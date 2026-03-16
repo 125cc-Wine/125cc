@@ -339,7 +339,6 @@ function copaSVG(color,size){
 function renderWineList(){
   document.getElementById('wineList').innerHTML=wines.map(w=>`
     <div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
-      ${w.destacado?'<div class="wc-star">★ Destacado</div>':''}
       <div class="wc-badge" style="background:${TYPE_COLOR[w.tipo]||'#888'}">${w.id}</div>
       <div class="wc-info"><div class="wc-name">${w.nombre}</div><div class="wc-sub">${w.bodega} · ${w.tipo}</div></div>
       <div class="wc-price">${w.precio}</div>
