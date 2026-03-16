@@ -210,7 +210,7 @@
 <div class="app" id="app" style="display:none">
 
   <div class="header">
-    <div class="eyebrow">Wine Bar</div>
+    <div class="eyebrow" id="bar-eyebrow">Wine Bar</div>
     <h1 id="titulo">125<span>cc</span></h1>
     <p id="descripcion"></p>
   </div>
@@ -292,8 +292,10 @@ fetch('./vinos.json')
   .then(r=>r.json())
   .then(data=>{
     wines=data.vinos;
+    // eyebrow = nombre del bar (chico), h1 = subtitulo (grande)
+    document.getElementById('bar-eyebrow').textContent=data.bar.nombre;
     document.getElementById('titulo').innerHTML=data.bar.subtitulo
-      ?`${data.bar.nombre} <span>${data.bar.subtitulo}</span>`
+      ?`${data.bar.subtitulo.replace('cc','<span>cc</span>')}`
       :data.bar.nombre;
     document.getElementById('descripcion').textContent=data.bar.descripcion;
     document.getElementById('mapWatermark').textContent=`${data.bar.nombre} · ${data.bar.subtitulo||''}`;
