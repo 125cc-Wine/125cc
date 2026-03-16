@@ -209,7 +209,7 @@
     <button class="tab-btn active" onclick="showTab('carta',this)">Carta</button>
     <button class="tab-btn" onclick="showTab('ficha',this)">Ficha</button>
     <button class="tab-btn" onclick="showTab('sommelier',this)">Sommelier</button>
-    <button class="tab-btn" onclick="showTab('charc',this)">Tabla</button>
+    <button class="tab-btn" onclick="showTab('charc',this)">Menu</button>
   </div>
 
   <!-- CARTA -->
@@ -247,7 +247,7 @@
 
 <script>
 const TYPE_COLOR={Tinto:"#991b1b",Blanco:"#92400e",Rosado:"#9f1239",Naranja:"#b45309"};
-const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos":"🧀","jamón crudo":"🍖","tabla":"🪵","fiambres":"🥓","salmón":"🐟","mortadela":"🥩","aceitunas":"🫒","panera":"🍞","salame":"🥩"};
+const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos":"🧀","jamón crudo":"🍖","Menu":"🪵","fiambres":"🥓","salmón":"🐟","mortadela":"🥩","aceitunas":"🫒","panera":"🍞","salame":"🥩"};
 
 let wines=[], selectedId=null;
 
@@ -391,7 +391,7 @@ const PREGUNTAS=[
     pregunta:'¿Va con algo para comer?',
     sub:'Así encontramos el maridaje perfecto.',
     opciones:[
-      {val:'Menu',icon:'🪵',label:'Tabla o charcutería',sub:'Quesos, jamón, fiambres'},
+      {val:'Menu',icon:'🪵',label:'Menu o charcutería',sub:'Quesos, jamón, fiambres'},
       {val:'solo',icon:'🍷',label:'Solo, por ahora',sub:'Degustare una copa'},
       {val:'carnes',icon:'🥩',label:'Algo más contundente',sub:'Carnes o quesos duros'}
     ]
@@ -466,7 +466,7 @@ function renderSommResults(){
     if(estilo==='cualquiera'){score+=1;}
 
     // comida match
-    if(comida==='tabla'&&w.maridaje&&w.maridaje.includes('tabla')){score+=2;reasons.push('va perfecto con tabla');}
+    if(comida==='Menu'&&w.maridaje&&w.maridaje.includes('Menu')){score+=2;reasons.push('va perfecto con Menu');}
     if(comida==='carnes'&&w.maridaje&&w.maridaje.includes('carnes rojas')){score+=2;reasons.push('ideal para carnes');}
     if(comida==='solo'){score+=1;}
 
