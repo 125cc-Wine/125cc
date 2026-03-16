@@ -9,7 +9,7 @@
   "vinos": [
     {
       "id": 1,
-      "nombre": "Malbec de Altura",
+      "nombre": "Kaiken Ultra Malbec",
       "bodega": "Valle de Uco",
       "precio": "$12.000",
       "copa": "125 cc",
@@ -37,7 +37,7 @@
         "dulzura": 1
       },
       "destacado": false,
-      "tienda_url": "https://tu-tienda.com/productos/malbec-de-altura"
+      "tienda_url": "https://www.aromadevid.com.ar/producto/kaiken-ultra-malbec/"
     },
     {
       "id": 2,
