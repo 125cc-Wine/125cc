@@ -27,7 +27,7 @@
         "carnes rojas",
         "quesos duros",
         "jamón crudo",
-        "tabla"
+        "Menu"
       ],
       "bodega_info": "Viñedos plantados a 1.100 metros en el Valle de Uco. Suelo pedregoso con componente calcáreo que aporta estructura y frescura al vino.",
       "perfil": {
@@ -59,7 +59,7 @@
         "carnes rojas",
         "quesos duros",
         "fiambres",
-        "tabla"
+        "Menu"
       ],
       "bodega_info": "Agrelo es uno de los terruños históricos de Luján de Cuyo. Suelo franco arcilloso ideal para varietales con estructura y carácter herbal.",
       "perfil": {
@@ -91,7 +91,7 @@
         "quesos blandos",
         "salmón",
         "mortadela",
-        "tabla"
+        "Menu"
       ],
       "bodega_info": "Río Negro es la región más austral de la viticultura argentina. Clima frío y vientos patagónicos producen vinos de gran frescura y elegancia.",
       "perfil": {
@@ -120,7 +120,7 @@
       "temperatura": "8–10°C",
       "nota": "Rosado seco, vibrante y floral, ideal para servicio fresco.",
       "maridaje": [
-        "tabla",
+        "Menu",
         "quesos blandos",
         "aceitunas",
         "mortadela"
@@ -152,7 +152,7 @@
       "temperatura": "12–14°C",
       "nota": "Ligero, fluido y jugoso, pensado para beber fácil y sin rigidez.",
       "maridaje": [
-        "tabla",
+        "Menu",
         "aceitunas",
         "panera",
         "salame"
@@ -186,7 +186,7 @@
       "maridaje": [
         "quesos blandos",
         "salmón",
-        "tabla",
+        "Menu",
         "aceitunas"
       ],
       "bodega_info": "Gualtallary es la zona más alta del Valle de Uco, a 1.350 metros. El suelo calcáreo imprime un filo mineral único que distingue estos blancos.",
@@ -219,7 +219,7 @@
         "quesos blandos",
         "aceitunas",
         "panera",
-        "tabla"
+        "Menu"
       ],
       "bodega_info": "Sauvignon Blanc a más de 1.000 metros. Sin crianza para preservar el perfil herbal y la acidez vibrante característica del varietal.",
       "perfil": {
@@ -251,7 +251,7 @@
         "quesos duros",
         "salmón",
         "jamón crudo",
-        "tabla"
+        "Menu"
       ],
       "bodega_info": "El Semillón patagónico es una rareza. Criado sobre lías gana textura y complejidad manteniendo la frescura del clima frío de Río Negro.",
       "perfil": {
@@ -280,7 +280,7 @@
       "temperatura": "16–18°C",
       "nota": "Tinto especiado, de fruta madura y boca amplia, muy amigable con charcutería.",
       "maridaje": [
-        "tabla",
+        "Menu",
         "salame",
         "jamón crudo",
         "quesos duros"
@@ -315,7 +315,7 @@
         "carnes rojas",
         "quesos duros",
         "jamón crudo",
-        "tabla"
+        "Menu"
       ],
       "bodega_info": "Ensamblaje de tres parcelas históricas de Luján de Cuyo. Malbec aporta fruta, Cabernet Franc estructura herbal, Merlot redondez y volumen.",
       "perfil": {
@@ -344,7 +344,7 @@
       "temperatura": "10–12°C",
       "nota": "Vino naranjo de perfil expresivo, con textura y notas de piel seca y té.",
       "maridaje": [
-        "tabla",
+        "Menu",
         "quesos duros",
         "salame",
         "mortadela"
@@ -376,7 +376,7 @@
       "temperatura": "15–17°C",
       "nota": "Frutado, amable y directo, ideal para copa y consumo relajado.",
       "maridaje": [
-        "tabla",
+        "Menu",
         "salame",
         "mortadela",
         "aceitunas"
@@ -408,7 +408,7 @@
       "temperatura": "6–8°C",
       "nota": "Refrescante, seco y de burbuja viva, muy bueno para abrir la experiencia.",
       "maridaje": [
-        "tabla",
+        "Menu",
         "aceitunas",
         "panera",
         "quesos blandos"
@@ -443,7 +443,7 @@
         "carnes rojas",
         "quesos duros",
         "jamón crudo",
-        "tabla"
+        "Menu"
       ],
       "bodega_info": "Cabernet Sauvignon de Agrelo, referente histórico del terruño mendocino. 12 meses en roble francés integran la fruta negra con elegancia y estructura.",
       "perfil": {
@@ -458,7 +458,7 @@
   ],
   "charcuteria": [
     {
-      "nombre": "Tabla 125cc",
+      "nombre": "Menu 125cc",
       "detalle": "quesos, charcutería, encurtidos y pan",
       "precio": "$24.000"
     },
