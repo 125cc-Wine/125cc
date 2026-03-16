@@ -1,1 +1,496 @@
-
+{
+  "bar": {
+    "nombre": "Wine Bar",
+    "subtitulo": "125cc",
+    "descripcion": "Carta visual por mapa de sabor. Elegí por estilo, intensidad y perfil.",
+    "instagram": "@tu_winebar",
+    "direccion": "Tu dirección, Ciudad"
+  },
+  "vinos": [
+    {
+      "id": 1,
+      "nombre": "Malbec de Altura",
+      "bodega": "Valle de Uco",
+      "precio": "$12.000",
+      "copa": "125 cc",
+      "tipo": "Tinto",
+      "x": 32,
+      "y": 68,
+      "varietal": "100% Malbec",
+      "region": "Valle de Uco, Mendoza",
+      "altitud": "1.100 msnm",
+      "suelo": "Pedregoso calcáreo",
+      "crianza": "10 meses en roble",
+      "temperatura": "16–18°C",
+      "nota": "Tinto de montaña, con fruta negra madura, especias dulces y paso amplio.",
+      "maridaje": [
+        "carnes rojas",
+        "quesos duros",
+        "jamón crudo",
+        "Menu"
+      ],
+      "bodega_info": "Viñedos plantados a 1.100 metros en el Valle de Uco. Suelo pedregoso con componente calcáreo que aporta estructura y frescura al vino.",
+      "perfil": {
+        "cuerpo": 5,
+        "frescura": 3,
+        "taninos": 4,
+        "dulzura": 1
+      },
+      "destacado": false,
+      "tienda_url": "https://tu-tienda.com/productos/malbec-de-altura"
+    },
+    {
+      "id": 2,
+      "nombre": "Cabernet Franc Reserva",
+      "bodega": "Agrelo",
+      "precio": "$12.000",
+      "copa": "125 cc",
+      "tipo": "Tinto",
+      "x": -18,
+      "y": 54,
+      "varietal": "100% Cabernet Franc",
+      "region": "Agrelo, Luján de Cuyo",
+      "altitud": "980 msnm",
+      "suelo": "Franco arcilloso",
+      "crianza": "12 meses en barrica",
+      "temperatura": "16–18°C",
+      "nota": "Perfil herbal clásico, con especias, tensión y estructura media-alta.",
+      "maridaje": [
+        "carnes rojas",
+        "quesos duros",
+        "fiambres",
+        "Menu"
+      ],
+      "bodega_info": "Agrelo es uno de los terruños históricos de Luján de Cuyo. Suelo franco arcilloso ideal para varietales con estructura y carácter herbal.",
+      "perfil": {
+        "cuerpo": 4,
+        "frescura": 4,
+        "taninos": 4,
+        "dulzura": 1
+      },
+      "destacado": false,
+      "tienda_url": "https://tu-tienda.com/productos/cabernet-franc-reserva"
+    },
+    {
+      "id": 3,
+      "nombre": "Pinot Noir",
+      "bodega": "Patagonia",
+      "precio": "$8.000",
+      "copa": "125 cc",
+      "tipo": "Tinto",
+      "x": -42,
+      "y": 18,
+      "varietal": "100% Pinot Noir",
+      "region": "Río Negro, Patagonia",
+      "altitud": "390 msnm",
+      "suelo": "Aluvial y arenoso",
+      "crianza": "Sin paso por madera",
+      "temperatura": "14–16°C",
+      "nota": "Expresivo y sutil, con fruta roja fresca, textura fina y final delicado.",
+      "maridaje": [
+        "quesos blandos",
+        "salmón",
+        "mortadela",
+        "Menu"
+      ],
+      "bodega_info": "Río Negro es la región más austral de la viticultura argentina. Clima frío y vientos patagónicos producen vinos de gran frescura y elegancia.",
+      "perfil": {
+        "cuerpo": 2,
+        "frescura": 5,
+        "taninos": 2,
+        "dulzura": 1
+      },
+      "destacado": true,
+      "tienda_url": "https://tu-tienda.com/productos/pinot-noir-patagonia"
+    },
+    {
+      "id": 4,
+      "nombre": "Rosé de Malbec",
+      "bodega": "Mendoza",
+      "precio": "$8.000",
+      "copa": "125 cc",
+      "tipo": "Rosado",
+      "x": 12,
+      "y": -28,
+      "varietal": "Malbec",
+      "region": "Mendoza",
+      "altitud": "900 msnm",
+      "suelo": "Franco arenoso",
+      "crianza": "Sin crianza",
+      "temperatura": "8–10°C",
+      "nota": "Rosado seco, vibrante y floral, ideal para servicio fresco.",
+      "maridaje": [
+        "Menu",
+        "quesos blandos",
+        "aceitunas",
+        "mortadela"
+      ],
+      "bodega_info": "Elaborado con uvas Malbec de viñedos a 900 metros. Fermentación a baja temperatura para preservar aromas florales y frescura.",
+      "perfil": {
+        "cuerpo": 1,
+        "frescura": 5,
+        "taninos": 1,
+        "dulzura": 2
+      },
+      "destacado": false,
+      "tienda_url": "https://tu-tienda.com/productos/rose-de-malbec"
+    },
+    {
+      "id": 5,
+      "nombre": "Criolla Chica",
+      "bodega": "Lavalle",
+      "precio": "$6.000",
+      "copa": "125 cc",
+      "tipo": "Tinto",
+      "x": -8,
+      "y": -10,
+      "varietal": "Criolla Chica",
+      "region": "Lavalle, Mendoza",
+      "altitud": "700 msnm",
+      "suelo": "Arenoso",
+      "crianza": "Sin madera",
+      "temperatura": "12–14°C",
+      "nota": "Ligero, fluido y jugoso, pensado para beber fácil y sin rigidez.",
+      "maridaje": [
+        "Menu",
+        "aceitunas",
+        "panera",
+        "salame"
+      ],
+      "bodega_info": "Uva histórica argentina cultivada en Lavalle desde hace más de un siglo. Vino de cepa patrimonial, ligero y auténtico.",
+      "perfil": {
+        "cuerpo": 1,
+        "frescura": 4,
+        "taninos": 1,
+        "dulzura": 2
+      },
+      "destacado": false,
+      "tienda_url": "https://tu-tienda.com/productos/criolla-chica"
+    },
+    {
+      "id": 6,
+      "nombre": "Chardonnay",
+      "bodega": "Gualtallary",
+      "precio": "$8.000",
+      "copa": "125 cc",
+      "tipo": "Blanco",
+      "x": -22,
+      "y": -44,
+      "varietal": "Chardonnay",
+      "region": "Gualtallary, Valle de Uco",
+      "altitud": "1.350 msnm",
+      "suelo": "Calcáreo pedregoso",
+      "crianza": "Parte en barrica usada",
+      "temperatura": "10–12°C",
+      "nota": "Blanco de tensión alta, perfil cítrico y filo mineral.",
+      "maridaje": [
+        "quesos blandos",
+        "salmón",
+        "Menu",
+        "aceitunas"
+      ],
+      "bodega_info": "Gualtallary es la zona más alta del Valle de Uco, a 1.350 metros. El suelo calcáreo imprime un filo mineral único que distingue estos blancos.",
+      "perfil": {
+        "cuerpo": 3,
+        "frescura": 5,
+        "taninos": 1,
+        "dulzura": 1
+      },
+      "destacado": true,
+      "tienda_url": "https://tu-tienda.com/productos/chardonnay-gualtallary"
+    },
+    {
+      "id": 7,
+      "nombre": "Sauvignon Blanc",
+      "bodega": "Valle de Uco",
+      "precio": "$6.000",
+      "copa": "125 cc",
+      "tipo": "Blanco",
+      "x": -72,
+      "y": -54,
+      "varietal": "Sauvignon Blanc",
+      "region": "Valle de Uco",
+      "altitud": "1.050 msnm",
+      "suelo": "Pedregoso",
+      "crianza": "Sin crianza",
+      "temperatura": "8–10°C",
+      "nota": "Directo, herbal y refrescante, de acidez marcada y final seco.",
+      "maridaje": [
+        "quesos blandos",
+        "aceitunas",
+        "panera",
+        "Menu"
+      ],
+      "bodega_info": "Sauvignon Blanc a más de 1.000 metros. Sin crianza para preservar el perfil herbal y la acidez vibrante característica del varietal.",
+      "perfil": {
+        "cuerpo": 1,
+        "frescura": 5,
+        "taninos": 1,
+        "dulzura": 1
+      },
+      "destacado": false,
+      "tienda_url": "https://tu-tienda.com/productos/sauvignon-blanc"
+    },
+    {
+      "id": 8,
+      "nombre": "Semillón",
+      "bodega": "Río Negro",
+      "precio": "$8.000",
+      "copa": "125 cc",
+      "tipo": "Blanco",
+      "x": -38,
+      "y": -50,
+      "varietal": "Semillón",
+      "region": "Río Negro",
+      "altitud": "380 msnm",
+      "suelo": "Aluvial",
+      "crianza": "Sobre lías finas",
+      "temperatura": "10–12°C",
+      "nota": "Blanco con textura, notas de cera y fruta blanca, más gastronómico.",
+      "maridaje": [
+        "quesos duros",
+        "salmón",
+        "jamón crudo",
+        "Menu"
+      ],
+      "bodega_info": "El Semillón patagónico es una rareza. Criado sobre lías gana textura y complejidad manteniendo la frescura del clima frío de Río Negro.",
+      "perfil": {
+        "cuerpo": 3,
+        "frescura": 4,
+        "taninos": 1,
+        "dulzura": 1
+      },
+      "destacado": false,
+      "tienda_url": "https://tu-tienda.com/productos/semillon-rio-negro"
+    },
+    {
+      "id": 9,
+      "nombre": "Syrah",
+      "bodega": "San Rafael",
+      "precio": "$12.000",
+      "copa": "125 cc",
+      "tipo": "Tinto",
+      "x": 56,
+      "y": 50,
+      "varietal": "Syrah",
+      "region": "San Rafael, Mendoza",
+      "altitud": "750 msnm",
+      "suelo": "Franco limoso",
+      "crianza": "8 meses en roble",
+      "temperatura": "16–18°C",
+      "nota": "Tinto especiado, de fruta madura y boca amplia, muy amigable con charcutería.",
+      "maridaje": [
+        "Menu",
+        "salame",
+        "jamón crudo",
+        "quesos duros"
+      ],
+      "bodega_info": "San Rafael, al sur de Mendoza, produce Syrahs de perfil cálido y especiado. Suelo franco limoso con buena retención hídrica.",
+      "perfil": {
+        "cuerpo": 4,
+        "frescura": 2,
+        "taninos": 3,
+        "dulzura": 1
+      },
+      "destacado": false,
+      "tienda_url": "https://tu-tienda.com/productos/syrah-san-rafael"
+    },
+    {
+      "id": 10,
+      "nombre": "Blend de Parcela",
+      "bodega": "Luján de Cuyo",
+      "precio": "$12.000",
+      "copa": "125 cc",
+      "tipo": "Tinto",
+      "x": 62,
+      "y": 76,
+      "varietal": "Malbec / Cabernet Franc / Merlot",
+      "region": "Luján de Cuyo",
+      "altitud": "960 msnm",
+      "suelo": "Franco pedregoso",
+      "crianza": "12 meses en roble",
+      "temperatura": "16–18°C",
+      "nota": "Blend de perfil serio, con mayor profundidad, volumen y persistencia.",
+      "maridaje": [
+        "carnes rojas",
+        "quesos duros",
+        "jamón crudo",
+        "Menu"
+      ],
+      "bodega_info": "Ensamblaje de tres parcelas históricas de Luján de Cuyo. Malbec aporta fruta, Cabernet Franc estructura herbal, Merlot redondez y volumen.",
+      "perfil": {
+        "cuerpo": 5,
+        "frescura": 3,
+        "taninos": 4,
+        "dulzura": 1
+      },
+      "destacado": true,
+      "tienda_url": "https://tu-tienda.com/productos/blend-de-parcela"
+    },
+    {
+      "id": 11,
+      "nombre": "Naranjo Criollo",
+      "bodega": "Este Mendocino",
+      "precio": "$8.000",
+      "copa": "125 cc",
+      "tipo": "Naranja",
+      "x": 24,
+      "y": -8,
+      "varietal": "Criolla Blanca",
+      "region": "Este mendocino",
+      "altitud": "650 msnm",
+      "suelo": "Franco arenoso",
+      "crianza": "Maceración con pieles",
+      "temperatura": "10–12°C",
+      "nota": "Vino naranjo de perfil expresivo, con textura y notas de piel seca y té.",
+      "maridaje": [
+        "Menu",
+        "quesos duros",
+        "salame",
+        "mortadela"
+      ],
+      "bodega_info": "Elaborado con Criolla Blanca macerada con pieles varios días. Estilo ancestral que produce un vino de color ámbar, gran textura y personalidad.",
+      "perfil": {
+        "cuerpo": 3,
+        "frescura": 3,
+        "taninos": 2,
+        "dulzura": 1
+      },
+      "destacado": false,
+      "tienda_url": "https://tu-tienda.com/productos/naranjo-criollo"
+    },
+    {
+      "id": 12,
+      "nombre": "Bonarda",
+      "bodega": "Maipú",
+      "precio": "$8.000",
+      "copa": "125 cc",
+      "tipo": "Tinto",
+      "x": 44,
+      "y": 32,
+      "varietal": "Bonarda",
+      "region": "Maipú, Mendoza",
+      "altitud": "850 msnm",
+      "suelo": "Franco",
+      "crianza": "Paso breve por tanque",
+      "temperatura": "15–17°C",
+      "nota": "Frutado, amable y directo, ideal para copa y consumo relajado.",
+      "maridaje": [
+        "Menu",
+        "salame",
+        "mortadela",
+        "aceitunas"
+      ],
+      "bodega_info": "La Bonarda es la segunda uva más plantada de Argentina. En Maipú encuenta suelos francos que producen vinos jugosos, frutados y accesibles.",
+      "perfil": {
+        "cuerpo": 2,
+        "frescura": 3,
+        "taninos": 2,
+        "dulzura": 2
+      },
+      "destacado": false,
+      "tienda_url": "https://tu-tienda.com/productos/bonarda-maipu"
+    },
+    {
+      "id": 13,
+      "nombre": "Pet Nat Rosado",
+      "bodega": "Mendoza",
+      "precio": "$8.000",
+      "copa": "125 cc",
+      "tipo": "Rosado",
+      "x": 68,
+      "y": -48,
+      "varietal": "Rosado espumoso ancestral",
+      "region": "Mendoza",
+      "altitud": "900 msnm",
+      "suelo": "Franco arenoso",
+      "crianza": "Método ancestral",
+      "temperatura": "6–8°C",
+      "nota": "Refrescante, seco y de burbuja viva, muy bueno para abrir la experiencia.",
+      "maridaje": [
+        "Menu",
+        "aceitunas",
+        "panera",
+        "quesos blandos"
+      ],
+      "bodega_info": "Pétillant Naturel por método ancestral: embotellado antes de terminar la fermentación, capturando CO2 naturalmente. Sin adición de azúcar ni levaduras.",
+      "perfil": {
+        "cuerpo": 1,
+        "frescura": 5,
+        "taninos": 1,
+        "dulzura": 2
+      },
+      "destacado": false,
+      "tienda_url": "https://tu-tienda.com/productos/pet-nat-rosado"
+    },
+    {
+      "id": 14,
+      "nombre": "Cabernet Sauvignon",
+      "bodega": "Agrelo",
+      "precio": "$12.000",
+      "copa": "125 cc",
+      "tipo": "Tinto",
+      "x": -52,
+      "y": 62,
+      "varietal": "Cabernet Sauvignon",
+      "region": "Agrelo, Luján de Cuyo",
+      "altitud": "980 msnm",
+      "suelo": "Franco arcilloso",
+      "crianza": "12 meses en roble",
+      "temperatura": "16–18°C",
+      "nota": "Cabernet clásico, con cassis, estructura firme y final largo.",
+      "maridaje": [
+        "carnes rojas",
+        "quesos duros",
+        "jamón crudo",
+        "Menu"
+      ],
+      "bodega_info": "Cabernet Sauvignon de Agrelo, referente histórico del terruño mendocino. 12 meses en roble francés integran la fruta negra con elegancia y estructura.",
+      "perfil": {
+        "cuerpo": 5,
+        "frescura": 3,
+        "taninos": 5,
+        "dulzura": 1
+      },
+      "destacado": false,
+      "tienda_url": "https://tu-tienda.com/productos/cabernet-sauvignon-agrelo"
+    }
+  ],
+  "charcuteria": [
+    {
+      "nombre": "Menu 125cc",
+      "detalle": "quesos, charcutería, encurtidos y pan",
+      "precio": "$24.000"
+    },
+    {
+      "nombre": "Jamón crudo",
+      "detalle": "porción con pan tostado",
+      "precio": "$14.000"
+    },
+    {
+      "nombre": "Quesos afinados",
+      "detalle": "selección del día",
+      "precio": "$16.000"
+    },
+    {
+      "nombre": "Salame artesanal",
+      "detalle": "con mostaza antigua y pickles",
+      "precio": "$12.000"
+    },
+    {
+      "nombre": "Mortadela con pistacho",
+      "detalle": "láminas finas y focaccia",
+      "precio": "$13.000"
+    },
+    {
+      "nombre": "Aceitunas marinadas",
+      "detalle": "cítricos, hierbas y oliva",
+      "precio": "$7.000"
+    },
+    {
+      "nombre": "Panera tibia",
+      "detalle": "manteca batida y oliva",
+      "precio": "$6.000"
+    }
+  ]
+}
