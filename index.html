@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1c1917" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Wine Bar · Carta de Vinos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #f5f0ea;
+      --card: #fffdf9;
+      --border: #e8e0d4;
+      --text: #1a1510;
+      --muted: #7a6e62;
+      --dark: #1c1917;
+      --dark2: #292524;
+      --dark3: #3c3835;
+      --dark-muted: #78716c;
+      --dark-text: #f5f5f4;
+      --dark-sub: #a8a29e;
+      --accent: #c8463a;
+      --tinto: #991b1b;
+      --blanco: #92400e;
+      --rosado: #9f1239;
+      --naranja: #b45309;
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      overscroll-behavior: none;
+    }
+
+    /* ── Layout ── */
+    .app { display: flex; flex-direction: column; min-height: 100vh; max-width: 430px; margin: 0 auto; background: var(--bg); position: relative; }
+
+    /* ── Header ── */
+    .header { background: var(--dark); padding: 52px 20px 20px; }
+    .eyebrow { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--dark-muted); margin-bottom: 4px; }
+    .header h1 { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 600; color: var(--dark-text); line-height: 1; letter-spacing: -0.02em; }
+    .header h1 span { color: var(--accent); }
+    .header p { margin-top: 8px; font-size: 13px; color: var(--dark-sub); line-height: 1.55; }
+
+    /* ── Map section ── */
+    .map-section { background: var(--dark); padding: 16px 16px 18px; }
+    .map-section h2 { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; color: var(--dark-text); margin-bottom: 10px; }
+
+    .map-canvas {
+      background: #f4efe7;
+      border-radius: 16px;
+      position: relative;
+      height: 260px;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .map-axis-h { position: absolute; top: 50%; left: 6%; right: 6%; height: 0.5px; background: rgba(100,80,60,0.28); pointer-events: none; }
+    .map-axis-v { position: absolute; left: 50%; top: 10%; bottom: 8%; width: 0.5px; background: rgba(100,80,60,0.28); pointer-events: none; }
+    .map-label { position: absolute; font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase; color: #78716c; pointer-events: none; font-family: 'DM Sans', sans-serif; }
+    .map-watermark { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(120,100,80,0.09); font-weight: 600; pointer-events: none; }
+
+    .wine-pin { position: absolute; transform: translate(-50%, -50%); cursor: pointer; z-index: 2; -webkit-tap-highlight-color: transparent; }
+    .wine-pin:active { z-index: 10; }
+
+    .copa-icon { display: block; transition: transform 0.12s; }
+    .wine-pin:active .copa-icon { transform: scale(1.2); }
+
+    .pin-tooltip {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      border-radius: 10px;
+      padding: 7px 11px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 50;
+      border: 0.5px solid var(--border);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    }
+    .pin-tooltip.show { opacity: 1; }
+    .pin-tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #fff; }
+    .pin-tooltip .pt-name { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.2; }
+    .pin-tooltip .pt-price { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .legend-row { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 11px; }
+    .legend-pill { display: flex; align-items: center; gap: 5px; background: var(--dark2); border: 0.5px solid var(--dark3); border-radius: 20px; padding: 4px 11px; font-size: 11px; color: #d6d3d1; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Tab bar ── */
+    .tab-bar { display: flex; background: var(--card); border-bottom: 0.5px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .tab-btn { flex: 1; padding: 13px 4px; text-align: center; font-size: 12px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.15s; background: none; border-top: none; border-left: none; border-right: none; font-family: 'DM Sans', sans-serif; }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--text); }
+
+    /* ── Content pads ── */
+    .tab-content { display: none; padding: 16px; padding-bottom: 32px; }
+    .tab-content.active { display: block; }
+    .section-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; margin-top: 2px; }
+
+    /* ── Wine list ── */
+    .wine-card { background: var(--card); border: 0.5px solid var(--border); border-radius: 14px; padding: 12px 13px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+    .wine-card.active { border-color: var(--text); background: #f5f0ea; }
+    .wc-badge { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: #fff; flex-shrink: 0; margin-top: 2px; }
+    .wc-info { flex: 1; min-width: 0; }
+    .wc-name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .wc-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .wc-price { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+
+    /* ── Ficha ── */
+    .ficha-card { background: var(--card); border: 0.5px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+    .ficha-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 10px; }
+    .ficha-tipo-badge { border-radius: 20px; padding: 3px 12px; font-size: 11px; font-weight: 500; color: #fff; white-space: nowrap; flex-shrink: 0; }
+    .ficha-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; color: var(--text); line-height: 1.1; }
+    .ficha-winery { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .ficha-note { background: var(--bg); border-radius: 10px; padding: 11px 13px; font-size: 13px; color: var(--text); font-style: italic; line-height: 1.65; margin-bottom: 13px; }
+    .ficha-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .ficha-item { background: var(--bg); border: 0.5px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    .fi-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+    .fi-val { font-size: 12px; font-weight: 500; color: var(--text); }
+
+    .ficha-placeholder { text-align: center; padding: 48px 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .ficha-placeholder .placeholder-icon { font-size: 32px; margin-bottom: 8px; }
+
+    /* ── Charcutería ── */
+    .charc-item { background: var(--card); border: 0.5px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .charc-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+    .charc-detail { font-size: 11px; color: var(--muted); }
+    .charc-price { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+
+    /* ── Footer ── */
+    .footer { background: var(--dark); padding: 20px; text-align: center; }
+    .footer p { font-size: 11px; color: var(--dark-muted); line-height: 1.8; }
+    .footer strong { color: var(--dark-sub); }
+
+    /* ── Loading ── */
+    #loading { position: fixed; inset: 0; background: var(--dark); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; transition: opacity 0.4s; }
+    #loading h2 { font-family: 'Playfair Display', serif; font-size: 36px; color: var(--dark-text); }
+    #loading h2 span { color: var(--accent); }
+    #loading p { font-size: 12px; color: var(--dark-muted); margin-top: 8px; }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+
+<div id="loading">
+  <h2>125<span>cc</span></h2>
+  <p>Cargando carta…</p>
+</div>
+
+<div class="app" id="app" style="display:none">
+
+  <div class="header" id="header">
+    <div class="eyebrow">Wine Bar</div>
+    <h1 id="titulo">125<span>cc</span></h1>
+    <p id="descripcion"></p>
+  </div>
+
+  <div class="map-section">
+    <div class="eyebrow" style="color:var(--dark-muted);margin-bottom:4px">Wine map</div>
+    <h2>Mapa del vino</h2>
+    <div class="map-canvas" id="mapCanvas">
+      <div class="map-watermark" id="mapWatermark"></div>
+      <div class="map-axis-h"></div>
+      <div class="map-axis-v"></div>
+      <div class="map-label" style="left:50%;top:5%;transform:translateX(-50%)">Potente</div>
+      <div class="map-label" style="left:50%;bottom:3%;transform:translateX(-50%)">Ligero</div>
+      <div class="map-label" style="left:2%;top:50%;transform:translateY(-50%)">Fresco</div>
+      <div class="map-label" style="right:1%;top:50%;transform:translateY(-50%)">Maduro</div>
+      <div id="mapDots"></div>
+    </div>
+    <div class="legend-row" id="legendRow">
+      <div class="legend-pill"><div class="legend-dot" style="background:var(--tinto)"></div>Tinto</div>
+      <div class="legend-pill"><div class="legend-dot" style="background:var(--blanco)"></div>Blanco</div>
+      <div class="legend-pill"><div class="legend-dot" style="background:var(--rosado)"></div>Rosado</div>
+      <div class="legend-pill"><div class="legend-dot" style="background:var(--naranja)"></div>Naranja</div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('carta', this)">Carta</button>
+    <button class="tab-btn" onclick="showTab('ficha', this)">Ficha</button>
+    <button class="tab-btn" onclick="showTab('charc', this)">Tabla</button>
+  </div>
+
+  <div class="tab-content active" id="tab-carta">
+    <div class="section-title">Carta por copa</div>
+    <div id="wineList"></div>
+  </div>
+
+  <div class="tab-content" id="tab-ficha">
+    <div id="fichaContent">
+      <div class="ficha-placeholder">
+        <div class="placeholder-icon">🍷</div>
+        Tocá una copita en el mapa<br>o un vino de la carta<br>para ver su ficha completa.
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-charc">
+    <div class="section-title">Charcutería</div>
+    <div id="charcList"></div>
+  </div>
+
+  <div class="footer" id="footer">
+    <p id="footerInfo"></p>
+  </div>
+
+</div>
+
+<script>
+const TYPE_COLOR = { Tinto:"#991b1b", Blanco:"#92400e", Rosado:"#9f1239", Naranja:"#b45309" };
+
+let wines = [];
+let selectedId = null;
+let tooltipTimer = null;
+
+/* ── Load data ── */
+fetch('./vinos.json')
+  .then(r => r.json())
+  .then(data => {
+    wines = data.vinos;
+
+    /* header */
+    document.getElementById('titulo').innerHTML = data.bar.subtitulo
+      ? `${data.bar.nombre} <span>${data.bar.subtitulo}</span>`
+      : data.bar.nombre;
+    document.getElementById('descripcion').textContent = data.bar.descripcion;
+    document.getElementById('mapWatermark').textContent = `${data.bar.nombre} · ${data.bar.subtitulo || ''}`;
+
+    /* footer */
+    const parts = [data.bar.instagram, data.bar.direccion].filter(Boolean);
+    document.getElementById('footerInfo').innerHTML = parts.map(p => `<strong>${p}</strong>`).join(' &nbsp;·&nbsp; ');
+
+    buildMap();
+    renderWineList();
+    renderCharc(data.charcuteria);
+
+    /* hide loading */
+    setTimeout(() => {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('app').style.display = 'flex';
+    }, 300);
+  })
+  .catch(() => {
+    document.getElementById('loading').innerHTML = '<p style="color:#f87171;font-size:14px;padding:20px;text-align:center">Error cargando el menú.<br>Verificá tu conexión e intentá de nuevo.</p>';
+  });
+
+/* ── Map ── */
+function buildMap() {
+  const container = document.getElementById('mapDots');
+  container.innerHTML = '';
+  wines.forEach(w => {
+    const left = 50 + w.x * 0.4;
+    const top  = 50 - w.y * 0.36;
+    const color = TYPE_COLOR[w.tipo] || '#888';
+    const isSelected = w.id === selectedId;
+    const size = isSelected ? 22 : 17;
+
+    const pin = document.createElement('div');
+    pin.className = 'wine-pin';
+    pin.style.cssText = `left:${left}%;top:${top}%;z-index:${isSelected ? 20 : 2}`;
+
+    pin.innerHTML = `
+      ${copaSVG(color, size)}
+      <div class="pin-tooltip${isSelected ? ' show' : ''}" id="tip-${w.id}">
+        <div class="pt-name">${w.nombre}</div>
+        <div class="pt-price">${w.precio} · ${w.tipo}</div>
+      </div>`;
+
+    pin.addEventListener('click', e => {
+      e.stopPropagation();
+      selectedId = (selectedId === w.id) ? null : w.id;
+      buildMap();
+      renderWineList();
+      if (selectedId) {
+        renderFicha(wines.find(x => x.id === selectedId));
+        showTab('ficha', document.querySelectorAll('.tab-btn')[1]);
+      }
+    });
+
+    container.appendChild(pin);
+  });
+}
+
+document.addEventListener('click', () => {
+  if (selectedId !== null) { selectedId = null; buildMap(); renderWineList(); }
+});
+
+function copaSVG(color, size) {
+  return `<svg class="copa-icon" width="${size}" height="${size}" viewBox="0 0 20 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4 2 C4 2 2 8 2 11 C2 15 5.5 17.5 9 18 L9 21 L6 21 L6 23 L14 23 L14 21 L11 21 L11 18 C14.5 17.5 18 15 18 11 C18 8 16 2 16 2 Z" fill="${color}" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+  </svg>`;
+}
+
+/* ── Wine list ── */
+function renderWineList() {
+  document.getElementById('wineList').innerHTML = wines.map(w => `
+    <div class="wine-card${w.id === selectedId ? ' active' : ''}" onclick="selectWine(${w.id})">
+      <div class="wc-badge" style="background:${TYPE_COLOR[w.tipo] || '#888'}">${w.id}</div>
+      <div class="wc-info">
+        <div class="wc-name">${w.nombre}</div>
+        <div class="wc-sub">${w.bodega} · ${w.tipo}</div>
+      </div>
+      <div class="wc-price">${w.precio}</div>
+    </div>`).join('');
+}
+
+function selectWine(id) {
+  selectedId = id;
+  buildMap();
+  renderWineList();
+  renderFicha(wines.find(w => w.id === id));
+  showTab('ficha', document.querySelectorAll('.tab-btn')[1]);
+}
+
+/* ── Ficha ── */
+function renderFicha(w) {
+  if (!w) {
+    document.getElementById('fichaContent').innerHTML = `
+      <div class="ficha-placeholder">
+        <div class="placeholder-icon">🍷</div>
+        Tocá una copita en el mapa<br>o un vino de la carta.
+      </div>`;
+    return;
+  }
+  const color = TYPE_COLOR[w.tipo] || '#888';
+  document.getElementById('fichaContent').innerHTML = `
+    <div class="ficha-card">
+      <div class="ficha-header">
+        <div>
+          <div class="fi-label" style="margin-bottom:6px">Ficha técnica</div>
+          <div class="ficha-name">${w.nombre}</div>
+          <div class="ficha-winery">${w.bodega}</div>
+        </div>
+        <div class="ficha-tipo-badge" style="background:${color}">${w.precio}</div>
+      </div>
+      <div class="ficha-note">${w.nota}</div>
+      <div class="ficha-grid">
+        ${[
+          ['Varietal', w.varietal],
+          ['Región', w.region],
+          ['Altitud', w.altitud],
+          ['Suelo', w.suelo],
+          ['Crianza', w.crianza],
+          ['Temperatura', w.temperatura],
+        ].map(([l, v]) => `
+          <div class="ficha-item">
+            <div class="fi-label">${l}</div>
+            <div class="fi-val">${v}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ── Charcutería ── */
+function renderCharc(items) {
+  document.getElementById('charcList').innerHTML = items.map(c => `
+    <div class="charc-item">
+      <div>
+        <div class="charc-name">${c.nombre}</div>
+        <div class="charc-detail">${c.detalle}</div>
+      </div>
+      <div class="charc-price">${c.precio}</div>
+    </div>`).join('');
+}
+
+/* ── Tabs ── */
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+</script>
+</body>
+</html>
