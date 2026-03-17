@@ -160,21 +160,38 @@
     .form-card{background:var(--card);border:.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
     .form-card h3{font-family:'Playfair Display',serif;font-size:18px;color:var(--text);margin-bottom:4px}
     .form-card .form-sub{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.4}
-    .field-group{margin-bottom:14px}
-    .field-label{font-size:12px;font-weight:500;color:var(--text);display:block;margin-bottom:7px}
+    .field-group{margin-bottom:18px}
+    .field-label{font-size:12px;font-weight:500;color:var(--text);display:block;margin-bottom:10px}
     .field-label span{font-size:11px;color:var(--muted);font-weight:400;margin-left:4px}
     .wine-select{width:100%;background:var(--bg);border:.5px solid var(--border);border-radius:10px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer}
     .wine-select:focus{border-color:var(--text)}
-    .stars-row{display:flex;gap:7px}
-    .star-btn{flex:1;height:42px;border-radius:10px;border:.5px solid var(--border);background:var(--bg);font-size:18px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
-    .star-btn.active{background:var(--accent);border-color:var(--accent);transform:scale(1.05)}
-    .slider-group{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-    .slider-block{background:var(--bg);border:.5px solid var(--border);border-radius:10px;padding:10px 12px}
-    .slider-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-    .slider-name{font-size:12px;font-weight:500;color:var(--text)}
-    .slider-val{font-size:11px;color:var(--muted)}
-    input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:2px;background:var(--border);outline:none;cursor:pointer}
-    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--text);cursor:pointer}
+
+    /* Score general */
+    .score-display{text-align:center;margin-bottom:16px}
+    .score-big{font-size:52px;font-weight:600;color:var(--accent);line-height:1}
+    .score-lbl{font-size:13px;color:var(--muted);margin-top:4px;min-height:18px}
+    .main-track-wrap{position:relative;padding-bottom:24px}
+    .main-track{height:5px;background:var(--border);border-radius:3px;position:relative;cursor:pointer}
+    .main-fill{height:100%;border-radius:3px;background:var(--accent)}
+    .main-handle{position:absolute;top:50%;transform:translate(-50%,-50%);cursor:grab;z-index:3}
+    .main-handle:active{transform:translate(-50%,-50%) scale(1.18)}
+    .main-ticks{display:flex;justify-content:space-between;margin-top:7px}
+    .main-ticks span{font-size:10px;color:var(--muted);width:10px;text-align:center}
+    .main-ticks span.hi{color:var(--accent);font-weight:600;font-size:12px}
+
+    /* Atributos */
+    .attr-list{display:flex;flex-direction:column;gap:16px}
+    .attr-row{display:flex;align-items:center;gap:12px}
+    .attr-name{font-size:12px;font-weight:500;color:var(--text);width:62px;flex-shrink:0}
+    .attr-slider-wrap{flex:1}
+    .attr-track{height:5px;background:var(--border);border-radius:3px;position:relative;cursor:pointer}
+    .attr-fill{height:100%;border-radius:3px}
+    .attr-handle{position:absolute;top:50%;transform:translate(-50%,-50%);cursor:grab;z-index:3}
+    .attr-handle:active{transform:translate(-50%,-50%) scale(1.15)}
+    .attr-dots{display:flex;gap:5px;margin-top:6px}
+    .attr-dot{width:8px;height:8px;border-radius:50%}
+    .attr-val{font-size:12px;font-weight:500;width:28px;text-align:right;flex-shrink:0}
+
     .opinion-input{width:100%;background:var(--bg);border:.5px solid var(--border);border-radius:10px;padding:10px 13px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.5}
     .opinion-input:focus{border-color:var(--text)}
     .submit-btn{width:100%;background:var(--text);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s;margin-top:4px}
@@ -185,7 +202,6 @@
     .form-success h3{font-size:17px;font-weight:600;color:#1b5e20;margin-bottom:6px}
     .form-success p{font-size:13px;color:#2e7d32;line-height:1.5}
     .form-success button{margin-top:14px;background:transparent;border:.5px solid #c8e6c9;border-radius:10px;padding:10px 20px;font-size:13px;color:#2e7d32;cursor:pointer;font-family:'DM Sans',sans-serif}
-    .rating-label{font-size:11px;color:var(--muted);text-align:center;margin-top:5px;min-height:16px}
 
     /* ── POPUP WHATSAPP ── */
     .wa-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;display:flex;align-items:flex-end;justify-content:center;padding:0 0 24px}
@@ -586,16 +602,51 @@ function showTab(name,btn){
 }
 
 /* ── FORMULARIO DEGUSTACIÓN ── */
-let formState = { puntuacion:0, aroma:3, cuerpo:3, gusto:3, opinion:'', vinoId:null };
+const SCORE_LABELS=['','Malo','Flojo','Regular','Correcto','Bueno','Muy bueno','Notable','Excelente','Sobresaliente','Perfecto'];
+const FORM_ATTRS=[
+  {id:'acidez',  name:'Acidez',  color:'#1a7fd4'},
+  {id:'cuerpo',  name:'Cuerpo',  color:'#c8463a'},
+  {id:'taninos', name:'Taninos', color:'#b06010'},
+  {id:'visual',  name:'Visual',  color:'#c8a018'},
+  {id:'gusto',   name:'Gusto',   color:'#c03070'},
+];
+let formState = { puntuacion:0, opinion:'', vinoId:null };
+FORM_ATTRS.forEach(a=>formState[a.id]=3);
 
-function ratingText(n){
-  return ['','No me convenció','Correcto','Bueno','Muy bueno','Excelente, lo volvería a pedir'][n] || '';
+function ratingText(n){ return SCORE_LABELS[n]||''; }
+
+function copaSVGForm(color,size=22){
+  return `<svg width="${size}" height="${Math.round(size*1.3)}" viewBox="0 0 20 24" fill="none"><path d="M4 2 C4 2 2 8 2 11 C2 15 5.5 17.5 9 18 L9 21 L6 21 L6 23 L14 23 L14 21 L11 21 L11 18 C14.5 17.5 18 15 18 11 C18 8 16 2 16 2 Z" fill="${color}" stroke="rgba(255,255,255,0.6)" stroke-width="0.8"/></svg>`;
+}
+
+function pctToScore10(p){return Math.max(1,Math.min(10,Math.round(p/100*9)+1));}
+function pctToScore5(p){return Math.max(1,Math.min(5,Math.round(p/100*4)+1));}
+function score10ToPct(s){return (s-1)/9*100;}
+function score5ToPct(s){return (s-1)/4*100;}
+
+function getFormEvtPct(e,el){
+  const r=el.getBoundingClientRect();
+  const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+  return Math.max(0,Math.min(100,x/r.width*100));
+}
+
+function makeFormDrag(trackEl,handleEl,onUpdate){
+  let dragging=false;
+  handleEl.addEventListener('mousedown',e=>{dragging=true;e.preventDefault();});
+  handleEl.addEventListener('touchstart',()=>dragging=true,{passive:true});
+  document.addEventListener('mousemove',e=>{if(dragging)onUpdate(getFormEvtPct(e,trackEl));});
+  document.addEventListener('touchmove',e=>{if(dragging)onUpdate(getFormEvtPct(e,trackEl));},{passive:true});
+  document.addEventListener('mouseup',()=>dragging=false);
+  document.addEventListener('touchend',()=>dragging=false);
+  trackEl.addEventListener('click',e=>onUpdate(getFormEvtPct(e,trackEl)));
 }
 
 function renderFormPuntuar(){
   if(!wines.length) return;
   const sel = formState.vinoId ? wines.find(w=>w.id===formState.vinoId) : (selectedId ? wines.find(w=>w.id===selectedId) : wines[0]);
   if(sel && !formState.vinoId) formState.vinoId = sel.id;
+
+  const mainPct = formState.puntuacion > 0 ? score10ToPct(formState.puntuacion) : 0;
 
   document.getElementById('puntuarContent').innerHTML=`
     <div class="form-card">
@@ -611,30 +662,24 @@ function renderFormPuntuar(){
 
       <div class="field-group">
         <label class="field-label">Puntuación general</label>
-        <div class="stars-row">
-          ${[1,2,3,4,5].map(n=>`
-            <button type="button" class="star-btn ${formState.puntuacion>=n?'active':''}"
-              onclick="setStars(${n})">★</button>`).join('')}
+        <div class="score-display">
+          <div class="score-big" id="f-score-num">${formState.puntuacion||'—'}</div>
+          <div class="score-lbl" id="f-score-lbl">${formState.puntuacion?ratingText(formState.puntuacion):'Deslizá la copita'}</div>
         </div>
-        <div class="rating-label" id="rating-label">${ratingText(formState.puntuacion)}</div>
+        <div class="main-track-wrap">
+          <div class="main-track" id="f-main-track">
+            <div class="main-fill" id="f-main-fill" style="width:${mainPct}%"></div>
+            <div class="main-handle" id="f-main-handle" style="left:${mainPct>0?mainPct:0}%">
+              ${copaSVGForm('#c8463a',26)}
+            </div>
+          </div>
+          <div class="main-ticks" id="f-main-ticks"></div>
+        </div>
       </div>
 
       <div class="field-group">
-        <label class="field-label">Sensaciones <span>deslizá cada barra</span></label>
-        <div class="slider-group">
-          <div class="slider-block">
-            <div class="slider-top"><span class="slider-name">Aroma</span><span class="slider-val" id="lbl-aroma">${formState.aroma}/5</span></div>
-            <input type="range" min="1" max="5" step="1" value="${formState.aroma}" oninput="formState.aroma=+this.value;document.getElementById('lbl-aroma').textContent=this.value+'/5'">
-          </div>
-          <div class="slider-block">
-            <div class="slider-top"><span class="slider-name">Cuerpo</span><span class="slider-val" id="lbl-cuerpo">${formState.cuerpo}/5</span></div>
-            <input type="range" min="1" max="5" step="1" value="${formState.cuerpo}" oninput="formState.cuerpo=+this.value;document.getElementById('lbl-cuerpo').textContent=this.value+'/5'">
-          </div>
-          <div class="slider-block">
-            <div class="slider-top"><span class="slider-name">Gusto</span><span class="slider-val" id="lbl-gusto">${formState.gusto}/5</span></div>
-            <input type="range" min="1" max="5" step="1" value="${formState.gusto}" oninput="formState.gusto=+this.value;document.getElementById('lbl-gusto').textContent=this.value+'/5'">
-          </div>
-        </div>
+        <label class="field-label">Atributos <span>deslizá cada copita · escala 1–5</span></label>
+        <div class="attr-list" id="f-attrs"></div>
       </div>
 
       <div class="field-group">
@@ -644,24 +689,84 @@ function renderFormPuntuar(){
           oninput="formState.opinion=this.value">${formState.opinion}</textarea>
       </div>
 
-      <button class="submit-btn" id="submit-btn" onclick="mostrarPopupWA()" ${formState.puntuacion===0?'disabled':''}>
+      <button class="submit-btn" id="submit-btn" onclick="mostrarPopupWA()" ${!formState.puntuacion?'disabled':''}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
         Enviar puntuación
       </button>
-      ${formState.puntuacion===0?`<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px">Tocá las estrellas para habilitar el envío</p>`:''}
+      ${!formState.puntuacion?`<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px">Deslizá la copita para habilitar el envío</p>`:''}
     </div>`;
-}
 
-function setStars(n){
-  formState.puntuacion = (formState.puntuacion===n) ? 0 : n;
-  renderFormPuntuar();
+  // Build main ticks
+  const tc=document.getElementById('f-main-ticks');
+  for(let i=1;i<=10;i++){
+    const s=document.createElement('span');
+    s.textContent=i;
+    if(i===formState.puntuacion)s.classList.add('hi');
+    tc.appendChild(s);
+  }
+
+  // Main slider drag
+  const mainTrack=document.getElementById('f-main-track');
+  const mainHandle=document.getElementById('f-main-handle');
+  makeFormDrag(mainTrack,mainHandle,pct=>{
+    const val=pctToScore10(pct);
+    formState.puntuacion=val;
+    const p=score10ToPct(val);
+    document.getElementById('f-main-fill').style.width=p+'%';
+    document.getElementById('f-main-handle').style.left=p+'%';
+    document.getElementById('f-score-num').textContent=val;
+    document.getElementById('f-score-lbl').textContent=ratingText(val);
+    document.getElementById('submit-btn').disabled=false;
+    // update ticks
+    document.querySelectorAll('#f-main-ticks span').forEach((s,i)=>{
+      s.classList.toggle('hi',i+1===val);
+    });
+  });
+
+  // Build attr sliders
+  const attrsWrap=document.getElementById('f-attrs');
+  FORM_ATTRS.forEach(a=>{
+    const pct=score5ToPct(formState[a.id]);
+    const row=document.createElement('div');
+    row.className='attr-row';
+    row.innerHTML=`
+      <div class="attr-name">${a.name}</div>
+      <div class="attr-slider-wrap">
+        <div class="attr-track" id="fat-${a.id}">
+          <div class="attr-fill" id="faf-${a.id}" style="width:${pct}%;background:${a.color}"></div>
+          <div class="attr-handle" id="fah-${a.id}" style="left:${pct}%">${copaSVGForm(a.color,20)}</div>
+        </div>
+        <div class="attr-dots" id="fad-${a.id}"></div>
+      </div>
+      <div class="attr-val" style="color:${a.color}" id="fav-${a.id}">${formState[a.id]}/5</div>`;
+    attrsWrap.appendChild(row);
+
+    const buildDots=val=>{
+      const dc=document.getElementById('fad-'+a.id);dc.innerHTML='';
+      for(let i=1;i<=5;i++){
+        const d=document.createElement('div');d.className='attr-dot';
+        d.style.background=i<=val?a.color:'var(--border)';
+        dc.appendChild(d);
+      }
+    };
+    buildDots(formState[a.id]);
+
+    const t=document.getElementById('fat-'+a.id),h=document.getElementById('fah-'+a.id);
+    makeFormDrag(t,h,pct=>{
+      const val=pctToScore5(pct);formState[a.id]=val;
+      const p=score5ToPct(val);
+      document.getElementById('faf-'+a.id).style.width=p+'%';
+      document.getElementById('fah-'+a.id).style.left=p+'%';
+      document.getElementById('fav-'+a.id).textContent=val+'/5';
+      buildDots(val);
+    });
+  });
 }
 
 /* ── POPUP WHATSAPP (link directo, sin API) ── */
 function mostrarPopupWA(){
-  if(formState.puntuacion===0) return;
+  if(!formState.puntuacion) return;
   const w = wines.find(x=>x.id===formState.vinoId)||wines[0];
-  const stars = '⭐'.repeat(formState.puntuacion) + '☆'.repeat(5-formState.puntuacion);
   const bar = v => '▰'.repeat(v) + '▱'.repeat(5-v);
 
   const msg = encodeURIComponent(
@@ -671,11 +776,13 @@ function mostrarPopupWA(){
 *Varietal:* ${w.varietal||'—'}
 *Copa:* ${w.copa||'125 cc'} · ${w.precio}
 
-*Puntuación:* ${stars} ${formState.puntuacion}/5
+*Puntuación general:* ${formState.puntuacion}/10 — ${ratingText(formState.puntuacion)}
 
-*Sensaciones:*
-• Aroma: ${bar(formState.aroma)} ${formState.aroma}/5
+*Atributos:*
+• Acidez: ${bar(formState.acidez)} ${formState.acidez}/5
 • Cuerpo: ${bar(formState.cuerpo)} ${formState.cuerpo}/5
+• Taninos: ${bar(formState.taninos)} ${formState.taninos}/5
+• Visual: ${bar(formState.visual)} ${formState.visual}/5
 • Gusto: ${bar(formState.gusto)} ${formState.gusto}/5
 
 ${formState.opinion?`*Opinión:* ${formState.opinion}\n\n`:''}📍 Wine Bar 125cc · www.125cc.com.ar`
@@ -737,8 +844,10 @@ async function enviarPuntuacion(phone){
     tipo:      w.tipo,
     precio:    w.precio,
     puntuacion:formState.puntuacion,
-    aroma:     formState.aroma,
+    acidez:    formState.acidez,
     cuerpo:    formState.cuerpo,
+    taninos:   formState.taninos,
+    visual:    formState.visual,
     gusto:     formState.gusto,
     opinion:   formState.opinion,
     phone:     phone ? normalizarTelefono(phone) : null,
@@ -779,7 +888,7 @@ async function enviarPuntuacion(phone){
     }
 
     // 3 — pantalla de éxito
-    formState = { puntuacion:0, aroma:3, cuerpo:3, gusto:3, opinion:'', vinoId:formState.vinoId };
+    formState = { puntuacion:0, acidez:3, cuerpo:3, taninos:3, visual:3, gusto:3, opinion:'', vinoId:formState.vinoId };
     document.getElementById('puntuarContent').innerHTML=`
       <div class="form-success">
         <div class="success-icon">🍷</div>
