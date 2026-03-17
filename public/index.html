@@ -770,7 +770,7 @@ function mostrarPopupWA(){
   const bar = v => '▰'.repeat(v) + '▱'.repeat(5-v);
 
   const msg = encodeURIComponent(
-`🍷 *Mi degustación en Wine Bar 125cc*
+`\uD83C\uDF77 *Mi degustación en Wine Bar 125cc*
 
 *Vino:* ${w.nombre} · ${w.bodega}
 *Varietal:* ${w.varietal||'—'}
@@ -785,7 +785,7 @@ function mostrarPopupWA(){
 • Visual: ${bar(formState.visual)} ${formState.visual}/5
 • Gusto: ${bar(formState.gusto)} ${formState.gusto}/5
 
-${formState.opinion?`*Opinión:* ${formState.opinion}\n\n`:''}📍 Wine Bar 125cc · www.125cc.com.ar`
+${formState.opinion?`*Opinión:* ${formState.opinion}\n\n`:''}\uD83D\uDCCD Wine Bar 125cc · www.125cc.com.ar`
   );
 
   const overlay = document.createElement('div');
