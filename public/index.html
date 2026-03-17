@@ -16,7 +16,7 @@
       --bg:#f5f0ea;--card:#fffdf9;--border:#e8e0d4;--text:#1a1510;--muted:#7a6e62;
       --dark:#1c1917;--dark2:#292524;--dark3:#3c3835;--dark-muted:#78716c;
       --dark-text:#f5f5f4;--dark-sub:#a8a29e;--accent:#c8463a;
-      --tinto:#8B0000;--blanco:#7ab83a;--rosado:#e05080;--naranja:#c46a10;
+      --tinto:#8B0000;--blanco:#c8920a;--rosado:#d94060;--naranja:#c46a10;
     }
     html,body{height:100%}
     body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text);overscroll-behavior:none}
@@ -210,7 +210,7 @@
 <div class="app" id="app" style="display:none">
 
   <div class="header">
-    <div class="eyebrow">Wine Bar</div>
+    <div class="eyebrow" id="bar-eyebrow">Wine Bar</div>
     <h1 id="titulo">125<span>cc</span></h1>
     <p id="descripcion"></p>
   </div>
@@ -283,23 +283,32 @@
 </div>
 
 <script>
-const TYPE_COLOR={Tinto:"#9B1C1C",Blanco:"#7ab83a",Rosado:"#d94060",Naranja:"#d4721a"};
+const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#c8920a",Rosado:"#d94060",Naranja:"#c46a10"};
 const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos":"🧀","jamón crudo":"🍖","tabla":"🪵","fiambres":"🥓","salmón":"🐟","mortadela":"🥩","aceitunas":"🫒","panera":"🍞","salame":"🥩"};
 
 let wines=[], selectedId=null;
 
-fetch('./vinos.json')
-  .then(r=>r.json())
-  .then(data=>{
-    wines=data.vinos;
-    document.getElementById('titulo').innerHTML=data.bar.subtitulo
-      ?`${data.bar.nombre} <span>${data.bar.subtitulo}</span>`
-      :data.bar.nombre;
-    document.getElementById('descripcion').textContent=data.bar.descripcion;
-    document.getElementById('mapWatermark').textContent=`${data.bar.nombre} · ${data.bar.subtitulo||''}`;
-    const parts=[data.bar.instagram,data.bar.direccion].filter(Boolean);
+// Carga la config del bar desde vinos.json y los vinos desde la API (Google Sheets)
+Promise.all([
+  fetch('./vinos.json').then(r=>r.json()),
+  fetch('/api/obtener-vinos').then(r=>r.json()).catch(()=>null)
+]).then(([config, apiData])=>{
+    // Si la API devuelve vinos, usarlos; si no, caer al vinos.json como respaldo
+    wines = (apiData && apiData.vinos && apiData.vinos.length > 0)
+      ? apiData.vinos
+      : config.vinos;
+
+    // Header del bar (siempre desde vinos.json)
+    document.getElementById('bar-eyebrow').textContent=config.bar.nombre;
+    document.getElementById('titulo').innerHTML=config.bar.subtitulo
+      ?`${config.bar.subtitulo.replace('cc','<span>cc</span>')}`
+      :config.bar.nombre;
+    document.getElementById('descripcion').textContent=config.bar.descripcion;
+    document.getElementById('mapWatermark').textContent=`${config.bar.nombre} · ${config.bar.subtitulo||''}`;
+    const parts=[config.bar.instagram,config.bar.direccion].filter(Boolean);
     document.getElementById('footerInfo').innerHTML=parts.map(p=>`<strong>${p}</strong>`).join(' &nbsp;·&nbsp; ');
-    buildMap(); renderWineList(); renderCharc(data.charcuteria); initSommelier();
+
+    buildMap(); renderWineList(); renderCharc(config.charcuteria); initSommelier();
     setTimeout(()=>{
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('app').style.display='flex';
@@ -339,6 +348,7 @@ function copaSVG(color,size){
 function renderWineList(){
   document.getElementById('wineList').innerHTML=wines.map(w=>`
     <div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
+      ${w.destacado?'<div class="wc-star">★ Destacado</div>':''}
       <div class="wc-badge" style="background:${TYPE_COLOR[w.tipo]||'#888'}">${w.id}</div>
       <div class="wc-info"><div class="wc-name">${w.nombre}</div><div class="wc-sub">${w.bodega} · ${w.tipo}</div></div>
       <div class="wc-price">${w.precio}</div>
@@ -409,7 +419,7 @@ const PREGUNTAS=[
     opciones:[
       {val:'tinto',icon:'🍷',label:'Tinto',sub:'Con cuerpo y carácter'},
       {val:'blanco',icon:'🥂',label:'Blanco o Rosado',sub:'Fresco y liviano'},
-      {val:'naranja',icon:'🫙',label:'Sorprendeme',sub:'Quiero descubrir'}
+      {val:'naranja',icon:'🫙',label:'Sorprendeme',sub:'Naranja, Pet Nat, lo que sea'}
     ]
   },
   {
@@ -417,9 +427,9 @@ const PREGUNTAS=[
     pregunta:'¿Cómo lo querés?',
     sub:'Pensá en el estado de ánimo de esta noche.',
     opciones:[
-      {val:'fresco',icon:'💧',label:'Fresco y fácil',sub:'Algo Liviano'},
+      {val:'fresco',icon:'💧',label:'Fresco y fácil',sub:'Que entre solo, sin pensar'},
       {val:'serio',icon:'🧱',label:'Con estructura',sub:'Algo que dure y se piense'},
-      {val:'cualquiera',icon:'🎲',label:'Me da igual',sub:'Quiero Sorprenderme'}
+      {val:'cualquiera',icon:'🎲',label:'Me da igual',sub:'Lo que mejor maride con algo'}
     ]
   },
   {
@@ -428,7 +438,7 @@ const PREGUNTAS=[
     sub:'Así encontramos el maridaje perfecto.',
     opciones:[
       {val:'tabla',icon:'🪵',label:'Tabla o charcutería',sub:'Quesos, jamón, fiambres'},
-      {val:'solo',icon:'🍷',label:'Solo, por ahora',sub:'Prefiero degustar el vino'},
+      {val:'solo',icon:'🍷',label:'Solo, por ahora',sub:'A pelo, sin comida'},
       {val:'carnes',icon:'🥩',label:'Algo más contundente',sub:'Carnes o quesos duros'}
     ]
   }
