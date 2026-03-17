@@ -16,7 +16,7 @@
       --bg:#f5f0ea;--card:#fffdf9;--border:#e8e0d4;--text:#1a1510;--muted:#7a6e62;
       --dark:#1c1917;--dark2:#292524;--dark3:#3c3835;--dark-muted:#78716c;
       --dark-text:#f5f5f4;--dark-sub:#a8a29e;--accent:#c8463a;
-      --tinto:#8B0000;--blanco:#c8920a;--rosado:#d94060;--naranja:#c46a10;
+      --tinto:#8B0000;--blanco:#7ab83a;--rosado:#d94060;--naranja:#c46a10;
     }
     html,body{height:100%}
     body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text);overscroll-behavior:none}
@@ -283,7 +283,7 @@
 </div>
 
 <script>
-const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#c8920a",Rosado:"#d94060",Naranja:"#c46a10"};
+const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranja:"#c46a10"};
 const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos":"🧀","jamón crudo":"🍖","tabla":"🪵","fiambres":"🥓","salmón":"🐟","mortadela":"🥩","aceitunas":"🫒","panera":"🍞","salame":"🥩"};
 
 let wines=[], selectedId=null;
@@ -414,7 +414,7 @@ function renderCharc(items){
 const PREGUNTAS=[
   {
     id:'color',
-    pregunta:'¿Qué color te llama hoy?',
+    pregunta:'¿Qué Vino te llama hoy?',
     sub:'Sin presiones, lo que más se te antoja.',
     opciones:[
       {val:'tinto',icon:'🍷',label:'Tinto',sub:'Con cuerpo y carácter'},
