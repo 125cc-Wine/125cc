@@ -361,14 +361,15 @@ Promise.all([
 function buildMap(){
   const c=document.getElementById('mapDots');
   c.innerHTML='';
-  wines.forEach(w=>{
+  wines.forEach((w,idx)=>{
     const left=50+w.x*0.4, top=50-w.y*0.36;
     const color=TYPE_COLOR[w.tipo]||'#888';
-    const isSel=w.id===selectedId, size=isSel?22:17;
+    const isSel=w.id===selectedId, size=isSel?24:18;
+    const num=idx+1;
     const pin=document.createElement('div');
     pin.className='wine-pin';
     pin.style.cssText=`left:${left}%;top:${top}%;z-index:${isSel?20:2}`;
-    pin.innerHTML=`${copaSVG(color,size)}<div class="pin-tooltip${isSel?' show':''}" id="tip-${w.id}"><div class="pt-name">${w.nombre}</div><div class="pt-price">${w.precio} · ${w.tipo}</div></div>`;
+    pin.innerHTML=`${copaSVG(color,size,num)}<div class="pin-tooltip${isSel?' show':''}" id="tip-${w.id}"><div class="pt-name">${num}. ${w.nombre}</div><div class="pt-price">${w.precio} · ${w.tipo}</div></div>`;
     pin.addEventListener('click',e=>{
       e.stopPropagation();
       selectedId=(selectedId===w.id)?null:w.id;
@@ -379,8 +380,10 @@ function buildMap(){
   });
 }
 document.addEventListener('click',()=>{ if(selectedId!==null){selectedId=null;buildMap();renderWineList();} });
-function copaSVG(color,size){
-  return `<svg class="copa-icon" width="${size}" height="${size}" viewBox="0 0 20 24" fill="none"><path d="M4 2 C4 2 2 8 2 11 C2 15 5.5 17.5 9 18 L9 21 L6 21 L6 23 L14 23 L14 21 L11 21 L11 18 C14.5 17.5 18 15 18 11 C18 8 16 2 16 2 Z" fill="${color}" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/></svg>`;
+function copaSVG(color,size,num){
+  const fontSize = size > 18 ? 7 : 6;
+  const numEl = num!=null ? `<text x="10" y="13" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="#fff" font-family="sans-serif">${num}</text>` : '';
+  return `<svg class="copa-icon" width="${size}" height="${size}" viewBox="0 0 20 24" fill="none"><path d="M4 2 C4 2 2 8 2 11 C2 15 5.5 17.5 9 18 L9 21 L6 21 L6 23 L14 23 L14 21 L11 21 L11 18 C14.5 17.5 18 15 18 11 C18 8 16 2 16 2 Z" fill="${color}" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>${numEl}</svg>`;
 }
 
 /* ── WINE LIST ── */
