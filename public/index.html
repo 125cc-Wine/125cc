@@ -334,10 +334,12 @@ const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranja:"#d4
 const TYPE_LABEL={Tinto:"Tinto",Blanco:"Blanco",Rosado:"Rosado",Naranja:"Naranjo"};
 function fmtPrecio(p){
   if(!p) return p;
-  // Remove $ and dots, parse number, reformat
-  const n = parseFloat(p.replace(/[$\.]/g,'').replace(',','.'));
+  // Handles: $12,000.00 (Sheets) / $12.000 / $12000 / 12000
+  const clean = p.toString().replace(/\$/g,'').trim();
+  // If has comma as thousands separator (e.g. 12,000.00)
+  const n = parseFloat(clean.replace(/,/g,''));
   if(isNaN(n)) return p;
-  return '$' + n.toLocaleString('es-AR');
+  return '$' + Math.round(n).toLocaleString('es-AR');
 }
 const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos":"🧀","jamón crudo":"🍖","tabla":"🪵","fiambres":"🥓","salmón":"🐟","mortadela":"🥩","aceitunas":"🫒","panera":"🍞","salame":"🥩"};
 
