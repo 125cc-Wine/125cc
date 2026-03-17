@@ -274,8 +274,13 @@
       <div class="legend-pill"><div class="legend-dot" style="background:var(--tinto)"></div>Tinto</div>
       <div class="legend-pill"><div class="legend-dot" style="background:var(--blanco)"></div>Blanco</div>
       <div class="legend-pill"><div class="legend-dot" style="background:var(--rosado)"></div>Rosado</div>
-      <div class="legend-pill"><div class="legend-dot" style="background:var(--naranja)"></div>Naranja</div>
+      <div class="legend-pill"><div class="legend-dot" style="background:var(--naranja)"></div>Naranjo</div>
     </div>
+    <div style="margin-top:9px;font-size:11px;color:var(--dark-sub);display:flex;gap:14px;flex-wrap:wrap">
+      <span>↔ <strong style="color:var(--dark-text)">Fresco → Maduro</strong> perfil aromático</span>
+      <span>↕ <strong style="color:var(--dark-text)">Ligero → Potente</strong> intensidad en boca</span>
+    </div>
+    <div style="margin-top:7px;font-size:11px;color:var(--dark-muted)">Tocá una copita para ver la ficha del vino</div>
   </div>
 
   <div class="tab-bar">
@@ -283,7 +288,7 @@
     <button class="tab-btn" onclick="showTab('ficha',this)">Ficha</button>
     <button class="tab-btn" onclick="showTab('sommelier',this)">Sommelier</button>
     <button class="tab-btn" onclick="showTab('charc',this)">Menú</button>
-    <button class="tab-btn" onclick="showTab('puntuar',this)">★ Puntuar</button>
+    <button class="tab-btn" onclick="showTab('puntuar',this)">Calificá</button>
   </div>
 
   <!-- CARTA -->
@@ -325,7 +330,14 @@
 </div>
 
 <script>
-const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranja:"#d4721a"};
+const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranjo:"#d4721a"};
+function fmtPrecio(p){
+  if(!p) return p;
+  // Remove $ and dots, parse number, reformat
+  const n = parseFloat(p.replace(/[$\.]/g,'').replace(',','.'));
+  if(isNaN(n)) return p;
+  return '$' + n.toLocaleString('es-AR');
+}
 const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos":"🧀","jamón crudo":"🍖","tabla":"🪵","fiambres":"🥓","salmón":"🐟","mortadela":"🥩","aceitunas":"🫒","panera":"🍞","salame":"🥩"};
 
 let wines=[], selectedId=null;
@@ -409,7 +421,7 @@ function renderWineList(){
     <div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
       <div style="flex-shrink:0;margin-top:2px">${copaSVG(TYPE_COLOR[w.tipo]||'#888',28,idx+1)}</div>
       <div class="wc-info"><div class="wc-name">${w.nombre}</div><div class="wc-sub">${w.bodega} · ${w.tipo}</div></div>
-      <div class="wc-price">${w.precio}</div>
+      <div class="wc-price">${fmtPrecio(w.precio)}</div>
     </div>`).join('');
 }
 function selectWine(id){
@@ -441,14 +453,14 @@ function renderFicha(w){
           <div class="ficha-name">${w.nombre}</div>
           <div class="ficha-winery">${w.bodega}</div>
         </div>
-        <div class="ficha-tipo-badge" style="background:${color}">${w.precio}</div>
+        <div class="ficha-tipo-badge" style="background:${color}">${fmtPrecio(w.precio)}</div>
       </div>
       <div class="ficha-note">${w.nota}</div>
       <div class="ficha-grid">
         ${[['Varietal',w.varietal],['Región',w.region],['Altitud',w.altitud],['Suelo',w.suelo],['Crianza',w.crianza],['Temperatura',w.temperatura]].map(([l,v])=>`
           <div class="ficha-item"><div class="fi-label">${l}</div><div class="fi-val">${v}</div></div>`).join('')}
       </div>
-      ${w.perfil?`<div class="perfil-section"><div class="perfil-title">Perfil de sabor</div>${perfilRows}</div>`:''}
+      ${w.perfil?`<div class="perfil-section"><div class="perfil-title">Perfil del vino <span style="font-size:10px;color:var(--muted);font-weight:400">según la bodega</span></div>${perfilRows}</div>`:''}
       ${w.maridaje&&w.maridaje.length?`<div class="maridaje-section"><div class="maridaje-title">Va bien con</div><div class="maridaje-pills">${maridajePills}</div></div>`:''}
       ${w.bodega_info?`<div class="bodega-section"><div class="bodega-label">Sobre la bodega y el terruño</div><div class="bodega-text">${w.bodega_info}</div></div>`:''}
       ${w.tienda_url?`
@@ -477,7 +489,7 @@ const PREGUNTAS=[
     opciones:[
       {val:'tinto',icon:'🍷',label:'Tinto',sub:'Con cuerpo y carácter'},
       {val:'blanco',icon:'🥂',label:'Blanco o Rosado',sub:'Fresco y liviano'},
-      {val:'naranja',icon:'🫙',label:'Sorprendeme',sub:'Naranja, Pet Nat, lo que sea'}
+      {val:'naranja',icon:'🫙',label:'Sorprendeme',sub:'Naranjo, Pet Nat, lo que sea'}
     ]
   },
   {
@@ -499,6 +511,16 @@ const PREGUNTAS=[
       {val:'solo',icon:'🍷',label:'Solo, por ahora',sub:'A pelo, sin comida'},
       {val:'carnes',icon:'🥩',label:'Algo más contundente',sub:'Carnes o quesos duros'}
     ]
+  },
+  {
+    id:'precio',
+    pregunta:'¿Cuánto querés invertir?',
+    sub:'Sin juicios, todos los vinos son buenos.',
+    opciones:[
+      {val:'bajo',icon:'😊',label:'Lo más accesible',sub:'Quiero algo rico sin gastar mucho'},
+      {val:'medio',icon:'👌',label:'Precio medio',sub:'Un punto equilibrado'},
+      {val:'alto',icon:'✨',label:'Lo mejor de la carta',sub:'Esta noche me doy un gusto'}
+    ]
   }
 ];
 
@@ -513,7 +535,7 @@ function renderSommIntro(){
     <div class="somm-intro">
       <div style="font-size:28px;margin-bottom:8px">🍾</div>
       <h3>Modo Sommelier</h3>
-      <p>Tres preguntas rápidas y te recomendamos los vinos que mejor te calzan esta noche.</p>
+      <p>3 preguntas rápidas · sin tecnicismos · te recomendamos los vinos que mejor te calzan esta noche.</p>
       <button class="somm-start-btn" onclick="startSommelier()">Ayudame a elegir</button>
     </div>`;
 }
@@ -559,7 +581,7 @@ function renderSommResults(){
     // color match
     if(color==='tinto'&&w.tipo==='Tinto'){score+=3;reasons.push('es tinto');}
     if(color==='blanco'&&(w.tipo==='Blanco'||w.tipo==='Rosado')){score+=3;reasons.push('es fresco y liviano');}
-    if(color==='naranja'&&(w.tipo==='Naranja'||w.varietal.includes('ancestral')||w.varietal.includes('espumoso'))){score+=4;reasons.push('es una elección diferente');}
+    if(color==='naranja'&&(w.tipo==='Naranjo'||w.varietal.includes('ancestral')||w.varietal.includes('espumoso'))){score+=4;reasons.push('es una elección diferente');}
     if(color==='cualquiera'){score+=1;}
 
     // estilo match
@@ -574,8 +596,12 @@ function renderSommResults(){
     if(comida==='carnes'&&w.maridaje&&w.maridaje.includes('carnes rojas')){score+=2;reasons.push('ideal para carnes');}
     if(comida==='solo'){score+=1;}
 
-    // destacado bonus
-    if(w.destacado) score+=1;
+    // precio match
+    const precioNum = parseFloat((w.precio||'0').replace(/[$\\.]/g,'').replace(',','.'));
+    if(sommAnswers.precio==='bajo'&&precioNum<=8000){score+=3;reasons.push('entra en tu presupuesto');}
+    if(sommAnswers.precio==='medio'&&precioNum>=8000&&precioNum<=10000){score+=3;reasons.push('precio justo');}
+    if(sommAnswers.precio==='alto'&&precioNum>=12000){score+=3;reasons.push('lo mejor de la carta');}
+    if(sommAnswers.precio==='bajo'&&precioNum>=12000){score-=2;} // penalizar caro cuando quiere barato
 
     return {...w, score, reasons};
   }).sort((a,b)=>b.score-a.score).slice(0,3);
@@ -596,7 +622,7 @@ function renderSommResults(){
               <div class="src-why">${rankLabel[i]} · ${w.reasons.slice(0,2).join(', ')}</div>
             </div>
           </div>
-          <div class="src-price">${w.precio} · ${w.copa}</div>
+          <div class="src-price">${fmtPrecio(w.precio)} · ${w.copa||'125 cc'}</div>
           <div class="src-maridaje">
             ${(w.maridaje||[]).slice(0,3).map(m=>`<div class="src-pill">${MARIDAJE_ICON[m]||''} ${m}</div>`).join('')}
           </div>
