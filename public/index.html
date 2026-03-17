@@ -6,7 +6,14 @@
   <meta name="theme-color" content="#1c1917"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta property="og:title" content="125cc Wine Bar · Carta de Vinos"/>
+  <meta property="og:description" content="Elegí tu vino por estilo, intensidad y perfil. Carta visual interactiva."/>
+  <meta property="og:url" content="https://www.125cc.com.ar"/>
+  <meta property="og:type" content="website"/>
+  <meta name="theme-color" content="#1c1917"/>
   <title>Wine Bar · Carta de Vinos</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231c1917'/><path d='M11 4 C11 4 8.5 10 8.5 13.5 C8.5 17.5 11.5 20 15.5 20.5 L15.5 26 L12.5 26 L12 28.5 L20 28.5 L19.5 26 L16.5 26 L16.5 20.5 C20.5 20 23.5 17.5 23.5 13.5 C23.5 10 21 4 21 4 Z' fill='%23c8463a'/></svg>"/>
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231c1917'/><path d='M11 4 C11 4 8.5 10 8.5 13.5 C8.5 17.5 11.5 20 15.5 20.5 L15.5 26 L12.5 26 L12 28.5 L20 28.5 L19.5 26 L16.5 26 L16.5 20.5 C20.5 20 23.5 17.5 23.5 13.5 C23.5 10 21 4 21 4 Z' fill='%23c8463a'/></svg>"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
@@ -345,31 +352,48 @@ const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos
 
 let wines=[], selectedId=null;
 
-// Carga la config del bar desde vinos.json y los vinos desde la API (Google Sheets)
-Promise.all([
-  fetch('./vinos.json').then(r=>r.json()),
-  fetch('/api/obtener-vinos').then(r=>r.json()).catch(()=>null)
-]).then(([config, apiData])=>{
-    // Si la API devuelve vinos, usarlos; si no, caer al vinos.json como respaldo
-    wines = (apiData && apiData.vinos && apiData.vinos.length > 0)
-      ? apiData.vinos
-      : config.vinos;
+// ── Caché del cliente (5 minutos) ──────────────────────────────
+const CACHE_KEY='125cc_wines_v1';
+const CACHE_TTL=5*60*1000;
+function getCachedWines(){
+  try{const raw=localStorage.getItem(CACHE_KEY);if(!raw)return null;const{data,ts}=JSON.parse(raw);if(Date.now()-ts>CACHE_TTL)return null;return data;}catch(e){return null;}
+}
+function setCachedWines(data){
+  try{localStorage.setItem(CACHE_KEY,JSON.stringify({data,ts:Date.now()}));}catch(e){}
+}
 
-    // Header del bar (siempre desde vinos.json)
-    document.getElementById('bar-eyebrow').textContent=config.bar.nombre;
-    document.getElementById('titulo').innerHTML=config.bar.subtitulo
-      ?`${config.bar.subtitulo.replace('cc','<span>cc</span>')}`
-      :config.bar.nombre;
-    document.getElementById('descripcion').textContent=config.bar.descripcion;
-    document.getElementById('mapWatermark').textContent=`${config.bar.nombre} · ${config.bar.subtitulo||''}`;
-    const parts=[config.bar.instagram,config.bar.direccion].filter(Boolean);
-    document.getElementById('footerInfo').innerHTML=parts.map(p=>`<strong>${p}</strong>`).join(' &nbsp;·&nbsp; ');
+function initApp(config, apiWines){
+  if(apiWines && apiWines.length>0){ wines=apiWines; setCachedWines(apiWines); }
+  document.getElementById('bar-eyebrow').textContent=config.bar.nombre;
+  document.getElementById('titulo').innerHTML=config.bar.subtitulo
+    ?`${config.bar.subtitulo.replace('cc','<span>cc</span>')}`
+    :config.bar.nombre;
+  document.getElementById('descripcion').textContent=config.bar.descripcion;
+  document.getElementById('mapWatermark').textContent=`${config.bar.nombre} · ${config.bar.subtitulo||''}`;
+  const parts=[config.bar.instagram,config.bar.direccion].filter(Boolean);
+  document.getElementById('footerInfo').innerHTML=parts.map(p=>`<strong>${p}</strong>`).join(' &nbsp;·&nbsp; ');
+  buildMap(); renderWineList(); renderCharc(config.charcuteria); initSommelier();
+  setTimeout(()=>{document.getElementById('loading').classList.add('hidden');document.getElementById('app').style.display='flex';},200);
+}
 
-    buildMap(); renderWineList(); renderCharc(config.charcuteria); initSommelier();
-    setTimeout(()=>{
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('app').style.display='flex';
-    },300);
+fetch('./vinos.json').then(r=>r.json()).then(config=>{
+    const cached=getCachedWines();
+    if(cached && cached.length>0){
+      // Mostrar inmediato desde caché
+      wines=cached;
+      initApp(config, null);
+      // Actualizar en background
+      fetch('/api/obtener-vinos').then(r=>r.json()).then(d=>{
+        if(d && d.vinos && d.vinos.length>0){setCachedWines(d.vinos);wines=d.vinos;buildMap();renderWineList();}
+      }).catch(()=>{});
+    } else {
+      // Primera visita — esperar la API
+      fetch('/api/obtener-vinos').then(r=>r.json()).catch(()=>null).then(d=>{
+        const apiWines=(d && d.vinos && d.vinos.length>0)?d.vinos:config.vinos;
+        wines=apiWines;
+        initApp(config, apiWines);
+      });
+    }
   })
   .catch(()=>{
     document.getElementById('loading').innerHTML='<p style="color:#f87171;font-size:14px;padding:20px;text-align:center">Error cargando el menú.<br>Verificá tu conexión.</p>';
