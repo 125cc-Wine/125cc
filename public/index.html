@@ -37,7 +37,8 @@
     .map-axis-v{position:absolute;left:50%;top:10%;bottom:8%;width:.5px;background:rgba(100,80,60,.28);pointer-events:none}
     .map-label{position:absolute;font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:#78716c;pointer-events:none;font-family:'DM Sans',sans-serif}
     .map-watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:rgba(120,100,80,.09);font-weight:600;pointer-events:none}
-    .wine-pin{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:2}
+    .wine-pin{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:2;opacity:0;animation:pinPop .35s ease forwards}
+    @keyframes pinPop{0%{opacity:0;transform:translate(-50%,-50%) scale(0.2)}65%{transform:translate(-50%,-50%) scale(1.15)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
     .wine-pin:active{z-index:10}
     .copa-icon{display:block;transition:transform .12s}
     .wine-pin:active .copa-icon{transform:scale(1.2)}
@@ -55,12 +56,14 @@
     .tab-bar::-webkit-scrollbar{display:none}
     .tab-btn{flex:1;min-width:60px;padding:13px 6px;text-align:center;font-size:12px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;white-space:nowrap}
     .tab-btn.active{color:var(--text);border-bottom-color:var(--text)}
-    .tab-content{display:none;padding:16px;padding-bottom:40px}
+    .tab-content{display:none;padding:16px;padding-bottom:40px;animation:fadeIn .2s ease}
     .tab-content.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
     .section-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;margin-top:2px}
 
     /* Wine list */
-    .wine-card{background:var(--card);border:.5px solid var(--border);border-radius:14px;padding:12px 13px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:border-color .15s,background .15s;position:relative}
+    .wine-card{background:var(--card);border:.5px solid var(--border);border-radius:14px;padding:12px 13px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s;position:relative}
+    .wine-card:active{transform:scale(0.98)}
     .wine-card.active{border-color:var(--text);background:#f5f0ea}
     .wc-badge{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0;margin-top:2px}
     .wc-info{flex:1;min-width:0}
@@ -359,16 +362,30 @@ Promise.all([
 
 /* ── MAP ── */
 function buildMap(){
+  const canvas=document.getElementById('mapCanvas');
+  if(!document.getElementById('map-q1')){
+    [{id:'map-q1',s:'top:0;left:0;width:50%;height:50%;background:rgba(139,0,0,.05)'},
+     {id:'map-q2',s:'top:0;right:0;width:50%;height:50%;background:rgba(180,83,9,.05)'},
+     {id:'map-q3',s:'bottom:0;left:0;width:50%;height:50%;background:rgba(122,184,58,.05)'},
+     {id:'map-q4',s:'bottom:0;right:0;width:50%;height:50%;background:rgba(212,114,26,.04)'},
+    ].forEach(q=>{
+      const d=document.createElement('div');
+      d.id=q.id;
+      d.style.cssText='position:absolute;pointer-events:none;'+q.s;
+      canvas.insertBefore(d,canvas.firstChild);
+    });
+  }
   const c=document.getElementById('mapDots');
   c.innerHTML='';
   wines.forEach((w,idx)=>{
     const left=50+w.x*0.4, top=50-w.y*0.36;
     const color=TYPE_COLOR[w.tipo]||'#888';
-    const isSel=w.id===selectedId, size=isSel?24:18;
+    const isSel=w.id===selectedId, size=isSel?38:28;
     const num=idx+1;
     const pin=document.createElement('div');
     pin.className='wine-pin';
-    pin.style.cssText=`left:${left}%;top:${top}%;z-index:${isSel?20:2}`;
+    pin.style.cssText=`left:${left}%;top:${top}%;z-index:${isSel?20:2};animation-delay:${idx*55}ms`;
+    if(isSel) pin.style.transform='translate(-50%,-50%) scale(1.15)';
     pin.innerHTML=`${copaSVG(color,size,num)}<div class="pin-tooltip${isSel?' show':''}" id="tip-${w.id}"><div class="pt-name">${num}. ${w.nombre}</div><div class="pt-price">${w.precio} · ${w.tipo}</div></div>`;
     pin.addEventListener('click',e=>{
       e.stopPropagation();
@@ -381,17 +398,16 @@ function buildMap(){
 }
 document.addEventListener('click',()=>{ if(selectedId!==null){selectedId=null;buildMap();renderWineList();} });
 function copaSVG(color,size,num){
-  const fontSize = size > 18 ? 7 : 6;
-  const numEl = num!=null ? `<text x="10" y="13" text-anchor="middle" font-size="${fontSize}" font-weight="600" fill="#fff" font-family="sans-serif">${num}</text>` : '';
-  return `<svg class="copa-icon" width="${size}" height="${size}" viewBox="0 0 20 24" fill="none"><path d="M4 2 C4 2 2 8 2 11 C2 15 5.5 17.5 9 18 L9 21 L6 21 L6 23 L14 23 L14 21 L11 21 L11 18 C14.5 17.5 18 15 18 11 C18 8 16 2 16 2 Z" fill="${color}" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>${numEl}</svg>`;
+  const w=size, h=Math.round(size*1.4);
+  const numEl = num!=null ? `<text x="10" y="10.5" text-anchor="middle" font-size="5.5" font-weight="700" fill="rgba(255,255,255,0.95)" font-family="sans-serif">${num}</text>` : '';
+  return `<svg class="copa-icon" width="${w}" height="${h}" viewBox="0 0 20 30" fill="none"><path d="M7 2 C7 2 5.5 6 5.5 8.5 C5.5 11.5 7.2 13.5 9.5 14.2 L9.5 22 L7.5 22 L7 24 L13 24 L12.5 22 L10.5 22 L10.5 14.2 C12.8 13.5 14.5 11.5 14.5 8.5 C14.5 6 13 2 13 2 Z" fill="${color}" stroke="rgba(255,255,255,0.45)" stroke-width="0.6"/>${numEl}</svg>`;
 }
 
 /* ── WINE LIST ── */
 function renderWineList(){
-  document.getElementById('wineList').innerHTML=wines.map(w=>`
+  document.getElementById('wineList').innerHTML=wines.map((w,idx)=>`
     <div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
-      ${w.destacado?'<div class="wc-star">★ Destacado</div>':''}
-      <div class="wc-badge" style="background:${TYPE_COLOR[w.tipo]||'#888'}">${w.id}</div>
+      <div style="flex-shrink:0;margin-top:2px">${copaSVG(TYPE_COLOR[w.tipo]||'#888',28,idx+1)}</div>
       <div class="wc-info"><div class="wc-name">${w.nombre}</div><div class="wc-sub">${w.bodega} · ${w.tipo}</div></div>
       <div class="wc-price">${w.precio}</div>
     </div>`).join('');
