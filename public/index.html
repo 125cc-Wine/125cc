@@ -330,7 +330,8 @@
 </div>
 
 <script>
-const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranjo:"#d4721a"};
+const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranja:"#d4721a"};
+const TYPE_LABEL={Tinto:"Tinto",Blanco:"Blanco",Rosado:"Rosado",Naranja:"Naranjo"};
 function fmtPrecio(p){
   if(!p) return p;
   // Remove $ and dots, parse number, reformat
@@ -398,7 +399,7 @@ function buildMap(){
     pin.className='wine-pin';
     pin.style.cssText=`left:${left}%;top:${top}%;z-index:${isSel?20:2};animation-delay:${idx*55}ms`;
     if(isSel) pin.style.transform='translate(-50%,-50%) scale(1.15)';
-    pin.innerHTML=`${copaSVG(color,size,num)}<div class="pin-tooltip${isSel?' show':''}" id="tip-${w.id}"><div class="pt-name">${num}. ${w.nombre}</div><div class="pt-price">${w.precio} · ${w.tipo}</div></div>`;
+    pin.innerHTML=`${copaSVG(color,size,num)}<div class="pin-tooltip${isSel?' show':''}" id="tip-${w.id}"><div class="pt-name">${num}. ${w.nombre}</div><div class="pt-price">${fmtPrecio(w.precio)} · ${TYPE_LABEL[w.tipo]||w.tipo}</div></div>`;
     pin.addEventListener('click',e=>{
       e.stopPropagation();
       selectedId=(selectedId===w.id)?null:w.id;
@@ -420,7 +421,7 @@ function renderWineList(){
   document.getElementById('wineList').innerHTML=wines.map((w,idx)=>`
     <div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
       <div style="flex-shrink:0;margin-top:2px">${copaSVG(TYPE_COLOR[w.tipo]||'#888',28,idx+1)}</div>
-      <div class="wc-info"><div class="wc-name">${w.nombre}</div><div class="wc-sub">${w.bodega} · ${w.tipo}</div></div>
+      <div class="wc-info"><div class="wc-name">${w.nombre}</div><div class="wc-sub">${w.bodega} · ${TYPE_LABEL[w.tipo]||w.tipo}</div></div>
       <div class="wc-price">${fmtPrecio(w.precio)}</div>
     </div>`).join('');
 }
@@ -548,8 +549,10 @@ function startSommelier(){
 function renderSommStep(step){
   const p=PREGUNTAS[step];
   const progressDots=PREGUNTAS.map((_,i)=>`<div class="somm-dot${i<step?' done':i===step?' active':''}"></div>`).join('');
+  const backBtn=step>0?`<button onclick="goBackSomm()" style="background:transparent;border:none;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;margin-bottom:14px">← Volver</button>`:'';
   document.getElementById('sommContent').innerHTML=`
     <div class="somm-progress">${progressDots}</div>
+    ${backBtn}
     <div class="somm-step active">
       <div class="somm-question">${p.pregunta}</div>
       <div class="somm-sub">${p.sub}</div>
@@ -564,6 +567,14 @@ function renderSommStep(step){
           </div>`).join('')}
       </div>
     </div>`;
+}
+
+function goBackSomm(){
+  if(sommStep>0){
+    sommStep--;
+    delete sommAnswers[PREGUNTAS[sommStep].id];
+    renderSommStep(sommStep);
+  }
 }
 
 function answerSomm(qid, val){
@@ -581,7 +592,7 @@ function renderSommResults(){
     // color match
     if(color==='tinto'&&w.tipo==='Tinto'){score+=3;reasons.push('es tinto');}
     if(color==='blanco'&&(w.tipo==='Blanco'||w.tipo==='Rosado')){score+=3;reasons.push('es fresco y liviano');}
-    if(color==='naranja'&&(w.tipo==='Naranjo'||w.varietal.includes('ancestral')||w.varietal.includes('espumoso'))){score+=4;reasons.push('es una elección diferente');}
+    if(color==='naranja'&&(w.tipo==='Naranja'||w.varietal.includes('ancestral')||w.varietal.includes('espumoso'))){score+=4;reasons.push('es una elección diferente');}
     if(color==='cualquiera'){score+=1;}
 
     // estilo match
