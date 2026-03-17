@@ -673,13 +673,14 @@ function mostrarPopupWA(){
       <div style="font-size:28px;text-align:center;margin-bottom:10px">📱</div>
       <h3 style="text-align:center">¿Querés recibir tu puntuación por WhatsApp?</h3>
       <p style="text-align:center">Te enviamos un resumen de tu degustación al instante. Es opcional.</p>
-      <div style="position:relative">
-        <div style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--muted);pointer-events:none;user-select:none">🇦🇷</div>
-        <input class="wa-phone-input" id="wa-phone" type="tel"
-          placeholder="261 000 0000"
-          value="+549"
-          style="padding-left:44px"
-          oninput="if(!this.value.startsWith('+549')){this.value='+549'+this.value.replace(/[^0-9]/g,'').replace(/^549/,'').replace(/^54/,'').replace(/^5/,'').replace(/^\+/,'')}">
+      <div style="position:relative;display:flex;align-items:center;background:var(--bg);border:.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px">
+        <div style="padding:0 10px 0 13px;font-size:13px;color:var(--muted);white-space:nowrap;border-right:.5px solid var(--border);height:48px;display:flex;align-items:center;gap:6px;flex-shrink:0">
+          🇦🇷 <span style="font-family:monospace;color:var(--text)">+54</span>
+        </div>
+        <input id="wa-phone" type="tel" inputmode="numeric"
+          placeholder="2234247723"
+          style="flex:1;border:none;background:transparent;padding:12px 13px;font-size:15px;color:var(--text);outline:none;font-family:'DM Sans',sans-serif;width:100%"
+          oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
       </div>
       <p style="font-size:11px;color:var(--muted);margin-bottom:14px;text-align:center">Solo usamos tu número para enviarte este mensaje.</p>
       <button class="wa-send-btn" onclick="enviarConWA()">
@@ -700,19 +701,16 @@ function cerrarPopupWA(){
 }
 
 function normalizarTelefono(raw){
-  // Quitar todo excepto dígitos
   const digits = raw.replace(/\D/g,'');
-  // Ya tiene código completo
-  if(digits.startsWith('549')) return digits;
-  if(digits.startsWith('54')) return '549' + digits.slice(2);
-  if(digits.startsWith('0')) return '549' + digits.slice(1);
-  if(digits.startsWith('9')) return '54' + digits;
-  return '549' + digits;
+  if(digits.startsWith('54')) return digits;
+  if(digits.startsWith('0')) return '54' + digits.slice(1);
+  return '54' + digits;
 }
 
 async function enviarConWA(){
-  const phone = document.getElementById('wa-phone')?.value?.trim() || '';
-  if(!phone){ alert('Ingresá tu número para recibir el WhatsApp.'); return; }
+  const localNum = document.getElementById('wa-phone')?.value?.trim() || '';
+  if(!localNum || localNum.length < 8){ alert('Ingresá tu número para recibir el WhatsApp.'); return; }
+  const phone = '549' + localNum.replace(/\D/g,'');
   cerrarPopupWA();
   await enviarPuntuacion(phone);
 }
