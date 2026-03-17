@@ -52,6 +52,8 @@
     .pin-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#fff;border-radius:10px;padding:7px 11px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:50;border:.5px solid var(--border);box-shadow:0 4px 14px rgba(0,0,0,.12)}
     .pin-tooltip.show{opacity:1}
     .pin-tooltip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#fff}
+    .pin-tooltip.below{bottom:auto;top:calc(100% + 8px)}
+    .pin-tooltip.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:#fff}
     .pt-name{font-size:12px;font-weight:500;color:var(--text);line-height:1.2}
     .pt-price{font-size:11px;color:var(--muted);margin-top:2px}
     .legend-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
@@ -294,7 +296,7 @@
     <button class="tab-btn active" onclick="showTab('carta',this)">Carta</button>
     <button class="tab-btn" onclick="showTab('ficha',this)">Ficha</button>
     <button class="tab-btn" onclick="showTab('sommelier',this)">Sommelier</button>
-    <button class="tab-btn" onclick="showTab('charc',this)">Menú</button>
+    <button class="tab-btn" onclick="showTab('charc',this)">Tapeos</button>
     <button class="tab-btn" onclick="showTab('puntuar',this)">Calificá</button>
   </div>
 
@@ -321,7 +323,7 @@
 
   <!-- MENÚ -->
   <div class="tab-content" id="tab-charc">
-    <div class="section-title">Menú</div>
+    <div class="section-title">Tapeos</div>
     <div id="charcList"></div>
   </div>
 
@@ -425,7 +427,8 @@ function buildMap(){
     pin.className='wine-pin';
     pin.style.cssText=`left:${left}%;top:${top}%;z-index:${isSel?20:2};animation-delay:${idx*55}ms`;
     if(isSel) pin.style.transform='translate(-50%,-50%) scale(1.15)';
-    pin.innerHTML=`${copaSVG(color,size,num)}<div class="pin-tooltip${isSel?' show':''}" id="tip-${w.id}"><div class="pt-name">${num}. ${w.nombre}</div><div class="pt-price">${fmtPrecio(w.precio)} · ${TYPE_LABEL[w.tipo]||w.tipo}</div></div>`;
+    const belowClass = top < 50 ? ' below' : '';
+    pin.innerHTML=`${copaSVG(color,size,num)}<div class="pin-tooltip${isSel?' show':''}${belowClass}" id="tip-${w.id}"><div class="pt-name">${num}. ${w.nombre}</div><div class="pt-price">${fmtPrecio(w.precio)} · ${TYPE_LABEL[w.tipo]||w.tipo}</div></div>`;
     pin.addEventListener('click',e=>{
       e.stopPropagation();
       selectedId=(selectedId===w.id)?null:w.id;
@@ -561,8 +564,9 @@ function renderSommIntro(){
   document.getElementById('sommContent').innerHTML=`
     <div class="somm-intro">
       <div style="font-size:28px;margin-bottom:8px">🍾</div>
-      <h3>Modo Sommelier</h3>
-      <p>3 preguntas rápidas · sin tecnicismos · te recomendamos los vinos que mejor te calzan esta noche.</p>
+      <h3>¿No sabés por dónde empezar?</h3>
+      <p style="margin-bottom:10px">4 preguntas rápidas y te orientamos hacia los vinos que mejor te van esta noche.</p>
+      <p style="font-size:12px;color:var(--dark-muted);margin-bottom:14px">Nuestro sommelier está en el salón — después podés consultarle cualquier duda.</p>
       <button class="somm-start-btn" onclick="startSommelier()">Ayudame a elegir</button>
     </div>`;
 }
@@ -664,6 +668,10 @@ function renderSommResults(){
             ${(w.maridaje||[]).slice(0,3).map(m=>`<div class="src-pill">${MARIDAJE_ICON[m]||''} ${m}</div>`).join('')}
           </div>
         </div>`).join('')}
+      <div style="background:var(--dark);border-radius:12px;padding:14px;margin-top:4px;margin-bottom:8px;text-align:center">
+        <div style="font-size:11px;color:var(--dark-muted);margin-bottom:4px;letter-spacing:.08em;text-transform:uppercase">Sommelier en el salón</div>
+        <div style="font-size:13px;color:var(--dark-sub);line-height:1.5">Contale tus preferencias y te guía al vino perfecto para esta noche.</div>
+      </div>
       <button class="somm-restart" onclick="startSommelier()">Volver a empezar</button>
     </div>`;
 }
