@@ -16,7 +16,7 @@
       --bg:#f5f0ea;--card:#fffdf9;--border:#e8e0d4;--text:#1a1510;--muted:#7a6e62;
       --dark:#1c1917;--dark2:#292524;--dark3:#3c3835;--dark-muted:#78716c;
       --dark-text:#f5f5f4;--dark-sub:#a8a29e;--accent:#c8463a;
-      --tinto:#8B0000;--blanco:#7ab83a;--rosado:#d94060;--naranja:#c46a10;
+      --tinto:#8B0000;--blanco:#c8920a;--rosado:#d94060;--naranja:#c46a10;
     }
     html,body{height:100%}
     body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text);overscroll-behavior:none}
@@ -187,6 +187,29 @@
     .form-success button{margin-top:14px;background:transparent;border:.5px solid #c8e6c9;border-radius:10px;padding:10px 20px;font-size:13px;color:#2e7d32;cursor:pointer;font-family:'DM Sans',sans-serif}
     .rating-label{font-size:11px;color:var(--muted);text-align:center;margin-top:5px;min-height:16px}
 
+    /* ── POPUP WHATSAPP ── */
+    .wa-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;display:flex;align-items:flex-end;justify-content:center;padding:0 0 24px}
+    .wa-popup{background:var(--card);border-radius:20px;padding:24px 20px;width:100%;max-width:390px;margin:0 16px}
+    .wa-popup-icon{font-size:36px;text-align:center;margin-bottom:10px}
+    .wa-popup h3{font-family:'Playfair Display',serif;font-size:20px;color:var(--text);text-align:center;margin-bottom:6px}
+    .wa-popup p{font-size:13px;color:var(--muted);text-align:center;line-height:1.5;margin-bottom:18px}
+    .wa-phone-input{width:100%;background:var(--bg);border:.5px solid var(--border);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;margin-bottom:10px;letter-spacing:.02em}
+    .wa-phone-input:focus{border-color:#25D366}
+    .wa-send-btn{width:100%;background:#25D366;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px}
+    .wa-skip-btn{width:100%;background:transparent;border:.5px solid var(--border);border-radius:12px;padding:12px;font-size:13px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif}
+
+    /* ── POPUP WHATSAPP ── */
+    .wa-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;display:flex;align-items:flex-end;justify-content:center}
+    .wa-sheet{background:var(--card);border-radius:24px 24px 0 0;padding:28px 22px 40px;width:100%;max-width:430px;animation:slideUp .3s ease}
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .wa-sheet h3{font-family:'Playfair Display',serif;font-size:20px;color:var(--text);margin-bottom:6px}
+    .wa-sheet p{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:18px}
+    .wa-phone-input{width:100%;background:var(--bg);border:.5px solid var(--border);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;margin-bottom:10px;letter-spacing:.02em}
+    .wa-phone-input:focus{border-color:var(--text)}
+    .wa-send-btn{width:100%;background:#25D366;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;transition:opacity .15s}
+    .wa-send-btn:active{opacity:.85}
+    .wa-skip-btn{width:100%;background:transparent;border:.5px solid var(--border);border-radius:12px;padding:12px;font-size:13px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif}
+
     /* Footer */
     .footer{background:var(--dark);padding:20px;text-align:center}
     .footer p{font-size:11px;color:var(--dark-muted);line-height:1.8}
@@ -283,7 +306,7 @@
 </div>
 
 <script>
-const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranja:"#c46a10"};
+const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#c8920a",Rosado:"#d94060",Naranja:"#c46a10"};
 const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos":"🧀","jamón crudo":"🍖","tabla":"🪵","fiambres":"🥓","salmón":"🐟","mortadela":"🥩","aceitunas":"🫒","panera":"🍞","salame":"🥩"};
 
 let wines=[], selectedId=null;
@@ -414,7 +437,7 @@ function renderCharc(items){
 const PREGUNTAS=[
   {
     id:'color',
-    pregunta:'¿Qué Vino te llama hoy?',
+    pregunta:'¿Qué color te llama hoy?',
     sub:'Sin presiones, lo que más se te antoja.',
     opciones:[
       {val:'tinto',icon:'🍷',label:'Tinto',sub:'Con cuerpo y carácter'},
@@ -621,7 +644,7 @@ function renderFormPuntuar(){
           oninput="formState.opinion=this.value">${formState.opinion}</textarea>
       </div>
 
-      <button class="submit-btn" id="submit-btn" onclick="enviarPuntuacion()" ${formState.puntuacion===0?'disabled':''}>
+      <button class="submit-btn" id="submit-btn" onclick="mostrarPopupWA()" ${formState.puntuacion===0?'disabled':''}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
         Enviar puntuación
       </button>
@@ -634,14 +657,70 @@ function setStars(n){
   renderFormPuntuar();
 }
 
-async function enviarPuntuacion(){
+/* ── POPUP WHATSAPP ── */
+function mostrarPopupWA(){
   if(formState.puntuacion===0) return;
-  const btn=document.getElementById('submit-btn');
-  btn.disabled=true;
-  btn.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="animation:spin .8s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Enviando…`;
+  const w = wines.find(x=>x.id===formState.vinoId)||wines[0];
+  const stars = '⭐'.repeat(formState.puntuacion) + '☆'.repeat(5-formState.puntuacion);
 
-  const w=wines.find(x=>x.id===formState.vinoId)||wines[0];
-  const payload={
+  // Crear overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'wa-overlay';
+  overlay.id = 'wa-overlay';
+  overlay.innerHTML=`
+    <div class="wa-sheet">
+      <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px"></div>
+      <div style="font-size:28px;text-align:center;margin-bottom:10px">📱</div>
+      <h3 style="text-align:center">¿Querés recibir tu puntuación por WhatsApp?</h3>
+      <p style="text-align:center">Te enviamos un resumen de tu degustación al instante. Es opcional.</p>
+      <input class="wa-phone-input" id="wa-phone" type="tel"
+        placeholder="+54 9 261 000 0000"
+        value=""
+        oninput="this.value=this.value.replace(/[^0-9+]/g,'')">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:14px;text-align:center">Solo usamos tu número para enviarte este mensaje.</p>
+      <button class="wa-send-btn" onclick="enviarConWA()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        Sí, enviame el resumen
+      </button>
+      <button class="wa-skip-btn" onclick="enviarSinWA()">No gracias, solo enviar la puntuación</button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  // Focus en el input
+  setTimeout(()=>{ const inp=document.getElementById('wa-phone'); if(inp) inp.focus(); }, 350);
+}
+
+function cerrarPopupWA(){
+  const el = document.getElementById('wa-overlay');
+  if(el) el.remove();
+}
+
+function normalizarTelefono(raw){
+  const digits = raw.replace(/\D/g,'');
+  if(digits.startsWith('54')) return digits;
+  if(digits.startsWith('0')) return '54' + digits.slice(1);
+  if(digits.startsWith('9')) return '54' + digits;
+  return '549' + digits;
+}
+
+async function enviarConWA(){
+  const phone = document.getElementById('wa-phone')?.value?.trim() || '';
+  if(!phone){ alert('Ingresá tu número para recibir el WhatsApp.'); return; }
+  cerrarPopupWA();
+  await enviarPuntuacion(phone);
+}
+
+async function enviarSinWA(){
+  cerrarPopupWA();
+  await enviarPuntuacion(null);
+}
+
+async function enviarPuntuacion(phone){
+  const btn = document.getElementById('submit-btn');
+  if(btn){ btn.disabled=true; btn.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="animation:spin .8s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Enviando…`; }
+
+  const w = wines.find(x=>x.id===formState.vinoId)||wines[0];
+  const payload = {
     vino:      w.nombre,
     bodega:    w.bodega,
     tipo:      w.tipo,
@@ -651,30 +730,56 @@ async function enviarPuntuacion(){
     cuerpo:    formState.cuerpo,
     gusto:     formState.gusto,
     opinion:   formState.opinion,
+    phone:     phone ? normalizarTelefono(phone) : null,
+    copa:      w.copa || '125 cc',
+    varietal:  w.varietal || '',
   };
 
   try{
+    // 1 — guardar en Sheets
     const res = await fetch('/api/guardar-puntuacion',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify(payload),
     });
     const data = await res.json();
     if(!res.ok) throw new Error(data.detail||data.error||'Error desconocido');
 
-    // success
+    // 2 — enviar WhatsApp si hay teléfono
+    if(phone){
+      await fetch('/api/send-whatsapp',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          phone:     normalizarTelefono(phone),
+          wineName:  w.nombre,
+          winery:    w.bodega,
+          varietal:  w.varietal||'',
+          price:     w.precio,
+          glass:     w.copa||'125 cc',
+          rating:    formState.puntuacion,
+          ratingLabel: ratingText(formState.puntuacion),
+          aroma:     formState.aroma,
+          body:      formState.cuerpo,
+          freshness: formState.gusto,
+          wouldOrderAgain: '—',
+          pairing:   '—',
+          opinion:   formState.opinion||'—',
+        }),
+      }).catch(()=>{}); // silencioso si falla WA
+    }
+
+    // 3 — pantalla de éxito
     formState = { puntuacion:0, aroma:3, cuerpo:3, gusto:3, opinion:'', vinoId:formState.vinoId };
     document.getElementById('puntuarContent').innerHTML=`
       <div class="form-success">
         <div class="success-icon">🍷</div>
         <h3>¡Gracias por tu puntuación!</h3>
-        <p>Tu opinión sobre <strong>${w.nombre}</strong> quedó registrada.<br>Nos ayuda a armar una mejor carta cada semana.</p>
+        <p>Tu opinión sobre <strong>${w.nombre}</strong> quedó registrada.${phone?'<br>Te enviamos el resumen por WhatsApp.':''}<br>Nos ayuda a armar una mejor carta cada semana.</p>
         <button onclick="renderFormPuntuar()">Puntuar otro vino</button>
       </div>`;
+
   } catch(err){
-    btn.disabled=false;
-    btn.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Enviar puntuación`;
-    alert('No se pudo enviar. Verificá tu conexión e intentá de nuevo.\n\n'+err.message);
+    if(btn){ btn.disabled=false; btn.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Enviar puntuación`; }
+    alert('No se pudo enviar. Verificá tu conexión.\n\n'+err.message);
   }
 }
 </script>
