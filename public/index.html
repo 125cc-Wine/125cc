@@ -800,8 +800,8 @@ ${formState.opinion?`*Opinión:* ${formState.opinion}\n\n`:''}📍 Wine Bar 125c
 
       <div style="background:var(--bg);border:.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.8;font-family:monospace">
         🍷 <strong style="color:var(--text)">${w.nombre}</strong><br>
-        ${stars} ${formState.puntuacion}/5<br>
-        Aroma ${bar(formState.aroma)} · Cuerpo ${bar(formState.cuerpo)} · Gusto ${bar(formState.gusto)}
+        Puntuación: ${formState.puntuacion}/10 — ${ratingText(formState.puntuacion)}<br>
+        Acidez ${bar(formState.acidez)} · Cuerpo ${bar(formState.cuerpo)} · Gusto ${bar(formState.gusto)}
         ${formState.opinion?`<br><em>"${formState.opinion}"</em>`:''}
       </div>
 
