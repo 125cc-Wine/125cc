@@ -341,14 +341,19 @@
 <script>
 const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranja:"#d4721a"};
 const TYPE_LABEL={Tinto:"Tinto",Blanco:"Blanco",Rosado:"Rosado",Naranja:"Naranjo"};
-function fmtPrecio(p){
-  if(!p) return p;
-  // Handles: $12,000.00 (Sheets) / $12.000 / $12000 / 12000
+function precioBottella(p){
+  // Devuelve el número crudo del precio botella
+  if(!p) return 0;
   const clean = p.toString().replace(/\$/g,'').trim();
-  // If has comma as thousands separator (e.g. 12,000.00)
   const n = parseFloat(clean.replace(/,/g,''));
-  if(isNaN(n)) return p;
-  return '$' + Math.round(n).toLocaleString('es-AR');
+  return isNaN(n) ? 0 : n;
+}
+function fmtPrecio(p){
+  // Precio copa = (botella ÷ 6) × 1,25 → redondeado al 500 más cercano
+  const botella = precioBottella(p);
+  if(!botella) return p;
+  const copa = Math.round(((botella / 6) * 1.25) / 500) * 500;
+  return '$' + copa.toLocaleString('es-AR');
 }
 const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos":"🧀","jamón crudo":"🍖","tabla":"🪵","fiambres":"🥓","salmón":"🐟","mortadela":"🥩","aceitunas":"🫒","panera":"🍞","salame":"🥩"};
 
