@@ -480,17 +480,13 @@ function renderFicha(w){
       <div class="perfil-val">${v}/5</div>
     </div>`).join(''):'';
 
-  // Bottle image: show from data or fallback to SVG icon
-  const bottleSVG=`<svg viewBox="0 0 40 100" xmlns="http://www.w3.org/2000/svg" width="36" height="90" opacity=".55">
-    <rect x="14" y="2" width="12" height="10" rx="2" fill="currentColor"/>
-    <path d="M12 12 C8 20 6 30 6 45 L6 88 C6 92 10 96 14 96 L26 96 C30 96 34 92 34 88 L34 45 C34 30 32 20 28 12 Z" fill="currentColor"/>
-    <rect x="10" y="50" width="20" height="18" rx="2" fill="white" opacity=".15"/>
-  </svg>`;
-  const bottleImg = w.imagen
-    ? `<img src="${w.imagen}" alt="${w.nombre}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
-        style="width:44px;height:110px;object-fit:contain;border-radius:6px;flex-shrink:0">
-       <div style="display:none;width:44px;height:110px;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0">${bottleSVG}</div>`
-    : `<div style="display:flex;width:44px;height:110px;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0">${bottleSVG}</div>`;
+  // Bottle image — large, centered, before buy button
+  const bottleSection = w.imagen ? `
+    <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0 8px;border-top:.5px solid var(--border);margin-top:4px">
+      <img src="${w.imagen}" alt="${w.nombre}"
+        onerror="this.parentElement.style.display='none'"
+        style="max-width:140px;max-height:320px;width:auto;height:auto;object-fit:contain;border-radius:8px;filter:drop-shadow(0 4px 16px rgba(0,0,0,.35))">
+    </div>` : '';
 
   document.getElementById('fichaContent').innerHTML=`
     <div class="ficha-card">
@@ -500,10 +496,7 @@ function renderFicha(w){
           <div class="ficha-name">${w.nombre}</div>
           <div class="ficha-winery">${w.bodega}</div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
-          <div class="ficha-tipo-badge" style="background:${color}">${fmtPrecio(w.precio)}</div>
-          ${bottleImg}
-        </div>
+        <div class="ficha-tipo-badge" style="background:${color}">${fmtPrecio(w.precio)}</div>
       </div>
       <div class="ficha-note">${w.nota}</div>
       <div class="ficha-grid">
@@ -513,6 +506,7 @@ function renderFicha(w){
       ${w.perfil?`<div class="perfil-section"><div class="perfil-title">Perfil del vino <span style="font-size:10px;color:var(--muted);font-weight:400">según la bodega</span></div>${perfilRows}</div>`:''}
       ${w.maridaje&&w.maridaje.length?`<div class="maridaje-section"><div class="maridaje-title">Va bien con</div><div class="maridaje-pills">${maridajePills}</div></div>`:''}
       ${w.bodega_info?`<div class="bodega-section"><div class="bodega-label">Sobre la bodega y el terruño</div><div class="bodega-text">${w.bodega_info}</div></div>`:''}
+      ${bottleSection}
       ${w.tienda_url?`
         <a href="${w.tienda_url}" target="_blank" rel="noopener" class="comprar-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
