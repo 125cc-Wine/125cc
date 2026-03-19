@@ -14,7 +14,8 @@
       "precio": "9900",
       "copa": "125 cc",
       "tipo": "Tinto",
-      "x": 28, "y": 62,
+      "x": 28,
+      "y": 62,
       "varietal": "100% Malbec",
       "region": "Valle de Uco, Mendoza",
       "altitud": "850–1.100 msnm",
@@ -22,10 +23,18 @@
       "crianza": "Roble francés 60% · americano 40%",
       "temperatura": "16–18°C",
       "nota": "Malbec de tres terruños distintos — Ugarteche, Tupungato y Los Chacayes. Fruta negra madura, especias dulces y paso equilibrado. Un fiel exponente de la variedad.",
-      "maridaje": ["carnes rojas", "quesos duros", "jamón crudo", "tabla"],
+      "maridaje": [
+        "carnes rojas",
+        "quesos duros",
+        "jamón crudo",
+        "tabla"
+      ],
       "bodega_info": "Reinero trabaja parcelas seleccionadas en distintas zonas del Valle de Uco. La mezcla de terroirs a distintas alturas le da complejidad y equilibrio al vino.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/nazareno-malbec-reinero/",
-      "perfil_cuerpo": 4, "perfil_frescura": 4, "perfil_taninos": 3
+      "perfil_cuerpo": 4,
+      "perfil_frescura": 4,
+      "perfil_taninos": 3,
+      "imagen": "https://www.aromadevid.com.ar/wp-content/uploads/2022/07/NAZARENO-MALBEC-scaled.jpg"
     },
     {
       "id": 2,
@@ -34,7 +43,8 @@
       "precio": "14600",
       "copa": "125 cc",
       "tipo": "Tinto",
-      "x": -38, "y": 22,
+      "x": -38,
+      "y": 22,
       "varietal": "100% Pinot Noir",
       "region": "Vista Flores, Valle de Uco",
       "altitud": "1.050 msnm",
@@ -42,10 +52,18 @@
       "crianza": "Parcial en roble, uso moderado",
       "temperatura": "14–16°C",
       "nota": "Rubí brillante, aromas de cereza y frambuesa con notas florales. Taninos finos y sedosos, acidez fresca. Estilo elegante y preciso con marcada identidad varietal.",
-      "maridaje": ["quesos blandos", "salmón", "tabla", "mortadela"],
+      "maridaje": [
+        "quesos blandos",
+        "salmón",
+        "tabla",
+        "mortadela"
+      ],
       "bodega_info": "Dharma Wines elabora desde Vista Flores, una de las zonas más frescas del Valle de Uco. Foco en expresión varietal y elegancia por sobre la extracción.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/kamala-pinot-noir/",
-      "perfil_cuerpo": 2, "perfil_frescura": 5, "perfil_taninos": 2
+      "perfil_cuerpo": 2,
+      "perfil_frescura": 5,
+      "perfil_taninos": 2,
+      "imagen": "https://www.aromadevid.com.ar/wp-content/uploads/2026/01/image-Photoroom-66.png"
     },
     {
       "id": 3,
@@ -54,7 +72,8 @@
       "precio": "16360",
       "copa": "125 cc",
       "tipo": "Tinto",
-      "x": 42, "y": 72,
+      "x": 42,
+      "y": 72,
       "varietal": "100% Malbec",
       "region": "La Consulta, Valle de Uco",
       "altitud": "1.050 msnm",
@@ -62,10 +81,18 @@
       "crianza": "12 meses en roble francés",
       "temperatura": "16–18°C",
       "nota": "Malbec de La Consulta, zona de alta expresión en el Valle de Uco. Fruta negra concentrada, violetas, chocolate amargo y final persistente. Estructura y profundidad.",
-      "maridaje": ["carnes rojas", "quesos duros", "jamón crudo", "tabla"],
+      "maridaje": [
+        "carnes rojas",
+        "quesos duros",
+        "jamón crudo",
+        "tabla"
+      ],
       "bodega_info": "Ricominciare nació como un proyecto de elaboración artesanal en La Consulta, San Carlos. Nombre italiano que significa 'empezar de nuevo' — cada cosecha es un nuevo comienzo.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/ricominciare-malbec/",
-      "perfil_cuerpo": 5, "perfil_frescura": 3, "perfil_taninos": 4
+      "perfil_cuerpo": 5,
+      "perfil_frescura": 3,
+      "perfil_taninos": 4,
+      "imagen": ""
     },
     {
       "id": 4,
@@ -74,7 +101,8 @@
       "precio": "13700",
       "copa": "125 cc",
       "tipo": "Tinto",
-      "x": -22, "y": 50,
+      "x": -22,
+      "y": 50,
       "varietal": "100% Cabernet Franc",
       "region": "Vista Flores, Valle de Uco",
       "altitud": "1.050 msnm",
@@ -82,10 +110,18 @@
       "crianza": "Roble francés, uso moderado",
       "temperatura": "15–17°C",
       "nota": "Cabernet Franc de perfil herbal y especiado, con cassis rojo, pimiento asado y pimienta. Tensión y frescura características de la altura. Un varietal que muestra lo mejor del Valle de Uco.",
-      "maridaje": ["carnes rojas", "quesos duros", "fiambres", "tabla"],
+      "maridaje": [
+        "carnes rojas",
+        "quesos duros",
+        "fiambres",
+        "tabla"
+      ],
       "bodega_info": "Dharma Wines apuesta al Cabernet Franc como varietal estrella en Vista Flores. La altitud y el suelo arcilloso pedregoso le imprimen una acidez y un perfil herbáceo únicos.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/kamala-cabernet-franc/",
-      "perfil_cuerpo": 3, "perfil_frescura": 4, "perfil_taninos": 4
+      "perfil_cuerpo": 3,
+      "perfil_frescura": 4,
+      "perfil_taninos": 4,
+      "imagen": "https://www.aromadevid.com.ar/wp-content/uploads/2026/01/image-Photoroom-67-Photoroom-150x150.png"
     },
     {
       "id": 5,
@@ -94,7 +130,8 @@
       "precio": "12200",
       "copa": "125 cc",
       "tipo": "Tinto",
-      "x": 55, "y": 68,
+      "x": 55,
+      "y": 68,
       "varietal": "Malbec · Cabernet Franc · Merlot",
       "region": "Agrelo · Gualtallary · Chacayes",
       "altitud": "960–1.300 msnm",
@@ -102,10 +139,18 @@
       "crianza": "12 meses en roble francés",
       "temperatura": "16–18°C",
       "nota": "Blend de tres parcelas históricas: Malbec de Agrelo aporta la fruta, Cab. Franc de Gualtallary la estructura herbácea y el Merlot de Chacayes la redondez. Complejo, profundo y bien integrado.",
-      "maridaje": ["carnes rojas", "quesos duros", "jamón crudo", "tabla"],
+      "maridaje": [
+        "carnes rojas",
+        "quesos duros",
+        "jamón crudo",
+        "tabla"
+      ],
       "bodega_info": "El blend insignia de Reinero, que cruza tres zonas emblemáticas de Mendoza en una sola botella. Un proyecto de terruño que refleja la diversidad del paisaje vitivinícola mendocino.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/reinero-reserva-blend/",
-      "perfil_cuerpo": 5, "perfil_frescura": 3, "perfil_taninos": 4
+      "perfil_cuerpo": 5,
+      "perfil_frescura": 3,
+      "perfil_taninos": 4,
+      "imagen": ""
     },
     {
       "id": 6,
@@ -114,7 +159,8 @@
       "precio": "12600",
       "copa": "125 cc",
       "tipo": "Tinto",
-      "x": -48, "y": 58,
+      "x": -48,
+      "y": 58,
       "varietal": "100% Cabernet Sauvignon",
       "region": "Perdriel, Luján de Cuyo",
       "altitud": "980 msnm",
@@ -122,10 +168,18 @@
       "crianza": "12 meses en roble francés",
       "temperatura": "16–18°C",
       "nota": "Cabernet clásico de Luján de Cuyo, con cassis, ciruela, cedro y un toque de chocolate. Estructura firme, taninos maduros y final largo. Un vino que honra el terruño de Perdriel.",
-      "maridaje": ["carnes rojas", "quesos duros", "jamón crudo", "tabla"],
+      "maridaje": [
+        "carnes rojas",
+        "quesos duros",
+        "jamón crudo",
+        "tabla"
+      ],
       "bodega_info": "Marchiori & Barraud es una de las bodegas boutique más respetadas de Luján de Cuyo. Perdriel, su terruño principal, produce algunos de los Cabernet más complejos de Mendoza.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/marchiori-barraud-cabernet-sauvignon/",
-      "perfil_cuerpo": 5, "perfil_frescura": 3, "perfil_taninos": 5
+      "perfil_cuerpo": 5,
+      "perfil_frescura": 3,
+      "perfil_taninos": 5,
+      "imagen": ""
     },
     {
       "id": 7,
@@ -134,7 +188,8 @@
       "precio": "15000",
       "copa": "125 cc",
       "tipo": "Tinto",
-      "x": -45, "y": 15,
+      "x": -45,
+      "y": 15,
       "varietal": "100% Pinot Noir",
       "region": "Campo los Andes, Tunuyán",
       "altitud": "1.200 msnm",
@@ -142,10 +197,18 @@
       "crianza": "10 meses en roble francés",
       "temperatura": "14–16°C",
       "nota": "Pinot Noir de gran altitud con fruta roja fresca, especias suaves y textura aterciopelada. Campo los Andes es uno de los terroirs más fríos de Mendoza, ideal para este varietal de difícil elaboración.",
-      "maridaje": ["quesos blandos", "salmón", "tabla", "fiambres"],
+      "maridaje": [
+        "quesos blandos",
+        "salmón",
+        "tabla",
+        "fiambres"
+      ],
       "bodega_info": "Alta Vista elabora este Pinot desde Campo los Andes, un paraje a más de 1.200 metros en Tunuyán. Clima frío extremo y suelos aluviales que producen vinos de gran fineza.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/alta-vista-estate-premium-pinot-noir/",
-      "perfil_cuerpo": 2, "perfil_frescura": 5, "perfil_taninos": 2
+      "perfil_cuerpo": 2,
+      "perfil_frescura": 5,
+      "perfil_taninos": 2,
+      "imagen": ""
     },
     {
       "id": 8,
@@ -154,7 +217,8 @@
       "precio": "12500",
       "copa": "125 cc",
       "tipo": "Tinto",
-      "x": 18, "y": 35,
+      "x": 18,
+      "y": 35,
       "varietal": "Malbec · Cabernet Sauvignon · Syrah",
       "region": "Mendoza",
       "altitud": "900 msnm",
@@ -162,10 +226,18 @@
       "crianza": "8 meses en roble",
       "temperatura": "15–17°C",
       "nota": "Blend accesible y expresivo de Alta Vista. Fruta madura, especias y buena bebilidad. El equilibrio entre los tres varietales lo hace versátil y fácil de disfrutar.",
-      "maridaje": ["tabla", "salame", "quesos duros", "mortadela"],
+      "maridaje": [
+        "tabla",
+        "salame",
+        "quesos duros",
+        "mortadela"
+      ],
       "bodega_info": "VIVE es la línea de entrada de Alta Vista, pensada para el consumo cotidiano. Fruta de distintas parcelas mendocinas, buscando frescura y accesibilidad por sobre la estructura.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/vive-red-blend/",
-      "perfil_cuerpo": 3, "perfil_frescura": 3, "perfil_taninos": 3
+      "perfil_cuerpo": 3,
+      "perfil_frescura": 3,
+      "perfil_taninos": 3,
+      "imagen": ""
     },
     {
       "id": 9,
@@ -174,7 +246,8 @@
       "precio": "11700",
       "copa": "125 cc",
       "tipo": "Blanco",
-      "x": -60, "y": -38,
+      "x": -60,
+      "y": -38,
       "varietal": "Pedro Ximénez 65% · Riesling 35%",
       "region": "Los Chacayes · Vista Flores, Tunuyán",
       "altitud": "1.100 msnm",
@@ -182,10 +255,18 @@
       "crianza": "Sin paso por madera",
       "temperatura": "8–10°C",
       "nota": "Blend inusual y fascinante de Pedro Ximénez y Riesling cofermentados. Amarillo tenue con reflejos verdosos, aromas cítricos y florales, boca untuosa con buena estructura. Un vino que sorprende.",
-      "maridaje": ["quesos blandos", "aceitunas", "panera", "salmón"],
+      "maridaje": [
+        "quesos blandos",
+        "aceitunas",
+        "panera",
+        "salmón"
+      ],
       "bodega_info": "Gimenez Riili trabaja en Los Chacayes y Vista Flores, dos zonas de gran altitud en Tunuyán. El proyecto De Nos nació de la unión del equipo de bodega, cada varietal colaborando como en familia.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/gimenez-riili-de-nos-blend-de-blancas/",
-      "perfil_cuerpo": 3, "perfil_frescura": 5, "perfil_taninos": 1
+      "perfil_cuerpo": 3,
+      "perfil_frescura": 5,
+      "perfil_taninos": 1,
+      "imagen": "https://www.aromadevid.com.ar/wp-content/uploads/2020/09/De-Nos-01-blanco-fondo-blanco-scaled.jpg"
     },
     {
       "id": 10,
@@ -194,7 +275,8 @@
       "precio": "24500",
       "copa": "125 cc",
       "tipo": "Blanco",
-      "x": -25, "y": -50,
+      "x": -25,
+      "y": -50,
       "varietal": "100% Chardonnay",
       "region": "Altamira · Vistalba, Mendoza",
       "altitud": "1.000–1.050 msnm",
@@ -202,10 +284,18 @@
       "crianza": "Fermentación y crianza en barrica",
       "temperatura": "10–12°C",
       "nota": "Chardonnay premium con fermentación en barrica. Amarillo dorado, aromas de durazno, vainilla y tostados elegantes. Boca cremosa, acidez equilibrada y final largo. La línea Ultra de Kaiken en su máxima expresión.",
-      "maridaje": ["quesos blandos", "salmón", "jamón crudo", "tabla"],
+      "maridaje": [
+        "quesos blandos",
+        "salmón",
+        "jamón crudo",
+        "tabla"
+      ],
       "bodega_info": "Kaiken, fundada por el enólogo chileno Aurelio Montes, elabora este Chardonnay con uvas de Altamira y Vistalba. Dos terruños complementarios que aportan fruta y estructura.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/kaiken-ultra-chardonnay/",
-      "perfil_cuerpo": 4, "perfil_frescura": 4, "perfil_taninos": 1
+      "perfil_cuerpo": 4,
+      "perfil_frescura": 4,
+      "perfil_taninos": 1,
+      "imagen": ""
     },
     {
       "id": 11,
@@ -214,7 +304,8 @@
       "precio": "16100",
       "copa": "125 cc",
       "tipo": "Rosado",
-      "x": 15, "y": -30,
+      "x": 15,
+      "y": -30,
       "varietal": "Blend de rosados",
       "region": "Valle de Uco, Mendoza",
       "altitud": "1.100 msnm",
@@ -222,10 +313,18 @@
       "crianza": "Sin paso por madera",
       "temperatura": "8–10°C",
       "nota": "Rosado de gran personalidad de la bodega Gimenez Riili. Color frambuesa intenso, aromas de frutas rojas frescas y flores. Boca vibrante, seca y con buena estructura. Ideal para empezar la noche.",
-      "maridaje": ["tabla", "quesos blandos", "aceitunas", "mortadela"],
+      "maridaje": [
+        "tabla",
+        "quesos blandos",
+        "aceitunas",
+        "mortadela"
+      ],
       "bodega_info": "El proyecto Nietos Compañeros de Gimenez Riili reúne las mejores uvas rosadas de sus parcelas en el Valle de Uco. Un rosado que no pide disculpas — tiene carácter y lo muestra.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/gimenez-riili-de-nos-bled-de-rosados/",
-      "perfil_cuerpo": 2, "perfil_frescura": 5, "perfil_taninos": 1
+      "perfil_cuerpo": 2,
+      "perfil_frescura": 5,
+      "perfil_taninos": 1,
+      "imagen": ""
     },
     {
       "id": 12,
@@ -234,7 +333,8 @@
       "precio": "12000",
       "copa": "125 cc",
       "tipo": "Rosado",
-      "x": 55, "y": -42,
+      "x": 55,
+      "y": -42,
       "varietal": "Cabernet Franc",
       "region": "El Peral, Tupungato",
       "altitud": "1.200 msnm",
@@ -242,10 +342,18 @@
       "crianza": "Sin crianza",
       "temperatura": "8–10°C",
       "nota": "Rosado de Cabernet Franc de gran altitud. Color rosa pálido brillante, aromas de frutilla, pomelo y pétalos de rosa. Seco, fresco y muy preciso. El terruño de El Peral imprime un filo mineral único.",
-      "maridaje": ["tabla", "quesos blandos", "aceitunas", "panera"],
+      "maridaje": [
+        "tabla",
+        "quesos blandos",
+        "aceitunas",
+        "panera"
+      ],
       "bodega_info": "Uruco Wines trabaja la finca El Peral en Tupungato, a 1.200 metros de altura. El Cabernet Franc en rosado expresa lo mejor del terroir de altura: acidez vibrante y aromas florales.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/finca-el-peral-rose-uruco-wines/",
-      "perfil_cuerpo": 1, "perfil_frescura": 5, "perfil_taninos": 1
+      "perfil_cuerpo": 1,
+      "perfil_frescura": 5,
+      "perfil_taninos": 1,
+      "imagen": ""
     },
     {
       "id": 13,
@@ -254,7 +362,8 @@
       "precio": "9900",
       "copa": "125 cc",
       "tipo": "Tinto",
-      "x": -55, "y": 44,
+      "x": -55,
+      "y": 44,
       "varietal": "100% Cabernet Sauvignon",
       "region": "Valle de Uco, Mendoza",
       "altitud": "900–1.100 msnm",
@@ -262,10 +371,18 @@
       "crianza": "Roble francés y americano",
       "temperatura": "16–18°C",
       "nota": "Cabernet de Valle de Uco con toda la frescura que le aporta la altura. Cassis, tabaco, cedro y final persistente. El hermano tinto del Nazareno Malbec — misma filosofía, distinto varietal.",
-      "maridaje": ["carnes rojas", "quesos duros", "tabla", "jamón crudo"],
+      "maridaje": [
+        "carnes rojas",
+        "quesos duros",
+        "tabla",
+        "jamón crudo"
+      ],
       "bodega_info": "Reinero repite la fórmula de mezclar terruños del Valle de Uco para este Cabernet. La frescura de las alturas le da una identidad diferente a los Cabernet de zonas más cálidas.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/nazareno-cabernet-sauvignon-reinero/",
-      "perfil_cuerpo": 4, "perfil_frescura": 4, "perfil_taninos": 4
+      "perfil_cuerpo": 4,
+      "perfil_frescura": 4,
+      "perfil_taninos": 4,
+      "imagen": ""
     },
     {
       "id": 14,
@@ -274,7 +391,8 @@
       "precio": "20150",
       "copa": "125 cc",
       "tipo": "Tinto",
-      "x": 32, "y": 80,
+      "x": 32,
+      "y": 80,
       "varietal": "100% Malbec",
       "region": "La Rioja",
       "altitud": "1.200 msnm",
@@ -282,15 +400,35 @@
       "crianza": "12 meses en roble francés",
       "temperatura": "16–18°C",
       "nota": "Malbec de La Rioja, una región menos conocida que Mendoza pero de gran personalidad. Fruta roja y negra intensa, flores violáceas y especias. Un Malbec diferente que abre el debate sobre los terroirs argentinos.",
-      "maridaje": ["carnes rojas", "quesos duros", "tabla", "jamón crudo"],
+      "maridaje": [
+        "carnes rojas",
+        "quesos duros",
+        "tabla",
+        "jamón crudo"
+      ],
       "bodega_info": "Collovatti es un enólogo de referencia que trabaja en La Rioja con Malbec de gran altura. Su proyecto demuestra que el Malbec argentino va mucho más allá de Mendoza.",
       "tienda_url": "https://www.aromadevid.com.ar/producto/collovati-malbec/",
-      "perfil_cuerpo": 5, "perfil_frescura": 4, "perfil_taninos": 4
+      "perfil_cuerpo": 5,
+      "perfil_frescura": 4,
+      "perfil_taninos": 4,
+      "imagen": ""
     }
   ],
   "charcuteria": [
-    { "nombre": "Tabla de quesos", "detalle": "Selección de quesos artesanales locales", "precio": "—" },
-    { "nombre": "Tabla de fiambres", "detalle": "Chacinados y embutidos de productores locales", "precio": "—" },
-    { "nombre": "Tabla mixta", "detalle": "Quesos y fiambres seleccionados", "precio": "—" }
+    {
+      "nombre": "Tabla de quesos",
+      "detalle": "Selección de quesos artesanales locales",
+      "precio": "—"
+    },
+    {
+      "nombre": "Tabla de fiambres",
+      "detalle": "Chacinados y embutidos de productores locales",
+      "precio": "—"
+    },
+    {
+      "nombre": "Tabla mixta",
+      "detalle": "Quesos y fiambres seleccionados",
+      "precio": "—"
+    }
   ]
 }
