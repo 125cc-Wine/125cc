@@ -480,15 +480,30 @@ function renderFicha(w){
       <div class="perfil-val">${v}/5</div>
     </div>`).join(''):'';
 
+  // Bottle image: show from data or fallback to SVG icon
+  const bottleSVG=`<svg viewBox="0 0 40 100" xmlns="http://www.w3.org/2000/svg" width="36" height="90" opacity=".55">
+    <rect x="14" y="2" width="12" height="10" rx="2" fill="currentColor"/>
+    <path d="M12 12 C8 20 6 30 6 45 L6 88 C6 92 10 96 14 96 L26 96 C30 96 34 92 34 88 L34 45 C34 30 32 20 28 12 Z" fill="currentColor"/>
+    <rect x="10" y="50" width="20" height="18" rx="2" fill="white" opacity=".15"/>
+  </svg>`;
+  const bottleImg = w.imagen
+    ? `<img src="${w.imagen}" alt="${w.nombre}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+        style="width:44px;height:110px;object-fit:contain;border-radius:6px;flex-shrink:0">
+       <div style="display:none;width:44px;height:110px;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0">${bottleSVG}</div>`
+    : `<div style="display:flex;width:44px;height:110px;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0">${bottleSVG}</div>`;
+
   document.getElementById('fichaContent').innerHTML=`
     <div class="ficha-card">
       <div class="ficha-header">
-        <div>
+        <div style="flex:1;min-width:0">
           <div class="fi-label" style="margin-bottom:6px">Ficha técnica</div>
           <div class="ficha-name">${w.nombre}</div>
           <div class="ficha-winery">${w.bodega}</div>
         </div>
-        <div class="ficha-tipo-badge" style="background:${color}">${fmtPrecio(w.precio)}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+          <div class="ficha-tipo-badge" style="background:${color}">${fmtPrecio(w.precio)}</div>
+          ${bottleImg}
+        </div>
       </div>
       <div class="ficha-note">${w.nota}</div>
       <div class="ficha-grid">
