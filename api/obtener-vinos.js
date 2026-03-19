@@ -20,9 +20,9 @@ module.exports = async function handler(req, res) {
   try {
     const token = await getGoogleToken(GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY);
 
-    // Leer hoja Vinos (columnas A a Q, máximo 50 filas)
+    // Leer hoja Vinos (columnas A a U, máximo 50 filas — incluye columna Imagen)
     const sheetRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:Q50`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:U50`,
       { headers: { "Authorization": `Bearer ${token}` } }
     );
 
@@ -73,6 +73,7 @@ module.exports = async function handler(req, res) {
             : [],
           bodega_info: obj.bodega_info   || "",
           tienda_url:  obj.tienda_url    || "",
+          imagen:      obj.imagen        || "",
           perfil: {
             cuerpo:   parseInt(obj.perfil_cuerpo)   || 3,
             frescura: parseInt(obj.perfil_frescura) || 3,
