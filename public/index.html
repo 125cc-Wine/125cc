@@ -608,9 +608,17 @@
 const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranja:"#d4721a"};
 const TYPE_LABEL={Tinto:"Tinto",Blanco:"Blanco",Rosado:"Rosado",Naranja:"Naranjo"};
 function precioBottella(p){
-  if(!p) return 0;
-  const clean = p.toString().replace(/\$/g,'').trim();
-  const n = parseFloat(clean.replace(/,/g,''));
+  if (!p) return 0;
+
+  // Normaliza a string
+  const clean = p.toString()
+    .replace(/\$/g, '')     // saca $
+    .replace(/\s/g, '')     // saca espacios
+    .replace(/\./g, '')     // saca separadores de miles tipo 12.000
+    .replace(',', '.');     // por si viene decimal europeo
+
+  const n = parseFloat(clean);
+
   return isNaN(n) ? 0 : n;
 }
 function fmtPrecio(p){
