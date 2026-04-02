@@ -1,434 +1,1284 @@
-{
-  "bar": {
-    "nombre": "Wine Bar",
-    "subtitulo": "125cc",
-    "descripcion": "20 lugares. Un sommelier. Cada vino, una historia. Todo por copa.",
-    "instagram": "",
-    "direccion": ""
-  },
-  "vinos": [
-    {
-      "id": 1,
-      "nombre": "Reinero Nazareno Malbec",
-      "bodega": "Reinero",
-      "precio": "9900",
-      "copa": "125 cc",
-      "tipo": "Tinto",
-      "x": 28,
-      "y": 62,
-      "varietal": "100% Malbec",
-      "region": "Valle de Uco, Mendoza",
-      "altitud": "850–1.100 msnm",
-      "suelo": "Franco arcilloso",
-      "crianza": "Roble francés 60% · americano 40%",
-      "temperatura": "16–18°C",
-      "nota": "Malbec de tres terruños distintos — Ugarteche, Tupungato y Los Chacayes. Fruta negra madura, especias dulces y paso equilibrado. Un fiel exponente de la variedad.",
-      "maridaje": [
-        "carnes rojas",
-        "quesos duros",
-        "jamón crudo",
-        "tabla"
-      ],
-      "bodega_info": "Reinero trabaja parcelas seleccionadas en distintas zonas del Valle de Uco. La mezcla de terroirs a distintas alturas le da complejidad y equilibrio al vino.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/nazareno-malbec-reinero/",
-      "perfil_cuerpo": 4,
-      "perfil_frescura": 4,
-      "perfil_taninos": 3,
-      "imagen": "https://www.aromadevid.com.ar/wp-content/uploads/2022/07/NAZARENO-MALBEC-scaled.jpg"
-    },
-    {
-      "id": 2,
-      "nombre": "Kamala Pinot Noir",
-      "bodega": "Dharma Wines",
-      "precio": "14600",
-      "copa": "125 cc",
-      "tipo": "Tinto",
-      "x": -38,
-      "y": 22,
-      "varietal": "100% Pinot Noir",
-      "region": "Vista Flores, Valle de Uco",
-      "altitud": "1.050 msnm",
-      "suelo": "Arcilloso pedregoso",
-      "crianza": "Parcial en roble, uso moderado",
-      "temperatura": "14–16°C",
-      "nota": "Rubí brillante, aromas de cereza y frambuesa con notas florales. Taninos finos y sedosos, acidez fresca. Estilo elegante y preciso con marcada identidad varietal.",
-      "maridaje": [
-        "quesos blandos",
-        "salmón",
-        "tabla",
-        "mortadela"
-      ],
-      "bodega_info": "Dharma Wines elabora desde Vista Flores, una de las zonas más frescas del Valle de Uco. Foco en expresión varietal y elegancia por sobre la extracción.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/kamala-pinot-noir/",
-      "perfil_cuerpo": 2,
-      "perfil_frescura": 5,
-      "perfil_taninos": 2,
-      "imagen": "https://www.aromadevid.com.ar/wp-content/uploads/2026/01/image-Photoroom-66.png"
-    },
-    {
-      "id": 3,
-      "nombre": "Ricominciare Malbec",
-      "bodega": "Ricominciare",
-      "precio": "16360",
-      "copa": "125 cc",
-      "tipo": "Tinto",
-      "x": 42,
-      "y": 72,
-      "varietal": "100% Malbec",
-      "region": "La Consulta, Valle de Uco",
-      "altitud": "1.050 msnm",
-      "suelo": "Calcáreo pedregoso",
-      "crianza": "12 meses en roble francés",
-      "temperatura": "16–18°C",
-      "nota": "Malbec de La Consulta, zona de alta expresión en el Valle de Uco. Fruta negra concentrada, violetas, chocolate amargo y final persistente. Estructura y profundidad.",
-      "maridaje": [
-        "carnes rojas",
-        "quesos duros",
-        "jamón crudo",
-        "tabla"
-      ],
-      "bodega_info": "Ricominciare nació como un proyecto de elaboración artesanal en La Consulta, San Carlos. Nombre italiano que significa 'empezar de nuevo' — cada cosecha es un nuevo comienzo.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/ricominciare-malbec/",
-      "perfil_cuerpo": 5,
-      "perfil_frescura": 3,
-      "perfil_taninos": 4,
-      "imagen": ""
-    },
-    {
-      "id": 4,
-      "nombre": "Kamala Cabernet Franc",
-      "bodega": "Dharma Wines",
-      "precio": "13700",
-      "copa": "125 cc",
-      "tipo": "Tinto",
-      "x": -22,
-      "y": 50,
-      "varietal": "100% Cabernet Franc",
-      "region": "Vista Flores, Valle de Uco",
-      "altitud": "1.050 msnm",
-      "suelo": "Arcilloso pedregoso",
-      "crianza": "Roble francés, uso moderado",
-      "temperatura": "15–17°C",
-      "nota": "Cabernet Franc de perfil herbal y especiado, con cassis rojo, pimiento asado y pimienta. Tensión y frescura características de la altura. Un varietal que muestra lo mejor del Valle de Uco.",
-      "maridaje": [
-        "carnes rojas",
-        "quesos duros",
-        "fiambres",
-        "tabla"
-      ],
-      "bodega_info": "Dharma Wines apuesta al Cabernet Franc como varietal estrella en Vista Flores. La altitud y el suelo arcilloso pedregoso le imprimen una acidez y un perfil herbáceo únicos.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/kamala-cabernet-franc/",
-      "perfil_cuerpo": 3,
-      "perfil_frescura": 4,
-      "perfil_taninos": 4,
-      "imagen": "https://www.aromadevid.com.ar/wp-content/uploads/2026/01/image-Photoroom-67-Photoroom.png"
-    },
-    {
-      "id": 5,
-      "nombre": "Reinero Reserva Blend",
-      "bodega": "Reinero",
-      "precio": "12200",
-      "copa": "125 cc",
-      "tipo": "Tinto",
-      "x": 55,
-      "y": 68,
-      "varietal": "Malbec · Cabernet Franc · Merlot",
-      "region": "Agrelo · Gualtallary · Chacayes",
-      "altitud": "960–1.300 msnm",
-      "suelo": "Franco pedregoso",
-      "crianza": "12 meses en roble francés",
-      "temperatura": "16–18°C",
-      "nota": "Blend de tres parcelas históricas: Malbec de Agrelo aporta la fruta, Cab. Franc de Gualtallary la estructura herbácea y el Merlot de Chacayes la redondez. Complejo, profundo y bien integrado.",
-      "maridaje": [
-        "carnes rojas",
-        "quesos duros",
-        "jamón crudo",
-        "tabla"
-      ],
-      "bodega_info": "El blend insignia de Reinero, que cruza tres zonas emblemáticas de Mendoza en una sola botella. Un proyecto de terruño que refleja la diversidad del paisaje vitivinícola mendocino.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/reinero-reserva-blend/",
-      "perfil_cuerpo": 5,
-      "perfil_frescura": 3,
-      "perfil_taninos": 4,
-      "imagen": "https://www.aromadevid.com.ar/wp-content/uploads/2022/07/Reinero-Blend-scaled.jpg"
-    },
-    {
-      "id": 6,
-      "nombre": "Marchiori & Barraud Cabernet Sauvignon",
-      "bodega": "Marchiori & Barraud",
-      "precio": "12600",
-      "copa": "125 cc",
-      "tipo": "Tinto",
-      "x": -48,
-      "y": 58,
-      "varietal": "100% Cabernet Sauvignon",
-      "region": "Perdriel, Luján de Cuyo",
-      "altitud": "980 msnm",
-      "suelo": "Franco arcilloso",
-      "crianza": "12 meses en roble francés",
-      "temperatura": "16–18°C",
-      "nota": "Cabernet clásico de Luján de Cuyo, con cassis, ciruela, cedro y un toque de chocolate. Estructura firme, taninos maduros y final largo. Un vino que honra el terruño de Perdriel.",
-      "maridaje": [
-        "carnes rojas",
-        "quesos duros",
-        "jamón crudo",
-        "tabla"
-      ],
-      "bodega_info": "Marchiori & Barraud es una de las bodegas boutique más respetadas de Luján de Cuyo. Perdriel, su terruño principal, produce algunos de los Cabernet más complejos de Mendoza.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/marchiori-barraud-cabernet-sauvignon/",
-      "perfil_cuerpo": 5,
-      "perfil_frescura": 3,
-      "perfil_taninos": 5,
-      "imagen": ""
-    },
-    {
-      "id": 7,
-      "nombre": "Alta Vista Estate Pinot Noir",
-      "bodega": "Alta Vista",
-      "precio": "15000",
-      "copa": "125 cc",
-      "tipo": "Tinto",
-      "x": -45,
-      "y": 15,
-      "varietal": "100% Pinot Noir",
-      "region": "Campo los Andes, Tunuyán",
-      "altitud": "1.200 msnm",
-      "suelo": "Aluvial pedregoso",
-      "crianza": "10 meses en roble francés",
-      "temperatura": "14–16°C",
-      "nota": "Pinot Noir de gran altitud con fruta roja fresca, especias suaves y textura aterciopelada. Campo los Andes es uno de los terroirs más fríos de Mendoza, ideal para este varietal de difícil elaboración.",
-      "maridaje": [
-        "quesos blandos",
-        "salmón",
-        "tabla",
-        "fiambres"
-      ],
-      "bodega_info": "Alta Vista elabora este Pinot desde Campo los Andes, un paraje a más de 1.200 metros en Tunuyán. Clima frío extremo y suelos aluviales que producen vinos de gran fineza.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/alta-vista-estate-premium-pinot-noir/",
-      "perfil_cuerpo": 2,
-      "perfil_frescura": 5,
-      "perfil_taninos": 2,
-      "imagen": ""
-    },
-    {
-      "id": 8,
-      "nombre": "VIVE Red Blend",
-      "bodega": "Alta Vista",
-      "precio": "12500",
-      "copa": "125 cc",
-      "tipo": "Tinto",
-      "x": 18,
-      "y": 35,
-      "varietal": "Malbec · Cabernet Sauvignon · Syrah",
-      "region": "Mendoza",
-      "altitud": "900 msnm",
-      "suelo": "Franco arenoso",
-      "crianza": "8 meses en roble",
-      "temperatura": "15–17°C",
-      "nota": "Blend accesible y expresivo de Alta Vista. Fruta madura, especias y buena bebilidad. El equilibrio entre los tres varietales lo hace versátil y fácil de disfrutar.",
-      "maridaje": [
-        "tabla",
-        "salame",
-        "quesos duros",
-        "mortadela"
-      ],
-      "bodega_info": "VIVE es la línea de entrada de Alta Vista, pensada para el consumo cotidiano. Fruta de distintas parcelas mendocinas, buscando frescura y accesibilidad por sobre la estructura.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/vive-red-blend/",
-      "perfil_cuerpo": 3,
-      "perfil_frescura": 3,
-      "perfil_taninos": 3,
-      "imagen": ""
-    },
-    {
-      "id": 9,
-      "nombre": "De Nos Blend de Blancas",
-      "bodega": "Gimenez Riili",
-      "precio": "11700",
-      "copa": "125 cc",
-      "tipo": "Blanco",
-      "x": -60,
-      "y": -38,
-      "varietal": "Pedro Ximénez 65% · Riesling 35%",
-      "region": "Los Chacayes · Vista Flores, Tunuyán",
-      "altitud": "1.100 msnm",
-      "suelo": "Franco limoso arcilloso pedregoso",
-      "crianza": "Sin paso por madera",
-      "temperatura": "8–10°C",
-      "nota": "Blend inusual y fascinante de Pedro Ximénez y Riesling cofermentados. Amarillo tenue con reflejos verdosos, aromas cítricos y florales, boca untuosa con buena estructura. Un vino que sorprende.",
-      "maridaje": [
-        "quesos blandos",
-        "aceitunas",
-        "panera",
-        "salmón"
-      ],
-      "bodega_info": "Gimenez Riili trabaja en Los Chacayes y Vista Flores, dos zonas de gran altitud en Tunuyán. El proyecto De Nos nació de la unión del equipo de bodega, cada varietal colaborando como en familia.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/gimenez-riili-de-nos-blend-de-blancas/",
-      "perfil_cuerpo": 3,
-      "perfil_frescura": 5,
-      "perfil_taninos": 1,
-      "imagen": "https://www.aromadevid.com.ar/wp-content/uploads/2020/09/De-Nos-01-blanco-fondo-blanco-scaled.jpg"
-    },
-    {
-      "id": 10,
-      "nombre": "Kaiken Ultra Chardonnay",
-      "bodega": "Kaiken",
-      "precio": "24500",
-      "copa": "125 cc",
-      "tipo": "Blanco",
-      "x": -25,
-      "y": -50,
-      "varietal": "100% Chardonnay",
-      "region": "Altamira · Vistalba, Mendoza",
-      "altitud": "1.000–1.050 msnm",
-      "suelo": "Calcáreo pedregoso",
-      "crianza": "Fermentación y crianza en barrica",
-      "temperatura": "10–12°C",
-      "nota": "Chardonnay premium con fermentación en barrica. Amarillo dorado, aromas de durazno, vainilla y tostados elegantes. Boca cremosa, acidez equilibrada y final largo. La línea Ultra de Kaiken en su máxima expresión.",
-      "maridaje": [
-        "quesos blandos",
-        "salmón",
-        "jamón crudo",
-        "tabla"
-      ],
-      "bodega_info": "Kaiken, fundada por el enólogo chileno Aurelio Montes, elabora este Chardonnay con uvas de Altamira y Vistalba. Dos terruños complementarios que aportan fruta y estructura.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/kaiken-ultra-chardonnay/",
-      "perfil_cuerpo": 4,
-      "perfil_frescura": 4,
-      "perfil_taninos": 1,
-      "imagen": ""
-    },
-    {
-      "id": 11,
-      "nombre": "Nietos Compañeros Blend Rosado",
-      "bodega": "Gimenez Riili",
-      "precio": "16100",
-      "copa": "125 cc",
-      "tipo": "Rosado",
-      "x": 15,
-      "y": -30,
-      "varietal": "Blend de rosados",
-      "region": "Valle de Uco, Mendoza",
-      "altitud": "1.100 msnm",
-      "suelo": "Arcilloso pedregoso",
-      "crianza": "Sin paso por madera",
-      "temperatura": "8–10°C",
-      "nota": "Rosado de gran personalidad de la bodega Gimenez Riili. Color frambuesa intenso, aromas de frutas rojas frescas y flores. Boca vibrante, seca y con buena estructura. Ideal para empezar la noche.",
-      "maridaje": [
-        "tabla",
-        "quesos blandos",
-        "aceitunas",
-        "mortadela"
-      ],
-      "bodega_info": "El proyecto Nietos Compañeros de Gimenez Riili reúne las mejores uvas rosadas de sus parcelas en el Valle de Uco. Un rosado que no pide disculpas — tiene carácter y lo muestra.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/gimenez-riili-de-nos-bled-de-rosados/",
-      "perfil_cuerpo": 2,
-      "perfil_frescura": 5,
-      "perfil_taninos": 1,
-      "imagen": "https://www.aromadevid.com.ar/wp-content/uploads/2020/09/imagen_2025-11-17_125728016.png"
-    },
-    {
-      "id": 12,
-      "nombre": "Finca El Peral Rosé",
-      "bodega": "Uruco Wines",
-      "precio": "12000",
-      "copa": "125 cc",
-      "tipo": "Rosado",
-      "x": 55,
-      "y": -42,
-      "varietal": "Cabernet Franc",
-      "region": "El Peral, Tupungato",
-      "altitud": "1.200 msnm",
-      "suelo": "Pedregoso calcáreo",
-      "crianza": "Sin crianza",
-      "temperatura": "8–10°C",
-      "nota": "Rosado de Cabernet Franc de gran altitud. Color rosa pálido brillante, aromas de frutilla, pomelo y pétalos de rosa. Seco, fresco y muy preciso. El terruño de El Peral imprime un filo mineral único.",
-      "maridaje": [
-        "tabla",
-        "quesos blandos",
-        "aceitunas",
-        "panera"
-      ],
-      "bodega_info": "Uruco Wines trabaja la finca El Peral en Tupungato, a 1.200 metros de altura. El Cabernet Franc en rosado expresa lo mejor del terroir de altura: acidez vibrante y aromas florales.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/finca-el-peral-rose-uruco-wines/",
-      "perfil_cuerpo": 1,
-      "perfil_frescura": 5,
-      "perfil_taninos": 1,
-      "imagen": ""
-    },
-    {
-      "id": 13,
-      "nombre": "Reinero Nazareno Cabernet Sauvignon",
-      "bodega": "Reinero",
-      "precio": "9900",
-      "copa": "125 cc",
-      "tipo": "Tinto",
-      "x": -55,
-      "y": 44,
-      "varietal": "100% Cabernet Sauvignon",
-      "region": "Valle de Uco, Mendoza",
-      "altitud": "900–1.100 msnm",
-      "suelo": "Franco arcilloso",
-      "crianza": "Roble francés y americano",
-      "temperatura": "16–18°C",
-      "nota": "Cabernet de Valle de Uco con toda la frescura que le aporta la altura. Cassis, tabaco, cedro y final persistente. El hermano tinto del Nazareno Malbec — misma filosofía, distinto varietal.",
-      "maridaje": [
-        "carnes rojas",
-        "quesos duros",
-        "tabla",
-        "jamón crudo"
-      ],
-      "bodega_info": "Reinero repite la fórmula de mezclar terruños del Valle de Uco para este Cabernet. La frescura de las alturas le da una identidad diferente a los Cabernet de zonas más cálidas.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/nazareno-cabernet-sauvignon-reinero/",
-      "perfil_cuerpo": 4,
-      "perfil_frescura": 4,
-      "perfil_taninos": 4,
-      "imagen": "https://www.aromadevid.com.ar/wp-content/uploads/2022/07/NAZARENO-CABERNET-SAUVIGNON-scaled.jpg"
-    },
-    {
-      "id": 14,
-      "nombre": "Collovati Malbec",
-      "bodega": "Collovatti",
-      "precio": "20150",
-      "copa": "125 cc",
-      "tipo": "Tinto",
-      "x": 32,
-      "y": 80,
-      "varietal": "100% Malbec",
-      "region": "La Rioja",
-      "altitud": "1.200 msnm",
-      "suelo": "Arenoso calcáreo",
-      "crianza": "12 meses en roble francés",
-      "temperatura": "16–18°C",
-      "nota": "Malbec de La Rioja, una región menos conocida que Mendoza pero de gran personalidad. Fruta roja y negra intensa, flores violáceas y especias. Un Malbec diferente que abre el debate sobre los terroirs argentinos.",
-      "maridaje": [
-        "carnes rojas",
-        "quesos duros",
-        "tabla",
-        "jamón crudo"
-      ],
-      "bodega_info": "Collovatti es un enólogo de referencia que trabaja en La Rioja con Malbec de gran altura. Su proyecto demuestra que el Malbec argentino va mucho más allá de Mendoza.",
-      "tienda_url": "https://www.aromadevid.com.ar/producto/collovati-malbec/",
-      "perfil_cuerpo": 5,
-      "perfil_frescura": 4,
-      "perfil_taninos": 4,
-      "imagen": ""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <meta name="theme-color" content="#1c1917"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta property="og:title" content="125cc Wine Bar · Carta de Vinos"/>
+  <meta property="og:description" content="Elegí tu vino por estilo, intensidad y perfil. Carta visual interactiva."/>
+  <meta property="og:url" content="https://www.125cc.com.ar"/>
+  <meta property="og:type" content="website"/>
+  <meta name="theme-color" content="#1c1917"/>
+  <title>Wine Bar · Carta de Vinos</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231c1917'/><path d='M11 4 C11 4 8.5 10 8.5 13.5 C8.5 17.5 11.5 20 15.5 20.5 L15.5 26 L12.5 26 L12 28.5 L20 28.5 L19.5 26 L16.5 26 L16.5 20.5 C20.5 20 23.5 17.5 23.5 13.5 C23.5 10 21 4 21 4 Z' fill='%23c8463a'/></svg>"/>
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231c1917'/><path d='M11 4 C11 4 8.5 10 8.5 13.5 C8.5 17.5 11.5 20 15.5 20.5 L15.5 26 L12.5 26 L12 28.5 L20 28.5 L19.5 26 L16.5 26 L16.5 20.5 C20.5 20 23.5 17.5 23.5 13.5 C23.5 10 21 4 21 4 Z' fill='%23c8463a'/></svg>"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    :root{
+      --bg:#F2EBE0;--card:#FAF6F0;--border:rgba(60,40,20,.1);--text:#1A1208;--muted:#7A6A58;
+      --dark:#16110C;--dark2:#1E1710;--dark3:#2C2318;--dark-muted:#6B5E52;
+      --dark-text:#F5F0E8;--dark-sub:#A89880;--accent:#9B2030;--accent2:#C4354A;
+      --gold:#C4A05A;--gold2:#E8C878;
+      --tinto:#8B0000;--blanco:#5A8A2A;--rosado:#C4306A;--naranja:#C46020;
+      --shadow-sm:0 2px 8px rgba(20,10,0,.08);
+      --shadow-md:0 4px 20px rgba(20,10,0,.12);
+      --shadow-lg:0 8px 40px rgba(20,10,0,.18);
     }
-  ],
-  "charcuteria": [
-    {
-      "nombre": "Tabla de quesos",
-      "detalle": "Selección de quesos artesanales locales",
-      "precio": "—"
-    },
-    {
-      "nombre": "Tabla de fiambres",
-      "detalle": "Chacinados y embutidos de productores locales",
-      "precio": "—"
-    },
-    {
-      "nombre": "Tabla mixta",
-      "detalle": "Quesos y fiambres seleccionados",
-      "precio": "—"
+    html,body{height:100%}
+    body{
+      font-family:'DM Sans',sans-serif;font-weight:300;
+      background:var(--dark);color:var(--text);overscroll-behavior:none;
     }
-  ]
+    .app{
+      display:flex;flex-direction:column;min-height:100vh;
+      max-width:430px;margin:0 auto;background:var(--bg);
+      /* Grain texture overlay */
+      position:relative;
+    }
+    .app::before{
+      content:'';position:fixed;inset:0;max-width:430px;margin:0 auto;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");
+      pointer-events:none;z-index:1000;opacity:.4;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes pinPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}65%{transform:translate(-50%,-50%) scale(1.12)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    @keyframes shimmer{from{background-position:-200% 0}to{background-position:200% 0}}
+
+    /* ══════════════════════════════
+       HEADER
+    ══════════════════════════════ */
+    .header{
+      background:var(--dark);
+      padding:56px 22px 24px;
+      position:relative;overflow:hidden;
+    }
+    .header::before{
+      content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse at 80% 0%, rgba(156,32,48,.2) 0%, transparent 60%),
+                 radial-gradient(ellipse at 0% 100%, rgba(196,160,90,.08) 0%, transparent 50%);
+      pointer-events:none;
+    }
+    .header::after{
+      content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(196,160,90,.3),transparent);
+    }
+    .eyebrow{
+      font-size:9px;letter-spacing:.45em;text-transform:uppercase;
+      color:var(--gold);margin-bottom:8px;font-weight:500;
+    }
+    .header h1{
+      font-family:'Cormorant Garamond',serif;
+      font-size:52px;font-weight:700;color:var(--dark-text);
+      line-height:.95;letter-spacing:-.02em;
+    }
+    .header h1 span{
+      color:var(--accent);
+      font-style:italic;font-weight:300;
+    }
+    .header p{margin-top:12px;font-size:12px;color:var(--dark-muted);line-height:1.65;font-weight:300;letter-spacing:.02em}
+
+    /* ══════════════════════════════
+       MAP
+    ══════════════════════════════ */
+    .map-section{
+      background:var(--dark);
+      padding:16px 16px 20px;
+      position:relative;
+    }
+    .map-section::before{
+      content:'WINE MAP';
+      position:absolute;top:20px;left:22px;
+      font-size:8px;letter-spacing:.4em;color:var(--gold);font-weight:500;
+    }
+    .map-section h2{
+      font-family:'Cormorant Garamond',serif;
+      font-size:18px;font-weight:600;color:var(--dark-text);
+      margin-bottom:12px;margin-top:2px;
+    }
+    .map-canvas{
+      background:linear-gradient(145deg,#F0E8DC 0%,#E8DDD0 50%,#EDE4D8 100%);
+      border-radius:18px;position:relative;height:270px;overflow:hidden;
+      touch-action:none;-webkit-user-select:none;user-select:none;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.5),var(--shadow-md);
+      border:1px solid rgba(60,40,20,.06);
+    }
+    .map-axis-h{position:absolute;top:50%;left:6%;right:6%;height:.5px;background:rgba(80,55,35,.18);pointer-events:none}
+    .map-axis-v{position:absolute;left:50%;top:10%;bottom:8%;width:.5px;background:rgba(80,55,35,.18);pointer-events:none}
+    .map-label{
+      position:absolute;font-size:8px;letter-spacing:.2em;
+      text-transform:uppercase;color:rgba(80,60,40,.5);
+      pointer-events:none;font-family:'DM Sans',sans-serif;font-weight:500;
+    }
+    .map-watermark{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      font-size:9px;letter-spacing:.4em;text-transform:uppercase;
+      color:rgba(100,75,50,.06);font-weight:700;pointer-events:none;
+    }
+    .wine-pin{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:2;opacity:0;animation:pinPop .35s ease forwards}
+    .wine-pin:active{z-index:10}
+    .copa-icon{display:block;transition:transform .15s,filter .15s}
+    .wine-pin:active .copa-icon{transform:scale(1.2);filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
+    .pin-tooltip{
+      position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);
+      background:var(--dark2);border-radius:10px;padding:8px 13px;
+      white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;
+      z-index:50;border:1px solid rgba(196,160,90,.2);
+      box-shadow:0 8px 24px rgba(0,0,0,.3);
+    }
+    .pin-tooltip.show{opacity:1}
+    .pin-tooltip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--dark2)}
+    .pin-tooltip.below{bottom:auto;top:calc(100% + 10px)}
+    .pin-tooltip.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--dark2)}
+    .pt-name{font-size:12px;font-weight:500;color:var(--dark-text);line-height:1.2}
+    .pt-price{font-size:11px;color:var(--gold);margin-top:2px;font-weight:400}
+
+    .legend-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+    .legend-pill{
+      display:flex;align-items:center;gap:5px;
+      background:var(--dark3);border:1px solid rgba(196,160,90,.12);
+      border-radius:20px;padding:5px 13px;font-size:11px;color:var(--dark-sub);
+      transition:border-color .15s;
+    }
+    .legend-pill:hover{border-color:rgba(196,160,90,.3)}
+    .legend-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+    /* ══════════════════════════════
+       TABS
+    ══════════════════════════════ */
+    .tab-bar{
+      display:flex;background:var(--card);
+      border-bottom:1px solid var(--border);
+      position:sticky;top:0;z-index:100;overflow-x:auto;
+      box-shadow:0 2px 12px rgba(20,10,0,.06);
+    }
+    .tab-bar::-webkit-scrollbar{display:none}
+    .tab-btn{
+      flex:1;min-width:60px;padding:14px 6px;text-align:center;
+      font-size:11px;font-weight:500;letter-spacing:.05em;
+      color:var(--muted);border-bottom:2px solid transparent;
+      cursor:pointer;transition:all .2s;
+      background:none;border-top:none;border-left:none;border-right:none;
+      font-family:'DM Sans',sans-serif;white-space:nowrap;text-transform:uppercase;
+    }
+    .tab-btn.active{color:var(--text);border-bottom-color:var(--accent)}
+    .tab-content{display:none;padding:20px 16px;padding-bottom:48px;animation:fadeUp .25s ease}
+    .tab-content.active{display:block}
+    .section-title{
+      font-family:'Cormorant Garamond',serif;
+      font-size:20px;font-weight:600;color:var(--text);
+      margin-bottom:14px;margin-top:2px;
+    }
+
+    /* ══════════════════════════════
+       WINE LIST
+    ══════════════════════════════ */
+    .wine-card{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:16px;padding:13px 15px;margin-bottom:9px;
+      display:flex;align-items:flex-start;gap:12px;cursor:pointer;
+      transition:border-color .2s,box-shadow .2s,transform .15s;
+      position:relative;box-shadow:var(--shadow-sm);
+    }
+    .wine-card:hover{box-shadow:var(--shadow-md);border-color:rgba(60,40,20,.18)}
+    .wine-card:active{transform:scale(.98)}
+    .wine-card.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(155,32,48,.08)}
+    .wc-badge{
+      width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
+      justify-content:center;font-size:10px;font-weight:600;color:#fff;
+      flex-shrink:0;margin-top:2px;box-shadow:0 2px 6px rgba(0,0,0,.2);
+    }
+    .wc-info{flex:1;min-width:0}
+    .wc-name{font-size:13px;font-weight:500;color:var(--text);letter-spacing:.01em}
+    .wc-sub{font-size:11px;color:var(--muted);margin-top:2px;font-weight:300}
+    .wc-price{
+      font-family:'Cormorant Garamond',serif;
+      font-size:17px;font-weight:600;color:var(--text);white-space:nowrap;
+    }
+    .wc-star{position:absolute;top:11px;right:13px;font-size:9px;color:var(--accent);font-weight:600;letter-spacing:.05em}
+
+    /* ══════════════════════════════
+       FICHA TÉCNICA
+    ══════════════════════════════ */
+    .ficha-card{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:18px;padding:18px;margin-bottom:12px;
+      box-shadow:var(--shadow-sm);
+    }
+    .ficha-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:12px}
+    .ficha-tipo-badge{
+      border-radius:20px;padding:4px 14px;font-size:10px;font-weight:600;
+      color:#fff;white-space:nowrap;flex-shrink:0;letter-spacing:.06em;text-transform:uppercase;
+      box-shadow:0 2px 8px rgba(0,0,0,.2);
+    }
+    .ficha-name{
+      font-family:'Cormorant Garamond',serif;
+      font-size:22px;font-weight:600;color:var(--text);line-height:1.1;
+    }
+    .ficha-winery{font-size:11px;color:var(--muted);margin-top:4px;font-weight:300;letter-spacing:.04em;text-transform:uppercase}
+    .ficha-note{
+      background:var(--dark);border-radius:12px;padding:14px 16px;
+      font-size:13px;color:var(--dark-sub);font-style:italic;
+      line-height:1.7;margin-bottom:14px;
+      border-left:2px solid var(--gold);
+    }
+    .ficha-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+    .ficha-item{
+      background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:11px 13px;
+      transition:border-color .15s;
+    }
+    .fi-label{
+      font-size:8px;letter-spacing:.25em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:4px;font-weight:500;
+    }
+    .fi-val{font-size:12px;font-weight:500;color:var(--text);line-height:1.3}
+    .ficha-placeholder{text-align:center;padding:56px 0;color:var(--muted);font-size:13px;line-height:1.8}
+
+    /* Maridaje */
+    .maridaje-section{margin-bottom:14px}
+    .maridaje-title{
+      font-size:8px;letter-spacing:.3em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:9px;font-weight:500;
+    }
+    .maridaje-pills{display:flex;flex-wrap:wrap;gap:6px}
+    .maridaje-pill{
+      display:flex;align-items:center;gap:5px;
+      background:var(--bg);border:1px solid var(--border);
+      border-radius:20px;padding:5px 12px;font-size:11px;color:var(--text);font-weight:400;
+    }
+    .maridaje-icon{font-size:13px}
+
+    /* Perfil de sabor */
+    .perfil-section{margin-bottom:14px}
+    .perfil-title{
+      font-size:8px;letter-spacing:.3em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:10px;font-weight:500;
+    }
+    .perfil-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .perfil-label{font-size:11px;color:var(--muted);width:56px;flex-shrink:0;font-weight:300}
+    .perfil-bar-bg{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+    .perfil-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s ease}
+    .perfil-val{font-size:10px;color:var(--muted);width:16px;text-align:right;flex-shrink:0}
+
+    /* Bodega info */
+    .bodega-section{
+      background:var(--dark2);border-radius:14px;padding:15px 16px;margin-bottom:0;
+      border:1px solid rgba(196,160,90,.1);
+    }
+    .bodega-label{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-weight:500}
+    .bodega-text{font-size:12px;color:var(--dark-sub);line-height:1.7;font-weight:300}
+
+    /* ══════════════════════════════
+       CHARCUTERÍA
+    ══════════════════════════════ */
+    .charc-item{
+      background:var(--card);border:1px solid var(--border);border-radius:14px;
+      padding:13px 15px;margin-bottom:8px;
+      display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+      box-shadow:var(--shadow-sm);
+    }
+    .charc-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
+    .charc-detail{font-size:11px;color:var(--muted);font-weight:300}
+    .charc-price{
+      font-family:'Cormorant Garamond',serif;
+      font-size:17px;font-weight:600;color:var(--text);white-space:nowrap;
+    }
+
+    /* ══════════════════════════════
+       SOMMELIER
+    ══════════════════════════════ */
+    .somm-intro{
+      background:var(--dark2);border-radius:18px;padding:24px 20px;margin-bottom:16px;
+      text-align:center;border:1px solid rgba(196,160,90,.1);
+      position:relative;overflow:hidden;
+    }
+    .somm-intro::before{
+      content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse at 50% 0%,rgba(155,32,48,.15) 0%,transparent 70%);
+      pointer-events:none;
+    }
+    .somm-intro h3{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--dark-text);margin-bottom:8px;font-style:italic}
+    .somm-intro p{font-size:13px;color:var(--dark-sub);line-height:1.6;font-weight:300}
+    .somm-start-btn{
+      margin-top:16px;background:var(--accent);color:#fff;border:none;
+      border-radius:12px;padding:13px 28px;font-size:13px;font-weight:500;
+      cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;
+      letter-spacing:.06em;text-transform:uppercase;
+      box-shadow:0 4px 16px rgba(155,32,48,.3);
+      transition:box-shadow .2s,transform .15s;
+    }
+    .somm-start-btn:active{transform:scale(.98)}
+    .somm-step{display:none}
+    .somm-step.active{display:block;animation:fadeUp .25s ease}
+    .somm-question{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text);margin-bottom:6px;line-height:1.25}
+    .somm-sub{font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:300}
+    .somm-options{display:flex;flex-direction:column;gap:9px}
+    .somm-opt{
+      background:var(--card);border:1px solid var(--border);border-radius:14px;
+      padding:15px 16px;cursor:pointer;
+      transition:all .2s;display:flex;align-items:center;gap:13px;
+      box-shadow:var(--shadow-sm);
+    }
+    .somm-opt:hover{border-color:rgba(60,40,20,.2);box-shadow:var(--shadow-md)}
+    .somm-opt:active,.somm-opt.selected{background:#EDE6DC;border-color:var(--text)}
+    .somm-opt-icon{font-size:22px;flex-shrink:0}
+    .somm-opt-text{font-size:14px;font-weight:500;color:var(--text)}
+    .somm-opt-sub{font-size:12px;color:var(--muted);margin-top:2px;font-weight:300}
+    .somm-progress{display:flex;gap:4px;margin-bottom:20px}
+    .somm-dot{height:2px;flex:1;border-radius:2px;background:var(--border);transition:background .3s}
+    .somm-dot.done{background:var(--text)}
+    .somm-dot.active{background:var(--accent)}
+    .somm-results{display:none}
+    .somm-results h3{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--text);margin-bottom:5px}
+    .somm-results p{font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:300}
+    .somm-result-card{
+      background:var(--card);border:1px solid var(--border);border-radius:16px;
+      padding:15px;margin-bottom:10px;cursor:pointer;
+      transition:border-color .2s,box-shadow .2s;box-shadow:var(--shadow-sm);
+    }
+    .somm-result-card:hover{box-shadow:var(--shadow-md);border-color:rgba(60,40,20,.18)}
+    .src-header{display:flex;align-items:flex-start;gap:11px;margin-bottom:8px}
+    .src-rank{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+    .src-name{font-size:14px;font-weight:500;color:var(--text);line-height:1.2}
+    .src-why{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.45;font-weight:300}
+    .src-price{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--text);margin-top:8px}
+    .src-maridaje{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+    .src-pill{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--text);font-weight:300}
+    .somm-restart{background:transparent;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;margin-top:4px;transition:border-color .2s}
+    .somm-restart:hover{border-color:var(--text)}
+
+    /* ══════════════════════════════
+       COMPRAR
+    ══════════════════════════════ */
+    .comprar-btn{
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      margin-top:16px;padding:15px;width:100%;
+      background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);
+      color:#fff;border-radius:13px;font-size:13px;font-weight:500;
+      text-decoration:none;font-family:'DM Sans',sans-serif;
+      letter-spacing:.06em;text-transform:uppercase;
+      box-shadow:0 4px 20px rgba(155,32,48,.3);
+      transition:box-shadow .2s,transform .15s;
+    }
+    .comprar-btn:active{opacity:.9;transform:scale(.99)}
+
+    /* ══════════════════════════════
+       CALIFICÁ
+    ══════════════════════════════ */
+    .form-card{
+      background:var(--card);border:1px solid var(--border);border-radius:18px;
+      padding:20px;margin-bottom:12px;box-shadow:var(--shadow-sm);
+    }
+    .form-card h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);margin-bottom:5px;font-weight:600}
+    .form-card .form-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5;font-weight:300}
+    .field-group{margin-bottom:20px}
+    .field-label{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:11px}
+    .field-label span{font-size:10px;color:var(--muted);font-weight:300;margin-left:4px;text-transform:none;letter-spacing:0}
+    .wine-select{
+      width:100%;background:var(--bg);border:1px solid var(--border);
+      border-radius:11px;padding:11px 14px;font-size:13px;color:var(--text);
+      font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer;
+      transition:border-color .2s;
+    }
+    .wine-select:focus{border-color:var(--text)}
+    .score-display{text-align:center;margin-bottom:18px}
+    .score-big{
+      font-family:'Cormorant Garamond',serif;
+      font-size:64px;font-weight:700;color:var(--accent);line-height:1;
+    }
+    .score-lbl{font-size:13px;color:var(--muted);margin-top:5px;min-height:18px;font-weight:300}
+    .main-track-wrap{position:relative;padding-bottom:26px}
+    .main-track{height:4px;background:var(--border);border-radius:2px;position:relative;cursor:pointer}
+    .main-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+    .main-handle{position:absolute;top:50%;transform:translate(-50%,-50%);cursor:grab;z-index:3;transition:transform .1s}
+    .main-handle:active{transform:translate(-50%,-50%) scale(1.2)}
+    .main-ticks{display:flex;justify-content:space-between;margin-top:8px}
+    .main-ticks span{font-size:10px;color:var(--muted);width:10px;text-align:center}
+    .main-ticks span.hi{color:var(--accent);font-weight:600;font-size:11px}
+    .attr-list{display:flex;flex-direction:column;gap:18px}
+    .attr-row{display:flex;align-items:center;gap:12px}
+    .attr-name{font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text);width:62px;flex-shrink:0}
+    .attr-slider-wrap{flex:1}
+    .attr-track{height:4px;background:var(--border);border-radius:2px;position:relative;cursor:pointer}
+    .attr-fill{height:100%;border-radius:2px}
+    .attr-handle{position:absolute;top:50%;transform:translate(-50%,-50%);cursor:grab;z-index:3}
+    .attr-handle:active{transform:translate(-50%,-50%) scale(1.15)}
+    .attr-dots{display:flex;gap:5px;margin-top:6px}
+    .attr-dot{width:7px;height:7px;border-radius:50%}
+    .attr-val{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;width:28px;text-align:right;flex-shrink:0}
+    .opinion-input{
+      width:100%;background:var(--bg);border:1px solid var(--border);border-radius:11px;
+      padding:11px 14px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;
+      outline:none;resize:none;line-height:1.6;font-weight:300;transition:border-color .2s;
+    }
+    .opinion-input:focus{border-color:var(--text)}
+    .submit-btn{
+      width:100%;background:var(--text);color:#fff;border:none;border-radius:13px;
+      padding:15px;font-size:13px;font-weight:500;cursor:pointer;
+      font-family:'DM Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      transition:opacity .15s,transform .15s;margin-top:6px;
+      box-shadow:0 4px 16px rgba(20,10,0,.2);
+    }
+    .submit-btn:active{opacity:.85;transform:scale(.99)}
+    .submit-btn:disabled{opacity:.4;cursor:not-allowed}
+    .form-success{
+      background:linear-gradient(135deg,#0F2E1A,#1A4228);
+      border:1px solid rgba(100,180,100,.2);border-radius:18px;
+      padding:28px 20px;text-align:center;margin-bottom:12px;
+    }
+    .form-success .success-icon{font-size:40px;margin-bottom:12px;display:block}
+    .form-success h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#C8E8C8;margin-bottom:6px}
+    .form-success p{font-size:13px;color:rgba(200,232,200,.7);line-height:1.55;font-weight:300}
+    .form-success button{
+      margin-top:16px;background:transparent;border:1px solid rgba(100,180,100,.3);
+      border-radius:10px;padding:10px 22px;font-size:12px;color:rgba(200,232,200,.8);
+      cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;
+      transition:border-color .2s;
+    }
+
+    /* ══════════════════════════════
+       WHATSAPP POPUP
+    ══════════════════════════════ */
+    .wa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
+    .wa-sheet{
+      background:var(--card);border-radius:24px 24px 0 0;padding:30px 22px 44px;
+      width:100%;max-width:430px;animation:slideUp .3s cubic-bezier(.22,1,.36,1);
+      border-top:1px solid var(--border);box-shadow:0 -8px 40px rgba(0,0,0,.2);
+    }
+    .wa-sheet h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);margin-bottom:6px;font-weight:600}
+    .wa-sheet p{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:20px;font-weight:300}
+    .wa-phone-input{
+      width:100%;background:var(--bg);border:1px solid var(--border);border-radius:11px;
+      padding:13px 15px;font-size:15px;color:var(--text);font-family:'DM Sans',sans-serif;
+      outline:none;margin-bottom:10px;letter-spacing:.02em;transition:border-color .2s;
+    }
+    .wa-phone-input:focus{border-color:#25D366}
+    .wa-send-btn{
+      width:100%;background:#25D366;color:#fff;border:none;border-radius:13px;
+      padding:15px;font-size:13px;font-weight:500;cursor:pointer;
+      font-family:'DM Sans',sans-serif;display:flex;align-items:center;
+      justify-content:center;gap:8px;margin-bottom:10px;
+      letter-spacing:.06em;text-transform:uppercase;
+      box-shadow:0 4px 16px rgba(37,211,102,.25);transition:opacity .15s;
+    }
+    .wa-send-btn:active{opacity:.85}
+    .wa-skip-btn{
+      width:100%;background:transparent;border:1px solid var(--border);border-radius:13px;
+      padding:13px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+      color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color .2s;
+    }
+    .wa-skip-btn:hover{border-color:var(--text)}
+
+    /* ══════════════════════════════
+       FOOTER
+    ══════════════════════════════ */
+    .footer{
+      background:var(--dark);padding:24px 20px;text-align:center;
+      border-top:1px solid rgba(196,160,90,.1);
+    }
+    .footer p{font-size:11px;color:var(--dark-muted);line-height:1.9;font-weight:300;letter-spacing:.02em}
+    .footer strong{color:var(--gold);font-weight:400}
+
+    /* ══════════════════════════════
+       LOADING
+    ══════════════════════════════ */
+    #loading{
+      position:fixed;inset:0;
+      background:var(--dark);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      z-index:999;transition:opacity .5s;
+    }
+    #loading::before{
+      content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse at 50% 40%,rgba(155,32,48,.15) 0%,transparent 65%);
+    }
+    #loading h2{
+      font-family:'Cormorant Garamond',serif;
+      font-size:48px;font-weight:700;color:var(--dark-text);letter-spacing:-.02em;
+    }
+    #loading h2 span{color:var(--accent);font-style:italic;font-weight:300}
+    #loading p{font-size:11px;color:var(--dark-muted);margin-top:10px;letter-spacing:.2em;text-transform:uppercase}
+
+    /* ── AXIS DESCRIPTION ── */
+    .axis-desc{
+      margin-top:10px;display:flex;flex-direction:column;gap:3px;
+    }
+    .axis-desc span{font-size:11px;color:var(--dark-sub);font-weight:300}
+    .axis-desc strong{color:var(--dark-text);font-weight:500}
+    .axis-map-hint{font-size:11px;color:var(--dark-muted);margin-top:6px;font-weight:300}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <h2>125<span>cc</span></h2>
+  <p>Cargando carta…</p>
+</div>
+
+<div class="app" id="app" style="display:none">
+
+  <div class="header">
+    <div class="eyebrow" id="bar-eyebrow">Wine Bar</div>
+    <h1 id="titulo">125<span>cc</span></h1>
+    <p id="descripcion"></p>
+  </div>
+
+  <div class="map-section">
+    <div class="eyebrow" style="color:var(--dark-muted);margin-bottom:4px">Wine map</div>
+    <h2>Mapa del vino</h2>
+    <div class="map-canvas" id="mapCanvas">
+      <div class="map-watermark" id="mapWatermark"></div>
+      <div class="map-axis-h"></div>
+      <div class="map-axis-v"></div>
+      <div class="map-label" style="left:50%;top:5%;transform:translateX(-50%)">Potente</div>
+      <div class="map-label" style="left:50%;bottom:3%;transform:translateX(-50%)">Suave</div>
+      <div class="map-label" style="left:2%;top:50%;transform:translateY(-140%)">Fresco</div>
+      <div class="map-label" style="right:1%;top:50%;transform:translateY(-140%)">Complejo</div>
+      <div id="mapDots"></div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-pill"><div class="legend-dot" style="background:var(--tinto)"></div>Tinto</div>
+      <div class="legend-pill"><div class="legend-dot" style="background:var(--blanco)"></div>Blanco</div>
+      <div class="legend-pill"><div class="legend-dot" style="background:var(--rosado)"></div>Rosado</div>
+      <div class="legend-pill"><div class="legend-dot" style="background:var(--naranja)"></div>Naranjo</div>
+    </div>
+    <div style="margin-top:9px;font-size:11px;color:var(--dark-sub);display:flex;gap:14px;flex-wrap:wrap">
+      <span>↔ <strong style="color:var(--dark-text)">Fresco → Complejo</strong> perfil aromático</span>
+      <span>↕ <strong style="color:var(--dark-text)">Suave → Potente</strong> intensidad en boca</span>
+    </div>
+    <div style="margin-top:7px;font-size:11px;color:var(--dark-muted)">Tocá una copita para ver la ficha del vino</div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('carta',this)">Carta</button>
+    <button class="tab-btn" onclick="showTab('ficha',this)">Ficha</button>
+    <button class="tab-btn" onclick="showTab('sommelier',this)">Sommelier</button>
+    <button class="tab-btn" onclick="showTab('charc',this)">Tapeos</button>
+    <button class="tab-btn" onclick="showTab('puntuar',this)">Calificá</button>
+  </div>
+
+  <!-- CARTA -->
+  <div class="tab-content active" id="tab-carta">
+    <div class="section-title">Carta por copa</div>
+    <div id="wineList"></div>
+  </div>
+
+  <!-- FICHA -->
+  <div class="tab-content" id="tab-ficha">
+    <div id="fichaContent">
+      <div class="ficha-placeholder">
+        <div style="font-size:32px;margin-bottom:8px">🍷</div>
+        Tocá una copita en el mapa<br>o un vino de la carta<br>para ver su ficha completa.
+      </div>
+    </div>
+  </div>
+
+  <!-- SOMMELIER -->
+  <div class="tab-content" id="tab-sommelier">
+    <div id="sommContent"></div>
+  </div>
+
+  <!-- MENÚ -->
+  <div class="tab-content" id="tab-charc">
+    <div class="section-title">Tapeos</div>
+    <div id="charcList"></div>
+  </div>
+
+  <!-- PUNTUAR -->
+  <div class="tab-content" id="tab-puntuar">
+    <div id="puntuarContent"></div>
+  </div>
+
+  <div class="footer">
+    <p id="footerInfo"></p>
+  </div>
+
+</div>
+
+<script>
+const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranja:"#d4721a"};
+const TYPE_LABEL={Tinto:"Tinto",Blanco:"Blanco",Rosado:"Rosado",Naranja:"Naranjo"};
+function precioBottella(p){
+  // Devuelve el número crudo del precio botella
+  if(!p) return 0;
+  const clean = p.toString().replace(/\$/g,'').trim();
+  const n = parseFloat(clean.replace(/,/g,''));
+  return isNaN(n) ? 0 : n;
 }
+function fmtPrecio(p){
+  // Precio copa con multiplicador por rango de botella:
+  // $10k–$13.999 → ×1.70 | $14k–$17.999 → ×1.60 | $18k–$29.999 → ×1.50 | $30k+ → ×1.25
+  const botella = precioBottella(p);
+  if(!botella) return p;
+  let factor = 1.50; // default
+  if(botella < 14000)      factor = 1.70;
+  else if(botella < 18000) factor = 1.60;
+  else if(botella < 30000) factor = 1.50;
+  else                     factor = 1.25;
+  const copa = Math.round(((botella / 6) * factor) / 500) * 500;
+  return '$' + copa.toLocaleString('es-AR');
+}
+const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos":"🧀","jamón crudo":"🍖","tabla":"🪵","fiambres":"🥓","salmón":"🐟","mortadela":"🥩","aceitunas":"🫒","panera":"🍞","salame":"🥩"};
+
+let wines=[], selectedId=null;
+
+// ── Caché del cliente (5 minutos) ──────────────────────────────
+const CACHE_KEY='125cc_wines_v1';
+const CACHE_TTL=5*60*1000;
+function getCachedWines(){
+  try{const raw=localStorage.getItem(CACHE_KEY);if(!raw)return null;const{data,ts}=JSON.parse(raw);if(Date.now()-ts>CACHE_TTL)return null;return data;}catch(e){return null;}
+}
+function setCachedWines(data){
+  try{localStorage.setItem(CACHE_KEY,JSON.stringify({data,ts:Date.now()}));}catch(e){}
+}
+
+function initApp(config, apiWines){
+  if(apiWines && apiWines.length>0){ wines=apiWines; setCachedWines(apiWines); }
+  document.getElementById('bar-eyebrow').textContent=config.bar.nombre;
+  document.getElementById('titulo').innerHTML=config.bar.subtitulo
+    ?`${config.bar.subtitulo.replace('cc','<span>cc</span>')}`
+    :config.bar.nombre;
+  document.getElementById('descripcion').textContent=config.bar.descripcion;
+  document.getElementById('mapWatermark').textContent=`${config.bar.nombre} · ${config.bar.subtitulo||''}`;
+  const parts=[config.bar.instagram,config.bar.direccion].filter(Boolean);
+  document.getElementById('footerInfo').innerHTML=parts.map(p=>`<strong>${p}</strong>`).join(' &nbsp;·&nbsp; ');
+  buildMap(); renderWineList(); renderCharc(config.charcuteria); initSommelier();
+  setTimeout(()=>{document.getElementById('loading').classList.add('hidden');document.getElementById('app').style.display='flex';},200);
+}
+
+fetch('./vinos.json').then(r=>r.json()).then(config=>{
+    const cached=getCachedWines();
+    if(cached && cached.length>0){
+      // Mostrar inmediato desde caché
+      wines=cached;
+      initApp(config, null);
+      // Actualizar en background
+      fetch('/api/obtener-vinos').then(r=>r.json()).then(d=>{
+        if(d && d.vinos && d.vinos.length>0){setCachedWines(d.vinos);wines=d.vinos;buildMap();renderWineList();}
+      }).catch(()=>{});
+    } else {
+      // Primera visita — esperar la API
+      fetch('/api/obtener-vinos').then(r=>r.json()).catch(()=>null).then(d=>{
+        const apiWines=(d && d.vinos && d.vinos.length>0)?d.vinos:config.vinos;
+        wines=apiWines;
+        initApp(config, apiWines);
+      });
+    }
+  })
+  .catch(()=>{
+    document.getElementById('loading').innerHTML='<p style="color:#f87171;font-size:14px;padding:20px;text-align:center">Error cargando el menú.<br>Verificá tu conexión.</p>';
+  });
+
+/* ── MAP ── */
+function buildMap(){
+  const canvas=document.getElementById('mapCanvas');
+  if(!document.getElementById('map-q1')){
+    [{id:'map-q1',s:'top:0;left:0;width:50%;height:50%;background:rgba(139,0,0,.05)'},
+     {id:'map-q2',s:'top:0;right:0;width:50%;height:50%;background:rgba(180,83,9,.05)'},
+     {id:'map-q3',s:'bottom:0;left:0;width:50%;height:50%;background:rgba(122,184,58,.05)'},
+     {id:'map-q4',s:'bottom:0;right:0;width:50%;height:50%;background:rgba(212,114,26,.04)'},
+    ].forEach(q=>{
+      const d=document.createElement('div');
+      d.id=q.id;
+      d.style.cssText='position:absolute;pointer-events:none;'+q.s;
+      canvas.insertBefore(d,canvas.firstChild);
+    });
+  }
+  const c=document.getElementById('mapDots');
+  c.innerHTML='';
+  wines.forEach((w,idx)=>{
+    const left=50+w.x*0.4, top=50-w.y*0.36;
+    const color=TYPE_COLOR[w.tipo]||'#888';
+    const isSel=w.id===selectedId, size=isSel?38:28;
+    const num=idx+1;
+    const pin=document.createElement('div');
+    pin.className='wine-pin';
+    pin.style.cssText=`left:${left}%;top:${top}%;z-index:${isSel?20:2};animation-delay:${idx*55}ms`;
+    if(isSel) pin.style.transform='translate(-50%,-50%) scale(1.15)';
+    const belowClass = top < 50 ? ' below' : '';
+    pin.innerHTML=`${copaSVG(color,size,num)}<div class="pin-tooltip${isSel?' show':''}${belowClass}" id="tip-${w.id}"><div class="pt-name">${num}. ${w.nombre}</div><div class="pt-price">${fmtPrecio(w.precio)} · ${TYPE_LABEL[w.tipo]||w.tipo}</div></div>`;
+    pin.addEventListener('click',e=>{
+      e.stopPropagation();
+      selectedId=(selectedId===w.id)?null:w.id;
+      buildMap(); renderWineList();
+      if(selectedId){ renderFicha(wines.find(x=>x.id===selectedId)); showTab('ficha',document.querySelectorAll('.tab-btn')[1]); }
+    });
+    c.appendChild(pin);
+  });
+}
+document.addEventListener('click',()=>{ if(selectedId!==null){selectedId=null;buildMap();renderWineList();} });
+function copaSVG(color,size,num){
+  const w=size, h=Math.round(size*1.4);
+  const numEl = num!=null ? `<text x="10" y="10.5" text-anchor="middle" font-size="5.5" font-weight="700" fill="rgba(255,255,255,0.95)" font-family="sans-serif">${num}</text>` : '';
+  return `<svg class="copa-icon" width="${w}" height="${h}" viewBox="0 0 20 30" fill="none"><path d="M7 2 C7 2 5.5 6 5.5 8.5 C5.5 11.5 7.2 13.5 9.5 14.2 L9.5 22 L7.5 22 L7 24 L13 24 L12.5 22 L10.5 22 L10.5 14.2 C12.8 13.5 14.5 11.5 14.5 8.5 C14.5 6 13 2 13 2 Z" fill="${color}" stroke="rgba(255,255,255,0.45)" stroke-width="0.6"/>${numEl}</svg>`;
+}
+
+/* ── WINE LIST ── */
+function renderWineList(){
+  document.getElementById('wineList').innerHTML=wines.map((w,idx)=>`
+    <div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
+      <div style="flex-shrink:0;margin-top:2px">${copaSVG(TYPE_COLOR[w.tipo]||'#888',28,idx+1)}</div>
+      <div class="wc-info"><div class="wc-name">${w.nombre}</div><div class="wc-sub">${w.bodega} · ${TYPE_LABEL[w.tipo]||w.tipo}</div></div>
+      <div class="wc-price">${fmtPrecio(w.precio)}</div>
+    </div>`).join('');
+}
+function selectWine(id){
+  selectedId=id; buildMap(); renderWineList();
+  renderFicha(wines.find(w=>w.id===id));
+  showTab('ficha',document.querySelectorAll('.tab-btn')[1]);
+}
+
+/* ── FICHA ── */
+function renderFicha(w){
+  if(!w){
+    document.getElementById('fichaContent').innerHTML=`<div class="ficha-placeholder"><div style="font-size:32px;margin-bottom:8px">🍷</div>Tocá una copita en el mapa<br>o un vino de la carta.</div>`;
+    return;
+  }
+  const color=TYPE_COLOR[w.tipo]||'#888';
+  const maridajePills=(w.maridaje||[]).map(m=>`<div class="maridaje-pill"><span class="maridaje-icon">${MARIDAJE_ICON[m]||'•'}</span>${m}</div>`).join('');
+  const perfilRows=w.perfil?Object.entries({Cuerpo:w.perfil.cuerpo,Frescura:w.perfil.frescura,Taninos:w.perfil.taninos}).map(([k,v])=>`
+    <div class="perfil-row">
+      <div class="perfil-label">${k}</div>
+      <div class="perfil-bar-bg"><div class="perfil-bar-fill" style="width:${v/5*100}%"></div></div>
+      <div class="perfil-val">${v}/5</div>
+    </div>`).join(''):'';
+
+  // Bottle image — large, centered, before buy button
+  const bottleSection = w.imagen ? `
+    <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0 8px;border-top:.5px solid var(--border);margin-top:4px">
+      <img src="${w.imagen}" alt="${w.nombre}"
+        onerror="this.parentElement.style.display='none'"
+        style="max-width:140px;max-height:320px;width:auto;height:auto;object-fit:contain;border-radius:8px;filter:drop-shadow(0 4px 16px rgba(0,0,0,.35))">
+    </div>` : '';
+
+  document.getElementById('fichaContent').innerHTML=`
+    <div class="ficha-card">
+      <div class="ficha-header">
+        <div style="flex:1;min-width:0">
+          <div class="fi-label" style="margin-bottom:6px">Ficha técnica</div>
+          <div class="ficha-name">${w.nombre}</div>
+          <div class="ficha-winery">${w.bodega}</div>
+        </div>
+        <div class="ficha-tipo-badge" style="background:${color}">${fmtPrecio(w.precio)}</div>
+      </div>
+      <div class="ficha-note">${w.nota}</div>
+      <div class="ficha-grid">
+        ${[['Varietal',w.varietal],['Región',w.region],['Altitud',w.altitud],['Suelo',w.suelo],['Crianza',w.crianza],['Temperatura',w.temperatura]].map(([l,v])=>`
+          <div class="ficha-item"><div class="fi-label">${l}</div><div class="fi-val">${v}</div></div>`).join('')}
+      </div>
+      ${w.perfil?`<div class="perfil-section"><div class="perfil-title">Perfil del vino <span style="font-size:10px;color:var(--muted);font-weight:400">según la bodega</span></div>${perfilRows}</div>`:''}
+      ${w.maridaje&&w.maridaje.length?`<div class="maridaje-section"><div class="maridaje-title">Va bien con</div><div class="maridaje-pills">${maridajePills}</div></div>`:''}
+      ${w.bodega_info?`<div class="bodega-section"><div class="bodega-label">Sobre la bodega y el terruño</div><div class="bodega-text">${w.bodega_info}</div></div>`:''}
+      ${bottleSection}
+      ${w.tienda_url?`
+        <a href="${w.tienda_url}" target="_blank" rel="noopener" class="comprar-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          Comprá este vino en nuestra tienda
+        </a>`:''}
+    </div>`;
+}
+
+/* ── CHARCUTERÍA ── */
+function renderCharc(items){
+  document.getElementById('charcList').innerHTML=items.map(c=>`
+    <div class="charc-item">
+      <div><div class="charc-name">${c.nombre}</div><div class="charc-detail">${c.detalle}</div></div>
+      <div class="charc-price">${c.precio}</div>
+    </div>`).join('');
+}
+
+/* ── SOMMELIER ── */
+const PREGUNTAS=[
+  {
+    id:'color',
+    pregunta:'¿Qué color te llama hoy?',
+    sub:'Sin presiones, lo que más se te antoja.',
+    opciones:[
+      {val:'tinto',icon:'🍷',label:'Tinto',sub:'Con cuerpo y carácter'},
+      {val:'blanco',icon:'🥂',label:'Blanco o Rosado',sub:'Fresco y liviano'},
+      {val:'naranja',icon:'🫙',label:'Sorprendeme',sub:'Naranjo, Pet Nat, lo que sea'}
+    ]
+  },
+  {
+    id:'estilo',
+    pregunta:'¿Cómo lo querés?',
+    sub:'Pensá en el estado de ánimo de esta noche.',
+    opciones:[
+      {val:'fresco',icon:'💧',label:'Fresco y fácil',sub:'Que entre solo, sin pensar'},
+      {val:'serio',icon:'🧱',label:'Con estructura',sub:'Algo que dure y se piense'},
+      {val:'cualquiera',icon:'🎲',label:'Me da igual',sub:'Lo que mejor maride con algo'}
+    ]
+  },
+  {
+    id:'comida',
+    pregunta:'¿Va con algo para comer?',
+    sub:'Así encontramos el maridaje perfecto.',
+    opciones:[
+      {val:'tabla',icon:'🪵',label:'Tabla o charcutería',sub:'Quesos, jamón, fiambres'},
+      {val:'solo',icon:'🍷',label:'Solo, por ahora',sub:'A pelo, sin comida'},
+      {val:'carnes',icon:'🥩',label:'Algo más contundente',sub:'Carnes o quesos duros'}
+    ]
+  },
+  {
+    id:'precio',
+    pregunta:'¿Cuánto querés invertir?',
+    sub:'Sin juicios, todos los vinos son buenos.',
+    opciones:[
+      {val:'bajo',icon:'😊',label:'Lo más accesible',sub:'Quiero algo rico sin gastar mucho'},
+      {val:'medio',icon:'👌',label:'Precio medio',sub:'Un punto equilibrado'},
+      {val:'alto',icon:'✨',label:'Lo mejor de la carta',sub:'Esta noche me doy un gusto'}
+    ]
+  }
+];
+
+let sommAnswers={}, sommStep=0;
+
+function initSommelier(){
+  renderSommIntro();
+}
+
+function renderSommIntro(){
+  document.getElementById('sommContent').innerHTML=`
+    <div class="somm-intro">
+      <div style="font-size:28px;margin-bottom:8px">🍾</div>
+      <h3>¿No sabés por dónde empezar?</h3>
+      <p style="margin-bottom:10px">4 preguntas rápidas y te orientamos hacia los vinos que mejor te van esta noche.</p>
+      <p style="font-size:12px;color:var(--dark-muted);margin-bottom:14px">Nuestro sommelier está en el salón — después podés consultarle cualquier duda.</p>
+      <button class="somm-start-btn" onclick="startSommelier()">Ayudame a elegir</button>
+    </div>`;
+}
+
+function startSommelier(){
+  sommAnswers={}; sommStep=0;
+  renderSommStep(0);
+}
+
+function renderSommStep(step){
+  const p=PREGUNTAS[step];
+  const progressDots=PREGUNTAS.map((_,i)=>`<div class="somm-dot${i<step?' done':i===step?' active':''}"></div>`).join('');
+  const backBtn=step>0?`<button onclick="goBackSomm()" style="background:transparent;border:none;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;margin-bottom:14px">← Volver</button>`:'';
+  document.getElementById('sommContent').innerHTML=`
+    <div class="somm-progress">${progressDots}</div>
+    ${backBtn}
+    <div class="somm-step active">
+      <div class="somm-question">${p.pregunta}</div>
+      <div class="somm-sub">${p.sub}</div>
+      <div class="somm-options">
+        ${p.opciones.map(o=>`
+          <div class="somm-opt" onclick="answerSomm('${p.id}','${o.val}')">
+            <div class="somm-opt-icon">${o.icon}</div>
+            <div>
+              <div class="somm-opt-text">${o.label}</div>
+              <div class="somm-opt-sub">${o.sub}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function goBackSomm(){
+  if(sommStep>0){
+    sommStep--;
+    delete sommAnswers[PREGUNTAS[sommStep].id];
+    renderSommStep(sommStep);
+  }
+}
+
+function answerSomm(qid, val){
+  sommAnswers[qid]=val;
+  sommStep++;
+  if(sommStep<PREGUNTAS.length){ renderSommStep(sommStep); }
+  else { renderSommResults(); }
+}
+
+function renderSommResults(){
+  const scored=wines.map(w=>{
+    let score=0, reasons=[];
+    const {color,estilo,comida}=sommAnswers;
+
+    // color match
+    if(color==='tinto'&&w.tipo==='Tinto'){score+=3;reasons.push('es tinto');}
+    if(color==='blanco'&&(w.tipo==='Blanco'||w.tipo==='Rosado')){score+=3;reasons.push('es fresco y liviano');}
+    if(color==='naranja'&&(w.tipo==='Naranja'||w.varietal.includes('ancestral')||w.varietal.includes('espumoso'))){score+=4;reasons.push('es una elección diferente');}
+    if(color==='cualquiera'){score+=1;}
+
+    // estilo match
+    const cuerpo=w.perfil?w.perfil.cuerpo:3;
+    const frescura=w.perfil?w.perfil.frescura:3;
+    if(estilo==='fresco'&&frescura>=4){score+=3;reasons.push('entra fácil');}
+    if(estilo==='serio'&&cuerpo>=4){score+=3;reasons.push('tiene estructura y cuerpo');}
+    if(estilo==='cualquiera'){score+=1;}
+
+    // comida match
+    if(comida==='tabla'&&w.maridaje&&w.maridaje.includes('tabla')){score+=2;reasons.push('va perfecto con tabla');}
+    if(comida==='carnes'&&w.maridaje&&w.maridaje.includes('carnes rojas')){score+=2;reasons.push('ideal para carnes');}
+    if(comida==='solo'){score+=1;}
+
+    // precio match
+    const precioNum = parseFloat((w.precio||'0').replace(/[$\\.]/g,'').replace(',','.'));
+    if(sommAnswers.precio==='bajo'&&precioNum<=8000){score+=3;reasons.push('entra en tu presupuesto');}
+    if(sommAnswers.precio==='medio'&&precioNum>=8000&&precioNum<=10000){score+=3;reasons.push('precio justo');}
+    if(sommAnswers.precio==='alto'&&precioNum>=12000){score+=3;reasons.push('lo mejor de la carta');}
+    if(sommAnswers.precio==='bajo'&&precioNum>=12000){score-=2;} // penalizar caro cuando quiere barato
+
+    return {...w, score, reasons};
+  }).sort((a,b)=>b.score-a.score).slice(0,3);
+
+  const rankColors=['#c8463a','#78716c','#a8a29e'];
+  const rankLabel=['Ideal para vos','Segunda opción','También podría ser'];
+
+  document.getElementById('sommContent').innerHTML=`
+    <div class="somm-results" style="display:block">
+      <h3>Tus vinos de esta noche</h3>
+      <p>Basado en lo que nos dijiste</p>
+      ${scored.map((w,i)=>`
+        <div class="somm-result-card" onclick="selectWineFromSomm(${w.id})">
+          <div class="src-header">
+            <div class="src-rank" style="background:${rankColors[i]}">${i+1}</div>
+            <div>
+              <div class="src-name">${w.nombre}</div>
+              <div class="src-why">${rankLabel[i]} · ${w.reasons.slice(0,2).join(', ')}</div>
+            </div>
+          </div>
+          <div class="src-price">${fmtPrecio(w.precio)} · ${w.copa||'125 cc'}</div>
+          <div class="src-maridaje">
+            ${(w.maridaje||[]).slice(0,3).map(m=>`<div class="src-pill">${MARIDAJE_ICON[m]||''} ${m}</div>`).join('')}
+          </div>
+        </div>`).join('')}
+      <div style="background:var(--dark);border-radius:12px;padding:14px;margin-top:4px;margin-bottom:8px;text-align:center">
+        <div style="font-size:11px;color:var(--dark-muted);margin-bottom:4px;letter-spacing:.08em;text-transform:uppercase">Sommelier en el salón</div>
+        <div style="font-size:13px;color:var(--dark-sub);line-height:1.5">Contale tus preferencias y te guía al vino perfecto para esta noche.</div>
+      </div>
+      <button class="somm-restart" onclick="startSommelier()">Volver a empezar</button>
+    </div>`;
+}
+
+function selectWineFromSomm(id){
+  selectedId=id; buildMap(); renderWineList();
+  renderFicha(wines.find(w=>w.id===id));
+  showTab('ficha',document.querySelectorAll('.tab-btn')[1]);
+}
+
+/* ── TABS ── */
+function showTab(name,btn){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name==='puntuar') renderFormPuntuar();
+}
+
+/* ── FORMULARIO DEGUSTACIÓN ── */
+const SCORE_LABELS=['','Malo','Flojo','Regular','Correcto','Bueno','Muy bueno','Notable','Excelente','Sobresaliente','Perfecto'];
+const FORM_ATTRS=[
+  {id:'acidez',  name:'Acidez',  color:'#1a7fd4'},
+  {id:'cuerpo',  name:'Cuerpo',  color:'#c8463a'},
+  {id:'taninos', name:'Taninos', color:'#b06010'},
+  {id:'visual',  name:'Visual',  color:'#c8a018'},
+  {id:'gusto',   name:'Gusto',   color:'#c03070'},
+];
+let formState = { puntuacion:0, opinion:'', vinoId:null };
+FORM_ATTRS.forEach(a=>formState[a.id]=3);
+
+function ratingText(n){ return SCORE_LABELS[n]||''; }
+
+function copaSVGForm(color,size=22){
+  return `<svg width="${size}" height="${Math.round(size*1.3)}" viewBox="0 0 20 24" fill="none"><path d="M4 2 C4 2 2 8 2 11 C2 15 5.5 17.5 9 18 L9 21 L6 21 L6 23 L14 23 L14 21 L11 21 L11 18 C14.5 17.5 18 15 18 11 C18 8 16 2 16 2 Z" fill="${color}" stroke="rgba(255,255,255,0.6)" stroke-width="0.8"/></svg>`;
+}
+
+function pctToScore10(p){return Math.max(1,Math.min(10,Math.round(p/100*9)+1));}
+function pctToScore5(p){return Math.max(1,Math.min(5,Math.round(p/100*4)+1));}
+function score10ToPct(s){return (s-1)/9*100;}
+function score5ToPct(s){return (s-1)/4*100;}
+
+function getFormEvtPct(e,el){
+  const r=el.getBoundingClientRect();
+  const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+  return Math.max(0,Math.min(100,x/r.width*100));
+}
+
+function makeFormDrag(trackEl,handleEl,onUpdate){
+  let dragging=false;
+  handleEl.addEventListener('mousedown',e=>{dragging=true;e.preventDefault();});
+  handleEl.addEventListener('touchstart',()=>dragging=true,{passive:true});
+  document.addEventListener('mousemove',e=>{if(dragging)onUpdate(getFormEvtPct(e,trackEl));});
+  document.addEventListener('touchmove',e=>{if(dragging)onUpdate(getFormEvtPct(e,trackEl));},{passive:true});
+  document.addEventListener('mouseup',()=>dragging=false);
+  document.addEventListener('touchend',()=>dragging=false);
+  trackEl.addEventListener('click',e=>onUpdate(getFormEvtPct(e,trackEl)));
+}
+
+function renderFormPuntuar(){
+  if(!wines.length) return;
+  const sel = formState.vinoId ? wines.find(w=>w.id===formState.vinoId) : (selectedId ? wines.find(w=>w.id===selectedId) : wines[0]);
+  if(sel && !formState.vinoId) formState.vinoId = sel.id;
+
+  const mainPct = formState.puntuacion > 0 ? score10ToPct(formState.puntuacion) : 0;
+
+  document.getElementById('puntuarContent').innerHTML=`
+    <div class="form-card">
+      <h3>Puntuá tu vino</h3>
+      <p class="form-sub">Tu opinión nos ayuda a mejorar la carta cada semana.</p>
+
+      <div class="field-group">
+        <label class="field-label">¿Qué vino tomaste?</label>
+        <select class="wine-select" id="form-wine-sel" onchange="formState.vinoId=parseInt(this.value)">
+          ${wines.map(w=>`<option value="${w.id}" ${w.id===formState.vinoId?'selected':''}>${w.nombre} · ${w.precio}</option>`).join('')}
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Puntuación general</label>
+        <div class="score-display">
+          <div class="score-big" id="f-score-num">${formState.puntuacion||'—'}</div>
+          <div class="score-lbl" id="f-score-lbl">${formState.puntuacion?ratingText(formState.puntuacion):'Deslizá la copita'}</div>
+        </div>
+        <div class="main-track-wrap">
+          <div class="main-track" id="f-main-track">
+            <div class="main-fill" id="f-main-fill" style="width:${mainPct}%"></div>
+            <div class="main-handle" id="f-main-handle" style="left:${mainPct>0?mainPct:0}%">
+              ${copaSVGForm('#c8463a',26)}
+            </div>
+          </div>
+          <div class="main-ticks" id="f-main-ticks"></div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Atributos <span>deslizá cada copita · escala 1–5</span></label>
+        <div class="attr-list" id="f-attrs"></div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">Tu opinión <span>opcional</span></label>
+        <textarea class="opinion-input" id="form-opinion" rows="3"
+          placeholder="fresco, re tomable, muy especiado, lo pediría otra vez…"
+          oninput="formState.opinion=this.value">${formState.opinion}</textarea>
+      </div>
+
+      <button class="submit-btn" id="submit-btn" onclick="mostrarPopupWA()" ${!formState.puntuacion?'disabled':''}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        Enviar puntuación
+      </button>
+      ${!formState.puntuacion?`<p style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px">Deslizá la copita para habilitar el envío</p>`:''}
+    </div>`;
+
+  // Build main ticks
+  const tc=document.getElementById('f-main-ticks');
+  for(let i=1;i<=10;i++){
+    const s=document.createElement('span');
+    s.textContent=i;
+    if(i===formState.puntuacion)s.classList.add('hi');
+    tc.appendChild(s);
+  }
+
+  // Main slider drag
+  const mainTrack=document.getElementById('f-main-track');
+  const mainHandle=document.getElementById('f-main-handle');
+  makeFormDrag(mainTrack,mainHandle,pct=>{
+    const val=pctToScore10(pct);
+    formState.puntuacion=val;
+    const p=score10ToPct(val);
+    document.getElementById('f-main-fill').style.width=p+'%';
+    document.getElementById('f-main-handle').style.left=p+'%';
+    document.getElementById('f-score-num').textContent=val;
+    document.getElementById('f-score-lbl').textContent=ratingText(val);
+    document.getElementById('submit-btn').disabled=false;
+    // update ticks
+    document.querySelectorAll('#f-main-ticks span').forEach((s,i)=>{
+      s.classList.toggle('hi',i+1===val);
+    });
+  });
+
+  // Build attr sliders
+  const attrsWrap=document.getElementById('f-attrs');
+  FORM_ATTRS.forEach(a=>{
+    const pct=score5ToPct(formState[a.id]);
+    const row=document.createElement('div');
+    row.className='attr-row';
+    row.innerHTML=`
+      <div class="attr-name">${a.name}</div>
+      <div class="attr-slider-wrap">
+        <div class="attr-track" id="fat-${a.id}">
+          <div class="attr-fill" id="faf-${a.id}" style="width:${pct}%;background:${a.color}"></div>
+          <div class="attr-handle" id="fah-${a.id}" style="left:${pct}%">${copaSVGForm(a.color,20)}</div>
+        </div>
+        <div class="attr-dots" id="fad-${a.id}"></div>
+      </div>
+      <div class="attr-val" style="color:${a.color}" id="fav-${a.id}">${formState[a.id]}/5</div>`;
+    attrsWrap.appendChild(row);
+
+    const buildDots=val=>{
+      const dc=document.getElementById('fad-'+a.id);dc.innerHTML='';
+      for(let i=1;i<=5;i++){
+        const d=document.createElement('div');d.className='attr-dot';
+        d.style.background=i<=val?a.color:'var(--border)';
+        dc.appendChild(d);
+      }
+    };
+    buildDots(formState[a.id]);
+
+    const t=document.getElementById('fat-'+a.id),h=document.getElementById('fah-'+a.id);
+    makeFormDrag(t,h,pct=>{
+      const val=pctToScore5(pct);formState[a.id]=val;
+      const p=score5ToPct(val);
+      document.getElementById('faf-'+a.id).style.width=p+'%';
+      document.getElementById('fah-'+a.id).style.left=p+'%';
+      document.getElementById('fav-'+a.id).textContent=val+'/5';
+      buildDots(val);
+    });
+  });
+}
+
+/* ── POPUP WHATSAPP (link directo, sin API) ── */
+function mostrarPopupWA(){
+  if(!formState.puntuacion) return;
+  const w = wines.find(x=>x.id===formState.vinoId)||wines[0];
+  const bar = v => '▰'.repeat(v) + '▱'.repeat(5-v);
+
+  const msg = encodeURIComponent(
+`🍷 *Mi degustación en Wine Bar 125cc*
+
+*Vino:* ${w.nombre} · ${w.bodega}
+*Varietal:* ${w.varietal||'—'}
+*Copa:* ${w.copa||'125 cc'} · ${w.precio}
+
+*Puntuación general:* ${formState.puntuacion}/10 — ${ratingText(formState.puntuacion)}
+
+*Atributos:*
+• Acidez: ${bar(formState.acidez)} ${formState.acidez}/5
+• Cuerpo: ${bar(formState.cuerpo)} ${formState.cuerpo}/5
+• Taninos: ${bar(formState.taninos)} ${formState.taninos}/5
+• Visual: ${bar(formState.visual)} ${formState.visual}/5
+• Gusto: ${bar(formState.gusto)} ${formState.gusto}/5
+
+${formState.opinion?`*Opinión:* ${formState.opinion}\n\n`:''}📍 Wine Bar 125cc · www.125cc.com.ar`
+  );
+
+  const overlay = document.createElement('div');
+  overlay.className = 'wa-overlay';
+  overlay.id = 'wa-overlay';
+  overlay.innerHTML=`
+    <div class="wa-sheet">
+      <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px"></div>
+      <div style="font-size:28px;text-align:center;margin-bottom:10px">🍷</div>
+      <h3 style="text-align:center">¿Guardás tu degustación?</h3>
+      <p style="text-align:center;margin-bottom:18px">Abrimos WhatsApp con el resumen listo — solo tocás Enviar y queda guardado en tu chat.</p>
+
+      <div style="background:var(--bg);border:.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.8;font-family:monospace">
+        🍷 <strong style="color:var(--text)">${w.nombre}</strong><br>
+        Puntuación: ${formState.puntuacion}/10 — ${ratingText(formState.puntuacion)}<br>
+        Acidez ${bar(formState.acidez)} · Cuerpo ${bar(formState.cuerpo)} · Gusto ${bar(formState.gusto)}
+        ${formState.opinion?`<br><em>"${formState.opinion}"</em>`:''}
+      </div>
+
+      <a href="https://wa.me/541137876877?text=${msg}" target="_blank" rel="noopener"
+        class="wa-send-btn" style="text-decoration:none"
+        onclick="setTimeout(()=>{ cerrarPopupWA(); enviarSinWA(); }, 500)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        Guardar en WhatsApp
+      </a>
+      <button class="wa-skip-btn" onclick="cerrarPopupWA();enviarSinWA()">No gracias, solo enviar la puntuación</button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+}
+
+function cerrarPopupWA(){
+  const el = document.getElementById('wa-overlay');
+  if(el) el.remove();
+}
+
+function normalizarTelefono(raw){
+  const digits = raw.replace(/\D/g,'');
+  if(digits.startsWith('54')) return digits;
+  if(digits.startsWith('0')) return '54' + digits.slice(1);
+  return '54' + digits;
+}
+
+async function enviarSinWA(){
+  await enviarPuntuacion(null);
+}
+
+async function enviarPuntuacion(phone){
+  const btn = document.getElementById('submit-btn');
+  if(btn){ btn.disabled=true; btn.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="animation:spin .8s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Enviando…`; }
+
+  const w = wines.find(x=>x.id===formState.vinoId)||wines[0];
+  const payload = {
+    vino:      w.nombre,
+    bodega:    w.bodega,
+    tipo:      w.tipo,
+    precio:    w.precio,
+    puntuacion:formState.puntuacion,
+    acidez:    formState.acidez,
+    cuerpo:    formState.cuerpo,
+    taninos:   formState.taninos,
+    visual:    formState.visual,
+    gusto:     formState.gusto,
+    opinion:   formState.opinion,
+    phone:     phone ? normalizarTelefono(phone) : null,
+    copa:      w.copa || '125 cc',
+    varietal:  w.varietal || '',
+  };
+
+  try{
+    // 1 — guardar en Sheets
+    const res = await fetch('/api/guardar-puntuacion',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.detail||data.error||'Error desconocido');
+
+    // 2 — enviar WhatsApp si hay teléfono
+    if(phone){
+      await fetch('/api/send-whatsapp',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          phone:     normalizarTelefono(phone),
+          wineName:  w.nombre,
+          winery:    w.bodega,
+          varietal:  w.varietal||'',
+          price:     w.precio,
+          glass:     w.copa||'125 cc',
+          rating:    formState.puntuacion,
+          ratingLabel: ratingText(formState.puntuacion),
+          aroma:     formState.aroma,
+          body:      formState.cuerpo,
+          freshness: formState.gusto,
+          wouldOrderAgain: '—',
+          pairing:   '—',
+          opinion:   formState.opinion||'—',
+        }),
+      }).catch(()=>{}); // silencioso si falla WA
+    }
+
+    // 3 — pantalla de éxito
+    formState = { puntuacion:0, acidez:3, cuerpo:3, taninos:3, visual:3, gusto:3, opinion:'', vinoId:formState.vinoId };
+    document.getElementById('puntuarContent').innerHTML=`
+      <div class="form-success">
+        <div class="success-icon">🍷</div>
+        <h3>¡Gracias por tu puntuación!</h3>
+        <p>Tu opinión sobre <strong>${w.nombre}</strong> quedó registrada.${phone?'<br>Te enviamos el resumen por WhatsApp.':''}<br>Nos ayuda a armar una mejor carta cada semana.</p>
+        <button onclick="renderFormPuntuar()">Puntuar otro vino</button>
+      </div>`;
+
+  } catch(err){
+    if(btn){ btn.disabled=false; btn.innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Enviar puntuación`; }
+    alert('No se pudo enviar. Verificá tu conexión.\n\n'+err.message);
+  }
+}
+</script>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</body>
+</html>
