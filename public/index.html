@@ -349,10 +349,16 @@ function precioBottella(p){
   return isNaN(n) ? 0 : n;
 }
 function fmtPrecio(p){
-  // Precio copa = (botella ÷ 6) × 1,25 → redondeado al 500 más cercano
+  // Precio copa con multiplicador por rango de botella:
+  // $10k–$13.999 → ×1.70 | $14k–$17.999 → ×1.60 | $18k–$29.999 → ×1.50 | $30k+ → ×1.25
   const botella = precioBottella(p);
   if(!botella) return p;
-  const copa = Math.round(((botella / 6) * 1.25) / 500) * 500;
+  let factor = 1.50; // default
+  if(botella < 14000)      factor = 1.70;
+  else if(botella < 18000) factor = 1.60;
+  else if(botella < 30000) factor = 1.50;
+  else                     factor = 1.25;
+  const copa = Math.round(((botella / 6) * factor) / 500) * 500;
   return '$' + copa.toLocaleString('es-AR');
 }
 const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos":"🧀","jamón crudo":"🍖","tabla":"🪵","fiambres":"🥓","salmón":"🐟","mortadela":"🥩","aceitunas":"🫒","panera":"🍞","salame":"🥩"};
@@ -552,7 +558,7 @@ const PREGUNTAS=[
     sub:'Así encontramos el maridaje perfecto.',
     opciones:[
       {val:'tabla',icon:'🪵',label:'Tabla o charcutería',sub:'Quesos, jamón, fiambres'},
-      {val:'solo',icon:'🍷',label:'Solo, por ahora',sub:'Disfrutare el vino sin comida'},
+      {val:'solo',icon:'🍷',label:'Solo, por ahora',sub:'A pelo, sin comida'},
       {val:'carnes',icon:'🥩',label:'Algo más contundente',sub:'Carnes o quesos duros'}
     ]
   },
