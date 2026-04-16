@@ -146,20 +146,11 @@
     .copa-icon{display:block;transition:transform .2s cubic-bezier(.34,1.56,.64,1),filter .2s}
     .wine-pin:hover:not(.pin-selected) .copa-icon{transform:scale(1.12);filter:drop-shadow(0 3px 6px rgba(0,0,0,.25))}
 
-    /* Copa seleccionada — anillo dorado animado */
-    .pin-ring{
-      position:absolute;top:50%;left:50%;
-      transform:translate(-50%,-60%);
-      width:42px;height:42px;border-radius:50%;
-      border:1.5px solid rgba(196,160,90,.8);
-      opacity:0;transition:opacity .2s;
-      pointer-events:none;
-      animation:ringPulse 2s ease-in-out infinite;
-    }
-    .wine-pin.pin-selected .pin-ring{opacity:1}
-    @keyframes ringPulse{
-      0%,100%{transform:translate(-50%,-60%) scale(1);opacity:.7}
-      50%{transform:translate(-50%,-60%) scale(1.15);opacity:.3}
+    /* Copa seleccionada — highlight sin anillo */
+    .wine-pin.pin-selected{
+      transform:translate(-50%,-50%) scale(1.28) !important;
+      filter:drop-shadow(0 0 6px rgba(196,160,90,.5)) drop-shadow(0 4px 10px rgba(0,0,0,.5));
+      z-index:20 !important;
     }
 
     /* Tooltip mejorado */
@@ -619,14 +610,14 @@
     }
     .zoom-hint.hide{opacity:0}
 
-    /* Pin label — aparece con zoom */
+    /* Pin label — aparece solo con zoom alto, tamaño fijo en pantalla */
     .pin-zoom-label{
-      position:absolute;top:calc(100% + 2px);left:50%;transform:translateX(-50%);
-      font-size:9px;font-weight:500;color:var(--dark-text);
-      background:rgba(28,25,23,.82);border-radius:5px;padding:2px 6px;
-      white-space:nowrap;pointer-events:none;letter-spacing:.02em;
-      opacity:0;transition:opacity .2s;
-      border:1px solid rgba(255,255,255,.07);
+      position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);
+      font-size:8px;font-weight:500;color:rgba(255,255,255,.9);
+      background:rgba(20,15,10,.75);border-radius:4px;padding:1px 5px;
+      white-space:nowrap;pointer-events:none;letter-spacing:.01em;
+      opacity:0;transition:opacity .25s;
+      max-width:70px;overflow:hidden;text-overflow:ellipsis;
     }
     .pin-label-visible .pin-zoom-label{opacity:1}
 
@@ -819,18 +810,7 @@ fetch('./vinos.json').then(r=>r.json()).then(config=>{
 /* ── MAP ── */
 function buildMap(){
   const canvas=document.getElementById('mapCanvas');
-  if(!document.getElementById('map-q1')){
-    [{id:'map-q1',s:'top:0;left:0;width:50%;height:50%;background:rgba(139,0,0,.05)'},
-     {id:'map-q2',s:'top:0;right:0;width:50%;height:50%;background:rgba(180,83,9,.05)'},
-     {id:'map-q3',s:'bottom:0;left:0;width:50%;height:50%;background:rgba(122,184,58,.05)'},
-     {id:'map-q4',s:'bottom:0;right:0;width:50%;height:50%;background:rgba(212,114,26,.04)'},
-    ].forEach(q=>{
-      const d=document.createElement('div');
-      d.id=q.id;
-      d.style.cssText='position:absolute;pointer-events:none;'+q.s;
-      canvas.insertBefore(d,canvas.firstChild);
-    });
-  }
+  // Cuadrantes removidos — fondo limpio
   const c=document.getElementById('mapDots');
   c.innerHTML='';
   // Eliminar preview anterior
@@ -843,14 +823,13 @@ function buildMap(){
     const isSel=w.id===selectedId;
     const size=isSel?36:26;
     const num=idx+1;
-    // Nombre corto: primera palabra significativa
-    const shortName = w.nombre.split(' ').slice(0,2).join(' ');
+    // Nombre corto: primera palabra del nombre del vino
+    const shortName = w.nombre.split(' ')[0];
     const pin=document.createElement('div');
     pin.className='wine-pin'+(isSel?' pin-selected':'');
     pin.style.cssText=`left:${left}%;top:${top}%;animation-delay:${idx*55}ms`;
     const belowClass = top < 50 ? ' below' : '';
     pin.innerHTML=`
-      <div class="pin-ring"></div>
       ${copaSVG(color,size,num)}
       <div class="pin-zoom-label">${shortName}</div>
       <div class="pin-tooltip${belowClass}" id="tip-${w.id}">
@@ -952,13 +931,12 @@ let mapPanX = 0;
 let mapPanY = 0;
 const ZOOM_MIN = 1;
 const ZOOM_MAX = 3.5;
-const LABEL_ZOOM_THRESHOLD = 1.6;
+const LABEL_ZOOM_THRESHOLD = 2.2;
 
 function applyMapTransform(animate){
   const inner = document.getElementById('mapInner');
   if(!inner) return;
   inner.style.transition = animate ? 'transform .25s cubic-bezier(.22,1,.36,1)' : 'none';
-  // translate ANTES de scale para que el pan sea en coordenadas del canvas
   inner.style.transform = `translate(${mapPanX}px,${mapPanY}px) scale(${mapZoom})`;
   document.getElementById('zoomResetBtn').style.display = mapZoom > 1.05 ? 'flex' : 'none';
   updateZoomLabels();
@@ -966,8 +944,12 @@ function applyMapTransform(animate){
 
 function updateZoomLabels(){
   const show = mapZoom >= LABEL_ZOOM_THRESHOLD;
+  // Escalar labels inversamente al zoom → tamaño constante en pantalla
+  const s = show ? +(1 / mapZoom).toFixed(3) : 1;
   document.querySelectorAll('.wine-pin').forEach(p=>{
     p.classList.toggle('pin-label-visible', show);
+    const lbl = p.querySelector('.pin-zoom-label');
+    if(lbl) lbl.style.transform = `translateX(-50%) scale(${s})`;
   });
 }
 
