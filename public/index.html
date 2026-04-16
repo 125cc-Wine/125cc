@@ -164,7 +164,9 @@
       z-index:20 !important;
     }
     .copa-icon{display:block;transition:transform .2s cubic-bezier(.34,1.56,.64,1),filter .2s}
-    .wine-pin:hover:not(.pin-selected) .copa-icon{transform:scale(1.12);filter:drop-shadow(0 3px 6px rgba(0,0,0,.25))}
+    .wine-pin:hover:not(.pin-selected):not(.pin-dimmed) .copa-icon{transform:scale(1.12);filter:drop-shadow(0 3px 6px rgba(0,0,0,.25))}
+    /* Copas de otro tipo al filtrar */
+    .wine-pin.pin-dimmed{opacity:.2;pointer-events:none;transition:opacity .25s}
 
     /* Tooltip mejorado */
     .pin-tooltip{
@@ -231,9 +233,14 @@
       display:flex;align-items:center;gap:5px;
       background:var(--dark3);border:1px solid rgba(196,160,90,.12);
       border-radius:20px;padding:5px 13px;font-size:11px;color:var(--dark-sub);
-      transition:border-color .15s;
+      transition:all .2s;cursor:pointer;user-select:none;
     }
-    .legend-pill:hover{border-color:rgba(196,160,90,.3)}
+    .legend-pill:hover{border-color:rgba(196,160,90,.3);color:var(--dark-text)}
+    .legend-pill.active{
+      background:rgba(196,160,90,.15);
+      border-color:rgba(196,160,90,.5);
+      color:var(--dark-text);font-weight:500;
+    }
     .legend-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 
     /* ══════════════════════════════
@@ -683,10 +690,11 @@
       </div>
     </div>
     <div class="legend-row">
-      <div class="legend-pill"><div class="legend-dot" style="background:var(--tinto)"></div>Tinto</div>
-      <div class="legend-pill"><div class="legend-dot" style="background:var(--blanco)"></div>Blanco</div>
-      <div class="legend-pill"><div class="legend-dot" style="background:var(--rosado)"></div>Rosado</div>
-      <div class="legend-pill"><div class="legend-dot" style="background:var(--naranja)"></div>Naranjo</div>
+      <div class="legend-pill" id="pill-all" onclick="filterMap(null)" style="border-color:rgba(196,160,90,.4);color:var(--dark-text)">Todos</div>
+      <div class="legend-pill" id="pill-Tinto" onclick="filterMap('Tinto')"><div class="legend-dot" style="background:var(--tinto)"></div>Tinto</div>
+      <div class="legend-pill" id="pill-Blanco" onclick="filterMap('Blanco')"><div class="legend-dot" style="background:var(--blanco)"></div>Blanco</div>
+      <div class="legend-pill" id="pill-Rosado" onclick="filterMap('Rosado')"><div class="legend-dot" style="background:var(--rosado)"></div>Rosado</div>
+      <div class="legend-pill" id="pill-Naranja" onclick="filterMap('Naranja')"><div class="legend-dot" style="background:var(--naranja)"></div>Naranjo</div>
     </div>
     <div style="margin-top:9px;font-size:11px;color:var(--dark-sub);display:flex;gap:14px;flex-wrap:wrap">
       <span>↔ <strong style="color:var(--dark-text)">Fresco → Complejo</strong> perfil aromático</span>
@@ -789,6 +797,8 @@ function initApp(config, apiWines){
   const parts=[config.bar.instagram,config.bar.direccion].filter(Boolean);
   document.getElementById('footerInfo').innerHTML=parts.map(p=>`<strong>${p}</strong>`).join(' &nbsp;·&nbsp; ');
   buildMap(); renderWineList(); renderCharc(config.charcuteria); initSommelier();
+  // Pill "Todos" activa por defecto
+  document.getElementById('pill-all')?.classList.add('active');
   setTimeout(()=>{
     const l=document.getElementById('loading');
     l.classList.add('hidden');
@@ -834,12 +844,13 @@ function buildMap(){
     const left=50+w.x*0.4, top=50-w.y*0.36;
     const color=TYPE_COLOR[w.tipo]||'#888';
     const isSel=w.id===selectedId;
+    const isFiltered = activeFilter && w.tipo !== activeFilter;
     const size=isSel?36:26;
     const num=idx+1;
     // Nombre corto: primera palabra del nombre del vino
     const shortName = w.nombre.split(' ')[0];
     const pin=document.createElement('div');
-    pin.className='wine-pin'+(isSel?' pin-selected':'');
+    pin.className='wine-pin'+(isSel?' pin-selected':'')+(isFiltered?' pin-dimmed':'');
     pin.style.cssText=`left:${left}%;top:${top}%;animation-delay:${idx*55}ms`;
     const belowClass = top < 50 ? ' below' : '';
     pin.innerHTML=`
@@ -852,6 +863,7 @@ function buildMap(){
 
     pin.addEventListener('click',e=>{
       e.stopPropagation();
+      if(isFiltered) return; // no seleccionar copas filtradas
       const wasSelected = selectedId===w.id;
       selectedId = wasSelected ? null : w.id;
       buildMap(); renderWineList();
@@ -886,12 +898,10 @@ function copaSVG(color,size,num){
 
 function showMapPreview(w, leftPct, topPct, num){
   const canvas = document.getElementById('mapCanvas');
-  // Eliminar preview anterior
   const old = document.getElementById('mapPreview');
   if(old) old.remove();
 
   const color = TYPE_COLOR[w.tipo]||'#888';
-  // Aromas — primeros 2-3 del array de maridaje como proxy, o varietal+región
   const aromaItems = [];
   if(w.varietal) aromaItems.push(w.varietal.split('·')[0].trim());
   if(w.region)   aromaItems.push(w.region.split(',')[0].trim());
@@ -900,19 +910,28 @@ function showMapPreview(w, leftPct, topPct, num){
 
   const preview = document.createElement('div');
   preview.id = 'mapPreview';
-  preview.className = 'map-preview' + (topPct > 55 ? ' above' : '');
 
-  // Posicionar: encima o debajo según posición vertical
-  const previewTop = topPct > 55
-    ? `${topPct+6}%`
-    : `${Math.max(2, topPct-6)}%`;
+  // Lógica de posición: siempre mostrar DEBAJO de la copa
+  // así nunca se corta con el borde superior del canvas
+  // Solo mostrar arriba si la copa está en el 75% inferior Y hay espacio
+  const showAbove = topPct > 68;
+  preview.className = 'map-preview' + (showAbove ? ' above' : '');
 
-  // Ajustar horizontal para no salirse
+  // Top: debajo de la copa por defecto, arriba solo si copa muy abajo
+  const pinOffsetPct = 8; // margen desde la copa
+  const previewTopPct = showAbove
+    ? topPct - pinOffsetPct   // arriba de la copa
+    : topPct + pinOffsetPct;  // abajo de la copa
+
+  // Horizontal: clamp para no salirse del canvas
   let previewLeft = leftPct;
-  if(leftPct < 25) previewLeft = 25;
-  if(leftPct > 75) previewLeft = 75;
+  if(leftPct < 28) previewLeft = 28;
+  if(leftPct > 72) previewLeft = 72;
 
-  preview.style.cssText = `left:${previewLeft}%;top:${previewTop}%;transform:translate(-50%,${topPct>55?'0':'-100%'})`;
+  // Vertical: clamp mínimo
+  const clampedTop = Math.max(3, Math.min(92, previewTopPct));
+
+  preview.style.cssText = `left:${previewLeft}%;top:${clampedTop}%;transform:translate(-50%,${showAbove?'-100%':'0'})`;
 
   preview.innerHTML = `
     <div class="map-preview-inner">
@@ -932,7 +951,6 @@ function showMapPreview(w, leftPct, topPct, num){
     </div>`;
 
   canvas.appendChild(preview);
-  // Trigger animation
   requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ preview.classList.add('show'); }); });
 }
 
@@ -1133,8 +1151,31 @@ document.addEventListener('mouseup', ()=>{
   isMousePanning = false;
   document.getElementById('mapCanvas').style.cursor = '';
 });
+let activeFilter = null;
+
+function filterMap(tipo){
+  activeFilter = tipo;
+  // Actualizar pills
+  document.querySelectorAll('.legend-pill').forEach(p=>p.classList.remove('active','dimmed'));
+  if(tipo){
+    document.getElementById('pill-'+tipo)?.classList.add('active');
+    document.querySelectorAll('.legend-pill').forEach(p=>{
+      if(p.id !== 'pill-'+tipo && p.id !== 'pill-all') p.classList.add('dimmed');
+    });
+    document.getElementById('pill-all')?.classList.remove('active');
+  } else {
+    document.getElementById('pill-all')?.classList.add('active');
+  }
+  selectedId = null;
+  const prev = document.getElementById('mapPreview');
+  if(prev) prev.remove();
+  buildMap();
+  renderWineList();
+}
+
 function renderWineList(){
-  document.getElementById('wineList').innerHTML=wines.map((w,idx)=>`
+  const filtered = activeFilter ? wines.filter(w=>w.tipo===activeFilter) : wines;
+  document.getElementById('wineList').innerHTML=filtered.map((w,idx)=>`
     <div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
       <div style="flex-shrink:0;margin-top:2px">${copaSVG(TYPE_COLOR[w.tipo]||'#888',28,idx+1)}</div>
       <div class="wc-info"><div class="wc-name">${w.nombre}</div><div class="wc-sub">${w.bodega} · ${TYPE_LABEL[w.tipo]||w.tipo}</div></div>
