@@ -113,7 +113,11 @@
       touch-action:none;-webkit-user-select:none;user-select:none;
       box-shadow:inset 0 1px 0 rgba(255,255,255,.6), inset 0 0 60px rgba(80,50,20,.08), var(--shadow-md);
       border:1px solid rgba(60,40,20,.08);
+      /* Cursor grab cuando hay zoom */
+      cursor:default;
     }
+    .map-canvas.zoomed{cursor:grab}
+    .map-canvas.zoomed:active{cursor:grabbing}
     /* Viñeta atmosférica en los bordes del mapa */
     .map-canvas::after{
       content:'';position:absolute;inset:0;pointer-events:none;
@@ -137,21 +141,30 @@
       opacity:0;animation:pinPop .4s cubic-bezier(.34,1.56,.64,1) forwards;
       transition:transform .25s cubic-bezier(.34,1.56,.64,1), filter .2s;
     }
-    .wine-pin:active{z-index:10}
-    .wine-pin.pin-selected{
-      transform:translate(-50%,-50%) scale(1.22) !important;
-      filter:drop-shadow(0 0 8px rgba(196,160,90,.6)) drop-shadow(0 4px 12px rgba(0,0,0,.4));
-      z-index:20 !important;
+    /* Área táctil extendida invisible — mínimo 44×44px para iOS/Android */
+    .wine-pin::before{
+      content:'';
+      position:absolute;
+      top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      width:44px; height:44px;
+      min-width:44px; min-height:44px;
+      border-radius:50%;
+      /* Transparente — solo amplía el área tocable */
     }
-    .copa-icon{display:block;transition:transform .2s cubic-bezier(.34,1.56,.64,1),filter .2s}
-    .wine-pin:hover:not(.pin-selected) .copa-icon{transform:scale(1.12);filter:drop-shadow(0 3px 6px rgba(0,0,0,.25))}
-
-    /* Copa seleccionada — highlight sin anillo */
+    .wine-pin:active{z-index:10}
+    .wine-pin:active .copa-icon{
+      transform:scale(.9);
+      filter:brightness(1.3) drop-shadow(0 2px 4px rgba(0,0,0,.3));
+    }
+    /* Copa seleccionada */
     .wine-pin.pin-selected{
       transform:translate(-50%,-50%) scale(1.28) !important;
       filter:drop-shadow(0 0 6px rgba(196,160,90,.5)) drop-shadow(0 4px 10px rgba(0,0,0,.5));
       z-index:20 !important;
     }
+    .copa-icon{display:block;transition:transform .2s cubic-bezier(.34,1.56,.64,1),filter .2s}
+    .wine-pin:hover:not(.pin-selected) .copa-icon{transform:scale(1.12);filter:drop-shadow(0 3px 6px rgba(0,0,0,.25))}
 
     /* Tooltip mejorado */
     .pin-tooltip{
@@ -938,7 +951,9 @@ function applyMapTransform(animate){
   if(!inner) return;
   inner.style.transition = animate ? 'transform .25s cubic-bezier(.22,1,.36,1)' : 'none';
   inner.style.transform = `translate(${mapPanX}px,${mapPanY}px) scale(${mapZoom})`;
-  document.getElementById('zoomResetBtn').style.display = mapZoom > 1.05 ? 'flex' : 'none';
+  const hasZoom = mapZoom > 1.05;
+  document.getElementById('zoomResetBtn').style.display = hasZoom ? 'flex' : 'none';
+  document.getElementById('mapCanvas').classList.toggle('zoomed', hasZoom);
   updateZoomLabels();
 }
 
