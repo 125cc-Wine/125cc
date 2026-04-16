@@ -592,7 +592,7 @@
     /* ── ZOOM ── */
     #mapInner{
       position:absolute;inset:0;
-      transform-origin:center center;
+      transform-origin:50% 50%;
       transition:transform .25s cubic-bezier(.22,1,.36,1);
       will-change:transform;
     }
@@ -952,13 +952,14 @@ let mapPanX = 0;
 let mapPanY = 0;
 const ZOOM_MIN = 1;
 const ZOOM_MAX = 3.5;
-const LABEL_ZOOM_THRESHOLD = 1.6; // mostrar labels a partir de este zoom
+const LABEL_ZOOM_THRESHOLD = 1.6;
 
 function applyMapTransform(animate){
   const inner = document.getElementById('mapInner');
   if(!inner) return;
   inner.style.transition = animate ? 'transform .25s cubic-bezier(.22,1,.36,1)' : 'none';
-  inner.style.transform = `scale(${mapZoom}) translate(${mapPanX/mapZoom}px,${mapPanY/mapZoom}px)`;
+  // translate ANTES de scale para que el pan sea en coordenadas del canvas
+  inner.style.transform = `translate(${mapPanX}px,${mapPanY}px) scale(${mapZoom})`;
   document.getElementById('zoomResetBtn').style.display = mapZoom > 1.05 ? 'flex' : 'none';
   updateZoomLabels();
 }
@@ -973,25 +974,39 @@ function updateZoomLabels(){
 function clampPan(){
   const canvas = document.getElementById('mapCanvas');
   const cw = canvas.offsetWidth, ch = canvas.offsetHeight;
-  const maxPanX = (cw * (mapZoom - 1)) / 2;
-  const maxPanY = (ch * (mapZoom - 1)) / 2;
-  mapPanX = Math.max(-maxPanX, Math.min(maxPanX, mapPanX));
-  mapPanY = Math.max(-maxPanY, Math.min(maxPanY, mapPanY));
+  // Máximo desplazamiento = cuánto crece el contenido con el zoom
+  const maxX = (cw  * (mapZoom - 1)) / 2;
+  const maxY = (ch * (mapZoom - 1)) / 2;
+  mapPanX = Math.max(-maxX, Math.min(maxX, mapPanX));
+  mapPanY = Math.max(-maxY, Math.min(maxY, mapPanY));
 }
 
-function adjustZoom(delta, cx, cy){
+function zoomAroundPoint(newZoom, clientX, clientY){
   const canvas = document.getElementById('mapCanvas');
   const rect = canvas.getBoundingClientRect();
-  const originX = (cx !== undefined ? cx : rect.width/2) - rect.width/2;
-  const originY = (cy !== undefined ? cy : rect.height/2) - rect.height/2;
+  // Punto en coordenadas del canvas (0,0 = top-left)
+  const px = clientX - rect.left;
+  const py = clientY - rect.top;
+  // Punto en coordenadas del canvas centrado (0,0 = center)
+  const cx = px - rect.width  / 2;
+  const cy = py - rect.height / 2;
+  // Para que el punto bajo el cursor no se mueva:
+  // newPan = oldPan + (cx * (1/oldZoom - 1/newZoom)) * oldZoom * newZoom  → simplificado:
+  // newPan = cx + (mapPanX - cx) * (newZoom / mapZoom)
   const prevZoom = mapZoom;
-  mapZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, mapZoom + delta));
-  const zoomRatio = mapZoom / prevZoom;
-  mapPanX = mapPanX * zoomRatio + originX * (zoomRatio - 1);
-  mapPanY = mapPanY * zoomRatio + originY * (zoomRatio - 1);
+  mapZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom));
+  mapPanX = cx + (mapPanX - cx) * (mapZoom / prevZoom);
+  mapPanY = cy + (mapPanY - cy) * (mapZoom / prevZoom);
   clampPan();
+}
+
+function adjustZoom(delta, clientX, clientY){
+  const canvas = document.getElementById('mapCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const cx = clientX !== undefined ? clientX : rect.left + rect.width/2;
+  const cy = clientY !== undefined ? clientY : rect.top  + rect.height/2;
+  zoomAroundPoint(mapZoom + delta, cx, cy);
   applyMapTransform(true);
-  // Ocultar hint tras primer zoom
   document.getElementById('zoomHint').classList.add('hide');
 }
 
@@ -1003,68 +1018,78 @@ function resetZoom(){
 // ── Scroll wheel (desktop) ─────────────────────────────────────
 document.getElementById('mapCanvas').addEventListener('wheel', e=>{
   e.preventDefault();
-  const rect = e.currentTarget.getBoundingClientRect();
-  adjustZoom(e.deltaY < 0 ? 0.2 : -0.2, e.clientX - rect.left - rect.width/2, e.clientY - rect.top - rect.height/2);
+  adjustZoom(e.deltaY < 0 ? 0.25 : -0.25, e.clientX, e.clientY);
 }, {passive:false});
 
-// ── Pinch (móvil) ─────────────────────────────────────────────
+// ── Touch: pinch + pan ────────────────────────────────────────
 let pinchStartDist = 0;
 let pinchStartZoom = 1;
-let pinchCenterX = 0;
-let pinchCenterY = 0;
+let pinchStartPanX = 0;
+let pinchStartPanY = 0;
+let pinchMidX = 0, pinchMidY = 0;
 let isPinching = false;
-
-// ── Pan (arrastrar) ───────────────────────────────────────────
-let panStartX = 0, panStartY = 0, panStartMapX = 0, panStartMapY = 0;
-let isPanning = false;
-let tapTimer = null;
+let isPanning  = false;
+let panStartX = 0, panStartY = 0;
+let panStartMapX = 0, panStartMapY = 0;
 let lastTapTime = 0;
+let touchMoved = false;
 
 document.getElementById('mapCanvas').addEventListener('touchstart', e=>{
+  touchMoved = false;
   if(e.touches.length === 2){
-    // Pinch start
     isPinching = true;
-    isPanning = false;
+    isPanning  = false;
     const t1 = e.touches[0], t2 = e.touches[1];
     pinchStartDist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY);
     pinchStartZoom = mapZoom;
-    const rect = e.currentTarget.getBoundingClientRect();
-    pinchCenterX = ((t1.clientX+t2.clientX)/2) - rect.left - rect.width/2;
-    pinchCenterY = ((t1.clientY+t2.clientY)/2) - rect.top - rect.height/2;
+    pinchStartPanX = mapPanX;
+    pinchStartPanY = mapPanY;
+    pinchMidX = (t1.clientX + t2.clientX) / 2;
+    pinchMidY = (t1.clientY + t2.clientY) / 2;
     e.preventDefault();
-  } else if(e.touches.length === 1 && mapZoom > 1.05){
-    // Pan start (solo cuando hay zoom)
+  } else if(e.touches.length === 1){
     const t = e.touches[0];
-    const rect = e.currentTarget.getBoundingClientRect();
-    // Detectar doble tap
     const now = Date.now();
-    if(now - lastTapTime < 300){
-      // Doble tap → zoom in en ese punto
-      adjustZoom(0.6, t.clientX - rect.left - rect.width/2, t.clientY - rect.top - rect.height/2);
+    // Doble tap → zoom in/out
+    if(now - lastTapTime < 280 && !touchMoved){
+      if(mapZoom > 1.5) resetZoom();
+      else adjustZoom(0.8, t.clientX, t.clientY);
       lastTapTime = 0;
+      e.preventDefault();
       return;
     }
     lastTapTime = now;
+    // Iniciar pan siempre (si hay zoom se arrastra, si no hay zoom solo toca)
     isPanning = true;
-    panStartX = t.clientX; panStartY = t.clientY;
-    panStartMapX = mapPanX; panStartMapY = mapPanY;
+    panStartX = t.clientX;
+    panStartY = t.clientY;
+    panStartMapX = mapPanX;
+    panStartMapY = mapPanY;
   }
 }, {passive:false});
 
 document.getElementById('mapCanvas').addEventListener('touchmove', e=>{
+  touchMoved = true;
   if(isPinching && e.touches.length === 2){
     e.preventDefault();
     const t1=e.touches[0], t2=e.touches[1];
     const dist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY);
-    const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchStartZoom * (dist/pinchStartDist)));
-    const zoomDelta = newZoom - mapZoom;
+    const scale = dist / pinchStartDist;
+    const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchStartZoom * scale));
+    // Pan proporcional al zoom
+    const midX = (t1.clientX + t2.clientX) / 2;
+    const midY = (t1.clientY + t2.clientY) / 2;
+    const canvas = document.getElementById('mapCanvas');
+    const rect = canvas.getBoundingClientRect();
+    const cx = pinchMidX - rect.left - rect.width/2;
+    const cy = pinchMidY - rect.top  - rect.height/2;
     mapZoom = newZoom;
-    mapPanX += pinchCenterX * (newZoom/pinchStartZoom - 1) * 0;
-    mapPanY += pinchCenterY * (newZoom/pinchStartZoom - 1) * 0;
+    mapPanX = cx + (pinchStartPanX - cx) * (newZoom / pinchStartZoom) + (midX - pinchMidX);
+    mapPanY = cy + (pinchStartPanY - cy) * (newZoom / pinchStartZoom) + (midY - pinchMidY);
     clampPan();
     applyMapTransform(false);
     document.getElementById('zoomHint').classList.add('hide');
-  } else if(isPanning && e.touches.length === 1){
+  } else if(isPanning && e.touches.length === 1 && mapZoom > 1.05){
     e.preventDefault();
     const t = e.touches[0];
     mapPanX = panStartMapX + (t.clientX - panStartX);
@@ -1079,12 +1104,37 @@ document.getElementById('mapCanvas').addEventListener('touchend', e=>{
   if(e.touches.length === 0) isPanning = false;
 });
 
-// ── Doble tap en desktop ───────────────────────────────────────
+// ── Doble click desktop ────────────────────────────────────────
 document.getElementById('mapCanvas').addEventListener('dblclick', e=>{
-  if(e.target.closest('.wine-pin')) return; // no hacer zoom si clickea una copa
-  const rect = e.currentTarget.getBoundingClientRect();
+  if(e.target.closest('.wine-pin')) return;
   if(mapZoom > 1.5) resetZoom();
-  else adjustZoom(0.7, e.clientX - rect.left - rect.width/2, e.clientY - rect.top - rect.height/2);
+  else adjustZoom(0.8, e.clientX, e.clientY);
+});
+
+// ── Mouse pan (desktop con zoom) ──────────────────────────────
+let isMousePanning = false;
+let mousePanStartX = 0, mousePanStartY = 0;
+let mousePanMapX = 0, mousePanMapY = 0;
+
+document.getElementById('mapCanvas').addEventListener('mousedown', e=>{
+  if(mapZoom <= 1.05 || e.target.closest('.wine-pin') || e.target.closest('.zoom-controls')) return;
+  isMousePanning = true;
+  mousePanStartX = e.clientX; mousePanStartY = e.clientY;
+  mousePanMapX = mapPanX; mousePanMapY = mapPanY;
+  document.getElementById('mapCanvas').style.cursor = 'grabbing';
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e=>{
+  if(!isMousePanning) return;
+  mapPanX = mousePanMapX + (e.clientX - mousePanStartX);
+  mapPanY = mousePanMapY + (e.clientY - mousePanStartY);
+  clampPan();
+  applyMapTransform(false);
+});
+document.addEventListener('mouseup', ()=>{
+  if(!isMousePanning) return;
+  isMousePanning = false;
+  document.getElementById('mapCanvas').style.cursor = '';
 });
 function renderWineList(){
   document.getElementById('wineList').innerHTML=wines.map((w,idx)=>`
