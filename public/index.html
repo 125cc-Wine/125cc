@@ -107,11 +107,18 @@
       margin-bottom:12px;margin-top:2px;
     }
     .map-canvas{
-      background:linear-gradient(145deg,#F0E8DC 0%,#E8DDD0 50%,#EDE4D8 100%);
+      background:
+        radial-gradient(ellipse at 50% 50%, #F5EDE0 0%, #E8DDD0 45%, #D8CDBC 100%);
       border-radius:18px;position:relative;height:270px;overflow:hidden;
       touch-action:none;-webkit-user-select:none;user-select:none;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.5),var(--shadow-md);
-      border:1px solid rgba(60,40,20,.06);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.6), inset 0 0 60px rgba(80,50,20,.08), var(--shadow-md);
+      border:1px solid rgba(60,40,20,.08);
+    }
+    /* Viñeta atmosférica en los bordes del mapa */
+    .map-canvas::after{
+      content:'';position:absolute;inset:0;pointer-events:none;
+      background:radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(60,35,15,.12) 100%);
+      border-radius:18px;
     }
     .map-axis-h{position:absolute;top:50%;left:6%;right:6%;height:.5px;background:rgba(80,55,35,.18);pointer-events:none}
     .map-axis-v{position:absolute;left:50%;top:10%;bottom:8%;width:.5px;background:rgba(80,55,35,.18);pointer-events:none}
@@ -125,23 +132,95 @@
       font-size:9px;letter-spacing:.4em;text-transform:uppercase;
       color:rgba(100,75,50,.06);font-weight:700;pointer-events:none;
     }
-    .wine-pin{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:2;opacity:0;animation:pinPop .35s ease forwards}
+    .wine-pin{
+      position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:2;
+      opacity:0;animation:pinPop .4s cubic-bezier(.34,1.56,.64,1) forwards;
+      transition:transform .25s cubic-bezier(.34,1.56,.64,1), filter .2s;
+    }
     .wine-pin:active{z-index:10}
-    .copa-icon{display:block;transition:transform .15s,filter .15s}
-    .wine-pin:active .copa-icon{transform:scale(1.2);filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
+    .wine-pin.pin-selected{
+      transform:translate(-50%,-50%) scale(1.22) !important;
+      filter:drop-shadow(0 0 8px rgba(196,160,90,.6)) drop-shadow(0 4px 12px rgba(0,0,0,.4));
+      z-index:20 !important;
+    }
+    .copa-icon{display:block;transition:transform .2s cubic-bezier(.34,1.56,.64,1),filter .2s}
+    .wine-pin:hover:not(.pin-selected) .copa-icon{transform:scale(1.12);filter:drop-shadow(0 3px 6px rgba(0,0,0,.25))}
+
+    /* Copa seleccionada — anillo dorado animado */
+    .pin-ring{
+      position:absolute;top:50%;left:50%;
+      transform:translate(-50%,-60%);
+      width:42px;height:42px;border-radius:50%;
+      border:1.5px solid rgba(196,160,90,.8);
+      opacity:0;transition:opacity .2s;
+      pointer-events:none;
+      animation:ringPulse 2s ease-in-out infinite;
+    }
+    .wine-pin.pin-selected .pin-ring{opacity:1}
+    @keyframes ringPulse{
+      0%,100%{transform:translate(-50%,-60%) scale(1);opacity:.7}
+      50%{transform:translate(-50%,-60%) scale(1.15);opacity:.3}
+    }
+
+    /* Tooltip mejorado */
     .pin-tooltip{
-      position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);
-      background:var(--dark2);border-radius:10px;padding:8px 13px;
-      white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;
-      z-index:50;border:1px solid rgba(196,160,90,.2);
-      box-shadow:0 8px 24px rgba(0,0,0,.3);
+      position:absolute;bottom:calc(100% + 12px);left:50%;transform:translateX(-50%);
+      background:var(--dark);border-radius:11px;padding:9px 14px;
+      white-space:nowrap;pointer-events:none;opacity:0;
+      transition:opacity .2s, transform .2s;transform-origin:bottom center;
+      z-index:50;border:1px solid rgba(196,160,90,.25);
+      box-shadow:0 8px 32px rgba(0,0,0,.45);
     }
     .pin-tooltip.show{opacity:1}
-    .pin-tooltip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--dark2)}
-    .pin-tooltip.below{bottom:auto;top:calc(100% + 10px)}
-    .pin-tooltip.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--dark2)}
+    .pin-tooltip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--dark)}
+    .pin-tooltip.below{bottom:auto;top:calc(100% + 12px)}
+    .pin-tooltip.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--dark)}
     .pt-name{font-size:12px;font-weight:500;color:var(--dark-text);line-height:1.2}
-    .pt-price{font-size:11px;color:var(--gold);margin-top:2px;font-weight:400}
+    .pt-price{font-size:11px;color:var(--gold);margin-top:2px;font-weight:400;letter-spacing:.03em}
+
+    /* Mini-preview card sobre el mapa */
+    .map-preview{
+      position:absolute;z-index:100;pointer-events:none;
+      opacity:0;transition:opacity .2s, transform .2s;
+      transform:translateY(6px);
+      min-width:180px;max-width:220px;
+    }
+    .map-preview.show{opacity:1;transform:translateY(0)}
+    .map-preview-inner{
+      background:var(--dark);border:1px solid rgba(196,160,90,.3);
+      border-radius:14px;padding:13px 15px;
+      box-shadow:0 12px 40px rgba(0,0,0,.5);
+    }
+    .map-preview-inner::before{
+      content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);
+      width:12px;height:6px;
+      background:var(--dark);clip-path:polygon(0 0,100% 0,50% 100%);
+      border-left:1px solid rgba(196,160,90,.3);
+      border-right:1px solid rgba(196,160,90,.3);
+    }
+    .map-preview.above .map-preview-inner::before{
+      bottom:auto;top:-6px;
+      clip-path:polygon(50% 0,0 100%,100% 100%);
+      border-top:1px solid rgba(196,160,90,.3);
+      border-left:none;border-right:none;
+    }
+    .mpv-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .mpv-num{
+      font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;
+      color:var(--gold);line-height:1;flex-shrink:0;
+    }
+    .mpv-name{font-size:12px;font-weight:500;color:var(--dark-text);line-height:1.25}
+    .mpv-bodega{font-size:10px;color:var(--dark-muted);margin-top:1px;font-weight:300}
+    .mpv-divider{height:.5px;background:rgba(196,160,90,.15);margin:8px 0}
+    .mpv-row{display:flex;justify-content:space-between;align-items:center}
+    .mpv-tipo{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--dark-muted);font-weight:400}
+    .mpv-price{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--dark-text)}
+    .mpv-aromas{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+    .mpv-aroma{
+      font-size:10px;color:var(--dark-sub);
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;padding:2px 8px;
+    }
 
     .legend-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
     .legend-pill{
@@ -510,7 +589,48 @@
     #loading h2 span{color:var(--accent);font-style:italic;font-weight:300}
     #loading p{font-size:11px;color:var(--dark-muted);margin-top:10px;letter-spacing:.2em;text-transform:uppercase}
 
-    /* ── AXIS DESCRIPTION ── */
+    /* ── ZOOM ── */
+    #mapInner{
+      position:absolute;inset:0;
+      transform-origin:center center;
+      transition:transform .25s cubic-bezier(.22,1,.36,1);
+      will-change:transform;
+    }
+    .zoom-controls{
+      position:absolute;top:10px;right:10px;z-index:200;
+      display:flex;flex-direction:column;gap:4px;
+    }
+    .zoom-btn{
+      width:28px;height:28px;border-radius:8px;
+      background:rgba(28,25,23,.75);border:1px solid rgba(196,160,90,.25);
+      color:var(--dark-text);font-size:16px;font-weight:300;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      backdrop-filter:blur(4px);transition:background .15s,border-color .15s;
+      font-family:'DM Sans',sans-serif;line-height:1;
+    }
+    .zoom-btn:hover{background:rgba(28,25,23,.9);border-color:rgba(196,160,90,.5)}
+    .zoom-btn:active{transform:scale(.92)}
+    .zoom-reset{font-size:12px}
+    .zoom-hint{
+      position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+      font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+      color:rgba(80,60,40,.4);pointer-events:none;white-space:nowrap;
+      transition:opacity .5s;
+    }
+    .zoom-hint.hide{opacity:0}
+
+    /* Pin label — aparece con zoom */
+    .pin-zoom-label{
+      position:absolute;top:calc(100% + 2px);left:50%;transform:translateX(-50%);
+      font-size:9px;font-weight:500;color:var(--dark-text);
+      background:rgba(28,25,23,.82);border-radius:5px;padding:2px 6px;
+      white-space:nowrap;pointer-events:none;letter-spacing:.02em;
+      opacity:0;transition:opacity .2s;
+      border:1px solid rgba(255,255,255,.07);
+    }
+    .pin-label-visible .pin-zoom-label{opacity:1}
+
+    /* ── ZOOM ── */
     .axis-desc{
       margin-top:10px;display:flex;flex-direction:column;gap:3px;
     }
@@ -538,14 +658,25 @@
     <div class="eyebrow" style="color:var(--dark-muted);margin-bottom:4px">Wine map</div>
     <h2>Mapa del vino</h2>
     <div class="map-canvas" id="mapCanvas">
-      <div class="map-watermark" id="mapWatermark"></div>
-      <div class="map-axis-h"></div>
-      <div class="map-axis-v"></div>
-      <div class="map-label" style="left:50%;top:5%;transform:translateX(-50%)">Potente</div>
-      <div class="map-label" style="left:50%;bottom:3%;transform:translateX(-50%)">Suave</div>
-      <div class="map-label" style="left:2%;top:50%;transform:translateY(-140%)">Fresco</div>
-      <div class="map-label" style="right:1%;top:50%;transform:translateY(-140%)">Complejo</div>
-      <div id="mapDots"></div>
+      <!-- Zoom controls -->
+      <div class="zoom-controls" id="zoomControls">
+        <button class="zoom-btn" onclick="adjustZoom(0.35);event.stopPropagation()">+</button>
+        <button class="zoom-btn" onclick="adjustZoom(-0.35);event.stopPropagation()">−</button>
+        <button class="zoom-btn zoom-reset" onclick="resetZoom();event.stopPropagation()" id="zoomResetBtn" style="display:none">↺</button>
+      </div>
+      <!-- Zoom hint -->
+      <div class="zoom-hint" id="zoomHint">Pellizco para zoom</div>
+      <!-- Inner zoomable layer -->
+      <div id="mapInner">
+        <div class="map-watermark" id="mapWatermark"></div>
+        <div class="map-axis-h"></div>
+        <div class="map-axis-v"></div>
+        <div class="map-label" style="left:50%;top:5%;transform:translateX(-50%)">Potente</div>
+        <div class="map-label" style="left:50%;bottom:3%;transform:translateX(-50%)">Suave</div>
+        <div class="map-label" style="left:2%;top:50%;transform:translateY(-140%)">Fresco</div>
+        <div class="map-label" style="right:1%;top:50%;transform:translateY(-140%)">Complejo</div>
+        <div id="mapDots"></div>
+      </div>
     </div>
     <div class="legend-row">
       <div class="legend-pill"><div class="legend-dot" style="background:var(--tinto)"></div>Tinto</div>
@@ -702,34 +833,259 @@ function buildMap(){
   }
   const c=document.getElementById('mapDots');
   c.innerHTML='';
+  // Eliminar preview anterior
+  const oldPreview = document.getElementById('mapPreview');
+  if(oldPreview) oldPreview.remove();
+
   wines.forEach((w,idx)=>{
     const left=50+w.x*0.4, top=50-w.y*0.36;
     const color=TYPE_COLOR[w.tipo]||'#888';
-    const isSel=w.id===selectedId, size=isSel?38:28;
+    const isSel=w.id===selectedId;
+    const size=isSel?36:26;
     const num=idx+1;
+    // Nombre corto: primera palabra significativa
+    const shortName = w.nombre.split(' ').slice(0,2).join(' ');
     const pin=document.createElement('div');
-    pin.className='wine-pin';
-    pin.style.cssText=`left:${left}%;top:${top}%;z-index:${isSel?20:2};animation-delay:${idx*55}ms`;
-    if(isSel) pin.style.transform='translate(-50%,-50%) scale(1.15)';
+    pin.className='wine-pin'+(isSel?' pin-selected':'');
+    pin.style.cssText=`left:${left}%;top:${top}%;animation-delay:${idx*55}ms`;
     const belowClass = top < 50 ? ' below' : '';
-    pin.innerHTML=`${copaSVG(color,size,num)}<div class="pin-tooltip${isSel?' show':''}${belowClass}" id="tip-${w.id}"><div class="pt-name">${num}. ${w.nombre}</div><div class="pt-price">${fmtPrecio(w.precio)} · ${TYPE_LABEL[w.tipo]||w.tipo}</div></div>`;
+    pin.innerHTML=`
+      <div class="pin-ring"></div>
+      ${copaSVG(color,size,num)}
+      <div class="pin-zoom-label">${shortName}</div>
+      <div class="pin-tooltip${belowClass}" id="tip-${w.id}">
+        <div class="pt-name">${num}. ${w.nombre}</div>
+        <div class="pt-price">${fmtPrecio(w.precio)} · ${TYPE_LABEL[w.tipo]||w.tipo}</div>
+      </div>`;
+
     pin.addEventListener('click',e=>{
       e.stopPropagation();
-      selectedId=(selectedId===w.id)?null:w.id;
+      const wasSelected = selectedId===w.id;
+      selectedId = wasSelected ? null : w.id;
       buildMap(); renderWineList();
-      if(selectedId){ renderFicha(wines.find(x=>x.id===selectedId)); showTab('ficha',document.querySelectorAll('.tab-btn')[1]); }
+      if(selectedId){
+        showMapPreview(w, left, top, idx+1);
+        renderFicha(wines.find(x=>x.id===selectedId));
+        showTab('ficha',document.querySelectorAll('.tab-btn')[1]);
+      }
     });
     c.appendChild(pin);
+
+    // Mostrar preview si está seleccionado al rebuilding
+    if(isSel) showMapPreview(w, left, top, idx+1);
   });
+
+  // Aplicar estado de labels según zoom actual
+  updateZoomLabels();
 }
-document.addEventListener('click',()=>{ if(selectedId!==null){selectedId=null;buildMap();renderWineList();} });
+document.addEventListener('click',()=>{
+  if(selectedId!==null){
+    selectedId=null;
+    buildMap();renderWineList();
+    const p=document.getElementById('mapPreview');
+    if(p) p.remove();
+  }
+});
 function copaSVG(color,size,num){
   const w=size, h=Math.round(size*1.4);
   const numEl = num!=null ? `<text x="10" y="10.5" text-anchor="middle" font-size="5.5" font-weight="700" fill="rgba(255,255,255,0.95)" font-family="sans-serif">${num}</text>` : '';
   return `<svg class="copa-icon" width="${w}" height="${h}" viewBox="0 0 20 30" fill="none"><path d="M7 2 C7 2 5.5 6 5.5 8.5 C5.5 11.5 7.2 13.5 9.5 14.2 L9.5 22 L7.5 22 L7 24 L13 24 L12.5 22 L10.5 22 L10.5 14.2 C12.8 13.5 14.5 11.5 14.5 8.5 C14.5 6 13 2 13 2 Z" fill="${color}" stroke="rgba(255,255,255,0.45)" stroke-width="0.6"/>${numEl}</svg>`;
 }
 
-/* ── WINE LIST ── */
+function showMapPreview(w, leftPct, topPct, num){
+  const canvas = document.getElementById('mapCanvas');
+  // Eliminar preview anterior
+  const old = document.getElementById('mapPreview');
+  if(old) old.remove();
+
+  const color = TYPE_COLOR[w.tipo]||'#888';
+  // Aromas — primeros 2-3 del array de maridaje como proxy, o varietal+región
+  const aromaItems = [];
+  if(w.varietal) aromaItems.push(w.varietal.split('·')[0].trim());
+  if(w.region)   aromaItems.push(w.region.split(',')[0].trim());
+  if(w.crianza && w.crianza !== '-') aromaItems.push(w.crianza.split('·')[0].trim());
+  const aromaChips = aromaItems.slice(0,3).map(a=>`<div class="mpv-aroma">${a}</div>`).join('');
+
+  const preview = document.createElement('div');
+  preview.id = 'mapPreview';
+  preview.className = 'map-preview' + (topPct > 55 ? ' above' : '');
+
+  // Posicionar: encima o debajo según posición vertical
+  const previewTop = topPct > 55
+    ? `${topPct+6}%`
+    : `${Math.max(2, topPct-6)}%`;
+
+  // Ajustar horizontal para no salirse
+  let previewLeft = leftPct;
+  if(leftPct < 25) previewLeft = 25;
+  if(leftPct > 75) previewLeft = 75;
+
+  preview.style.cssText = `left:${previewLeft}%;top:${previewTop}%;transform:translate(-50%,${topPct>55?'0':'-100%'})`;
+
+  preview.innerHTML = `
+    <div class="map-preview-inner">
+      <div class="mpv-header">
+        <div class="mpv-num">${num}</div>
+        <div>
+          <div class="mpv-name">${w.nombre}</div>
+          <div class="mpv-bodega">${w.bodega}</div>
+        </div>
+      </div>
+      <div class="mpv-divider"></div>
+      <div class="mpv-row">
+        <div class="mpv-tipo" style="color:${color}">${w.tipo}</div>
+        <div class="mpv-price">${fmtPrecio(w.precio)}</div>
+      </div>
+      ${aromaChips ? `<div class="mpv-aromas">${aromaChips}</div>` : ''}
+    </div>`;
+
+  canvas.appendChild(preview);
+  // Trigger animation
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ preview.classList.add('show'); }); });
+}
+
+/* ══════════════════════════════════════
+   ZOOM — pinch, scroll, doble tap, botones
+══════════════════════════════════════ */
+let mapZoom = 1;
+let mapPanX = 0;
+let mapPanY = 0;
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 3.5;
+const LABEL_ZOOM_THRESHOLD = 1.6; // mostrar labels a partir de este zoom
+
+function applyMapTransform(animate){
+  const inner = document.getElementById('mapInner');
+  if(!inner) return;
+  inner.style.transition = animate ? 'transform .25s cubic-bezier(.22,1,.36,1)' : 'none';
+  inner.style.transform = `scale(${mapZoom}) translate(${mapPanX/mapZoom}px,${mapPanY/mapZoom}px)`;
+  document.getElementById('zoomResetBtn').style.display = mapZoom > 1.05 ? 'flex' : 'none';
+  updateZoomLabels();
+}
+
+function updateZoomLabels(){
+  const show = mapZoom >= LABEL_ZOOM_THRESHOLD;
+  document.querySelectorAll('.wine-pin').forEach(p=>{
+    p.classList.toggle('pin-label-visible', show);
+  });
+}
+
+function clampPan(){
+  const canvas = document.getElementById('mapCanvas');
+  const cw = canvas.offsetWidth, ch = canvas.offsetHeight;
+  const maxPanX = (cw * (mapZoom - 1)) / 2;
+  const maxPanY = (ch * (mapZoom - 1)) / 2;
+  mapPanX = Math.max(-maxPanX, Math.min(maxPanX, mapPanX));
+  mapPanY = Math.max(-maxPanY, Math.min(maxPanY, mapPanY));
+}
+
+function adjustZoom(delta, cx, cy){
+  const canvas = document.getElementById('mapCanvas');
+  const rect = canvas.getBoundingClientRect();
+  const originX = (cx !== undefined ? cx : rect.width/2) - rect.width/2;
+  const originY = (cy !== undefined ? cy : rect.height/2) - rect.height/2;
+  const prevZoom = mapZoom;
+  mapZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, mapZoom + delta));
+  const zoomRatio = mapZoom / prevZoom;
+  mapPanX = mapPanX * zoomRatio + originX * (zoomRatio - 1);
+  mapPanY = mapPanY * zoomRatio + originY * (zoomRatio - 1);
+  clampPan();
+  applyMapTransform(true);
+  // Ocultar hint tras primer zoom
+  document.getElementById('zoomHint').classList.add('hide');
+}
+
+function resetZoom(){
+  mapZoom = 1; mapPanX = 0; mapPanY = 0;
+  applyMapTransform(true);
+}
+
+// ── Scroll wheel (desktop) ─────────────────────────────────────
+document.getElementById('mapCanvas').addEventListener('wheel', e=>{
+  e.preventDefault();
+  const rect = e.currentTarget.getBoundingClientRect();
+  adjustZoom(e.deltaY < 0 ? 0.2 : -0.2, e.clientX - rect.left - rect.width/2, e.clientY - rect.top - rect.height/2);
+}, {passive:false});
+
+// ── Pinch (móvil) ─────────────────────────────────────────────
+let pinchStartDist = 0;
+let pinchStartZoom = 1;
+let pinchCenterX = 0;
+let pinchCenterY = 0;
+let isPinching = false;
+
+// ── Pan (arrastrar) ───────────────────────────────────────────
+let panStartX = 0, panStartY = 0, panStartMapX = 0, panStartMapY = 0;
+let isPanning = false;
+let tapTimer = null;
+let lastTapTime = 0;
+
+document.getElementById('mapCanvas').addEventListener('touchstart', e=>{
+  if(e.touches.length === 2){
+    // Pinch start
+    isPinching = true;
+    isPanning = false;
+    const t1 = e.touches[0], t2 = e.touches[1];
+    pinchStartDist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY);
+    pinchStartZoom = mapZoom;
+    const rect = e.currentTarget.getBoundingClientRect();
+    pinchCenterX = ((t1.clientX+t2.clientX)/2) - rect.left - rect.width/2;
+    pinchCenterY = ((t1.clientY+t2.clientY)/2) - rect.top - rect.height/2;
+    e.preventDefault();
+  } else if(e.touches.length === 1 && mapZoom > 1.05){
+    // Pan start (solo cuando hay zoom)
+    const t = e.touches[0];
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Detectar doble tap
+    const now = Date.now();
+    if(now - lastTapTime < 300){
+      // Doble tap → zoom in en ese punto
+      adjustZoom(0.6, t.clientX - rect.left - rect.width/2, t.clientY - rect.top - rect.height/2);
+      lastTapTime = 0;
+      return;
+    }
+    lastTapTime = now;
+    isPanning = true;
+    panStartX = t.clientX; panStartY = t.clientY;
+    panStartMapX = mapPanX; panStartMapY = mapPanY;
+  }
+}, {passive:false});
+
+document.getElementById('mapCanvas').addEventListener('touchmove', e=>{
+  if(isPinching && e.touches.length === 2){
+    e.preventDefault();
+    const t1=e.touches[0], t2=e.touches[1];
+    const dist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY);
+    const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchStartZoom * (dist/pinchStartDist)));
+    const zoomDelta = newZoom - mapZoom;
+    mapZoom = newZoom;
+    mapPanX += pinchCenterX * (newZoom/pinchStartZoom - 1) * 0;
+    mapPanY += pinchCenterY * (newZoom/pinchStartZoom - 1) * 0;
+    clampPan();
+    applyMapTransform(false);
+    document.getElementById('zoomHint').classList.add('hide');
+  } else if(isPanning && e.touches.length === 1){
+    e.preventDefault();
+    const t = e.touches[0];
+    mapPanX = panStartMapX + (t.clientX - panStartX);
+    mapPanY = panStartMapY + (t.clientY - panStartY);
+    clampPan();
+    applyMapTransform(false);
+  }
+}, {passive:false});
+
+document.getElementById('mapCanvas').addEventListener('touchend', e=>{
+  if(e.touches.length < 2) isPinching = false;
+  if(e.touches.length === 0) isPanning = false;
+});
+
+// ── Doble tap en desktop ───────────────────────────────────────
+document.getElementById('mapCanvas').addEventListener('dblclick', e=>{
+  if(e.target.closest('.wine-pin')) return; // no hacer zoom si clickea una copa
+  const rect = e.currentTarget.getBoundingClientRect();
+  if(mapZoom > 1.5) resetZoom();
+  else adjustZoom(0.7, e.clientX - rect.left - rect.width/2, e.clientY - rect.top - rect.height/2);
+});
 function renderWineList(){
   document.getElementById('wineList').innerHTML=wines.map((w,idx)=>`
     <div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
