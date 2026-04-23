@@ -709,6 +709,7 @@
     <button class="tab-btn" onclick="showTab('sommelier',this)">Sommelier</button>
     <button class="tab-btn" onclick="showTab('charc',this)">Tapeos</button>
     <button class="tab-btn" onclick="showTab('puntuar',this)">Calificá</button>
+    <button class="tab-btn" onclick="showTab('miscatas',this)">Mis catas</button>
   </div>
 
   <!-- CARTA -->
@@ -741,6 +742,13 @@
   <!-- PUNTUAR -->
   <div class="tab-content" id="tab-puntuar">
     <div id="puntuarContent"></div>
+  </div>
+
+  <!-- ── MIS CATAS ── -->
+  <div class="tab-content" id="tab-miscatas">
+    <div id="misCatasContent">
+      <!-- Se renderiza por JS -->
+    </div>
   </div>
 
   <div class="footer">
@@ -1425,7 +1433,176 @@ function showTab(name,btn){
   document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   if(btn) btn.classList.add('active');
-  if(name==='puntuar') renderFormPuntuar();
+  if(name==='puntuar')   renderFormPuntuar();
+  if(name==='miscatas')  renderMisCatas();
+}
+
+/* ══════════════════════════════════════════════
+   MIS CATAS — Historial personal en 125cc
+══════════════════════════════════════════════ */
+const API_STATS_URL = '/api/stats'; // endpoint existente de 125cc
+
+function renderMisCatas(){
+  const container = document.getElementById('misCatasContent');
+  if(!container) return;
+
+  // Email guardado (del flujo de cata o del localStorage)
+  const savedEmail = (function(){ try{ return localStorage.getItem('125cc_email')||''; }catch(e){return '';} })();
+
+  container.innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--text);margin-bottom:4px">Mis catas</div>
+      <div style="font-size:13px;color:var(--muted);font-weight:300">Tu historial personal en 125cc</div>
+    </div>
+
+    <!-- Email input -->
+    <div class="form-card" style="margin-bottom:16px">
+      <div class="field-group" style="margin-bottom:14px">
+        <label class="field-label">Tu email</label>
+        <input type="email" id="miscatas-email" value="${savedEmail}"
+          placeholder="el que usaste al catar"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:11px;
+                 padding:12px 14px;font-size:14px;color:var(--text);font-family:'DM Sans',sans-serif;
+                 outline:none;transition:border-color .2s"
+          onfocus="this.style.borderColor='var(--text)'"
+          onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter')buscarMisCatas()">
+      </div>
+      <button onclick="buscarMisCatas()"
+        style="width:100%;background:var(--text);color:var(--bg);border:none;border-radius:12px;
+               padding:14px;font-size:13px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+               cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;
+               box-shadow:0 4px 16px rgba(20,10,0,.2)">
+        Ver mis catas →
+      </button>
+    </div>
+
+    <div id="miscatas-results"></div>`;
+}
+
+async function buscarMisCatas(){
+  const emailEl = document.getElementById('miscatas-email');
+  const email   = emailEl ? emailEl.value.trim() : '';
+  if(!email || !email.includes('@')){
+    emailEl.style.borderColor = 'var(--accent)';
+    emailEl.placeholder = 'Ingresá un email válido';
+    return;
+  }
+  // Guardar para próximas veces
+  try{ localStorage.setItem('125cc_email', email); }catch(e){}
+
+  const results = document.getElementById('miscatas-results');
+  results.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Buscando tus catas...</div>`;
+
+  try{
+    const r = await fetch(`/api/stats?email=${encodeURIComponent(email)}`);
+    const data = await r.json();
+    const catas = data.catas || [];
+
+    if(!catas.length){
+      results.innerHTML = `
+        <div style="text-align:center;padding:40px 16px;color:var(--muted);font-size:13px;line-height:1.8">
+          🍷<br><br>No encontramos catas para <strong>${email}</strong>.<br>
+          <span style="font-size:11px">¿Usaste otro email al catar?</span>
+        </div>`;
+      return;
+    }
+
+    results.innerHTML = `
+      <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">
+        ${catas.length} cata${catas.length!==1?'s':''} registrada${catas.length!==1?'s':''}
+      </div>
+      ${catas.map((c,i) => buildMiCataCard(c, i)).join('')}`;
+
+  } catch(err){
+    results.innerHTML = `
+      <div style="text-align:center;padding:32px 16px;color:var(--muted);font-size:13px;line-height:1.8">
+        ⚠️<br><br>No se pudo cargar el historial.<br>
+        <span style="font-size:11px">Verificá tu conexión.</span>
+      </div>`;
+  }
+}
+
+function buildMiCataCard(c, idx){
+  const id   = 'mc_' + idx;
+  const punt = c.puntuacion || c.puntuaci_n || c.rating || '—';
+  const vino = c.vino || '—';
+  const nivel= (c.nivel||'').toLowerCase();
+  const fecha= fmtMiCataFecha(c.fecha);
+  const color= c.color || '';
+  const aromas = c.aromas || '';
+  const sabor  = c.sabor  || '';
+  const desc   = c.descripcion || c.opinion || '';
+  const rep    = c.repetiria || '';
+
+  // Chips helper
+  const chips = (txt) => txt ? txt.split(',').filter(s=>s.trim()).slice(0,5)
+    .map(s=>`<span style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--text);margin:2px">${s.trim()}</span>`).join('') : '';
+
+  const puntColor = punt>=90?'#4CAF50':punt>=80?'#C4A05A':punt>=70?'#FF9800':'#888';
+
+  return `<div class="wine-card" id="${id}" onclick="toggleMiCataCard('${id}')" style="cursor:pointer;margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <!-- Puntaje -->
+      <div style="text-align:center;flex-shrink:0;width:52px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:${puntColor};line-height:1">${punt}</div>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:.05em">/100</div>
+      </div>
+      <!-- Info -->
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${vino}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;font-weight:300">${fecha}</div>
+        <div style="display:inline-block;font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+                    padding:3px 10px;border-radius:12px;margin-top:5px;font-weight:600;
+                    background:${nivel==='sommelier'?'rgba(196,160,90,.1)':'rgba(200,70,58,.08)'};
+                    color:${nivel==='sommelier'?'var(--gold)':'var(--accent)'}">
+          ${nivel==='sommelier'?'Sommelier':'Simple'}
+        </div>
+      </div>
+      <div style="font-size:16px;color:var(--muted);opacity:.5;transition:transform .2s" id="chev_${id}">▾</div>
+    </div>
+
+    <!-- Detalle expandible -->
+    <div id="det_${id}" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);animation:fadeUp .2s ease">
+      ${color ? `<div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Color</div><div style="margin-bottom:12px"><span style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--text)">${color}</span></div>` : ''}
+      ${aromas ? `<div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Aromas</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${chips(aromas)}</div>` : ''}
+      ${sabor  ? `<div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">En boca</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${chips(sabor)}</div>` : ''}
+      ${nivel==='sommelier' && (c.acidez||c.taninos||c.cuerpo) ? `
+        <div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Atributos</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+          ${[['Acidez',c.acidez],['Taninos',c.taninos],['Cuerpo',c.cuerpo],['Final',c.final_boca||c.final_en_boca]].filter(a=>a[1]).map(([n,v])=>`
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">${n}</span>
+              <span style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text);font-weight:600">${v}/5</span>
+            </div>`).join('')}
+        </div>` : ''}
+      ${rep ? `<div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">¿Lo pedirías de nuevo?</div><div style="font-size:13px;color:var(--text);margin-bottom:12px">${rep}</div>` : ''}
+      ${desc ? `<div style="background:var(--bg);border-left:2px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 14px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text);line-height:1.65;font-style:italic">"${desc}"</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function toggleMiCataCard(id){
+  const det  = document.getElementById('det_'+id);
+  const chev = document.getElementById('chev_'+id);
+  if(!det) return;
+  const open = det.style.display === 'block';
+  det.style.display  = open ? 'none' : 'block';
+  if(chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function fmtMiCataFecha(f){
+  if(!f) return '';
+  const s = f.toString();
+  if(s.includes('T') || (s.includes('-') && s.length > 8)){
+    const d = new Date(s);
+    if(!isNaN(d.getTime())){
+      return d.getDate().toString().padStart(2,'0') + '/' +
+             (d.getMonth()+1).toString().padStart(2,'0') + '/' +
+             d.getFullYear();
+    }
+  }
+  return s;
 }
 
 /* ── CATA FLOW — 2 niveles (Simple + Sommelier) ── */
@@ -1465,6 +1642,7 @@ const FINAL_DESC   = {1:'Muy corto',2:'Corto',3:'Medio',4:'Largo',5:'Muy largo'}
 
 let cataState = {
   nivel:null, step:0, vinoId:null,
+  email: (function(){ try{ return localStorage.getItem('125cc_email')||''; }catch(e){return '';} })(),
   color:null, colorOtro:'', aromas:[], aromasOtro:'', sabor:[], saborOtro:'',
   acidez:3, taninos:3, cuerpo:3, final:3, visual:3, olfativo:3,
   puntuacion:80, descripcion:'', repetiria:'',
@@ -1603,12 +1781,28 @@ function renderCataStep(){
 
 function renderCataWelcome(){
   return `<div style="padding:0 0 8px">
+    <!-- Email — identidad del catador -->
+    <div style="background:var(--dark2);border-radius:18px;padding:18px 20px;margin-bottom:12px;border:1px solid rgba(196,160,90,.15)">
+      <div style="font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Tu email</div>
+      <input type="email" id="cata-email-input" value="${cataState.email}" placeholder="para guardar tu historial de catas"
+        oninput="cataState.email=this.value.trim()"
+        style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);border-radius:11px;
+               padding:12px 14px;font-size:14px;color:var(--dark-text);font-family:'DM Sans',sans-serif;
+               outline:none;transition:border-color .2s;letter-spacing:.01em"
+        onfocus="this.style.borderColor='var(--gold)'"
+        onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+      <div style="font-size:11px;color:var(--dark-muted);margin-top:7px;line-height:1.5">
+        📒 Con tu email podés ver tu historial de catas en el bar. No lo compartimos con nadie.
+      </div>
+    </div>
+
     <div style="background:var(--dark2);border-radius:18px;padding:20px;margin-bottom:16px;border:1px solid rgba(196,160,90,.15)">
       <div style="font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">¿Qué vino querés catar?</div>
       <select id="cata-wine-sel" onchange="cataState.vinoId=parseInt(this.value)" style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:12px 14px;font-size:13px;color:var(--dark-text);font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;cursor:pointer">
         ${wines.map(w=>`<option value="${w.id}" ${w.id===cataState.vinoId?'selected':''}>${w.nombre}</option>`).join('')}
       </select>
     </div>
+
     <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--dark-text);text-align:center;margin-bottom:18px">¿Qué tipo de cata?</div>
     <div onclick="startCata('simple')" style="background:var(--dark2);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px 20px;margin-bottom:12px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden">
       <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:3px 0 0 3px"></div>
@@ -1630,8 +1824,12 @@ function renderCataWelcome(){
 }
 
 function startCata(nivel){
-  cataState.nivel=nivel; cataState.step=1;
+  // Tomar email del input
+  const emailEl=document.getElementById('cata-email-input');
+  if(emailEl) cataState.email=emailEl.value.trim();
+  // Tomar vino seleccionado
   const s=document.getElementById('cata-wine-sel'); if(s)cataState.vinoId=parseInt(s.value);
+  cataState.nivel=nivel; cataState.step=1;
   renderCataStep();
 }
 
@@ -1700,8 +1898,10 @@ function enviarSinWA(){ enviarPuntuacion(null); }
 
 async function enviarPuntuacion(phone){
   const w=wines.find(x=>x.id===cataState.vinoId)||wines[0];
+  // Guardar email localmente para próximas catas
+  try{if(cataState.email)localStorage.setItem('125cc_email',cataState.email);}catch(e){}
   const payload={
-    vino:w.nombre, bodega:w.bodega, tipo:w.tipo, precio:w.precio,
+    email:cataState.email, vino:w.nombre, bodega:w.bodega, tipo:w.tipo, precio:w.precio,
     nivel:cataState.nivel, puntuacion:cataState.puntuacion,
     color:cataState.color||'', aromas:cataState.aromas.join(', '),
     sabor:cataState.sabor.join(', '), acidez:cataState.acidez,
@@ -1724,7 +1924,7 @@ async function enviarPuntuacion(phone){
           opinion:cataState.descripcion||'—'})}).catch(()=>{});
     }
     const nl=cataState.nivel==='sommelier'?'Cata Sommelier':'Cata Simple';
-    cataState={nivel:null,step:0,vinoId:w.id,color:null,colorOtro:'',aromas:[],aromasOtro:'',sabor:[],saborOtro:'',acidez:3,taninos:3,cuerpo:3,final:3,visual:3,olfativo:3,puntuacion:80,descripcion:'',repetiria:''};
+    const _em=cataState.email;cataState={nivel:null,step:0,vinoId:w.id,email:_em,color:null,colorOtro:'',aromas:[],aromasOtro:'',sabor:[],saborOtro:'',acidez:3,taninos:3,cuerpo:3,final:3,visual:3,olfativo:3,puntuacion:80,descripcion:'',repetiria:''};
     document.getElementById('puntuarContent').innerHTML=`<div class="form-success"><span class="success-icon">🍷</span><h3>¡Cata guardada!</h3><p>${nl} de <strong>${w.nombre}</strong> registrada correctamente.${phone?'<br>Te enviamos el resumen por WhatsApp.':''}</p><button onclick="renderFormPuntuar()">Catar otro vino</button></div>`;
   } catch(err){
     alert('No se pudo guardar la cata.\n\n'+err.message);
