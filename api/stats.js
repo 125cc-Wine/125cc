@@ -1,6 +1,4 @@
-// api/stats.js
-// Lee la hoja "Degustaciones" y devuelve métricas para el dashboard
-
+// api/stats.js — v2 con email y nuevas columnas de cata
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -10,9 +8,114 @@ module.exports = async function handler(req, res) {
   const SHEET_ID            = process.env.GOOGLE_SHEET_ID;
   const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
   const GOOGLE_PRIVATE_KEY  = process.env.GOOGLE_PRIVATE_KEY;
-
   if (!SHEET_ID || !GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY)
     return res.status(500).json({ error: "Faltan credenciales." });
+
+  // Filtro por email (para Mis Catas)
+  const emailFiltro = (req.query?.email || "").toLowerCase().trim();
+
+  try {
+    const token = await getGoogleToken(GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY);
+
+    // Leer hasta columna V (22 cols) para capturar todos los campos nuevos
+    const sheetRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A1:V1000`,
+      { headers: { "Authorization": `Bearer ${token}` } }
+    );
+    if (!sheetRes.ok) {
+      const err = await sheetRes.json();
+      return res.status(502).json({ error: "Error leyendo Sheets.", detail: err?.error?.message });
+    }
+
+    const data = await sheetRes.json();
+    const rows = data.values || [];
+    if (rows.length < 2) return res.status(200).json({ total: 0, resumen: [], catas: [] });
+
+    const headers = rows[0].map(h => h.trim().toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "")
+    );
+
+    const col = (row, name) => {
+      const i = headers.indexOf(name);
+      return i >= 0 ? (row[i] || "").toString().trim() : "";
+    };
+    const colN = (row, name) => parseFloat(col(row, name)) || 0;
+
+    const degustaciones = rows.slice(1)
+      .filter(r => r.length > 1 && (r[3] || r[2] || r[0])) // al menos fecha o vino
+      .map(r => ({
+        fecha:       col(r, "fecha"),
+        hora:        col(r, "hora"),
+        email:       col(r, "email"),
+        vino:        col(r, "vino"),
+        bodega:      col(r, "bodega"),
+        tipo:        col(r, "tipo"),
+        precio:      col(r, "precio"),
+        nivel:       col(r, "nivel"),
+        puntuacion:  colN(r, "puntuacion"),
+        color:       col(r, "color"),
+        aromas:      col(r, "aromas"),
+        sabor:       col(r, "sabor"),
+        acidez:      colN(r, "acidez"),
+        taninos:     colN(r, "taninos"),
+        cuerpo:      colN(r, "cuerpo"),
+        final_boca:  colN(r, "final_en_boca") || colN(r, "final_boca"),
+        visual:      colN(r, "visual"),
+        olfativo:    colN(r, "olfativo"),
+        repetiria:   col(r, "repetiria"),
+        descripcion: col(r, "descripcion") || col(r, "opinion"),
+        copa:        col(r, "copa"),
+        varietal:    col(r, "varietal"),
+      }))
+      .filter(d => d.vino); // solo filas con nombre de vino
+
+    // ── Si hay filtro por email → devolver historial personal ──
+    if (emailFiltro) {
+      const catas = degustaciones
+        .filter(d => d.email.toLowerCase() === emailFiltro)
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      return res.status(200).json({ total: catas.length, catas });
+    }
+
+    // ── Sin filtro → resumen para dashboard ───────────────────
+    const byVino = {};
+    for (const d of degustaciones) {
+      if (!byVino[d.vino]) {
+        byVino[d.vino] = { vino: d.vino, bodega: d.bodega, tipo: d.tipo,
+          count: 0, puntuacion: 0, acidez: 0, cuerpo: 0, taninos: 0,
+          visual: 0, gusto: 0, opiniones: [] };
+      }
+      const b = byVino[d.vino];
+      b.count++;
+      b.puntuacion += d.puntuacion;
+      b.acidez     += d.acidez;
+      b.cuerpo     += d.cuerpo;
+      b.taninos    += d.taninos;
+      b.visual     += d.visual;
+      if (d.descripcion) b.opiniones.push({ texto: d.descripcion, fecha: d.fecha });
+    }
+
+    const resumen = Object.values(byVino).map(b => ({
+      vino:      b.vino,
+      bodega:    b.bodega,
+      tipo:      b.tipo,
+      count:     b.count,
+      puntuacion: +(b.puntuacion / b.count).toFixed(1),
+      acidez:    +(b.acidez    / b.count).toFixed(1),
+      cuerpo:    +(b.cuerpo    / b.count).toFixed(1),
+      taninos:   +(b.taninos   / b.count).toFixed(1),
+      visual:    +(b.visual    / b.count).toFixed(1),
+      gusto:     +(b.gusto     / b.count).toFixed(1),
+      opiniones: b.opiniones,
+    })).sort((a, b) => b.puntuacion - a.puntuacion);
+
+    return res.status(200).json({ total: degustaciones.length, resumen, degustaciones });
+
+  } catch (err) {
+    return res.status(500).json({ error: "Error interno.", detail: err.message });
+  }
+};
 
   try {
     const token = await getGoogleToken(GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY);
