@@ -1918,38 +1918,136 @@ function cataNavBack(){
 function ratingText(n){ return CATA_SCORE_LABELS[n]||''; }
 function enviarSinWA(){ enviarPuntuacion(null); }
 
+function mostrarPopupWA(){
+  // Crear overlay si no existe
+  let overlay = document.getElementById('waOverlay');
+  if(overlay) overlay.remove();
+
+  overlay = document.createElement('div');
+  overlay.id = 'waOverlay';
+  overlay.className = 'wa-overlay';
+  overlay.innerHTML = `
+    <div class="wa-sheet">
+      <h3>¡Última pregunta!</h3>
+      <p>¿Querés recibir un resumen de tu cata por WhatsApp? Es opcional — podés saltear y guardar igual.</p>
+      <input type="tel" class="wa-phone-input" id="waPhoneInput"
+        placeholder="+54 9 11 1234-5678"
+        style="width:100%;background:rgba(255,255,255,.7);border:1px solid rgba(80,55,30,.15);
+               border-radius:11px;padding:13px 15px;font-size:15px;color:var(--text);
+               font-family:'DM Sans',sans-serif;outline:none;margin-bottom:10px;
+               letter-spacing:.02em;transition:border-color .2s"
+        onfocus="this.style.borderColor='#25D366'"
+        onblur="this.style.borderColor='rgba(80,55,30,.15)'">
+      <button class="wa-send-btn" onclick="enviarConWA()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Enviar resumen por WhatsApp
+      </button>
+      <button class="wa-skip-btn" onclick="enviarSinWA();cerrarPopupWA()">
+        Guardar sin WhatsApp →
+      </button>
+    </div>`;
+
+  overlay.addEventListener('click', function(e){
+    if(e.target === overlay) cerrarPopupWA();
+  });
+
+  document.body.appendChild(overlay);
+}
+
+function cerrarPopupWA(){
+  const overlay = document.getElementById('waOverlay');
+  if(overlay) overlay.remove();
+}
+
+function enviarConWA(){
+  const input = document.getElementById('waPhoneInput');
+  const phone = input ? input.value.trim() : '';
+  cerrarPopupWA();
+  enviarPuntuacion(phone || null);
+}
+
 async function enviarPuntuacion(phone){
-  const w=wines.find(x=>x.id===cataState.vinoId)||wines[0];
-  // Guardar email localmente para próximas catas
-  try{if(cataState.email)localStorage.setItem('125cc_email',cataState.email);}catch(e){}
-  const payload={
-    email:cataState.email, vino:w.nombre, bodega:w.bodega, tipo:w.tipo, precio:w.precio,
-    nivel:cataState.nivel, puntuacion:cataState.puntuacion,
-    color:cataState.color||'', aromas:cataState.aromas.join(', '),
-    sabor:cataState.sabor.join(', '), acidez:cataState.acidez,
-    cuerpo:cataState.cuerpo, taninos:cataState.taninos,
-    final_boca:cataState.final, visual:cataState.visual,
-    olfativo:cataState.olfativo, maridaje:cataState.maridaje.join(', '),
-    color_otro:cataState.colorOtro, aromas_otro:cataState.aromasOtro, sabor_otro:cataState.saborOtro, repetiria:cataState.repetiria, color_otro:cataState.colorOtro, aromas_otro:cataState.aromasOtro, sabor_otro:cataState.saborOtro, descripcion:cataState.descripcion,
-    opinion:cataState.descripcion, phone:phone?normalizarTelefono(phone):null,
-    copa:w.copa||'125 cc', varietal:w.varietal||'',
+  const w = wines.find(x=>x.id===cataState.vinoId)||wines[0];
+  // Guardar email localmente
+  try{ if(cataState.email) localStorage.setItem('125cc_email', cataState.email); }catch(e){}
+
+  const colorFinal = cataState.color === '__otro__' ? cataState.colorOtro : cataState.color;
+
+  const payload = {
+    email:       cataState.email,
+    vino:        w.nombre,
+    bodega:      w.bodega,
+    tipo:        w.tipo,
+    precio:      w.precio,
+    nivel:       cataState.nivel,
+    puntuacion:  cataState.puntuacion,
+    color:       colorFinal || '',
+    color_otro:  cataState.colorOtro,
+    aromas:      cataState.aromas.join(', '),
+    aromas_otro: cataState.aromasOtro,
+    sabor:       cataState.sabor.join(', '),
+    sabor_otro:  cataState.saborOtro,
+    acidez:      cataState.acidez,
+    cuerpo:      cataState.cuerpo,
+    taninos:     cataState.taninos,
+    final_boca:  cataState.final,
+    visual:      cataState.visual,
+    olfativo:    cataState.olfativo,
+    repetiria:   cataState.repetiria,
+    descripcion: cataState.descripcion,
+    opinion:     cataState.descripcion,
+    phone:       phone ? normalizarTelefono(phone) : null,
+    copa:        w.copa || '125 cc',
+    varietal:    w.varietal || '',
   };
+
   try{
-    const res=await fetch('/api/guardar-puntuacion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    const data=await res.json();
-    if(!res.ok) throw new Error(data.detail||data.error||'Error');
+    const res = await fetch('/api/guardar-puntuacion', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.detail || data.error || 'Error desconocido');
+
     if(phone){
-      await fetch('/api/send-whatsapp',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({phone:normalizarTelefono(phone),wineName:w.nombre,winery:w.bodega,
-          varietal:w.varietal||'',price:w.precio,glass:w.copa||'125 cc',
-          rating:cataState.puntuacion,ratingLabel:ratingText(cataState.puntuacion),
-          opinion:cataState.descripcion||'—'})}).catch(()=>{});
+      await fetch('/api/send-whatsapp', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          phone:       normalizarTelefono(phone),
+          wineName:    w.nombre,
+          winery:      w.bodega,
+          varietal:    w.varietal || '',
+          price:       w.precio,
+          glass:       w.copa || '125 cc',
+          rating:      cataState.puntuacion,
+          ratingLabel: ratingText(cataState.puntuacion),
+          opinion:     cataState.descripcion || '—',
+        }),
+      }).catch(()=>{});
     }
-    const nl=cataState.nivel==='sommelier'?'Cata Sommelier':'Cata Simple';
-    const _em=cataState.email;cataState={nivel:null,step:0,vinoId:w.id,email:_em,color:null,colorOtro:'',aromas:[],aromasOtro:'',sabor:[],saborOtro:'',acidez:3,taninos:3,cuerpo:3,final:3,visual:3,olfativo:3,puntuacion:80,descripcion:'',repetiria:''};
-    document.getElementById('puntuarContent').innerHTML=`<div class="form-success"><span class="success-icon">🍷</span><h3>¡Cata guardada!</h3><p>${nl} de <strong>${w.nombre}</strong> registrada correctamente.${phone?'<br>Te enviamos el resumen por WhatsApp.':''}</p><button onclick="renderFormPuntuar()">Catar otro vino</button></div>`;
+
+    const nl = cataState.nivel==='sommelier' ? 'Cata Sommelier' : 'Cata Simple';
+    const _em = cataState.email;
+    cataState = {
+      nivel:null, step:0, vinoId:w.id, email:_em,
+      color:null, colorOtro:'', aromas:[], aromasOtro:'',
+      sabor:[], saborOtro:'', acidez:3, taninos:3, cuerpo:3,
+      final:3, visual:3, olfativo:3, puntuacion:80,
+      descripcion:'', repetiria:'',
+    };
+
+    document.getElementById('puntuarContent').innerHTML =
+      `<div class="form-success">
+        <span class="success-icon">🍷</span>
+        <h3>¡Cata guardada!</h3>
+        <p>${nl} de <strong>${w.nombre}</strong> registrada correctamente.${phone?'<br>Te enviamos el resumen por WhatsApp.':''}</p>
+        <button onclick="renderFormPuntuar()">Catar otro vino</button>
+      </div>`;
+
   } catch(err){
-    alert('No se pudo guardar la cata.\n\n'+err.message);
+    alert('No se pudo guardar la cata.\n\n' + err.message);
   }
 }
 </script>
