@@ -853,8 +853,15 @@ function initApp(config, apiWines){
     :config.bar.nombre;
   document.getElementById('descripcion').textContent=config.bar.descripcion;
   document.getElementById('mapWatermark').textContent=`${config.bar.nombre} · ${config.bar.subtitulo||''}`;
-  const parts=[config.bar.instagram,config.bar.direccion].filter(Boolean);
-  document.getElementById('footerInfo').innerHTML=parts.map(p=>`<strong>${p}</strong>`).join(' &nbsp;·&nbsp; ');
+  const parts = [];
+  if(config.bar.instagram){
+    const handle = config.bar.instagram.replace('@','');
+    parts.push(`<a href="https://instagram.com/${handle}" target="_blank" rel="noopener"
+      style="color:var(--madera);text-decoration:none;font-weight:400">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>${config.bar.instagram}</a>`);
+  }
+  if(config.bar.direccion) parts.push(`<strong>${config.bar.direccion}</strong>`);
+  document.getElementById('footerInfo').innerHTML = parts.join(' &nbsp;·&nbsp; ');
   buildMap(); renderWineList();  initSommelier();
   // Pill "Todos" activa por defecto
   document.getElementById('pill-all')?.classList.add('active');
