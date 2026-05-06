@@ -102,9 +102,7 @@
       box-shadow:0 4px 24px rgba(20,10,0,.12);
     }
     .map-section::before{
-      content:'WINE MAP';
-      position:absolute;top:20px;left:22px;
-      font-size:8px;letter-spacing:.4em;color:var(--gold);font-weight:500;
+      content:none; /* eyebrow ya está en el HTML, evita duplicado */
     }
     .map-section h2{
       font-family:'Cormorant Garamond',serif;
@@ -645,9 +643,9 @@
     .zoom-btn:active{transform:scale(.92)}
     .zoom-reset{font-size:12px}
     .zoom-hint{
-      position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+      position:absolute;bottom:8px;right:48px;
       font-size:9px;letter-spacing:.12em;text-transform:uppercase;
-      color:rgba(80,60,40,.4);pointer-events:none;white-space:nowrap;
+      color:rgba(80,60,40,.35);pointer-events:none;white-space:nowrap;
       transition:opacity .5s;
     }
     .zoom-hint.hide{opacity:0}
