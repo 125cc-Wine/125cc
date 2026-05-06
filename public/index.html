@@ -3,37 +3,75 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-  <meta name="theme-color" content="#1c1917"/>
+  <meta name="theme-color" content="#2E1E10"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta property="og:title" content="125cc Wine Bar · Carta de Vinos"/>
   <meta property="og:description" content="Elegí tu vino por estilo, intensidad y perfil. Carta visual interactiva."/>
   <meta property="og:url" content="https://www.125cc.com.ar"/>
   <meta property="og:type" content="website"/>
-  <meta name="theme-color" content="#1c1917"/>
+  <meta name="theme-color" content="#2E1E10"/>
   <title>Wine Bar · Carta de Vinos</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231c1917'/><path d='M11 4 C11 4 8.5 10 8.5 13.5 C8.5 17.5 11.5 20 15.5 20.5 L15.5 26 L12.5 26 L12 28.5 L20 28.5 L19.5 26 L16.5 26 L16.5 20.5 C20.5 20 23.5 17.5 23.5 13.5 C23.5 10 21 4 21 4 Z' fill='%23c8463a'/></svg>"/>
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231c1917'/><path d='M11 4 C11 4 8.5 10 8.5 13.5 C8.5 17.5 11.5 20 15.5 20.5 L15.5 26 L12.5 26 L12 28.5 L20 28.5 L19.5 26 L16.5 26 L16.5 20.5 C20.5 20 23.5 17.5 23.5 13.5 C23.5 10 21 4 21 4 Z' fill='%23c8463a'/></svg>"/>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232E1E10'/><path d='M11 4 C11 4 8.5 10 8.5 13.5 C8.5 17.5 11.5 20 15.5 20.5 L15.5 26 L12.5 26 L12 28.5 L20 28.5 L19.5 26 L16.5 26 L16.5 20.5 C20.5 20 23.5 17.5 23.5 13.5 C23.5 10 21 4 21 4 Z' fill='%23c8463a'/></svg>"/>
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232E1E10'/><path d='M11 4 C11 4 8.5 10 8.5 13.5 C8.5 17.5 11.5 20 15.5 20.5 L15.5 26 L12.5 26 L12 28.5 L20 28.5 L19.5 26 L16.5 26 L16.5 20.5 C20.5 20 23.5 17.5 23.5 13.5 C23.5 10 21 4 21 4 Z' fill='%23c8463a'/></svg>"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     :root{
-      --bg:#F2EBE0;--card:#FAF6F0;--border:rgba(60,40,20,.1);--text:#1A1208;--muted:#7A6A58;
-      --dark:#16110C;--dark2:#1E1710;--dark3:#2C2318;--dark-muted:#6B5E52;
-      --dark-text:#F5F0E8;--dark-sub:#A89880;--accent:#9B2030;--accent2:#C4354A;
-      --gold:#C4A05A;--gold2:#E8C878;
-      --tinto:#8B0000;--blanco:#5A8A2A;--rosado:#C4306A;--naranja:#C46020;
-      --shadow-sm:0 2px 8px rgba(20,10,0,.08);
-      --shadow-md:0 4px 20px rgba(20,10,0,.12);
-      --shadow-lg:0 8px 40px rgba(20,10,0,.18);
+      /* ── Paleta del local · Claudio Guzmán ── */
+      /* Madera */
+      --madera:      #C8A46A;   /* roble claro — dorado cálido */
+      --madera-dk:   #4A3020;   /* madera oscura — header */
+      --madera-mid:  #8B6A3A;   /* madera media */
+      --madera-lt:   #F0E4CC;   /* madera muy clara */
+      /* Piedra */
+      --piedra:      #C4785A;   /* piedra terrosa — acento cálido */
+      --piedra-lt:   #F2E4DA;   /* piedra clara */
+      /* Cuero */
+      --cuero:       #A0622A;   /* sillas cuero caramelo */
+      /* Tinto — marca 125cc */
+      --accent:      #7A1428;
+      --accent2:     #9B2035;
+      /* Fondos */
+      --bg:          #FAF5EE;   /* crema base muy cálida */
+      --bg2:         #F0E8DA;   /* crema arena */
+      --bg3:         #E4D8C8;   /* crema arena oscura */
+      --card:        rgba(255,255,255,.82);
+      --card2:       rgba(250,245,238,.9);
+      /* Texto */
+      --text:        #2A1A08;
+      --text2:       #3D2814;
+      --muted:       #8A7060;
+      --sub:         #5A4030;
+      /* Bordes */
+      --border:      rgba(139,106,58,.13);
+      --border2:     rgba(139,106,58,.24);
+      /* Header oscuro — madera quemada */
+      --dark:        #2E1E10;
+      --dark2:       #3A2618;
+      --dark3:       #4A3220;
+      --dark-text:   #F5EDE0;
+      --dark-sub:    #C8A878;
+      --dark-muted:  #8A7060;
+      /* Tipos vino */
+      --tinto:   #7A1428;
+      --blanco:  #5A8A2A;
+      --rosado:  #C4306A;
+      --naranja: #C46020;
+      /* Compatibilidad — gold = madera */
+      --gold:  #C8A46A;
+      --gold2: #E8C878;
+      /* Sombras cálidas */
+      --shadow-sm: 0 2px 10px rgba(60,35,10,.1);
+      --shadow-md: 0 4px 24px rgba(60,35,10,.15);
+      --shadow-lg: 0 8px 40px rgba(60,35,10,.22);
     }
     html,body{height:100%}
     body{
       font-family:'DM Sans',sans-serif;font-weight:300;
-      background:radial-gradient(ellipse at 50% 30%, #F5EDE0 0%, #E8DDD0 45%, #D8CDBC 100%);
-      background-attachment:fixed;
+      background:#FAF5EE;
       color:var(--text);overscroll-behavior:none;
       min-height:100vh;
     }
@@ -62,23 +100,23 @@
        HEADER
     ══════════════════════════════ */
     .header{
-      background:var(--dark);
+      background:var(--madera-dk);
       padding:56px 22px 24px;
       position:relative;overflow:hidden;
     }
     .header::before{
       content:'';position:absolute;inset:0;
-      background:radial-gradient(ellipse at 80% 0%, rgba(156,32,48,.25) 0%, transparent 60%),
-                 radial-gradient(ellipse at 0% 100%, rgba(196,160,90,.12) 0%, transparent 50%);
+      background:radial-gradient(ellipse at 80% 0%, rgba(196,120,90,.2) 0%, transparent 60%),
+                 radial-gradient(ellipse at 0% 100%, rgba(200,164,106,.1) 0%, transparent 50%);
       pointer-events:none;
     }
     .header::after{
       content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-      background:linear-gradient(90deg,transparent,rgba(196,160,90,.3),transparent);
+      background:linear-gradient(90deg,transparent,rgba(200,164,106,.35),transparent);
     }
     .eyebrow{
       font-size:9px;letter-spacing:.45em;text-transform:uppercase;
-      color:var(--gold);margin-bottom:8px;font-weight:500;
+      color:rgba(200,164,106,.75);margin-bottom:8px;font-weight:500;
     }
     .header h1{
       font-family:'Cormorant Garamond',serif;
@@ -86,20 +124,19 @@
       line-height:.95;letter-spacing:-.02em;
     }
     .header h1 span{
-      color:var(--accent);
+      color:var(--piedra);
       font-style:italic;font-weight:300;
     }
-    .header p{margin-top:12px;font-size:12px;color:var(--dark-muted);line-height:1.65;font-weight:300;letter-spacing:.02em}
+    .header p{margin-top:12px;font-size:12px;color:rgba(245,237,224,.55);line-height:1.65;font-weight:300;letter-spacing:.02em}
 
     /* ══════════════════════════════
        MAP
     ══════════════════════════════ */
     .map-section{
-      background:var(--dark);
+      background:var(--madera-dk);
       padding:16px 16px 20px;
       position:relative;
-      /* Separador visual entre arena y oscuro */
-      box-shadow:0 4px 24px rgba(20,10,0,.12);
+      box-shadow:0 4px 24px rgba(40,20,8,.18);
     }
     .map-section::before{
       content:none; /* eyebrow ya está en el HTML, evita duplicado */
@@ -253,27 +290,27 @@
     ══════════════════════════════ */
     .tab-bar{
       display:flex;
-      background:rgba(245,238,225,.88);
+      background:rgba(250,245,238,.96);
       backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-      border-bottom:1px solid rgba(80,55,30,.14);
+      border-bottom:1px solid rgba(139,106,58,.16);
       position:sticky;top:0;z-index:100;overflow-x:auto;
-      box-shadow:0 2px 16px rgba(60,35,10,.1);
+      box-shadow:0 2px 16px rgba(60,35,10,.08);
     }
     .tab-bar::-webkit-scrollbar{display:none}
     .tab-btn{
       flex:1;min-width:60px;padding:14px 6px;text-align:center;
-      font-size:11px;font-weight:500;letter-spacing:.05em;
-      color:var(--sub);border-bottom:2px solid transparent;
+      font-size:11px;font-weight:400;letter-spacing:.05em;
+      color:var(--muted);border-bottom:2px solid transparent;
       cursor:pointer;transition:all .2s;
       background:none;border-top:none;border-left:none;border-right:none;
       font-family:'DM Sans',sans-serif;white-space:nowrap;text-transform:uppercase;
     }
-    .tab-btn.active{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+    .tab-btn.active{color:var(--madera-dk);border-bottom-color:var(--accent);font-weight:600}
     .tab-content{display:none;padding:20px 16px;padding-bottom:48px;animation:fadeUp .25s ease}
     .tab-content.active{display:block}
     .section-title{
       font-family:'Cormorant Garamond',serif;
-      font-size:20px;font-weight:600;color:var(--text2);
+      font-size:20px;font-weight:600;color:var(--madera-dk);
       margin-bottom:14px;margin-top:2px;
     }
 
@@ -281,17 +318,16 @@
        WINE LIST
     ══════════════════════════════ */
     .wine-card{
-      background:rgba(255,255,255,.72);
-      backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-      border:1px solid rgba(80,55,30,.14);
-      border-radius:16px;padding:13px 15px;margin-bottom:9px;
+      background:rgba(255,255,255,.85);
+      border:1px solid rgba(139,106,58,.15);
+      border-radius:14px;padding:13px 15px;margin-bottom:8px;
       display:flex;align-items:flex-start;gap:12px;cursor:pointer;
       transition:border-color .2s,box-shadow .2s,transform .15s;
       position:relative;box-shadow:var(--shadow-sm);
     }
-    .wine-card:hover{box-shadow:var(--shadow-md);border-color:rgba(80,55,30,.25);background:rgba(255,255,255,.88)}
+    .wine-card:hover{box-shadow:var(--shadow-md);border-color:rgba(139,106,58,.3);background:#fff}
     .wine-card:active{transform:scale(.98)}
-    .wine-card.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(155,32,48,.1)}
+    .wine-card.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(122,20,40,.1)}
     .wc-badge{
       width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
       justify-content:center;font-size:10px;font-weight:600;color:#fff;
@@ -310,11 +346,10 @@
        FICHA TÉCNICA
     ══════════════════════════════ */
     .ficha-card{
-      background:rgba(255,255,255,.78);
-      backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-      border:1px solid rgba(80,55,30,.12);
-      border-radius:18px;padding:18px;margin-bottom:12px;
-      box-shadow:0 2px 16px rgba(60,35,10,.1);
+      background:rgba(255,255,255,.88);
+      border:1px solid rgba(139,106,58,.14);
+      border-radius:16px;padding:18px;margin-bottom:12px;
+      box-shadow:var(--shadow-sm);
     }
     .ficha-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:12px}
     .ficha-tipo-badge{
@@ -328,10 +363,10 @@
     }
     .ficha-winery{font-size:11px;color:var(--muted);margin-top:4px;font-weight:300;letter-spacing:.04em;text-transform:uppercase}
     .ficha-note{
-      background:var(--dark);border-radius:12px;padding:14px 16px;
-      font-size:13px;color:var(--dark-sub);font-style:italic;
+      background:var(--madera-dk);border-radius:12px;padding:14px 16px;
+      font-size:13px;color:rgba(200,164,106,.85);font-style:italic;
       line-height:1.7;margin-bottom:14px;
-      border-left:2px solid var(--gold);
+      border-left:2px solid var(--madera);
     }
     .ficha-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
     .ficha-item{
@@ -354,7 +389,7 @@
     .maridaje-pills{display:flex;flex-wrap:wrap;gap:6px}
     .maridaje-pill{
       display:flex;align-items:center;gap:5px;
-      background:rgba(255,255,255,.6);border:1px solid rgba(80,55,30,.12);
+      background:rgba(240,228,204,.5);border:1px solid rgba(139,106,58,.15);
       border-radius:20px;padding:5px 12px;font-size:11px;color:var(--text);font-weight:400;
     }
     .maridaje-icon{font-size:13px}
@@ -368,15 +403,15 @@
     .perfil-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
     .perfil-label{font-size:11px;color:var(--muted);width:56px;flex-shrink:0;font-weight:300}
     .perfil-bar-bg{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
-    .perfil-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),#E05060);transition:width .4s ease}
+    .perfil-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s ease}
     .perfil-val{font-size:10px;color:var(--muted);width:16px;text-align:right;flex-shrink:0}
 
     /* Bodega info */
     .bodega-section{
-      background:var(--dark2);border-radius:14px;padding:15px 16px;margin-bottom:0;
-      border:1px solid rgba(196,160,90,.1);
+      background:var(--madera-dk);border-radius:14px;padding:15px 16px;margin-bottom:0;
+      border:1px solid rgba(200,164,106,.15);
     }
-    .bodega-label{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-weight:500}
+    .bodega-label{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--madera);margin-bottom:6px;font-weight:500}
     .bodega-text{font-size:12px;color:rgba(250,245,235,.85);line-height:1.7;font-weight:300}
 
     /* ══════════════════════════════
@@ -401,10 +436,10 @@
        SOMMELIER
     ══════════════════════════════ */
     .somm-intro{
-      background:var(--dark2);border-radius:18px;padding:24px 20px;margin-bottom:16px;
-      text-align:center;border:1px solid rgba(196,160,90,.15);
+      background:var(--madera-dk);border-radius:18px;padding:24px 20px;margin-bottom:16px;
+      text-align:center;border:1px solid rgba(200,164,106,.18);
       position:relative;overflow:hidden;
-      box-shadow:0 4px 24px rgba(20,10,0,.15);
+      box-shadow:0 4px 24px rgba(40,20,8,.2);
     }
     .somm-intro::before{
       content:'';position:absolute;inset:0;
@@ -433,8 +468,8 @@
       transition:all .2s;display:flex;align-items:center;gap:13px;
       box-shadow:var(--shadow-sm);
     }
-    .somm-opt:hover{border-color:rgba(60,40,20,.2);box-shadow:var(--shadow-md)}
-    .somm-opt:active,.somm-opt.selected{background:#EDE6DC;border-color:var(--text)}
+    .somm-opt:hover{border-color:rgba(139,106,58,.25);box-shadow:var(--shadow-md)}
+    .somm-opt:active,.somm-opt.selected{background:rgba(240,228,204,.6);border-color:var(--madera-mid)}
     .somm-opt-icon{font-size:22px;flex-shrink:0}
     .somm-opt-text{font-size:14px;font-weight:500;color:var(--text)}
     .somm-opt-sub{font-size:12px;color:var(--muted);margin-top:2px;font-weight:300}
@@ -469,7 +504,7 @@
     .comprar-btn{
       display:flex;align-items:center;justify-content:center;gap:8px;
       margin-top:16px;padding:15px;width:100%;
-      background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);
+      background:linear-gradient(135deg,var(--accent) 0%,#9B2035 100%);
       color:#fff;border-radius:13px;font-size:13px;font-weight:500;
       text-decoration:none;font-family:'DM Sans',sans-serif;
       letter-spacing:.06em;text-transform:uppercase;
@@ -530,7 +565,7 @@
     }
     .opinion-input:focus{border-color:var(--accent);background:rgba(255,255,255,.9)}
     .submit-btn{
-      width:100%;background:var(--text);color:#fff;border:none;border-radius:13px;
+      width:100%;background:var(--madera-dk);color:#fff;border:none;border-radius:13px;
       padding:15px;font-size:13px;font-weight:500;cursor:pointer;
       font-family:'DM Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;
       display:flex;align-items:center;justify-content:center;gap:8px;
@@ -540,13 +575,13 @@
     .submit-btn:active{opacity:.85;transform:scale(.99)}
     .submit-btn:disabled{opacity:.4;cursor:not-allowed}
     .form-success{
-      background:linear-gradient(135deg,#0F2E1A,#1A4228);
-      border:1px solid rgba(100,180,100,.2);border-radius:18px;
+      background:var(--madera-dk);
+      border:1px solid rgba(200,164,106,.2);border-radius:18px;
       padding:28px 20px;text-align:center;margin-bottom:12px;
     }
     .form-success .success-icon{font-size:40px;margin-bottom:12px;display:block}
-    .form-success h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#C8E8C8;margin-bottom:6px}
-    .form-success p{font-size:13px;color:rgba(200,232,200,.7);line-height:1.55;font-weight:300}
+    .form-success h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--dark-text);margin-bottom:6px}
+    .form-success p{font-size:13px;color:rgba(245,237,224,.65);line-height:1.55;font-weight:300}
     .form-success button{
       margin-top:16px;background:transparent;border:1px solid rgba(100,180,100,.3);
       border-radius:10px;padding:10px 22px;font-size:12px;color:rgba(200,232,200,.8);
@@ -559,11 +594,10 @@
     ══════════════════════════════ */
     .wa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
     .wa-sheet{
-      background:rgba(248,243,234,.96);
-      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      background:rgba(250,245,238,.98);
       border-radius:24px 24px 0 0;padding:30px 22px 44px;
       width:100%;max-width:430px;animation:slideUp .3s cubic-bezier(.22,1,.36,1);
-      border-top:1px solid rgba(80,55,30,.15);box-shadow:0 -8px 40px rgba(60,35,10,.2);
+      border-top:1px solid rgba(139,106,58,.18);box-shadow:0 -8px 40px rgba(60,35,10,.18);
     }
     .wa-sheet h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);margin-bottom:6px;font-weight:600}
     .wa-sheet p{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:20px;font-weight:300}
@@ -605,7 +639,7 @@
     ══════════════════════════════ */
     #loading{
       position:fixed;inset:0;
-      background:radial-gradient(ellipse at 50% 40%, #F5EDE0 0%, #E0D3C0 60%, #CBBFAA 100%);
+      background:#FAF5EE;
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       z-index:999;transition:opacity .5s;
     }
@@ -615,7 +649,7 @@
     }
     #loading h2{
       font-family:'Cormorant Garamond',serif;
-      font-size:48px;font-weight:700;color:var(--text2);letter-spacing:-.02em;
+      font-size:48px;font-weight:700;color:var(--madera-dk);letter-spacing:-.02em;
     }
     #loading h2 span{color:var(--accent);font-style:italic;font-weight:300}
     #loading p{font-size:11px;color:var(--muted);margin-top:10px;letter-spacing:.2em;text-transform:uppercase}
