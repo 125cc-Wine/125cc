@@ -729,7 +729,6 @@
     <button class="tab-btn active" onclick="showTab('carta',this)">Carta</button>
     <button class="tab-btn" onclick="showTab('ficha',this)">Ficha</button>
     <button class="tab-btn" onclick="showTab('sommelier',this)">Sommelier</button>
-    <button class="tab-btn" onclick="showTab('charc',this)">Tapeos</button>
     <button class="tab-btn" onclick="showTab('puntuar',this)">Calificá</button>
     <button class="tab-btn" onclick="showTab('miscatas',this)">Mis catas</button>
   </div>
@@ -756,9 +755,7 @@
   </div>
 
   <!-- MENÚ -->
-  <div class="tab-content" id="tab-charc">
-    <div class="section-title">Tapeos</div>
-    <div id="charcList"></div>
+<div id="charcList"></div>
   </div>
 
   <!-- PUNTUAR -->
@@ -826,7 +823,7 @@ function initApp(config, apiWines){
   document.getElementById('mapWatermark').textContent=`${config.bar.nombre} · ${config.bar.subtitulo||''}`;
   const parts=[config.bar.instagram,config.bar.direccion].filter(Boolean);
   document.getElementById('footerInfo').innerHTML=parts.map(p=>`<strong>${p}</strong>`).join(' &nbsp;·&nbsp; ');
-  buildMap(); renderWineList(); renderCharc(config.charcuteria); initSommelier();
+  buildMap(); renderWineList();  initSommelier();
   // Pill "Todos" activa por defecto
   document.getElementById('pill-all')?.classList.add('active');
   setTimeout(()=>{
@@ -900,7 +897,7 @@ function buildMap(){
       if(selectedId){
         showMapPreview(w, left, top, idx+1);
         renderFicha(wines.find(x=>x.id===selectedId));
-        showTab('ficha',document.querySelectorAll('.tab-btn')[1]);
+        showTab('ficha',document.querySelector('.tab-btn[onclick*="ficha"]'));
       }
     });
     c.appendChild(pin);
@@ -1215,7 +1212,7 @@ function renderWineList(){
 function selectWine(id){
   selectedId=id; buildMap(); renderWineList();
   renderFicha(wines.find(w=>w.id===id));
-  showTab('ficha',document.querySelectorAll('.tab-btn')[1]);
+  showTab('ficha',document.querySelector('.tab-btn[onclick*="ficha"]'));
 }
 
 /* ── FICHA ── */
@@ -1269,13 +1266,6 @@ function renderFicha(w){
 }
 
 /* ── CHARCUTERÍA ── */
-function renderCharc(items){
-  document.getElementById('charcList').innerHTML=items.map(c=>`
-    <div class="charc-item">
-      <div><div class="charc-name">${c.nombre}</div><div class="charc-detail">${c.detalle}</div></div>
-      <div class="charc-price">${c.precio}</div>
-    </div>`).join('');
-}
 
 /* ── SOMMELIER ── */
 const PREGUNTAS=[
@@ -1446,7 +1436,7 @@ function renderSommResults(){
 function selectWineFromSomm(id){
   selectedId=id; buildMap(); renderWineList();
   renderFicha(wines.find(w=>w.id===id));
-  showTab('ficha',document.querySelectorAll('.tab-btn')[1]);
+  showTab('ficha',document.querySelector('.tab-btn[onclick*="ficha"]'));
 }
 
 /* ── TABS ── */
@@ -1696,10 +1686,25 @@ function buildChips(arr, selected, fn){
     return `<div onclick="${fn}('${item}')" style="padding:9px 15px;border-radius:24px;font-size:12px;cursor:pointer;border:1px solid ${s?'var(--gold)':'rgba(255,255,255,.1)'};background:${s?'rgba(196,160,90,.15)':'var(--dark3)'};color:${s?'var(--gold)':'var(--dark-sub)'};transition:all .2s">${item}</div>`;
   }).join('');
 }
+function getCataOtro(key){
+  // Acceso seguro a cataState sin eval
+  const map = {
+    'cataState.aromasOtro': ()=>cataState.aromasOtro,
+    'cataState.saborOtro':  ()=>cataState.saborOtro,
+    'cataState.colorOtro':  ()=>cataState.colorOtro,
+  };
+  return (map[key] && map[key]()) || '';
+}
+function setCataOtro(key, val){
+  if(key==='cataState.aromasOtro') cataState.aromasOtro=val;
+  else if(key==='cataState.saborOtro')  cataState.saborOtro=val;
+  else if(key==='cataState.colorOtro')  cataState.colorOtro=val;
+}
 function buildOtroField(inputId, stateKey, placeholder){
+  const val = getCataOtro(stateKey)||'';
   return `<div style="width:100%;margin-top:6px">
-    <input id="${inputId}" type="text" value="${eval(stateKey)||''}" placeholder="✏️ ${placeholder}"
-      oninput="${stateKey}=this.value"
+    <input id="${inputId}" type="text" value="${val.replace(/"/g,'&quot;')}" placeholder="✏️ ${placeholder}"
+      oninput="setCataOtro('${stateKey}',this.value)"
       style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);border-radius:24px;
              padding:9px 16px;font-size:12px;color:var(--dark-sub);font-family:'DM Sans',sans-serif;outline:none;
              transition:border-color .2s"
@@ -1726,8 +1731,7 @@ function toggleSabor(item){
   const g=document.getElementById('saborGrid'); if(g) g.innerHTML=buildChips(['Ácido','Dulce','Amargo','Tánico','Untuoso','Fresco','Cálido','Seco','Frutal','Especiado','Mineral'],cataState.sabor,'toggleSabor')+buildOtroField('saborOtro','cataState.saborOtro','Otra sensación en boca...');
 }
 function toggleMaridaje(item){
-  const i=cataState.maridaje.indexOf(item); if(i>=0)cataState.maridaje.splice(i,1); else cataState.maridaje.push(item);
-  const g=document.getElementById('maridajeGrid'); if(g) g.innerHTML=buildChips(['Carnes rojas','Quesos','Pescado','Mariscos','Pasta','Ensaladas','Aves','Cerdo','Embutidos','Solo','Aperitivo'],cataState.maridaje,'toggleMaridaje');
+  // toggleMaridaje eliminado — maridaje sacado del flujo
 }
 
 function buildScoreSlider(id,val){
@@ -1839,7 +1843,7 @@ function renderCataWelcome(){
       <div style="display:inline-flex;align-items:center;gap:5px;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);padding:3px 12px;border-radius:20px;background:rgba(196,160,90,.1);border:1px solid rgba(196,160,90,.2);margin-bottom:12px">⭐ Cata Sommelier</div>
       <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--dark-text);margin-bottom:6px">Análisis completo</div>
       <div style="font-size:13px;color:var(--dark-muted);line-height:1.6;margin-bottom:14px">Visual, olfativo, gustativo, atributos y maridaje.</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">${['Visual','Olfativo','Gustativo','Atributos','Maridaje','Puntuación 60–100'].map(f=>`<span style="font-size:11px;color:var(--dark-sub);background:var(--dark3);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:4px 11px">${f}</span>`).join('')}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${['Visual','Olfativo','Gustativo','Atributos','Puntuación 60–100'].map(f=>`<span style="font-size:11px;color:var(--dark-sub);background:var(--dark3);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:4px 11px">${f}</span>`).join('')}</div>
       <div style="position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:22px;color:rgba(255,255,255,.2)">›</div>
     </div>
   </div>`;
@@ -1915,6 +1919,13 @@ function cataNavBack(){
   renderCataStep();
 }
 
+function normalizarTelefono(phone){
+  if(!phone) return '';
+  let p = phone.toString().replace(/[^\d+]/g,'');
+  if(p.startsWith('0')) p = '+54' + p.slice(1);
+  if(!p.startsWith('+')) p = '+54' + p;
+  return p;
+}
 function ratingText(n){ return CATA_SCORE_LABELS[n]||''; }
 function enviarSinWA(){ enviarPuntuacion(null); }
 
