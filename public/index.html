@@ -292,7 +292,7 @@
     .tab-bar{
       display:flex;
       background:rgba(250,245,238,.96);
-      backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+      -webkit-
       border-bottom:1px solid rgba(139,106,58,.16);
       position:sticky;top:0;z-index:100;overflow-x:auto;
       box-shadow:0 2px 16px rgba(60,35,10,.08);
@@ -320,7 +320,7 @@
        WINE LIST
     ══════════════════════════════ */
     .wine-card{
-      background:rgba(255,255,255,.92);
+      background:#FFFFFF;
       border:1px solid rgba(139,106,58,.15);
       border-radius:14px;padding:13px 15px;margin-bottom:8px;
       display:flex;align-items:flex-start;gap:12px;cursor:pointer;
@@ -427,7 +427,7 @@
     ══════════════════════════════ */
     .charc-item{
       background:rgba(255,255,255,.72);
-      backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+      -webkit-
       border:1px solid rgba(80,55,30,.12);border-radius:14px;
       padding:13px 15px;margin-bottom:8px;
       display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
@@ -490,7 +490,7 @@
     .somm-results p{font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:300}
     .somm-result-card{
       background:rgba(255,255,255,.75);
-      backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+      -webkit-
       border:1px solid rgba(80,55,30,.12);border-radius:16px;
       padding:15px;margin-bottom:10px;cursor:pointer;
       transition:border-color .2s,box-shadow .2s;box-shadow:var(--shadow-sm);
@@ -600,9 +600,7 @@
     /* ══════════════════════════════
        WHATSAPP POPUP
     ══════════════════════════════ */
-    .wa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
-    .wa-sheet{
-      background:rgba(250,245,238,.98);
+    .wa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:flex-end;justify-content:center;
       border-radius:24px 24px 0 0;padding:30px 22px 44px;
       width:100%;max-width:430px;animation:slideUp .3s cubic-bezier(.22,1,.36,1);
       border-top:1px solid rgba(139,106,58,.18);box-shadow:0 -8px 40px rgba(60,35,10,.18);
@@ -667,7 +665,7 @@
       position:absolute;inset:0;
       transform-origin:50% 50%;
       transition:transform .25s cubic-bezier(.22,1,.36,1);
-      will-change:transform;
+      will-change:auto;
     }
     .zoom-controls{
       position:absolute;top:10px;right:10px;z-index:200;
@@ -678,7 +676,7 @@
       background:rgba(28,25,23,.75);border:1px solid rgba(196,160,90,.25);
       color:var(--dark-text);font-size:16px;font-weight:300;
       cursor:pointer;display:flex;align-items:center;justify-content:center;
-      backdrop-filter:blur(4px);transition:background .15s,border-color .15s;
+      transition:background .15s,border-color .15s;
       font-family:'DM Sans',sans-serif;line-height:1;
     }
     .zoom-btn:hover{background:rgba(28,25,23,.9);border-color:rgba(196,160,90,.5)}
@@ -776,7 +774,7 @@
   <!-- CARTA -->
   <div class="tab-content active" id="tab-carta">
     <div class="section-title">Carta por copa</div>
-    <div id="wineList" style="contain:layout;"></div>
+    <div id="wineList" style="contain:layout;transform:translateZ(0);will-change:auto;isolation:isolate"></div>
   </div>
 
   <!-- FICHA -->
@@ -956,11 +954,13 @@ function buildMap(){
   // Aplicar estado de labels según zoom actual
   updateZoomLabels();
 }
-document.addEventListener('click',()=>{
-  if(selectedId!==null){
-    selectedId=null;
-    buildMap();renderWineList();
-    const p=document.getElementById('mapPreview');
+document.addEventListener('click', e => {
+  // No deseleccionar si se clickeó en un elemento interactivo
+  if(e.target.closest('.legend-pill,.tab-btn,.wine-card,.map-preview,.filter-btn,button,input,select,textarea,a')) return;
+  if(selectedId !== null){
+    selectedId = null;
+    buildMap(); renderWineList();
+    const p = document.getElementById('mapPreview');
     if(p) p.remove();
   }
 });
@@ -1247,7 +1247,10 @@ function filterMap(tipo){
   renderWineList();
 }
 
+let _renderingList = false;
 function renderWineList(){
+  if(_renderingList) return;
+  _renderingList = true;
   const filtered = activeFilter ? wines.filter(w=>w.tipo===activeFilter) : wines;
   document.getElementById('wineList').innerHTML=filtered.map((w,idx)=>`
     <div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
@@ -1255,6 +1258,7 @@ function renderWineList(){
       <div class="wc-info"><div class="wc-name">${w.nombre}</div><div class="wc-sub">${w.bodega} · ${TYPE_LABEL[w.tipo]||w.tipo}</div></div>
       <div class="wc-price">${fmtPrecio(w.precio)}</div>
     </div>`).join('');
+  _renderingList = false;
 }
 function selectWine(id){
   selectedId=id; buildMap(); renderWineList();
