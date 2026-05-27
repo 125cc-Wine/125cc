@@ -78,8 +78,9 @@
     .app{
       display:flex;flex-direction:column;min-height:100vh;
       max-width:430px;margin:0 auto;
-      background:transparent; /* hereda el gradiente del body */
+      background:transparent;
       position:relative;
+      overflow-x:hidden; /* evita desbordamiento horizontal en móvil */
     }
     #loading.hidden{opacity:0;pointer-events:none}
     .hidden{display:none!important}
@@ -306,7 +307,8 @@
       font-family:'DM Sans',sans-serif;white-space:nowrap;text-transform:uppercase;
     }
     .tab-btn.active{color:var(--madera-dk);border-bottom-color:var(--accent);font-weight:600}
-    .tab-content{display:none;padding:20px 16px;padding-bottom:48px;animation:fadeUp .25s ease}
+    .tab-content{display:none;padding:20px 16px;padding-bottom:48px;animation:fadeUp .25s ease;
+      overflow:hidden;width:100%;box-sizing:border-box;}
     .tab-content.active{display:block}
     .section-title{
       font-family:'Cormorant Garamond',serif;
@@ -324,6 +326,9 @@
       display:flex;align-items:flex-start;gap:12px;cursor:pointer;
       transition:border-color .2s,box-shadow .2s,transform .15s;
       position:relative;box-shadow:var(--shadow-sm);
+      /* Fix mobile overflow cascade */
+      width:100%;box-sizing:border-box;overflow:hidden;
+      min-width:0;
     }
     .wine-card:hover{box-shadow:var(--shadow-md);border-color:rgba(139,106,58,.3);background:#fff}
     .wine-card:active{transform:scale(.98)}
@@ -333,12 +338,15 @@
       justify-content:center;font-size:10px;font-weight:600;color:#fff;
       flex-shrink:0;margin-top:2px;box-shadow:0 2px 6px rgba(0,0,0,.2);
     }
-    .wc-info{flex:1;min-width:0}
-    .wc-name{font-size:13px;font-weight:500;color:var(--text2);letter-spacing:.01em}
-    .wc-sub{font-size:11px;color:var(--sub);margin-top:2px;font-weight:300}
+    .wc-info{flex:1;min-width:0;overflow:hidden}
+    .wc-name{font-size:13px;font-weight:500;color:var(--text2);letter-spacing:.01em;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .wc-sub{font-size:11px;color:var(--sub);margin-top:2px;font-weight:300;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .wc-price{
       font-family:'Cormorant Garamond',serif;
       font-size:17px;font-weight:600;color:var(--text2);white-space:nowrap;
+      flex-shrink:0;
     }
     .wc-star{position:absolute;top:11px;right:13px;font-size:9px;color:var(--accent);font-weight:600;letter-spacing:.05em}
 
