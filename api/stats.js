@@ -43,17 +43,18 @@ module.exports = async function handler(req, res) {
     const colN = (row, name) => parseFloat(col(row, name)) || 0;
 
     const degustaciones = rows.slice(1)
-      .filter(r => r.length > 1 && (r[3] || r[2] || r[0])) // al menos fecha o vino
+      .filter(r => r.length > 1 && (r[2] || r[0]))
       .map(r => ({
         fecha:       col(r, "fecha"),
         hora:        col(r, "hora"),
-        email:       col(r, "email"),
+        email:       col(r, "email") || "",
         vino:        col(r, "vino"),
         bodega:      col(r, "bodega"),
         tipo:        col(r, "tipo"),
         precio:      col(r, "precio"),
         nivel:       col(r, "nivel"),
-        puntuacion:  colN(r, "puntuacion"),
+        // Puntuación — puede llamarse diferente
+        puntuacion:  colN(r, "puntuacion") || colN(r, "puntuaci_n") || colN(r, "puntuación"),
         color:       col(r, "color"),
         aromas:      col(r, "aromas"),
         sabor:       col(r, "sabor"),
@@ -63,12 +64,14 @@ module.exports = async function handler(req, res) {
         final_boca:  colN(r, "final_en_boca") || colN(r, "final_boca"),
         visual:      colN(r, "visual"),
         olfativo:    colN(r, "olfativo"),
+        // Gusto = campo viejo equivalente a opinion
+        gusto:       colN(r, "gusto"),
         repetiria:   col(r, "repetiria"),
-        descripcion: col(r, "descripcion") || col(r, "opinion"),
+        descripcion: col(r, "descripcion") || col(r, "opinion") || col(r, "opini_n"),
         copa:        col(r, "copa"),
         varietal:    col(r, "varietal"),
       }))
-      .filter(d => d.vino); // solo filas con nombre de vino
+      .filter(d => d.vino);
 
     // ── Si hay filtro por email → devolver historial personal ──
     if (emailFiltro) {
@@ -122,7 +125,7 @@ module.exports = async function handler(req, res) {
 
     // Columnas: Fecha | Hora | Vino | Bodega | Tipo | Precio | Puntuación | Acidez | Cuerpo | Taninos | Visual | Gusto | Opinión
     const sheetRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A1:M500`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A1:V1000`,
       { headers: { "Authorization": `Bearer ${token}` } }
     );
     if (!sheetRes.ok) {
