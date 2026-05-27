@@ -181,7 +181,7 @@
     }
     .wine-pin{
       position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:2;
-      opacity:0;animation:pinPop .4s cubic-bezier(.34,1.56,.64,1) forwards;
+      opacity:1;
       transition:transform .25s cubic-bezier(.34,1.56,.64,1), filter .2s;
     }
     /* Área táctil extendida invisible — mínimo 44×44px para iOS/Android */
@@ -307,7 +307,7 @@
       font-family:'DM Sans',sans-serif;white-space:nowrap;text-transform:uppercase;
     }
     .tab-btn.active{color:var(--madera-dk);border-bottom-color:var(--accent);font-weight:600}
-    .tab-content{display:none;padding:20px 16px;padding-bottom:48px;animation:fadeUp .25s ease;
+    .tab-content{display:none;padding:20px 16px;padding-bottom:48px;
       overflow:hidden;width:100%;box-sizing:border-box;}
     .tab-content.active{display:block}
     .section-title{
@@ -320,18 +320,18 @@
        WINE LIST
     ══════════════════════════════ */
     .wine-card{
-      background:rgba(255,255,255,.85);
+      background:rgba(255,255,255,.92);
       border:1px solid rgba(139,106,58,.15);
       border-radius:14px;padding:13px 15px;margin-bottom:8px;
       display:flex;align-items:flex-start;gap:12px;cursor:pointer;
-      transition:border-color .2s,box-shadow .2s,transform .15s;
+      transition:border-color .2s,box-shadow .2s;
       position:relative;box-shadow:var(--shadow-sm);
-      /* Fix mobile overflow cascade */
       width:100%;box-sizing:border-box;overflow:hidden;
       min-width:0;
+      /* Sin backdrop-filter — causa bug GPU en Android */
     }
     .wine-card:hover{box-shadow:var(--shadow-md);border-color:rgba(139,106,58,.3);background:#fff}
-    .wine-card:active{transform:scale(.98)}
+    .wine-card:active{opacity:.9}
     .wine-card.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(122,20,40,.1)}
     .wc-badge{
       width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
@@ -776,7 +776,7 @@
   <!-- CARTA -->
   <div class="tab-content active" id="tab-carta">
     <div class="section-title">Carta por copa</div>
-    <div id="wineList"></div>
+    <div id="wineList" style="contain:layout;"></div>
   </div>
 
   <!-- FICHA -->
