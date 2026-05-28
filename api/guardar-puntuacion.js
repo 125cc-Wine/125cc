@@ -36,26 +36,26 @@ module.exports = async function handler(req, res) {
 
     const fila = [
       fecha, hora,
-      vino       || '—',   // C — coincide con Sheet actual
-      bodega     || '—',   // D
-      tipo       || '—',   // E
-      precio     || '—',   // F
-      puntuacion,           // G — Puntuación
-      acidez     ?? '—',   // H
-      cuerpo     ?? '—',   // I
-      taninos    ?? '—',   // J
-      visual     ?? '—',   // K
-      repetiria  || '—',   // L — antes era Gusto
-      descripcion|| '—',   // M — Opinión
-      nivel      || 'simple', // N — nuevo
-      colorFinal,           // O — nuevo
-      aromasArr.join(', ') || '—', // P
-      saborArr.join(', ')  || '—', // Q
-      final_boca ?? '—',   // R
-      olfativo   ?? '—',   // S
-      copa       || '125 cc', // T
-      varietal   || '—',   // U
-      email      || '—',   // V — email al final para no correr columnas viejas
+      email      || '—',   // C — Email (coincide con header)
+      vino       || '—',   // D — Vino
+      bodega     || '—',   // E — Bodega
+      tipo       || '—',   // F — Tipo
+      precio     || '—',   // G — Precio
+      puntuacion,           // H — Puntuación
+      acidez     ?? '—',   // I — Acidez
+      cuerpo     ?? '—',   // J — Cuerpo
+      taninos    ?? '—',   // K — Taninos
+      visual     ?? '—',   // L — Visual
+      repetiria  || '—',   // M — (antes Gusto)
+      descripcion|| '—',   // N — Opinión
+      nivel      || 'simple', // O — nuevo
+      colorFinal,           // P — nuevo
+      aromasArr.join(', ') || '—', // Q
+      saborArr.join(', ')  || '—', // R
+      final_boca ?? '—',   // S
+      olfativo   ?? '—',   // T
+      copa       || '125 cc', // U
+      varietal   || '—',   // V
     ];
 
     const r = await fetch(
