@@ -1252,12 +1252,16 @@ function renderWineList(){
   if(_renderingList) return;
   _renderingList = true;
   const filtered = activeFilter ? wines.filter(w=>w.tipo===activeFilter) : wines;
-  document.getElementById('wineList').innerHTML=filtered.map((w,idx)=>`
-    <div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
-      <div style="flex-shrink:0;margin-top:2px">${copaSVG(TYPE_COLOR[w.tipo]||'#888',28,idx+1)}</div>
+  document.getElementById('wineList').innerHTML=filtered.map((w,idx)=>{
+    const color = TYPE_COLOR[w.tipo]||'#888';
+    return `<div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
+      <div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:${color};
+        display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+        color:#fff;margin-top:2px;box-shadow:0 2px 6px rgba(0,0,0,.2)">${idx+1}</div>
       <div class="wc-info"><div class="wc-name">${w.nombre}</div><div class="wc-sub">${w.bodega} · ${TYPE_LABEL[w.tipo]||w.tipo}</div></div>
       <div class="wc-price">${fmtPrecio(w.precio)}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   _renderingList = false;
 }
 function selectWine(id){
