@@ -338,7 +338,6 @@
 </div>
 
 <script>
-const PASS = "125cc2025";
 const SESSION_KEY = "125cc_stats_auth";
 const TYPE_COLOR = {Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranja:"#d4721a"};
 const ATTR_COLOR = {Acidez:"#1a7fd4",Cuerpo:"#c8463a",Taninos:"#b06010",Visual:"#c8a018",Gusto:"#c03070"};
@@ -348,17 +347,34 @@ let selectedWineId = null;
 let pendingChanges = {}; // {id: {x, y}}
 
 // ── AUTH ──────────────────────────────────────────────────────────
-function tryLogin(){
+async function tryLogin(){
   const val = document.getElementById('passInput').value;
-  if(val === PASS){
-    sessionStorage.setItem(SESSION_KEY,'1');
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('dashboard').style.display='block';
-    loadStats();
-    loadWinesForMap();
-  } else {
+  const btn = document.querySelector('.login-btn');
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+  try {
+    const r = await fetch('/api/admin-auth', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({password: val})
+    });
+    const data = await r.json();
+    if(data.ok){
+      sessionStorage.setItem(SESSION_KEY,'1');
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('dashboard').style.display='block';
+      loadStats();
+      loadWinesForMap();
+    } else {
+      document.getElementById('loginError').style.display='block';
+      document.getElementById('passInput').value='';
+    }
+  } catch(e) {
+    document.getElementById('loginError').textContent='Error de conexión.';
     document.getElementById('loginError').style.display='block';
-    document.getElementById('passInput').value='';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
   }
 }
 function logout(){

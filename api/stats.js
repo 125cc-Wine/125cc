@@ -1,7 +1,10 @@
 // api/stats.js — Lee hoja Degustaciones, soporta filtro por email
+
+const { getReadOnlyToken } = require('./_lib/google-auth');
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") return res.status(200).end();
 
@@ -11,10 +14,10 @@ module.exports = async function handler(req, res) {
   if (!SHEET_ID || !GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY)
     return res.status(500).json({ error: "Faltan credenciales." });
 
-  const emailFiltro = (req.query?.email || "").toLowerCase().trim();
+  const emailFiltro = (req.method === 'POST' ? req.body?.email : req.query?.email || "").toLowerCase().trim();
 
   try {
-    const token = await getGoogleToken(GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY);
+    const token = await getReadOnlyToken(GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY);
 
     const sheetRes = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A1:V1000`,
@@ -29,9 +32,8 @@ module.exports = async function handler(req, res) {
     const rows = data.values || [];
     if (rows.length < 2) return res.status(200).json({ total: 0, resumen: [], catas: [] });
 
-    // Normalizar encabezados
     const headers = rows[0].map(h => h.trim().toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .normalize("NFD").replace(/[̀-ͯ]/g, "")
       .replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "")
     );
 
@@ -66,7 +68,7 @@ module.exports = async function handler(req, res) {
       }))
       .filter(d => d.vino);
 
-    // ── Filtro por email → historial personal ──
+    // Filtro por email → historial personal
     if (emailFiltro) {
       const catas = degustaciones
         .filter(d => d.email.toLowerCase() === emailFiltro)
@@ -74,7 +76,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ total: catas.length, catas });
     }
 
-    // ── Sin filtro → resumen para dashboard ──
+    // Sin filtro → resumen para dashboard
     const byVino = {};
     for (const d of degustaciones) {
       if (!byVino[d.vino]) {
@@ -113,29 +115,3 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: "Error interno.", detail: err.message });
   }
 };
-
-// ── Google Auth ──────────────────────────────────────────────
-async function getGoogleToken(clientEmail, privateKeyRaw) {
-  const privateKey = privateKeyRaw.replace(/\\n/g, "\n");
-  const now = Math.floor(Date.now() / 1000);
-  const claim = { iss: clientEmail, scope: "https://www.googleapis.com/auth/spreadsheets.readonly", aud: "https://oauth2.googleapis.com/token", exp: now + 3600, iat: now };
-  const h = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const p = b64url(JSON.stringify(claim));
-  const unsigned = `${h}.${p}`;
-  const key = await crypto.subtle.importKey("pkcs8", pemToAB(privateKey), { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
-  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(unsigned));
-  const jwt = `${unsigned}.${b64url(sig)}`;
-  const t = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}` });
-  const d = await t.json();
-  if (!d.access_token) throw new Error("Token fallido: " + JSON.stringify(d));
-  return d.access_token;
-}
-function b64url(data) {
-  const s = data instanceof ArrayBuffer ? String.fromCharCode(...new Uint8Array(data)) : typeof data === "string" ? data : JSON.stringify(data);
-  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-function pemToAB(pem) {
-  const b64 = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\n/g, "");
-  const bin = atob(b64); const buf = new ArrayBuffer(bin.length); const v = new Uint8Array(buf);
-  for (let i = 0; i < bin.length; i++) v[i] = bin.charCodeAt(i); return buf;
-}

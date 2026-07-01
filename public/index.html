@@ -2,15 +2,15 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <meta name="theme-color" content="#2E1E10"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <link rel="manifest" href="/manifest.json"/>
   <meta property="og:title" content="125cc Wine Bar · Carta de Vinos"/>
   <meta property="og:description" content="Elegí tu vino por estilo, intensidad y perfil. Carta visual interactiva."/>
   <meta property="og:url" content="https://www.125cc.com.ar"/>
   <meta property="og:type" content="website"/>
-  <meta name="theme-color" content="#2E1E10"/>
   <title>Wine Bar · Carta de Vinos</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232E1E10'/><path d='M11 4 C11 4 8.5 10 8.5 13.5 C8.5 17.5 11.5 20 15.5 20.5 L15.5 26 L12.5 26 L12 28.5 L20 28.5 L19.5 26 L16.5 26 L16.5 20.5 C20.5 20 23.5 17.5 23.5 13.5 C23.5 10 21 4 21 4 Z' fill='%23c8463a'/></svg>"/>
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232E1E10'/><path d='M11 4 C11 4 8.5 10 8.5 13.5 C8.5 17.5 11.5 20 15.5 20.5 L15.5 26 L12.5 26 L12 28.5 L20 28.5 L19.5 26 L16.5 26 L16.5 20.5 C20.5 20 23.5 17.5 23.5 13.5 C23.5 10 21 4 21 4 Z' fill='%23c8463a'/></svg>"/>
@@ -84,18 +84,10 @@
     }
     #loading.hidden{opacity:0;pointer-events:none}
     .hidden{display:none!important}
-    .app::before{
-      content:'';position:fixed;inset:0;max-width:430px;margin:0 auto;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");
-      pointer-events:none;z-index:1000;opacity:.4;
-    }
 
     /* ── ANIMATIONS ── */
     @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    @keyframes pinPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}65%{transform:translate(-50%,-50%) scale(1.12)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
     @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-    @keyframes shimmer{from{background-position:-200% 0}to{background-position:200% 0}}
 
     /* ══════════════════════════════
        HEADER
@@ -292,7 +284,6 @@
     .tab-bar{
       display:flex;
       background:rgba(250,245,238,.96);
-      -webkit-
       border-bottom:1px solid rgba(139,106,58,.16);
       position:sticky;top:0;z-index:100;overflow-x:auto;
       box-shadow:0 2px 16px rgba(60,35,10,.08);
@@ -422,19 +413,6 @@
     .bodega-label{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--madera);margin-bottom:6px;font-weight:500}
     .bodega-text{font-size:12px;color:rgba(250,245,235,.85);line-height:1.7;font-weight:300}
 
-    /* ══════════════════════════════
-       CHARCUTERÍA
-    ══════════════════════════════ */
-    .charc-item{
-      background:rgba(255,255,255,.72);
-      -webkit-
-      border:1px solid rgba(80,55,30,.12);border-radius:14px;
-      padding:13px 15px;margin-bottom:8px;
-      display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
-      box-shadow:var(--shadow-sm);
-    }
-    .charc-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
-    .charc-detail{font-size:11px;color:var(--muted);font-weight:300}
     .charc-price{
       font-family:'Cormorant Garamond',serif;
       font-size:17px;font-weight:600;color:var(--text);white-space:nowrap;
@@ -490,7 +468,6 @@
     .somm-results p{font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:300}
     .somm-result-card{
       background:rgba(255,255,255,.75);
-      -webkit-
       border:1px solid rgba(80,55,30,.12);border-radius:16px;
       padding:15px;margin-bottom:10px;cursor:pointer;
       transition:border-color .2s,box-shadow .2s;box-shadow:var(--shadow-sm);
@@ -665,7 +642,7 @@
       position:absolute;inset:0;
       transform-origin:50% 50%;
       transition:transform .25s cubic-bezier(.22,1,.36,1);
-      will-change:auto;
+      will-change:transform;
     }
     .zoom-controls{
       position:absolute;top:10px;right:10px;z-index:200;
@@ -711,6 +688,7 @@
 </style>
 </head>
 <body>
+<noscript><div style="padding:32px;text-align:center;font-family:sans-serif;color:#333">Esta carta requiere JavaScript. Activalo en tu navegador para ver la carta de vinos.</div></noscript>
 
 <div id="loading">
   <h2>125<span>cc</span></h2>
@@ -731,9 +709,9 @@
     <div class="map-canvas" id="mapCanvas">
       <!-- Zoom controls -->
       <div class="zoom-controls" id="zoomControls">
-        <button class="zoom-btn" onclick="adjustZoom(0.35);event.stopPropagation()">+</button>
-        <button class="zoom-btn" onclick="adjustZoom(-0.35);event.stopPropagation()">−</button>
-        <button class="zoom-btn zoom-reset" onclick="resetZoom();event.stopPropagation()" id="zoomResetBtn" style="display:none">↺</button>
+        <button class="zoom-btn" aria-label="Acercar mapa" onclick="adjustZoom(0.35);event.stopPropagation()">+</button>
+        <button class="zoom-btn" aria-label="Alejar mapa" onclick="adjustZoom(-0.35);event.stopPropagation()">−</button>
+        <button class="zoom-btn zoom-reset" aria-label="Restablecer zoom" onclick="resetZoom();event.stopPropagation()" id="zoomResetBtn" style="display:none">↺</button>
       </div>
       <!-- Zoom hint -->
       <div class="zoom-hint" id="zoomHint">Pellizco para zoom</div>
@@ -774,7 +752,7 @@
   <!-- CARTA -->
   <div class="tab-content active" id="tab-carta">
     <div class="section-title">Carta por copa</div>
-    <div id="wineList" style="contain:layout;transform:translateZ(0);will-change:auto;isolation:isolate"></div>
+    <div id="wineList" style="contain:layout;transform:translateZ(0);isolation:isolate"></div>
   </div>
 
   <!-- FICHA -->
@@ -790,10 +768,6 @@
   <!-- SOMMELIER -->
   <div class="tab-content" id="tab-sommelier">
     <div id="sommContent"></div>
-  </div>
-
-  <!-- MENÚ -->
-<div id="charcList"></div>
   </div>
 
   <!-- PUNTUAR -->
@@ -817,6 +791,8 @@
 <script>
 const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranja:"#d4721a"};
 const TYPE_LABEL={Tinto:"Tinto",Blanco:"Blanco",Rosado:"Rosado",Naranja:"Naranjo"};
+function esc(s){ return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 function precioBottella(p){
   // Devuelve el número crudo del precio botella
   if(!p) return 0;
@@ -903,65 +879,77 @@ fetch('./vinos.json').then(r=>r.json()).then(config=>{
   });
 
 /* ── MAP ── */
-function buildMap(){
-  const canvas=document.getElementById('mapCanvas');
-  // Cuadrantes removidos — fondo limpio
-  const c=document.getElementById('mapDots');
-  c.innerHTML='';
-  // Eliminar preview anterior
-  const oldPreview = document.getElementById('mapPreview');
-  if(oldPreview) oldPreview.remove();
+let pinElements  = {}; // wine id → DOM element
+let pinPositions = {}; // wine id → { w, left, top, num }
 
-  wines.forEach((w,idx)=>{
-    const left=50+w.x*0.4, top=50-w.y*0.36;
-    const color=TYPE_COLOR[w.tipo]||'#888';
-    const isSel=w.id===selectedId;
-    const isFiltered = activeFilter && w.tipo !== activeFilter;
-    const size=isSel?36:26;
-    const num=idx+1;
-    // Nombre corto: primera palabra del nombre del vino
-    const shortName = w.nombre.split(' ')[0];
-    const pin=document.createElement('div');
-    pin.className='wine-pin'+(isSel?' pin-selected':'')+(isFiltered?' pin-dimmed':'');
-    pin.style.cssText=`left:${left}%;top:${top}%;animation-delay:${idx*55}ms`;
+function buildMap(){
+  const c = document.getElementById('mapDots');
+  c.innerHTML = '';
+  pinElements  = {};
+  pinPositions = {};
+  const old = document.getElementById('mapPreview');
+  if(old) old.remove();
+
+  wines.forEach((w, idx) => {
+    const left = 50 + w.x * 0.4, top = 50 - w.y * 0.36;
+    const color = TYPE_COLOR[w.tipo] || '#888';
+    const num   = idx + 1;
+    const pin   = document.createElement('div');
+    pin.className = 'wine-pin';
+    pin.style.cssText = `left:${left}%;top:${top}%`;
     const belowClass = top < 50 ? ' below' : '';
-    pin.innerHTML=`
-      ${copaSVG(color,size,num)}
-      <div class="pin-zoom-label">${shortName}</div>
+    pin.innerHTML = `
+      ${copaSVG(color, 26, num)}
+      <div class="pin-zoom-label">${w.nombre.split(' ')[0]}</div>
       <div class="pin-tooltip${belowClass}" id="tip-${w.id}">
         <div class="pt-name">${num}. ${w.nombre}</div>
         <div class="pt-price">${fmtPrecio(w.precio)} · ${TYPE_LABEL[w.tipo]||w.tipo}</div>
       </div>`;
 
-    pin.addEventListener('click',e=>{
+    pin.addEventListener('click', e => {
       e.stopPropagation();
-      if(isFiltered) return; // no seleccionar copas filtradas
-      const wasSelected = selectedId===w.id;
+      if(activeFilter && w.tipo !== activeFilter) return;
+      const wasSelected = selectedId === w.id;
       selectedId = wasSelected ? null : w.id;
-      buildMap(); renderWineList();
+      updateMapSelectionClasses();
+      renderWineList();
       if(selectedId){
-        showMapPreview(w, left, top, idx+1);
-        renderFicha(wines.find(x=>x.id===selectedId));
-        showTab('ficha',document.querySelector('.tab-btn[onclick*="ficha"]'));
+        renderFicha(wines.find(x => x.id === selectedId));
+        showTab('ficha', document.querySelector('.tab-btn[onclick*="ficha"]'));
       }
     });
-    c.appendChild(pin);
 
-    // Mostrar preview si está seleccionado al rebuilding
-    if(isSel) showMapPreview(w, left, top, idx+1);
+    pinElements[w.id]  = pin;
+    pinPositions[w.id] = { w, left, top, num };
+    c.appendChild(pin);
   });
 
-  // Aplicar estado de labels según zoom actual
+  updateMapSelectionClasses();
   updateZoomLabels();
 }
+
+function updateMapSelectionClasses(){
+  wines.forEach(w => {
+    const pin = pinElements[w.id];
+    if(!pin) return;
+    pin.classList.toggle('pin-selected', w.id === selectedId);
+    pin.classList.toggle('pin-dimmed',   !!(activeFilter && w.tipo !== activeFilter));
+  });
+  if(selectedId){
+    const pos = pinPositions[selectedId];
+    if(pos) showMapPreview(pos.w, pos.left, pos.top, pos.num);
+  } else {
+    const p = document.getElementById('mapPreview');
+    if(p) p.remove();
+  }
+}
+
 document.addEventListener('click', e => {
-  // No deseleccionar si se clickeó en un elemento interactivo
   if(e.target.closest('.legend-pill,.tab-btn,.wine-card,.map-preview,.filter-btn,button,input,select,textarea,a')) return;
   if(selectedId !== null){
     selectedId = null;
-    buildMap(); renderWineList();
-    const p = document.getElementById('mapPreview');
-    if(p) p.remove();
+    updateMapSelectionClasses();
+    renderWineList();
   }
 });
 function copaSVG(color,size,num){
@@ -1229,31 +1217,21 @@ let activeFilter = null;
 
 function filterMap(tipo){
   activeFilter = tipo;
-  // Actualizar pills
-  document.querySelectorAll('.legend-pill').forEach(p=>p.classList.remove('active','dimmed'));
+  selectedId   = null;
+  document.querySelectorAll('.legend-pill').forEach(p => p.classList.remove('active'));
   if(tipo){
     document.getElementById('pill-'+tipo)?.classList.add('active');
-    document.querySelectorAll('.legend-pill').forEach(p=>{
-      if(p.id !== 'pill-'+tipo && p.id !== 'pill-all') p.classList.add('dimmed');
-    });
-    document.getElementById('pill-all')?.classList.remove('active');
   } else {
     document.getElementById('pill-all')?.classList.add('active');
   }
-  selectedId = null;
-  const prev = document.getElementById('mapPreview');
-  if(prev) prev.remove();
-  buildMap();
+  updateMapSelectionClasses();
   renderWineList();
 }
 
-let _renderingList = false;
 function renderWineList(){
-  if(_renderingList) return;
-  _renderingList = true;
-  const filtered = activeFilter ? wines.filter(w=>w.tipo===activeFilter) : wines;
-  document.getElementById('wineList').innerHTML=filtered.map((w,idx)=>{
-    const color = TYPE_COLOR[w.tipo]||'#888';
+  const filtered = activeFilter ? wines.filter(w => w.tipo === activeFilter) : wines;
+  document.getElementById('wineList').innerHTML = filtered.map((w, idx) => {
+    const color = TYPE_COLOR[w.tipo] || '#888';
     return `<div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
       <div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:${color};
         display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
@@ -1262,12 +1240,13 @@ function renderWineList(){
       <div class="wc-price">${fmtPrecio(w.precio)}</div>
     </div>`;
   }).join('');
-  _renderingList = false;
 }
 function selectWine(id){
-  selectedId=id; buildMap(); renderWineList();
-  renderFicha(wines.find(w=>w.id===id));
-  showTab('ficha',document.querySelector('.tab-btn[onclick*="ficha"]'));
+  selectedId = id;
+  updateMapSelectionClasses();
+  renderWineList();
+  renderFicha(wines.find(w => w.id === id));
+  showTab('ficha', document.querySelector('.tab-btn[onclick*="ficha"]'));
 }
 
 /* ── FICHA ── */
@@ -1277,7 +1256,7 @@ function renderFicha(w){
     return;
   }
   const color=TYPE_COLOR[w.tipo]||'#888';
-  const maridajePills=(w.maridaje||[]).map(m=>`<div class="maridaje-pill"><span class="maridaje-icon">${MARIDAJE_ICON[m]||'•'}</span>${m}</div>`).join('');
+  const maridajePills=(w.maridaje||[]).map(m=>`<div class="maridaje-pill"><span class="maridaje-icon">${MARIDAJE_ICON[m]||'•'}</span>${esc(m)}</div>`).join('');
   const perfilRows=w.perfil?Object.entries({Cuerpo:w.perfil.cuerpo,Frescura:w.perfil.frescura,Taninos:w.perfil.taninos}).map(([k,v])=>`
     <div class="perfil-row">
       <div class="perfil-label">${k}</div>
@@ -1285,10 +1264,9 @@ function renderFicha(w){
       <div class="perfil-val">${v}/5</div>
     </div>`).join(''):'';
 
-  // Bottle image — large, centered, before buy button
   const bottleSection = w.imagen ? `
     <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0 8px;border-top:.5px solid var(--border);margin-top:4px">
-      <img src="${w.imagen}" alt="${w.nombre}"
+      <img src="${esc(w.imagen)}" alt="${esc(w.nombre)}" loading="lazy"
         onerror="this.parentElement.style.display='none'"
         style="max-width:140px;max-height:320px;width:auto;height:auto;object-fit:contain;border-radius:8px;filter:drop-shadow(0 4px 16px rgba(0,0,0,.35))">
     </div>` : '';
@@ -1298,29 +1276,27 @@ function renderFicha(w){
       <div class="ficha-header">
         <div style="flex:1;min-width:0">
           <div class="fi-label" style="margin-bottom:6px">Ficha técnica</div>
-          <div class="ficha-name">${w.nombre}</div>
-          <div class="ficha-winery">${w.bodega}</div>
+          <div class="ficha-name">${esc(w.nombre)}</div>
+          <div class="ficha-winery">${esc(w.bodega)}</div>
         </div>
         <div class="ficha-tipo-badge" style="background:${color}">${fmtPrecio(w.precio)}</div>
       </div>
-      <div class="ficha-note">${w.nota}</div>
+      <div class="ficha-note">${esc(w.nota)}</div>
       <div class="ficha-grid">
         ${[['Varietal',w.varietal],['Región',w.region],['Altitud',w.altitud],['Suelo',w.suelo],['Crianza',w.crianza],['Temperatura',w.temperatura]].map(([l,v])=>`
-          <div class="ficha-item"><div class="fi-label">${l}</div><div class="fi-val">${v}</div></div>`).join('')}
+          <div class="ficha-item"><div class="fi-label">${l}</div><div class="fi-val">${esc(v)}</div></div>`).join('')}
       </div>
       ${w.perfil?`<div class="perfil-section"><div class="perfil-title">Perfil del vino <span style="font-size:10px;color:var(--muted);font-weight:400">según la bodega</span></div>${perfilRows}</div>`:''}
       ${w.maridaje&&w.maridaje.length?`<div class="maridaje-section"><div class="maridaje-title">Va bien con</div><div class="maridaje-pills">${maridajePills}</div></div>`:''}
-      ${w.bodega_info?`<div class="bodega-section"><div class="bodega-label">Sobre la bodega y el terruño</div><div class="bodega-text">${w.bodega_info}</div></div>`:''}
+      ${w.bodega_info?`<div class="bodega-section"><div class="bodega-label">Sobre la bodega y el terruño</div><div class="bodega-text">${esc(w.bodega_info)}</div></div>`:''}
       ${bottleSection}
       ${w.tienda_url?`
-        <a href="${w.tienda_url}" target="_blank" rel="noopener" class="comprar-btn">
+        <a href="${esc(w.tienda_url)}" target="_blank" rel="noopener" class="comprar-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           Comprá este vino en nuestra tienda
         </a>`:''}
     </div>`;
 }
-
-/* ── CHARCUTERÍA ── */
 
 /* ── SOMMELIER ── */
 const PREGUNTAS=[
@@ -1359,8 +1335,8 @@ const PREGUNTAS=[
     pregunta:'¿Cuánto querés invertir?',
     sub:'Sin juicios, todos los vinos son buenos.',
     opciones:[
-      {val:'bajo',icon:'😊',label:'Lo más accesible',sub:'Quiero algo rico sin gastar mucho'},
-      {val:'medio',icon:'👌',label:'Precio medio',sub:'Un punto equilibrado'},
+      {val:'bajo',icon:'😊',label:'Lo más accesible',sub:'Los vinos de entrada de la carta'},
+      {val:'medio',icon:'👌',label:'Precio medio',sub:'Entre los más pedidos del bar'},
       {val:'alto',icon:'✨',label:'Lo mejor de la carta',sub:'Esta noche me doy un gusto'}
     ]
   }
@@ -1434,7 +1410,17 @@ function renderSommResults(){
     // color match
     if(color==='tinto'&&w.tipo==='Tinto'){score+=3;reasons.push('es tinto');}
     if(color==='blanco'&&(w.tipo==='Blanco'||w.tipo==='Rosado')){score+=3;reasons.push('es fresco y liviano');}
-    if(color==='naranja'&&(w.tipo==='Naranja'||w.varietal.includes('ancestral')||w.varietal.includes('espumoso'))){score+=4;reasons.push('es una elección diferente');}
+    if(color==='naranja'){
+      // Primero intentamos Naranjo/Pet Nat/ancestral
+      if(w.tipo==='Naranja'||w.varietal.toLowerCase().includes('ancestral')||w.varietal.toLowerCase().includes('espumoso')){
+        score+=4; reasons.push('es una elección diferente');
+      } else if(w.tipo==='Blanco'||w.tipo==='Rosado'){
+        // Fallback: recomendar blancos/rosados como opción distinta
+        score+=3; reasons.push('es una alternativa fresca e inesperada');
+      } else {
+        score+=1; // tinto igualmente suma un poco
+      }
+    }
     if(color==='cualquiera'){score+=1;}
 
     // estilo match
@@ -1449,12 +1435,12 @@ function renderSommResults(){
     if(comida==='carnes'&&w.maridaje&&w.maridaje.includes('carnes rojas')){score+=2;reasons.push('ideal para carnes');}
     if(comida==='solo'){score+=1;}
 
-    // precio match
+    // precio match — comparamos contra precio botella (los rangos reflejan el catálogo actual)
     const precioNum = parseFloat((w.precio||'0').replace(/[$\\.]/g,'').replace(',','.'));
-    if(sommAnswers.precio==='bajo'&&precioNum<=8000){score+=3;reasons.push('entra en tu presupuesto');}
-    if(sommAnswers.precio==='medio'&&precioNum>=8000&&precioNum<=10000){score+=3;reasons.push('precio justo');}
-    if(sommAnswers.precio==='alto'&&precioNum>=12000){score+=3;reasons.push('lo mejor de la carta');}
-    if(sommAnswers.precio==='bajo'&&precioNum>=12000){score-=2;} // penalizar caro cuando quiere barato
+    if(sommAnswers.precio==='bajo'  && precioNum<=10000){score+=3;reasons.push('entra en tu presupuesto');}
+    if(sommAnswers.precio==='medio' && precioNum>10000 && precioNum<=14000){score+=3;reasons.push('precio justo');}
+    if(sommAnswers.precio==='alto'  && precioNum>14000){score+=3;reasons.push('lo mejor de la carta');}
+    if(sommAnswers.precio==='bajo'  && precioNum>14000){score-=2;} // penalizar si pide barato y el vino es caro
 
     return {...w, score, reasons};
   }).sort((a,b)=>b.score-a.score).slice(0,3);
@@ -1489,9 +1475,11 @@ function renderSommResults(){
 }
 
 function selectWineFromSomm(id){
-  selectedId=id; buildMap(); renderWineList();
-  renderFicha(wines.find(w=>w.id===id));
-  showTab('ficha',document.querySelector('.tab-btn[onclick*="ficha"]'));
+  selectedId = id;
+  updateMapSelectionClasses();
+  renderWineList();
+  renderFicha(wines.find(w => w.id === id));
+  showTab('ficha', document.querySelector('.tab-btn[onclick*="ficha"]'));
 }
 
 /* ── TABS ── */
@@ -1525,7 +1513,7 @@ function renderMisCatas(){
     <!-- Email input -->
     <div class="form-card" style="margin-bottom:16px">
       <div class="field-group" style="margin-bottom:14px">
-        <label class="field-label">Tu email</label>
+        <label class="field-label" for="miscatas-email">Tu email</label>
         <input type="email" id="miscatas-email" value="${savedEmail}"
           placeholder="el que usaste al catar"
           style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:11px;
@@ -1562,7 +1550,11 @@ async function buscarMisCatas(){
   results.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Buscando tus catas...</div>`;
 
   try{
-    const r = await fetch(`/api/stats?email=${encodeURIComponent(email)}`);
+    const r = await fetch('/api/stats', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({email})
+    });
     const data = await r.json();
     const catas = data.catas || [];
 
@@ -1602,23 +1594,20 @@ function buildMiCataCard(c, idx){
   const desc   = c.descripcion || c.opinion || '';
   const rep    = c.repetiria || '';
 
-  // Chips helper
   const chips = (txt) => txt ? txt.split(',').filter(s=>s.trim()).slice(0,5)
-    .map(s=>`<span style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--text);margin:2px">${s.trim()}</span>`).join('') : '';
+    .map(s=>`<span style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--text);margin:2px">${esc(s.trim())}</span>`).join('') : '';
 
   const puntColor = punt>=90?'#4CAF50':punt>=80?'#C4A05A':punt>=70?'#FF9800':'#888';
 
   return `<div class="wine-card" id="${id}" onclick="toggleMiCataCard('${id}')" style="cursor:pointer;margin-bottom:10px">
     <div style="display:flex;align-items:center;gap:12px">
-      <!-- Puntaje -->
       <div style="text-align:center;flex-shrink:0;width:52px">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:${puntColor};line-height:1">${punt}</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:${puntColor};line-height:1">${esc(punt)}</div>
         <div style="font-size:9px;color:var(--muted);letter-spacing:.05em">/100</div>
       </div>
-      <!-- Info -->
       <div style="flex:1;min-width:0">
-        <div style="font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${vino}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;font-weight:300">${fecha}</div>
+        <div style="font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(vino)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;font-weight:300">${esc(fecha)}</div>
         <div style="display:inline-block;font-size:9px;letter-spacing:.12em;text-transform:uppercase;
                     padding:3px 10px;border-radius:12px;margin-top:5px;font-weight:600;
                     background:${nivel==='sommelier'?'rgba(196,160,90,.1)':'rgba(200,70,58,.08)'};
@@ -1629,9 +1618,8 @@ function buildMiCataCard(c, idx){
       <div style="font-size:16px;color:var(--muted);opacity:.5;transition:transform .2s" id="chev_${id}">▾</div>
     </div>
 
-    <!-- Detalle expandible -->
     <div id="det_${id}" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);animation:fadeUp .2s ease">
-      ${color ? `<div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Color</div><div style="margin-bottom:12px"><span style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--text)">${color}</span></div>` : ''}
+      ${color ? `<div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Color</div><div style="margin-bottom:12px"><span style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--text)">${esc(color)}</span></div>` : ''}
       ${aromas ? `<div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Aromas</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${chips(aromas)}</div>` : ''}
       ${sabor  ? `<div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">En boca</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${chips(sabor)}</div>` : ''}
       ${nivel==='sommelier' && (c.acidez||c.taninos||c.cuerpo) ? `
@@ -1643,8 +1631,8 @@ function buildMiCataCard(c, idx){
               <span style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text);font-weight:600">${v}/5</span>
             </div>`).join('')}
         </div>` : ''}
-      ${rep ? `<div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">¿Lo pedirías de nuevo?</div><div style="font-size:13px;color:var(--text);margin-bottom:12px">${rep}</div>` : ''}
-      ${desc ? `<div style="background:var(--bg);border-left:2px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 14px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text);line-height:1.65;font-style:italic">"${desc}"</div>` : ''}
+      ${rep ? `<div style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">¿Lo pedirías de nuevo?</div><div style="font-size:13px;color:var(--text);margin-bottom:12px">${esc(rep)}</div>` : ''}
+      ${desc ? `<div style="background:var(--bg);border-left:2px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 14px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text);line-height:1.65;font-style:italic">&ldquo;${esc(desc)}&rdquo;</div>` : ''}
     </div>
   </div>`;
 }
@@ -2085,11 +2073,12 @@ async function enviarPuntuacion(phone){
           wineName:    w.nombre,
           winery:      w.bodega,
           varietal:    w.varietal || '',
-          price:       w.precio,
+          price:       fmtPrecio(w.precio),
           glass:       w.copa || '125 cc',
           rating:      cataState.puntuacion,
           ratingLabel: ratingText(cataState.puntuacion),
-          opinion:     cataState.descripcion || '—',
+          sabor:       cataState.sabor.slice(0,5).join(', '),
+          opinion:     cataState.descripcion || '',
         }),
       }).catch(()=>{});
     }
@@ -2117,6 +2106,5 @@ async function enviarPuntuacion(phone){
   }
 }
 </script>
-<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 </body>
 </html>

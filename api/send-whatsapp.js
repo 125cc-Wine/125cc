@@ -1,5 +1,5 @@
 // api/send-whatsapp.js
-// Vercel Serverless Function — Meta WhatsApp Cloud API
+// Meta WhatsApp Cloud API — resumen de cata
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -12,25 +12,21 @@ module.exports = async function handler(req, res) {
   const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
 
   if (!WHATSAPP_TOKEN || !PHONE_NUMBER_ID) {
-    return res.status(500).json({ error: "Faltan credenciales de WhatsApp en las variables de entorno." });
+    return res.status(500).json({ error: "Faltan credenciales de WhatsApp." });
   }
 
-  const {
-    phone, wineName, winery, varietal, price, glass,
-    rating, ratingLabel, aroma, body, freshness,
-    wouldOrderAgain, pairing, opinion,
-  } = req.body;
+  const { phone, wineName, winery, varietal, price, glass, rating, ratingLabel, sabor, opinion } = req.body;
 
   if (!phone || !wineName) {
     return res.status(400).json({ error: "Faltan campos obligatorios: phone, wineName." });
   }
 
-  const bar = (v) => "▰".repeat(v) + "▱".repeat(5 - v);
-  const stars = "⭐".repeat(rating) + "☆".repeat(5 - rating);
+  const saborLine   = sabor && sabor.trim()   ? `\n*En boca:* ${sabor}` : '';
+  const opinionLine = opinion && opinion.trim() ? `\n*Opinión:* "${opinion}"` : '';
 
   const messageBody = {
     messaging_product: "whatsapp",
-    to: phone,
+    to:   phone,
     type: "text",
     text: {
       preview_url: false,
@@ -38,23 +34,15 @@ module.exports = async function handler(req, res) {
 `🍷 *Degustación en Wine Bar 125cc*
 
 *Vino:* ${wineName} · ${winery}
-*Varietal:* ${varietal || "—"}
-*Copa:* ${glass || "125 cc"} · ${price}
+*Varietal:* ${varietal || '—'}
+*Copa:* ${glass || '125 cc'} · ${price}
 
-*Tu puntuación:* ${stars} ${rating}/5
-_${ratingLabel}_
-
-*Sensaciones:*
-• Aroma: ${bar(aroma)} ${aroma}/5
-• Cuerpo: ${bar(body)} ${body}/5
-• Gusto: ${bar(freshness)} ${freshness}/5
-
-*Opinión:* ${opinion || "—"}
+*Puntuación:* ${rating}/100 — _${ratingLabel}_${saborLine}${opinionLine}
 
 📍 ${new Date().toLocaleDateString("es-AR", {
-  weekday: "long", year: "numeric", month: "long", day: "numeric"
+  weekday: "long", year: "numeric", month: "long", day: "numeric",
 })}
-🌐 www.125cc.com.ar`
+🌐 www.125cc.com.ar`,
     },
   };
 
@@ -62,12 +50,9 @@ _${ratingLabel}_
     const response = await fetch(
       `https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`,
       {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${WHATSAPP_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(messageBody),
+        method:  "POST",
+        headers: { "Authorization": `Bearer ${WHATSAPP_TOKEN}`, "Content-Type": "application/json" },
+        body:    JSON.stringify(messageBody),
       }
     );
 
