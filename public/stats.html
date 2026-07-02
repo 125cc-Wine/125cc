@@ -900,6 +900,12 @@ function renderWineForm(w, isNew=false){
     <div class="form-full">
       <label class="form-label">URL de imagen</label>
       <input class="form-input" id="ef-img" value="${esc(w.img||w.imagen||'')}" placeholder="https://..." oninput="previewImg(this.value)">
+      <button type="button" id="extraerImgBtn" onclick="extraerImagenDeLink()"
+        style="width:100%;margin-top:8px;background:transparent;border:.5px solid var(--gold);border-radius:10px;
+               padding:9px;color:var(--gold);font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;
+               cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s">
+        🔗 Traer del link de la tienda
+      </button>
       <div id="imgPreview" style="margin-top:8px;height:100px;border-radius:10px;background:var(--dark3);border:.5px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden">
         ${(w.img||w.imagen) ? `<img src="${esc(w.img||w.imagen||'')}" style="max-height:100px;max-width:100%;object-fit:contain">` : '<span style="color:var(--muted);font-size:12px">Sin imagen</span>'}
       </div>
@@ -936,8 +942,39 @@ function previewImg(url){
   const el = document.getElementById('imgPreview');
   if(!el) return;
   el.innerHTML = url
-    ? `<img src="${url}" style="max-height:100px;max-width:100%;object-fit:contain" onerror="this.parentNode.innerHTML='<span style=color:var(--muted);font-size:12px>URL inválida</span>'">`
+    ? `<img src="${esc(url)}" style="max-height:100px;max-width:100%;object-fit:contain" onerror="this.parentNode.innerHTML='<span style=color:var(--muted);font-size:12px>URL inválida</span>'">`
     : '<span style="color:var(--muted);font-size:12px">Sin imagen</span>';
+}
+
+async function extraerImagenDeLink(){
+  const urlEl = document.getElementById('ef-tienda-url');
+  const url = urlEl ? urlEl.value.trim() : '';
+  if(!url){ showToast('Primero cargá el link de la tienda','error'); return; }
+
+  const btn = document.getElementById('extraerImgBtn');
+  const original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Buscando imagen...';
+
+  try{
+    const res = await fetch('/api/extraer-imagen', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', ...adminAuthHeader()},
+      body: JSON.stringify({url})
+    });
+    handleAuthResponse(res);
+    const data = await res.json();
+    if(!res.ok || !data.imagen){
+      showToast(data.error || 'No encontramos una imagen en ese link', 'error');
+      return;
+    }
+    document.getElementById('ef-img').value = data.imagen;
+    previewImg(data.imagen);
+    showToast('✓ Imagen encontrada', 'success');
+  } catch(e){
+    showToast('Error de conexión','error');
+  } finally {
+    btn.disabled = false; btn.textContent = original;
+  }
 }
 
 function getFormData(id, isNew){
