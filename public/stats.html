@@ -398,14 +398,8 @@ if(sessionStorage.getItem(SESSION_KEY)){
   document.getElementById('dashboard').style.display='block';
 }
 
-// ── TABS ──────────────────────────────────────────────────────────
-function switchTab(tab){
-  document.querySelectorAll('.dash-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.dash-tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('panel-'+tab).classList.add('active');
-  event.target.classList.add('active');
-  if(tab==='mapa' && wines.length===0) loadWinesForMap();
-}
+// switchTab: ver la implementación completa más abajo (sección Editor de Vinos) —
+// esta era una declaración duplicada que quedaba muerta (la última definición gana).
 
 // ── STATS ─────────────────────────────────────────────────────────
 async function loadStats(){
@@ -715,14 +709,24 @@ let editorWines = [];
 let editingId = null;
 let editorLoaded = false;
 
-function switchTab(tab){
+function switchTab(tab, btnEl){
   document.querySelectorAll('.dash-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.dash-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
-  event.target.classList.add('active');
+  (btnEl || event.target).classList.add('active');
   if(tab==='stats' && wines.length===0) loadStats();
   if(tab==='mapa' && wines.length===0) loadWinesForMap();
   if(tab==='vinos' && !editorLoaded) loadWinesForEditor();
+}
+
+// Salto directo desde el Editor de Vinos al Editor de Mapa con el vino ya seleccionado —
+// evita tener que volver a buscarlo a mano en la lista del mapa.
+async function posicionarEnMapa(id){
+  await loadWinesForMap(); // siempre refresca para reflejar ediciones recientes del vino
+  const mapaBtn = document.querySelector('.dash-tab[onclick*="mapa"]');
+  switchTab('mapa', mapaBtn);
+  selectWine(id);
+  document.getElementById('selName')?.scrollIntoView?.({block:'nearest'});
 }
 
 async function loadWinesForEditor(){
@@ -775,16 +779,26 @@ function newWine(){
   editingId = null;
   const maxId = editorWines.length ? Math.max(...editorWines.map(w=>w.id)) : 0;
   const w = {id: maxId+1, nombre:'', bodega:'', tipo:'Tinto', precio:0, varietal:'',
-    x:0, y:0, nota:'', copa:'125 cc', maridaje:[], img:''};
+    region:'', altitud:'', suelo:'', crianza:'', temperatura:'', bodega_info:'', tienda_url:'',
+    x:0, y:0, nota:'', copa:'125 cc', maridaje:[], img:'', perfil:{cuerpo:3,frescura:3,taninos:3}};
   renderWineForm(w, true);
 }
 
+// Vocabulario EXACTO que espera el Sommelier y MARIDAJE_ICON en public/index.html —
+// si esto no coincide letra por letra, el maridaje elegido acá nunca hace match.
+const MARIDAJE_OPTS = [
+  ['carnes rojas','Carnes rojas'], ['quesos duros','Quesos duros'], ['quesos blandos','Quesos blandos'],
+  ['jamón crudo','Jamón crudo'], ['tabla','Tabla'], ['fiambres','Fiambres'], ['salmón','Salmón'],
+  ['mortadela','Mortadela'], ['aceitunas','Aceitunas'], ['panera','Panera'], ['salame','Salame'],
+];
+
 function renderWineForm(w, isNew=false){
-  const maridajeOpts = ['Carnes rojas','Carnes blancas','Pescado','Quesos','Tabla','Pasta','Solas','Mariscos','Charcutería'];
   const maridajeSelected = w.maridaje || [];
+  const perfil = w.perfil || {};
 
   document.getElementById('wineEditForm').innerHTML = `
     <h3>${isNew ? 'Nuevo vino' : esc(w.nombre) || 'Editar vino'}</h3>
+    <div id="wineCompleteness"></div>
 
     <div class="form-section">Datos principales</div>
     <div class="form-full">
@@ -831,43 +845,54 @@ function renderWineForm(w, isNew=false){
     </div>
     <div class="form-row">
       <div>
-        <label class="form-label">Cosecha</label>
-        <input class="form-input" id="ef-cosecha" value="${esc(w.cosecha||'')}" placeholder="Ej: 2022">
+        <label class="form-label">Suelo</label>
+        <input class="form-input" id="ef-suelo" value="${esc(w.suelo||'')}" placeholder="Ej: Franco arcilloso">
       </div>
+      <div>
+        <label class="form-label">Crianza</label>
+        <input class="form-input" id="ef-crianza" value="${esc(w.crianza||'')}" placeholder="Ej: Roble francés 12 meses">
+      </div>
+    </div>
+    <div class="form-row">
       <div>
         <label class="form-label">Temperatura de servicio</label>
         <input class="form-input" id="ef-temperatura" value="${esc(w.temperatura||'')}" placeholder="Ej: 16–18°C">
       </div>
+      <div>
+        <label class="form-label">Link a la tienda (opcional)</label>
+        <input class="form-input" id="ef-tienda-url" value="${esc(w.tienda_url||'')}" placeholder="https://...">
+      </div>
+    </div>
+    <div class="form-full">
+      <label class="form-label">Sobre la bodega y el terruño</label>
+      <textarea class="form-input" id="ef-bodega-info" placeholder="Historia de la bodega, filosofía, terruño...">${esc(w.bodega_info||'')}</textarea>
     </div>
 
-    <div class="form-section">Perfil sensorial (1–5)</div>
+    <div class="form-section">Perfil sensorial (1–5) — alimenta el Sommelier</div>
     <div class="form-row">
       <div>
         <label class="form-label">Cuerpo</label>
-        <input class="form-input" id="ef-cuerpo" type="number" min="1" max="5" value="${w.cuerpo||3}">
+        <input class="form-input" id="ef-cuerpo" type="number" min="1" max="5" value="${perfil.cuerpo ?? 3}">
       </div>
       <div>
         <label class="form-label">Frescura</label>
-        <input class="form-input" id="ef-frescura" type="number" min="1" max="5" value="${w.frescura||3}">
+        <input class="form-input" id="ef-frescura" type="number" min="1" max="5" value="${perfil.frescura ?? 3}">
       </div>
     </div>
     <div class="form-row">
       <div>
         <label class="form-label">Taninos</label>
-        <input class="form-input" id="ef-taninos" type="number" min="1" max="5" value="${w.taninos||3}">
+        <input class="form-input" id="ef-taninos" type="number" min="1" max="5" value="${perfil.taninos ?? 3}">
       </div>
-      <div>
-        <label class="form-label">Intensidad aromática</label>
-        <input class="form-input" id="ef-aroma" type="number" min="1" max="5" value="${w.aroma||3}">
-      </div>
+      <div></div>
     </div>
 
     <div class="form-section">Maridaje</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-      ${maridajeOpts.map(m=>`
+      ${MARIDAJE_OPTS.map(([val,label])=>`
         <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--sub)">
-          <input type="checkbox" value="${m}" ${maridajeSelected.includes(m)?'checked':''} style="accent-color:var(--wine)">
-          ${m}
+          <input type="checkbox" value="${val}" ${maridajeSelected.includes(val)?'checked':''} style="accent-color:var(--wine)">
+          ${label}
         </label>`).join('')}
     </div>
 
@@ -891,6 +916,10 @@ function renderWineForm(w, isNew=false){
         <input class="form-input" id="ef-y" type="number" min="-100" max="100" value="${w.y||0}">
       </div>
     </div>
+    ${!isNew ? `
+    <button type="button" class="map-save-all-btn" style="margin-bottom:16px" onclick="posicionarEnMapa(${w.id})">
+      📍 Ver / ajustar arrastrando en el mapa
+    </button>` : ''}
 
     <div class="form-actions">
       <button class="btn-save" onclick="saveWine(${w.id}, ${isNew})">
@@ -898,6 +927,7 @@ function renderWineForm(w, isNew=false){
       </button>
       ${!isNew ? `<button class="btn-delete" onclick="deleteWine(${w.id})">Eliminar</button>` : ''}
     </div>`;
+  refreshChecklist();
 }
 
 function esc(s){ return (s||'').toString().replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -924,12 +954,22 @@ function getFormData(id, isNew){
     nota:        document.getElementById('ef-nota').value.trim(),
     region:      document.getElementById('ef-region').value.trim(),
     altitud:     document.getElementById('ef-altitud').value.trim(),
-    cosecha:     document.getElementById('ef-cosecha').value.trim(),
+    suelo:       document.getElementById('ef-suelo').value.trim(),
+    crianza:     document.getElementById('ef-crianza').value.trim(),
     temperatura: document.getElementById('ef-temperatura').value.trim(),
-    cuerpo:      parseInt(document.getElementById('ef-cuerpo').value)||3,
-    frescura:    parseInt(document.getElementById('ef-frescura').value)||3,
-    taninos:     parseInt(document.getElementById('ef-taninos').value)||3,
-    aroma:       parseInt(document.getElementById('ef-aroma').value)||3,
+    tienda_url:  document.getElementById('ef-tienda-url').value.trim(),
+    bodega_info: document.getElementById('ef-bodega-info').value.trim(),
+    // perfil_* es lo que actualizar-vino.js espera para la hoja de Sheets —
+    // usar "cuerpo"/"frescura"/"taninos" sueltos acá los descarta en el guardado
+    // y el Sommelier los vuelve a leer siempre como 3 (default).
+    perfil_cuerpo:   parseInt(document.getElementById('ef-cuerpo').value)||3,
+    perfil_frescura: parseInt(document.getElementById('ef-frescura').value)||3,
+    perfil_taninos:  parseInt(document.getElementById('ef-taninos').value)||3,
+    perfil: {
+      cuerpo:   parseInt(document.getElementById('ef-cuerpo').value)||3,
+      frescura: parseInt(document.getElementById('ef-frescura').value)||3,
+      taninos:  parseInt(document.getElementById('ef-taninos').value)||3,
+    },
     maridaje:    maridaje,
     img:         document.getElementById('ef-img').value.trim(),
     imagen:      document.getElementById('ef-img').value.trim(),
@@ -937,6 +977,46 @@ function getFormData(id, isNew){
     y:           parseFloat(document.getElementById('ef-y').value)||0,
   };
 }
+
+// ── Checklist de completitud — ¿este vino ya funciona bien en la Carta y el Sommelier? ──
+function computeWineChecklist(vals){
+  const checks = [
+    { ok: !!vals.imagen,                              label: 'Imagen de la botella' },
+    { ok: vals.nota.length >= 15,                      label: 'Nota de cata / descripción' },
+    { ok: !!(vals.varietal && vals.region),            label: 'Varietal y región' },
+    { ok: (vals.x!==0 || vals.y!==0),                  label: 'Posición en el mapa (todavía en 0,0)' },
+    { ok: vals.maridaje.length>0,                      label: 'Al menos un maridaje asignado' },
+  ];
+  const pending = checks.filter(c=>!c.ok);
+  if(!pending.length){
+    return `<div style="background:rgba(90,180,90,.12);border:.5px solid rgba(90,180,90,.3);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#86efac">✓ Ficha completa — lista para la Carta y el Sommelier</div>`;
+  }
+  return `<div style="background:rgba(255,180,60,.1);border:.5px solid rgba(255,180,60,.3);border-radius:10px;padding:10px 14px;margin-bottom:16px">
+    <div style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#facc15;margin-bottom:6px">Falta antes de publicar en la rotación</div>
+    ${pending.map(c=>`<div style="font-size:12px;color:var(--sub);margin-bottom:2px">○ ${c.label}</div>`).join('')}
+  </div>`;
+}
+function readChecklistVals(){
+  const val = id => document.getElementById(id)?.value.trim() || '';
+  return {
+    imagen:   val('ef-img'),
+    nota:     val('ef-nota'),
+    varietal: val('ef-varietal'),
+    region:   val('ef-region'),
+    x:        parseFloat(val('ef-x'))||0,
+    y:        parseFloat(val('ef-y'))||0,
+    maridaje: [...document.querySelectorAll('#wineEditForm input[type=checkbox]:checked')].map(c=>c.value),
+  };
+}
+function refreshChecklist(){
+  const el = document.getElementById('wineCompleteness');
+  if(!el || !document.getElementById('ef-nombre')) return;
+  el.innerHTML = computeWineChecklist(readChecklistVals());
+}
+// Delegado una sola vez sobre el contenedor fijo — sigue funcionando aunque
+// renderWineForm reemplace el innerHTML en cada selección/nuevo vino.
+document.getElementById('wineEditForm')?.addEventListener('input', refreshChecklist);
+document.getElementById('wineEditForm')?.addEventListener('change', refreshChecklist);
 
 async function saveWine(id, isNew){
   const data = getFormData(id, isNew);
