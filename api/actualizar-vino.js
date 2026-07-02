@@ -2,13 +2,15 @@
 // Reemplaza la versión anterior que usaba fs.writeFileSync (solo funciona en local)
 
 const { getReadWriteToken } = require('./_lib/google-auth');
+const { requireAdmin }      = require('./_lib/require-admin');
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (!requireAdmin(req, res)) return;
 
   const SHEET_ID            = process.env.GOOGLE_SHEET_ID;
   const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
@@ -22,7 +24,7 @@ module.exports = async function handler(req, res) {
 
     // Leer encabezados + datos actuales
     const dataRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:V100`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:V500`,
       { headers: { 'Authorization': `Bearer ${token}` } }
     );
     if (!dataRes.ok) {

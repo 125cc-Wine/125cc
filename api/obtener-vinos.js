@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
 
     // Leer hoja Vinos — A:V incluye las 22 columnas hasta perfil_taninos
     const sheetRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:V50`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:V500`,
       { headers: { "Authorization": `Bearer ${token}` } }
     );
 

@@ -25,6 +25,30 @@ module.exports = async function handler(req, res) {
   if (!vino || !puntuacion)
     return res.status(400).json({ error: "Faltan campos obligatorios." });
 
+  if (typeof vino !== 'string' || vino.length > 200)
+    return res.status(400).json({ error: "Nombre de vino inválido." });
+
+  const puntuacionNum = Number(puntuacion);
+  if (!Number.isFinite(puntuacionNum) || puntuacionNum < 60 || puntuacionNum > 100)
+    return res.status(400).json({ error: "La puntuación debe estar entre 60 y 100." });
+
+  if (email && (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))
+    return res.status(400).json({ error: "Email inválido." });
+
+  const MAX_TEXT = 1000;
+  for (const [campo, val] of Object.entries({ descripcion, color_otro, aromas_otro, sabor_otro })) {
+    if (val && (typeof val !== 'string' || val.length > MAX_TEXT))
+      return res.status(400).json({ error: `Campo ${campo} demasiado largo.` });
+  }
+
+  for (const [campo, val] of Object.entries({ acidez, cuerpo, taninos, final_boca, visual, olfativo })) {
+    if (val !== undefined && val !== null && val !== '') {
+      const n = Number(val);
+      if (!Number.isFinite(n) || n < 1 || n > 5)
+        return res.status(400).json({ error: `Campo ${campo} fuera de rango (1-5).` });
+    }
+  }
+
   try {
     const token = await getReadWriteToken(GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY);
     const ahora = new Date();
@@ -44,7 +68,7 @@ module.exports = async function handler(req, res) {
       bodega      || '—',
       tipo        || '—',
       precio      || '—',
-      puntuacion,
+      puntuacionNum,
       acidez      ?? '—',
       cuerpo      ?? '—',
       taninos     ?? '—',
