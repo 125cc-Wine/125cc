@@ -513,7 +513,55 @@
     .comprar-btn:active{opacity:.9;transform:scale(.99)}
 
     /* ══════════════════════════════
-       CALIFICÁ
+       CATA OVERLAY — se abre desde el CTA de "Mis catas"
+    ══════════════════════════════ */
+    .cata-overlay{
+      position:fixed;inset:0;z-index:600;background:var(--dark);
+      overflow-y:auto;animation:fadeUp .25s ease;
+    }
+    .cata-overlay.hidden{display:none}
+    .cata-overlay-inner{max-width:430px;margin:0 auto;min-height:100%}
+    .cata-overlay-header{position:sticky;top:0;z-index:10;display:flex;justify-content:flex-end;
+      padding:14px 16px 0;background:var(--dark)}
+    .cata-overlay-close{
+      width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);color:var(--dark-text);font-size:15px;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-family:'DM Sans',sans-serif;transition:background .15s;
+    }
+    .cata-overlay-close:hover{background:rgba(255,255,255,.15)}
+
+    /* ══════════════════════════════
+       MIS CATAS — email + CTA de catar
+    ══════════════════════════════ */
+    .miscatas-email-row{
+      display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.7);
+      border:1px solid rgba(80,55,30,.14);border-radius:11px;padding:10px 14px;margin-bottom:16px;
+    }
+    .miscatas-email-row svg{color:var(--muted);flex-shrink:0}
+    .miscatas-email-row span{font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .miscatas-email-row button{
+      margin-left:auto;background:none;border:none;color:var(--accent);font-size:11px;
+      text-transform:uppercase;letter-spacing:.05em;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;
+    }
+    .cta-cata{
+      display:flex;align-items:center;gap:12px;cursor:pointer;
+      background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);
+      color:#fff;border-radius:16px;padding:18px;margin-bottom:24px;
+      box-shadow:0 6px 24px rgba(155,32,48,.32);transition:transform .15s;
+    }
+    .cta-cata:active{transform:scale(.98)}
+    .cta-cata .icon{font-size:24px;flex-shrink:0}
+    .cta-cata .txt-main{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;font-style:italic}
+    .cta-cata .txt-sub{font-size:11px;opacity:.85;margin-top:2px;font-weight:300}
+    .miscatas-divider{
+      font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);
+      margin-bottom:12px;display:flex;align-items:center;gap:8px;
+    }
+    .miscatas-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    /* ══════════════════════════════
+       CATA — formulario dentro del overlay
     ══════════════════════════════ */
     .form-card{
       background:var(--card);border:1px solid var(--border);border-radius:18px;
@@ -591,7 +639,7 @@
     /* ══════════════════════════════
        WHATSAPP POPUP
     ══════════════════════════════ */
-    .wa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:flex-end;justify-content:center;
+    .wa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:700;display:flex;align-items:flex-end;justify-content:center;
       border-radius:24px 24px 0 0;padding:30px 22px 44px;
       width:100%;max-width:430px;animation:slideUp .3s cubic-bezier(.22,1,.36,1);
       border-top:1px solid rgba(139,106,58,.18);box-shadow:0 -8px 40px rgba(60,35,10,.18);
@@ -772,7 +820,6 @@
     <button class="tab-btn active" onclick="showTab('carta',this)">Carta</button>
     <button class="tab-btn" onclick="showTab('ficha',this)">Ficha</button>
     <button class="tab-btn" onclick="showTab('sommelier',this)">Sommelier</button>
-    <button class="tab-btn" onclick="showTab('puntuar',this)">Calificá</button>
     <button class="tab-btn" onclick="showTab('miscatas',this)">Mis catas</button>
   </div>
 
@@ -801,12 +848,7 @@
     <div id="sommContent"></div>
   </div>
 
-  <!-- PUNTUAR -->
-  <div class="tab-content" id="tab-puntuar">
-    <div id="puntuarContent"></div>
-  </div>
-
-  <!-- ── MIS CATAS ── -->
+  <!-- ── MIS CATAS (incluye catar un vino) ── -->
   <div class="tab-content" id="tab-miscatas">
     <div id="misCatasContent">
       <!-- Se renderiza por JS -->
@@ -817,6 +859,16 @@
     <p id="footerInfo"></p>
   </div>
 
+</div>
+
+<!-- Overlay del wizard de cata — se abre desde el CTA en "Mis catas" -->
+<div class="cata-overlay hidden" id="cataOverlay">
+  <div class="cata-overlay-inner">
+    <div class="cata-overlay-header">
+      <button class="cata-overlay-close" onclick="cerrarCataOverlay()" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="puntuarContent"></div>
+  </div>
 </div>
 
 <script>
@@ -848,10 +900,12 @@ const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos
 
 let wines=[], selectedId=null;
 let favoritos=new Set(); // nombres de vinos mejor puntuados por clientes reales
+let wineRatings=new Map(); // nombre del vino → {puntuacion, count} — para el boost del sommelier
 
 function fetchFavoritos(){
   fetch('/api/stats').then(r=>r.json()).then(d=>{
     const resumen = (d && d.resumen) || [];
+    wineRatings = new Map(resumen.map(r => [r.vino, {puntuacion:r.puntuacion, count:r.count}]));
     favoritos = new Set(
       resumen.filter(r => r.count>=3 && r.puntuacion>=85)
              .sort((a,b) => b.puntuacion-a.puntuacion)
@@ -1512,7 +1566,21 @@ function answerSomm(qid, val){
   else { renderSommResults(); }
 }
 
+// Terciles de precio sobre el catálogo VIGENTE — reemplaza umbrales fijos que
+// se desactualizarían solos con el recambio de carta cada 14 días.
+function precioBandThresholds(){
+  const precios = wines
+    .map(w => parseFloat((w.precio||'0').toString().replace(/[$\.]/g,'').replace(',','.')))
+    .filter(p => p>0)
+    .sort((a,b)=>a-b);
+  if(!precios.length) return {low:10000, high:14000};
+  const low  = precios[Math.floor(precios.length/3)]   || precios[0];
+  const high = precios[Math.floor(precios.length*2/3)] || precios[precios.length-1];
+  return {low, high};
+}
+
 function renderSommResults(){
+  const {low:precioLow, high:precioHigh} = precioBandThresholds();
   const scored=wines.map(w=>{
     let score=0, reasons=[];
     const {color,estilo,comida}=sommAnswers;
@@ -1545,12 +1613,19 @@ function renderSommResults(){
     if(comida==='carnes'&&w.maridaje&&w.maridaje.includes('carnes rojas')){score+=2;reasons.push('ideal para carnes');}
     if(comida==='solo'){score+=1;}
 
-    // precio match — comparamos contra precio botella (los rangos reflejan el catálogo actual)
+    // precio match — terciles calculados sobre el catálogo vigente (ver precioBandThresholds)
     const precioNum = parseFloat((w.precio||'0').replace(/[$\\.]/g,'').replace(',','.'));
-    if(sommAnswers.precio==='bajo'  && precioNum<=10000){score+=3;reasons.push('entra en tu presupuesto');}
-    if(sommAnswers.precio==='medio' && precioNum>10000 && precioNum<=14000){score+=3;reasons.push('precio justo');}
-    if(sommAnswers.precio==='alto'  && precioNum>14000){score+=3;reasons.push('lo mejor de la carta');}
-    if(sommAnswers.precio==='bajo'  && precioNum>14000){score-=2;} // penalizar si pide barato y el vino es caro
+    if(sommAnswers.precio==='bajo'  && precioNum<=precioLow){score+=3;reasons.push('entra en tu presupuesto');}
+    if(sommAnswers.precio==='medio' && precioNum>precioLow && precioNum<=precioHigh){score+=3;reasons.push('precio justo');}
+    if(sommAnswers.precio==='alto'  && precioNum>precioHigh){score+=3;reasons.push('lo mejor de la carta');}
+    if(sommAnswers.precio==='bajo'  && precioNum>precioHigh){score-=2;} // penalizar si pide barato y el vino es caro
+
+    // boost suave por puntuación real de clientes — desempata sin dominar el match de perfil
+    const rating = wineRatings.get(w.nombre);
+    if(rating && rating.count>=3){
+      score += Math.max(0, (rating.puntuacion-85)/15*2);
+      if(rating.puntuacion>=90) reasons.push('muy bien puntuado por otros clientes');
+    }
 
     return {...w, score, reasons};
   }).sort((a,b)=>b.score-a.score).slice(0,3);
@@ -1592,8 +1667,18 @@ function showTab(name,btn){
   document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   if(btn) btn.classList.add('active');
-  if(name==='puntuar')   renderFormPuntuar();
   if(name==='miscatas')  renderMisCatas();
+}
+
+/* ── Overlay del wizard de cata (se abre desde "Mis catas") ── */
+function abrirCataOverlay(){
+  document.getElementById('cataOverlay').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+  renderFormPuntuar();
+}
+function cerrarCataOverlay(){
+  document.getElementById('cataOverlay').classList.add('hidden');
+  document.body.style.overflow='';
 }
 
 /* ══════════════════════════════════════════════
@@ -1605,52 +1690,80 @@ function renderMisCatas(){
   const container = document.getElementById('misCatasContent');
   if(!container) return;
 
-  // Email guardado (del flujo de cata o del localStorage)
   const savedEmail = (function(){ try{ return localStorage.getItem('125cc_email')||''; }catch(e){return '';} })();
 
   container.innerHTML = `
-    <div style="margin-bottom:20px">
+    <div style="margin-bottom:18px">
       <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--text);margin-bottom:4px">Mis catas</div>
-      <div style="font-size:13px;color:var(--muted);font-weight:300">Tu historial personal en 125cc</div>
+      <div style="font-size:13px;color:var(--muted);font-weight:300">Tu historial y tus catas en 125cc</div>
     </div>
 
-    <!-- Email input -->
-    <div class="form-card" style="margin-bottom:16px">
-      <div class="field-group" style="margin-bottom:14px">
-        <label class="field-label" for="miscatas-email">Tu email</label>
-        <input type="email" id="miscatas-email" value="${savedEmail}"
-          placeholder="el que usaste al catar"
-          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:11px;
-                 padding:12px 14px;font-size:14px;color:var(--text);font-family:'DM Sans',sans-serif;
-                 outline:none;transition:border-color .2s"
-          onfocus="this.style.borderColor='var(--text)'"
-          onblur="this.style.borderColor='var(--border)'"
-          onkeydown="if(event.key==='Enter')buscarMisCatas()">
+    <div id="miscatas-email-row"></div>
+
+    <div class="cta-cata" onclick="abrirCataOverlay()">
+      <div class="icon">🍷</div>
+      <div>
+        <div class="txt-main">Catar un vino ahora</div>
+        <div class="txt-sub">Simple o Sommelier · 2 min</div>
       </div>
-      <button onclick="buscarMisCatas()"
-        style="width:100%;background:var(--text);color:var(--bg);border:none;border-radius:12px;
-               padding:14px;font-size:13px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
-               cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;
-               box-shadow:0 4px 16px rgba(20,10,0,.2)">
-        Ver mis catas →
-      </button>
     </div>
 
     <div id="miscatas-results"></div>`;
+
+  renderMisCatasEmailRow(savedEmail);
+  if(savedEmail) buscarMisCatas(savedEmail);
 }
 
-async function buscarMisCatas(){
+function renderMisCatasEmailRow(email){
+  const row = document.getElementById('miscatas-email-row');
+  if(!row) return;
+  if(email){
+    row.innerHTML = `
+      <div class="miscatas-email-row">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+        <span>${esc(email)}</span>
+        <button onclick="renderMisCatasEmailRow('');document.getElementById('miscatas-results').innerHTML=''">Cambiar</button>
+      </div>`;
+  } else {
+    row.innerHTML = `
+      <div class="form-card" style="margin-bottom:16px">
+        <div class="field-group" style="margin-bottom:14px">
+          <label class="field-label" for="miscatas-email">Tu email</label>
+          <input type="email" id="miscatas-email"
+            placeholder="el que usaste al catar"
+            style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:11px;
+                   padding:12px 14px;font-size:14px;color:var(--text);font-family:'DM Sans',sans-serif;
+                   outline:none;transition:border-color .2s"
+            onfocus="this.style.borderColor='var(--text)'"
+            onblur="this.style.borderColor='var(--border)'"
+            onkeydown="if(event.key==='Enter')buscarMisCatasFromInput()">
+        </div>
+        <button onclick="buscarMisCatasFromInput()"
+          style="width:100%;background:var(--text);color:var(--bg);border:none;border-radius:12px;
+                 padding:14px;font-size:13px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+                 cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;
+                 box-shadow:0 4px 16px rgba(20,10,0,.2)">
+          Ver mis catas →
+        </button>
+      </div>`;
+  }
+}
+
+function buscarMisCatasFromInput(){
   const emailEl = document.getElementById('miscatas-email');
   const email   = emailEl ? emailEl.value.trim() : '';
   if(!email || !email.includes('@')){
-    emailEl.style.borderColor = 'var(--accent)';
-    emailEl.placeholder = 'Ingresá un email válido';
+    if(emailEl){ emailEl.style.borderColor = 'var(--accent)'; emailEl.placeholder = 'Ingresá un email válido'; }
     return;
   }
-  // Guardar para próximas veces
   try{ localStorage.setItem('125cc_email', email); }catch(e){}
+  renderMisCatasEmailRow(email);
+  buscarMisCatas(email);
+}
 
+async function buscarMisCatas(email){
   const results = document.getElementById('miscatas-results');
+  if(!results) return;
   results.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Buscando tus catas...</div>`;
 
   try{
@@ -1665,8 +1778,8 @@ async function buscarMisCatas(){
     if(!catas.length){
       results.innerHTML = `
         <div style="text-align:center;padding:40px 16px;color:var(--muted);font-size:13px;line-height:1.8">
-          🍷<br><br>No encontramos catas para <strong>${email}</strong>.<br>
-          <span style="font-size:11px">¿Usaste otro email al catar?</span>
+          🍷<br><br>Todavía no tenés catas registradas.<br>
+          <span style="font-size:11px">Tocá "Catar un vino ahora" para empezar.</span>
         </div>`;
       return;
     }
@@ -2208,7 +2321,10 @@ async function enviarPuntuacion(phone){
         <p>${nl} de <strong>${esc(w.nombre)}</strong> registrada correctamente.${
           phone ? (waSuccess ? '<br>Te enviamos el resumen por WhatsApp.' : '<br>Tu cata quedó guardada, pero no pudimos enviarte el resumen por WhatsApp.') : ''
         }</p>
-        <button onclick="renderFormPuntuar()">Catar otro vino</button>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button onclick="renderFormPuntuar()" style="flex:1;margin-top:0">Catar otro vino</button>
+          <button onclick="cerrarCataOverlay();renderMisCatas()" style="flex:1;margin-top:0">Ver mis catas</button>
+        </div>
       </div>`;
 
   } catch(err){
