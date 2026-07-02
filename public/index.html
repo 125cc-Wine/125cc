@@ -310,6 +310,15 @@
     /* ══════════════════════════════
        WINE LIST
     ══════════════════════════════ */
+    .carta-search{
+      width:100%;background:rgba(255,255,255,.7);border:1px solid rgba(80,55,30,.14);
+      border-radius:11px;padding:11px 14px 11px 38px;font-size:13px;color:var(--text);
+      font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;
+      margin-bottom:14px;
+    }
+    .carta-search:focus{border-color:var(--accent);background:rgba(255,255,255,.9)}
+    .carta-search-wrap{position:relative}
+    .carta-search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
     .wine-card{
       background:#FFFFFF;
       border:1px solid rgba(139,106,58,.15);
@@ -770,6 +779,10 @@
   <!-- CARTA -->
   <div class="tab-content active" id="tab-carta">
     <div class="section-title">Carta por copa</div>
+    <div class="carta-search-wrap">
+      <svg class="carta-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="carta-search" type="search" placeholder="Buscar por nombre o bodega..." oninput="onWineSearch(this.value)">
+    </div>
     <div id="wineList" style="contain:layout;transform:translateZ(0);isolation:isolate"></div>
   </div>
 
@@ -834,6 +847,20 @@ function fmtPrecio(p){
 const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos":"🧀","jamón crudo":"🍖","tabla":"🪵","fiambres":"🥓","salmón":"🐟","mortadela":"🥩","aceitunas":"🫒","panera":"🍞","salame":"🥩"};
 
 let wines=[], selectedId=null;
+let favoritos=new Set(); // nombres de vinos mejor puntuados por clientes reales
+
+function fetchFavoritos(){
+  fetch('/api/stats').then(r=>r.json()).then(d=>{
+    const resumen = (d && d.resumen) || [];
+    favoritos = new Set(
+      resumen.filter(r => r.count>=3 && r.puntuacion>=85)
+             .sort((a,b) => b.puntuacion-a.puntuacion)
+             .slice(0,3)
+             .map(r => r.vino)
+    );
+    if(wines.length){ renderWineList(); if(selectedId) renderFicha(wines.find(w=>w.id===selectedId)); }
+  }).catch(()=>{});
+}
 
 // ── Caché del cliente (5 minutos) ──────────────────────────────
 const CACHE_KEY='125cc_wines_v1';
@@ -865,6 +892,12 @@ function initApp(config, apiWines){
   buildMap(); renderWineList();  initSommelier();
   // Pill "Todos" activa por defecto
   document.getElementById('pill-all')?.classList.add('active');
+  // Deep link: si la URL trae #vino=ID, abrir directo esa ficha
+  const hashMatch = location.hash.match(/vino=(\d+)/);
+  if(hashMatch){
+    const linked = wines.find(x => x.id === parseInt(hashMatch[1]));
+    if(linked) selectWineAndShowFicha(linked.id);
+  }
   setTimeout(()=>{
     const l=document.getElementById('loading');
     l.classList.add('hidden');
@@ -872,6 +905,8 @@ function initApp(config, apiWines){
     document.getElementById('app').style.display='flex';
   },200);
 }
+
+fetchFavoritos();
 
 fetch('./vinos.json').then(r=>r.json()).then(config=>{
     const cached=getCachedWines();
@@ -893,7 +928,11 @@ fetch('./vinos.json').then(r=>r.json()).then(config=>{
     }
   })
   .catch(()=>{
-    document.getElementById('loading').innerHTML='<p style="color:#f87171;font-size:14px;padding:20px;text-align:center">Error cargando el menú.<br>Verificá tu conexión.</p>';
+    document.getElementById('loading').innerHTML=`
+      <p style="color:#f87171;font-size:14px;padding:20px;text-align:center">Error cargando el menú.<br>Verificá tu conexión.</p>
+      <button onclick="location.reload()" style="background:var(--accent);color:#fff;border:none;border-radius:12px;
+        padding:12px 28px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;
+        letter-spacing:.06em;text-transform:uppercase">Reintentar</button>`;
   });
 
 /* ── MAP ── */
@@ -934,6 +973,9 @@ function buildMap(){
       if(selectedId){
         renderFicha(wines.find(x => x.id === selectedId));
         showTab('ficha', document.querySelector('.tab-btn[onclick*="ficha"]'));
+        try{ history.replaceState(null, '', '#vino=' + selectedId); }catch(e){}
+      } else {
+        try{ history.replaceState(null, '', location.pathname); }catch(e){}
       }
     });
 
@@ -1246,8 +1288,26 @@ function filterMap(tipo){
   renderWineList();
 }
 
+let searchQuery = '';
+function normalizeSearch(s){
+  return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+}
+function onWineSearch(v){
+  searchQuery = v;
+  renderWineList();
+}
+
 function renderWineList(){
-  const filtered = activeFilter ? wines.filter(w => w.tipo === activeFilter) : wines;
+  let filtered = activeFilter ? wines.filter(w => w.tipo === activeFilter) : wines;
+  if(searchQuery.trim()){
+    const q = normalizeSearch(searchQuery);
+    filtered = filtered.filter(w => normalizeSearch(w.nombre).includes(q) || normalizeSearch(w.bodega).includes(q));
+  }
+  if(!filtered.length){
+    document.getElementById('wineList').innerHTML =
+      `<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">No encontramos vinos para "${esc(searchQuery)}"</div>`;
+    return;
+  }
   document.getElementById('wineList').innerHTML = filtered.map((w, idx) => {
     const color = TYPE_COLOR[w.tipo] || '#888';
     const thumb = w.imagen
@@ -1258,18 +1318,20 @@ function renderWineList(){
         display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
         color:#fff;margin-top:2px;box-shadow:0 2px 6px rgba(0,0,0,.2)">${idx+1}</div>
       ${thumb}
-      <div class="wc-info"><div class="wc-name">${esc(w.nombre)}</div><div class="wc-sub">${esc(w.bodega)} · ${esc(TYPE_LABEL[w.tipo]||w.tipo)}</div></div>
+      <div class="wc-info"><div class="wc-name">${esc(w.nombre)}</div><div class="wc-sub">${esc(w.bodega)} · ${esc(TYPE_LABEL[w.tipo]||w.tipo)}${favoritos.has(w.nombre)?' <span style="color:var(--accent);font-weight:600">· ★ Favorito del bar</span>':''}</div></div>
       <div class="wc-price">${fmtPrecio(w.precio)}</div>
     </div>`;
   }).join('');
 }
-function selectWine(id){
+function selectWineAndShowFicha(id){
   selectedId = id;
   updateMapSelectionClasses();
   renderWineList();
   renderFicha(wines.find(w => w.id === id));
   showTab('ficha', document.querySelector('.tab-btn[onclick*="ficha"]'));
+  try{ history.replaceState(null, '', '#vino=' + id); }catch(e){}
 }
+function selectWine(id){ selectWineAndShowFicha(id); }
 
 /* ── FICHA ── */
 function renderFicha(w){
@@ -1294,12 +1356,17 @@ function renderFicha(w){
     </div>` : '';
 
   document.getElementById('fichaContent').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span onclick="volverAlMapa()" style="font-size:12px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:4px">← Volver al mapa</span>
+      <span onclick="compartirVino(${w.id})" style="font-size:12px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:4px"><span id="shareBtnLabel">Compartir</span> ↗</span>
+    </div>
     <div class="ficha-card">
       <div class="ficha-header">
         <div style="flex:1;min-width:0">
           <div class="fi-label" style="margin-bottom:6px">Ficha técnica</div>
           <div class="ficha-name">${esc(w.nombre)}</div>
           <div class="ficha-winery">${esc(w.bodega)}</div>
+          ${favoritos.has(w.nombre) ? '<div style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;font-weight:600;color:var(--accent)">★ Favorito del bar</div>' : ''}
         </div>
         <div class="ficha-tipo-badge" style="background:${color}">${fmtPrecio(w.precio)}</div>
       </div>
@@ -1318,6 +1385,27 @@ function renderFicha(w){
           Comprá este vino en nuestra tienda
         </a>`:''}
     </div>`;
+}
+
+function volverAlMapa(){
+  showTab('carta', document.querySelector('.tab-btn[onclick*="carta"]'));
+}
+
+async function compartirVino(id){
+  const w = wines.find(x=>x.id===id);
+  if(!w) return;
+  const url = location.origin + location.pathname + '#vino=' + id;
+  const shareData = { title: '125cc · ' + w.nombre, text: `Mirá este vino: ${w.nombre} (${w.bodega})`, url };
+  if(navigator.share){
+    try{ await navigator.share(shareData); return; }catch(e){ /* cancelado o no soportado: sigue al fallback */ }
+  }
+  try{
+    await navigator.clipboard.writeText(url);
+    const el = document.getElementById('shareBtnLabel');
+    if(el){ const prev = el.textContent; el.textContent = '¡Copiado!'; setTimeout(()=>{ if(el.isConnected) el.textContent = prev; }, 1600); }
+  }catch(e){
+    prompt('Copiá este link:', url);
+  }
 }
 
 /* ── SOMMELIER ── */
@@ -1496,13 +1584,7 @@ function renderSommResults(){
     </div>`;
 }
 
-function selectWineFromSomm(id){
-  selectedId = id;
-  updateMapSelectionClasses();
-  renderWineList();
-  renderFicha(wines.find(w => w.id === id));
-  showTab('ficha', document.querySelector('.tab-btn[onclick*="ficha"]'));
-}
+function selectWineFromSomm(id){ selectWineAndShowFicha(id); }
 
 /* ── TABS ── */
 function showTab(name,btn){
@@ -2086,23 +2168,27 @@ async function enviarPuntuacion(phone){
     const data = await res.json();
     if(!res.ok) throw new Error(data.detail || data.error || 'Error desconocido');
 
+    let waSuccess = false;
     if(phone){
-      await fetch('/api/send-whatsapp', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          phone:       normalizarTelefono(phone),
-          wineName:    w.nombre,
-          winery:      w.bodega,
-          varietal:    w.varietal || '',
-          price:       fmtPrecio(w.precio),
-          glass:       w.copa || '125 cc',
-          rating:      cataState.puntuacion,
-          ratingLabel: ratingText(cataState.puntuacion),
-          sabor:       cataState.sabor.slice(0,5).join(', '),
-          opinion:     cataState.descripcion || '',
-        }),
-      }).catch(()=>{});
+      try{
+        const waRes = await fetch('/api/send-whatsapp', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            phone:       normalizarTelefono(phone),
+            wineName:    w.nombre,
+            winery:      w.bodega,
+            varietal:    w.varietal || '',
+            price:       fmtPrecio(w.precio),
+            glass:       w.copa || '125 cc',
+            rating:      cataState.puntuacion,
+            ratingLabel: ratingText(cataState.puntuacion),
+            sabor:       cataState.sabor.slice(0,5).join(', '),
+            opinion:     cataState.descripcion || '',
+          }),
+        });
+        waSuccess = waRes.ok;
+      }catch(e){ waSuccess = false; }
     }
 
     const nl = cataState.nivel==='sommelier' ? 'Cata Sommelier' : 'Cata Simple';
@@ -2119,7 +2205,9 @@ async function enviarPuntuacion(phone){
       `<div class="form-success">
         <span class="success-icon">🍷</span>
         <h3>¡Cata guardada!</h3>
-        <p>${nl} de <strong>${esc(w.nombre)}</strong> registrada correctamente.${phone?'<br>Te enviamos el resumen por WhatsApp.':''}</p>
+        <p>${nl} de <strong>${esc(w.nombre)}</strong> registrada correctamente.${
+          phone ? (waSuccess ? '<br>Te enviamos el resumen por WhatsApp.' : '<br>Tu cata quedó guardada, pero no pudimos enviarte el resumen por WhatsApp.') : ''
+        }</p>
         <button onclick="renderFormPuntuar()">Catar otro vino</button>
       </div>`;
 

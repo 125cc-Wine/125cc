@@ -109,7 +109,10 @@ module.exports = async function handler(req, res) {
       opiniones:  b.opiniones,
     })).sort((a, b) => b.puntuacion - a.puntuacion);
 
-    return res.status(200).json({ total: degustaciones.length, resumen, degustaciones });
+    // No devolver "degustaciones" crudo sin filtro: expondría email y opiniones
+    // de todos los clientes a cualquier caller anónimo. "resumen" (agregado, sin
+    // email) es lo único que consume el dashboard admin y la carta pública.
+    return res.status(200).json({ total: degustaciones.length, resumen });
 
   } catch (err) {
     return res.status(500).json({ error: "Error interno.", detail: err.message });
