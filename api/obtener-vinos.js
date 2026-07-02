@@ -7,7 +7,10 @@ module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Cache-Control", "public, max-age=300, stale-while-revalidate=60");
+  // Ventana corta a propósito: con el recambio de carta cada 14 días, un caché
+  // de 5 min (como estaba antes) podía tardar hasta ~6 min en reflejar un vino
+  // recién editado desde el admin.
+  res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=30");
   if (req.method === "OPTIONS") return res.status(200).end();
 
   const SHEET_ID            = process.env.GOOGLE_SHEET_ID;

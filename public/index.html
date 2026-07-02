@@ -915,9 +915,9 @@ function fetchFavoritos(){
   }).catch(()=>{});
 }
 
-// ── Caché del cliente (5 minutos) ──────────────────────────────
+// ── Caché del cliente (1 minuto — alineado con el Cache-Control de /api/obtener-vinos) ──
 const CACHE_KEY='125cc_wines_v1';
-const CACHE_TTL=5*60*1000;
+const CACHE_TTL=60*1000;
 function getCachedWines(){
   try{const raw=localStorage.getItem(CACHE_KEY);if(!raw)return null;const{data,ts}=JSON.parse(raw);if(Date.now()-ts>CACHE_TTL)return null;return data;}catch(e){return null;}
 }
