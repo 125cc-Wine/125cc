@@ -20,59 +20,96 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
     :root{
-      /* ── Paleta del local · Claudio Guzmán ── */
-      /* Madera */
-      --madera:      #C8A46A;   /* roble claro — dorado cálido */
-      --madera-dk:   #4A3020;   /* madera oscura — header */
-      --madera-mid:  #8B6A3A;   /* madera media */
-      --madera-lt:   #F0E4CC;   /* madera muy clara */
-      /* Piedra */
-      --piedra:      #C4785A;   /* piedra terrosa — acento cálido */
-      --piedra-lt:   #F2E4DA;   /* piedra clara */
-      /* Cuero */
-      --cuero:       #A0622A;   /* sillas cuero caramelo */
-      /* Tinto — marca 125cc */
-      --accent:      #7A1428;
-      --accent2:     #9B2035;
-      /* Fondos */
-      --bg:          #FAF5EE;   /* crema base muy cálida */
-      --bg2:         #F0E8DA;   /* crema arena */
-      --bg3:         #E4D8C8;   /* crema arena oscura */
-      --card:        rgba(255,255,255,.82);
-      --card2:       rgba(250,245,238,.9);
-      /* Texto */
-      --text:        #2A1A08;
-      --text2:       #3D2814;
-      --muted:       #8A7060;
-      --sub:         #5A4030;
-      /* Bordes */
-      --border:      rgba(139,106,58,.13);
-      --border2:     rgba(139,106,58,.24);
-      /* Header oscuro — madera quemada */
-      --dark:        #2E1E10;
-      --dark2:       #3A2618;
-      --dark3:       #4A3220;
-      --dark-text:   #F5EDE0;
-      --dark-sub:    #C8A878;
-      --dark-muted:  #8A7060;
-      /* Tipos vino */
-      --tinto:   #7A1428;
-      --blanco:  #5A8A2A;
-      --rosado:  #C4306A;
+      /* ── Color · fondos y tinta ─────────────────────────────── */
+      --bg: #FAF5EE;            /* fondo crema */
+      --bg2: #F0E8DA;           /* superficie arena (hero ficha, zonas destacadas) */
+      --surface: #FFFFFF;       /* cards */
+      --ink: #2A1A08;           /* texto principal (nunca #000) */
+      --ink-2: #5A4030;         /* texto secundario */
+      --ink-3: #8A7060;         /* texto terciario / data */
+      --dark: #2E1E10;          /* superficie oscura (bodega, modo cata, preview mapa) */
+      --dark-2: #3A2618;        /* superficie oscura elevada */
+      --dark-3: #4A3220;        /* superficie oscura elevada 2 (inputs/chips dentro del modo cata) */
+      --dark-cata: #1E1208;     /* fondo del ritual de cata */
+      --ink-dark: #F5EDE0;      /* texto sobre oscuro */
+      --ink-dark-2: #C8A878;    /* texto secundario sobre oscuro */
+
+      /* ── Color · materiales del local ───────────────────────── */
+      --madera: #C8A46A;
+      --madera-dk: #4A3020;
+      --piedra: #C4785A;
+      --cuero: #A0622A;
+
+      /* ── Color · acento (SOLO interactivo) ──────────────────── */
+      --accent: #7A1428;
+      --accent-2: #9B2035;
+      --accent-grad: linear-gradient(135deg, #7A1428, #9B2035);
+
+      /* ── Color · tipos de vino (única fuente de verdad) ────── */
+      --tinto: #7A1428;
+      --blanco: #5A8A2A;
+      --rosado: #C4306A;
       --naranja: #C46020;
-      /* Compatibilidad — gold = madera */
-      --gold:  #C8A46A;
-      --gold2: #E8C878;
-      /* Sombras cálidas */
-      --shadow-sm: 0 2px 10px rgba(60,35,10,.1);
-      --shadow-md: 0 4px 24px rgba(60,35,10,.15);
-      --shadow-lg: 0 8px 40px rgba(60,35,10,.22);
+
+      /* ── Bordes ─────────────────────────────────────────────── */
+      --line: rgba(139, 106, 58, .15);       /* hairline en claro */
+      --line-strong: rgba(139, 106, 58, .24);
+      --line-dark: rgba(200, 164, 106, .18); /* hairline en oscuro */
+      --line-dark-strong: rgba(200, 164, 106, .32);
+
+      /* ── Tipografía · escala modular 1.25 / base 16 ─────────── */
+      --font-serif: 'Cormorant Garamond', serif;
+      --font-sans: 'DM Sans', sans-serif;
+      --text-display: 48px;   /* Cormorant 700 — hero */
+      --text-title: 32px;     /* Cormorant 600 — título de pantalla */
+      --text-heading: 25px;   /* Cormorant 600 — sección */
+      --text-name: 20px;      /* Cormorant 600 — nombre de vino en card, precio */
+      --text-voice: 17px;     /* Cormorant 400 italic — voz del somm */
+      --text-body: 15px;      /* DM Sans 300 */
+      --text-data: 13px;      /* DM Sans 400 — datos técnicos */
+      --text-caption: 12px;
+      --text-kicker: 11px;    /* DM Sans 500, caps, tracking .28em — ÚNICO uppercase */
+      --kicker-tracking: .28em;
+
+      /* ── Espaciado · base 4 ─────────────────────────────────── */
+      --sp-1: 4px;
+      --sp-2: 8px;
+      --sp-3: 12px;
+      --sp-4: 16px;
+      --sp-5: 24px;   /* padding interno de card */
+      --sp-6: 32px;
+      --sp-7: 48px;   /* separación entre secciones */
+      --sp-8: 64px;
+
+      /* ── Radios · 3 pasos + píldora ─────────────────────────── */
+      --r-sm: 8px;
+      --r-card: 14px;
+      --r-surface: 20px;
+      --r-pill: 999px;
+
+      /* ── Elevación · claro = sombra cálida ──────────────────── */
+      --shadow-1: 0 2px 10px rgba(60, 35, 10, .10);   /* card en reposo */
+      --shadow-2: 0 4px 24px rgba(60, 35, 10, .15);   /* hover / sheet */
+      --shadow-3: 0 8px 40px rgba(60, 35, 10, .22);   /* flotante: mapa, modal */
+
+      /* ── Elevación · oscuro = luz ───────────────────────────── */
+      --glow-edge: inset 0 1px 0 rgba(245, 237, 224, .10); /* borde iluminado */
+      --glow-vela: 0 0 24px rgba(155, 32, 53, .22);        /* interactivo */
+      --shadow-dark: 0 12px 40px rgba(0, 0, 0, .5);        /* flotante oscuro */
+
+      /* ── Motion · una curva, tres tiempos ───────────────────── */
+      --ease: cubic-bezier(.22, 1, .36, 1);          /* curva de la casa */
+      --ease-copa: cubic-bezier(.34, 1.56, .64, 1);  /* elástica: SOLO copitas */
+      --t-feedback: 150ms;   /* tap, hover, press */
+      --t-local: 250ms;      /* tabs, filtros, tooltips */
+      --t-ritual: 600ms;     /* entrar/salir de cata, abrir ficha */
+      --stagger: 60ms;       /* cascada de barras */
     }
     html,body{height:100%}
     body{
       font-family:'DM Sans',sans-serif;font-weight:300;
       background:#FAF5EE;
-      color:var(--text);overscroll-behavior:none;
+      color:var(--ink);overscroll-behavior:none;
       min-height:100vh;
     }
     .app{
@@ -113,14 +150,14 @@
     }
     .header h1{
       font-family:'Cormorant Garamond',serif;
-      font-size:52px;font-weight:700;color:var(--dark-text);
+      font-size:52px;font-weight:700;color:var(--ink-dark);
       line-height:.95;letter-spacing:-.02em;
     }
     .header h1 span{
       color:var(--piedra);
       font-style:italic;font-weight:300;
     }
-    .header p{margin-top:12px;font-size:12px;color:rgba(245,237,224,.55);line-height:1.65;font-weight:300;letter-spacing:.02em}
+    .header p{margin-top:12px;font-size:var(--text-caption);color:rgba(245,237,224,.55);line-height:1.65;font-weight:300;letter-spacing:.02em}
 
     /* ══════════════════════════════
        MAP
@@ -136,13 +173,13 @@
     }
     .map-section h2{
       font-family:'Cormorant Garamond',serif;
-      font-size:18px;font-weight:600;color:var(--dark-text);
+      font-size:18px;font-weight:600;color:var(--ink-dark);
       margin-bottom:12px;margin-top:2px;
     }
     .map-canvas{
       background:
         radial-gradient(ellipse at 50% 50%, #EEE4D4 0%, #DDD0C0 45%, #CEC0AC 100%);
-      border-radius:18px;position:relative;height:296px;overflow:hidden;
+      border-radius:var(--r-surface);position:relative;height:296px;overflow:hidden;
       touch-action:none;-webkit-user-select:none;user-select:none;
       box-shadow:inset 0 1px 0 rgba(255,255,255,.5),
                  inset 0 0 60px rgba(80,50,20,.1),
@@ -157,13 +194,13 @@
     .map-canvas::after{
       content:'';position:absolute;inset:0;pointer-events:none;
       background:radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(60,35,15,.12) 100%);
-      border-radius:18px;
+      border-radius:var(--r-surface);
     }
     .map-axis-h{position:absolute;top:50%;left:6%;right:6%;height:.5px;background:rgba(80,55,35,.18);pointer-events:none}
     .map-axis-v{position:absolute;left:50%;top:10%;bottom:8%;width:.5px;background:rgba(80,55,35,.18);pointer-events:none}
     .map-label{
-      position:absolute;font-size:8px;letter-spacing:.2em;
-      text-transform:uppercase;color:rgba(80,60,40,.5);
+      position:absolute;font-size:9px;letter-spacing:.3em;
+      text-transform:uppercase;color:rgba(80,60,40,.6);
       pointer-events:none;font-family:'DM Sans',sans-serif;font-weight:500;
     }
     .map-watermark{
@@ -188,7 +225,7 @@
       /* Transparente — solo amplía el área tocable */
     }
     .wine-pin:active{z-index:10}
-    .wine-pin:active .copa-icon{
+    .wine-pin:active .copita{
       transform:scale(.9);
       filter:brightness(1.3) drop-shadow(0 2px 4px rgba(0,0,0,.3));
     }
@@ -198,15 +235,17 @@
       filter:drop-shadow(0 0 6px rgba(196,160,90,.5)) drop-shadow(0 4px 10px rgba(0,0,0,.5));
       z-index:20 !important;
     }
-    .copa-icon{display:block;transition:transform .2s cubic-bezier(.34,1.56,.64,1),filter .2s}
-    .wine-pin:hover:not(.pin-selected):not(.pin-dimmed) .copa-icon{transform:scale(1.12);filter:drop-shadow(0 3px 6px rgba(0,0,0,.25))}
+    .copita{display:block;transition:transform .2s var(--ease-copa),filter .2s}
+    .wine-pin:hover:not(.pin-selected):not(.pin-dimmed) .copita{transform:scale(1.12);filter:drop-shadow(0 3px 6px rgba(0,0,0,.25))}
     /* Copas de otro tipo al filtrar */
     .wine-pin.pin-dimmed{opacity:.2;pointer-events:none;transition:opacity .25s}
+    /* Copas no elegidas mientras hay una copita seleccionada (handoff Paso 8) */
+    .wine-pin.pin-unselected-dim{opacity:.45;transition:opacity .25s}
 
     /* Tooltip mejorado */
     .pin-tooltip{
       position:absolute;bottom:calc(100% + 12px);left:50%;transform:translateX(-50%);
-      background:var(--dark);border-radius:11px;padding:9px 14px;
+      background:var(--dark);border-radius:var(--r-card);padding:9px 14px;
       white-space:nowrap;pointer-events:none;opacity:0;
       transition:opacity .2s, transform .2s;transform-origin:bottom center;
       z-index:50;border:1px solid rgba(196,160,90,.25);
@@ -216,8 +255,8 @@
     .pin-tooltip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--dark)}
     .pin-tooltip.below{bottom:auto;top:calc(100% + 12px)}
     .pin-tooltip.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--dark)}
-    .pt-name{font-size:12px;font-weight:500;color:var(--dark-text);line-height:1.2}
-    .pt-price{font-size:11px;color:var(--gold);margin-top:2px;font-weight:400;letter-spacing:.03em}
+    .pt-name{font-size:var(--text-caption);font-weight:500;color:var(--ink-dark);line-height:1.2}
+    .pt-price{font-size:var(--text-kicker);color:var(--madera);margin-top:2px;font-weight:400;letter-spacing:.03em}
 
     /* Mini-preview card sobre el mapa */
     .map-preview{
@@ -229,7 +268,7 @@
     .map-preview.show{opacity:1;transform:translateY(0)}
     .map-preview-inner{
       background:var(--dark);border:1px solid rgba(196,160,90,.3);
-      border-radius:14px;padding:13px 15px;
+      border-radius:var(--r-card);padding:13px 15px;
       box-shadow:0 12px 40px rgba(0,0,0,.5);
     }
     .map-preview-inner::before{
@@ -246,35 +285,31 @@
       border-left:none;border-right:none;
     }
     .mpv-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-    .mpv-num{
-      font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;
-      color:var(--gold);line-height:1;flex-shrink:0;
-    }
-    .mpv-name{font-size:12px;font-weight:500;color:var(--dark-text);line-height:1.25}
-    .mpv-bodega{font-size:10px;color:var(--dark-muted);margin-top:1px;font-weight:300}
+    .mpv-name{font-size:var(--text-caption);font-weight:500;color:var(--ink-dark);line-height:1.25}
+    .mpv-bodega{font-size:10px;color:var(--ink-3);margin-top:1px;font-weight:300}
     .mpv-divider{height:.5px;background:rgba(196,160,90,.15);margin:8px 0}
     .mpv-row{display:flex;justify-content:space-between;align-items:center}
-    .mpv-tipo{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dark-muted);font-weight:400}
-    .mpv-price{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--dark-text)}
+    .mpv-tipo{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);font-weight:400}
+    .mpv-price{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--ink-dark)}
     .mpv-aromas{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
     .mpv-aroma{
-      font-size:10px;color:var(--dark-sub);
+      font-size:10px;color:var(--ink-dark-2);
       background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
-      border-radius:12px;padding:2px 8px;
+      border-radius:var(--r-card);padding:2px 8px;
     }
 
     .legend-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
     .legend-pill{
       display:flex;align-items:center;gap:5px;
-      background:var(--dark3);border:1px solid rgba(196,160,90,.12);
-      border-radius:20px;padding:5px 13px;font-size:11px;color:var(--dark-sub);
+      background:var(--dark-3);border:1px solid rgba(196,160,90,.12);
+      border-radius:var(--r-surface);padding:5px 13px;font-size:var(--text-kicker);color:var(--ink-dark-2);
       transition:all .2s;cursor:pointer;user-select:none;
     }
-    .legend-pill:hover{border-color:rgba(196,160,90,.3);color:var(--dark-text)}
+    .legend-pill:hover{border-color:rgba(196,160,90,.3);color:var(--ink-dark)}
     .legend-pill.active{
       background:rgba(196,160,90,.15);
       border-color:rgba(196,160,90,.5);
-      color:var(--dark-text);font-weight:500;
+      color:var(--ink-dark);font-weight:500;
     }
     .legend-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 
@@ -286,13 +321,13 @@
       background:rgba(250,245,238,.96);
       border-bottom:1px solid rgba(139,106,58,.16);
       position:sticky;top:0;z-index:100;overflow-x:auto;
-      box-shadow:0 2px 16px rgba(60,35,10,.08);
+      box-shadow:var(--shadow-1);
     }
     .tab-bar::-webkit-scrollbar{display:none}
     .tab-btn{
       flex:1;min-width:60px;padding:14px 6px;text-align:center;
-      font-size:11px;font-weight:400;letter-spacing:.05em;
-      color:var(--muted);border-bottom:2px solid transparent;
+      font-size:var(--text-kicker);font-weight:400;letter-spacing:.05em;
+      color:var(--ink-3);border-bottom:2px solid transparent;
       cursor:pointer;transition:all .2s;
       background:none;border-top:none;border-left:none;border-right:none;
       font-family:'DM Sans',sans-serif;white-space:nowrap;text-transform:uppercase;
@@ -303,7 +338,7 @@
     .tab-content.active{display:block;animation:fadeUp .32s cubic-bezier(.22,1,.36,1)}
     .section-title{
       font-family:'Cormorant Garamond',serif;
-      font-size:20px;font-weight:600;color:var(--madera-dk);
+      font-size:var(--text-name);font-weight:600;color:var(--madera-dk);
       margin-bottom:14px;margin-top:2px;
     }
 
@@ -312,47 +347,43 @@
     ══════════════════════════════ */
     .carta-search{
       width:100%;background:rgba(255,255,255,.7);border:1px solid rgba(80,55,30,.14);
-      border-radius:11px;padding:11px 14px 11px 38px;font-size:13px;color:var(--text);
+      border-radius:var(--r-card);padding:11px 14px 11px 38px;font-size:var(--text-data);color:var(--ink);
       font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;
       margin-bottom:14px;
     }
     .carta-search:focus{border-color:var(--accent);background:rgba(255,255,255,.9)}
     .carta-search-wrap{position:relative}
-    .carta-search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+    .carta-search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
     .wine-card{
       background:#FFFFFF;
       border:1px solid rgba(139,106,58,.15);
-      border-radius:14px;padding:13px 15px;margin-bottom:8px;
+      border-radius:var(--r-card);padding:13px 15px;margin-bottom:8px;
       display:flex;align-items:flex-start;gap:12px;cursor:pointer;
       transition:border-color .2s,box-shadow .2s;
-      position:relative;box-shadow:var(--shadow-sm);
+      position:relative;box-shadow:var(--shadow-1);
       width:100%;box-sizing:border-box;overflow:hidden;
       min-width:0;
       /* Sin backdrop-filter — causa bug GPU en Android */
     }
-    .wine-card:hover{box-shadow:var(--shadow-md);border-color:rgba(139,106,58,.3);background:#fff}
+    .wine-card:hover{box-shadow:var(--shadow-2);border-color:rgba(139,106,58,.3);background:#fff}
     .wine-card:active{opacity:.9}
     .wine-card.active{border-color:var(--accent);box-shadow:0 0 0 3px rgba(122,20,40,.1)}
-    .wc-badge{
-      width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
-      justify-content:center;font-size:10px;font-weight:600;color:#fff;
-      flex-shrink:0;margin-top:2px;box-shadow:0 2px 6px rgba(0,0,0,.2);
-    }
     .wc-thumb{
       width:34px;height:34px;flex-shrink:0;margin-top:1px;
-      border-radius:8px;object-fit:contain;
-      background:rgba(240,228,204,.55);border:1px solid var(--border);
+      border-radius:var(--r-sm);object-fit:contain;
+      background:rgba(240,228,204,.55);border:1px solid var(--line);
     }
     .wc-info{flex:1;min-width:0;overflow:hidden}
-    .wc-name{font-size:13px;font-weight:500;color:var(--text2);letter-spacing:.01em;
+    .wc-name{font-size:var(--text-data);font-weight:500;color:var(--ink);letter-spacing:.01em;
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .wc-sub{font-size:11px;color:var(--sub);margin-top:2px;font-weight:300;
+    .wc-sub{font-size:var(--text-kicker);color:var(--ink-2);margin-top:2px;font-weight:300;
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .wc-price{
+    .wc-price{flex-shrink:0;text-align:right}
+    .wc-price-num{
       font-family:'Cormorant Garamond',serif;
-      font-size:17px;font-weight:600;color:var(--text2);white-space:nowrap;
-      flex-shrink:0;
+      font-size:var(--text-name);font-weight:600;color:var(--ink);white-space:nowrap;line-height:1.15;
     }
+    .wc-price-cap{font-size:10px;color:var(--ink-3);white-space:nowrap;margin-top:1px}
     .wc-star{position:absolute;top:11px;right:13px;font-size:9px;color:var(--accent);font-weight:600;letter-spacing:.05em}
 
     /* ══════════════════════════════
@@ -361,83 +392,98 @@
     .ficha-card{
       background:rgba(255,255,255,.88);
       border:1px solid rgba(139,106,58,.14);
-      border-radius:16px;padding:18px;margin-bottom:12px;
-      box-shadow:var(--shadow-sm);
-      animation:fadeUp .3s cubic-bezier(.22,1,.36,1);
-    }
-    .ficha-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:12px}
-    .ficha-tipo-badge{
-      border-radius:20px;padding:4px 14px;font-size:10px;font-weight:600;
-      color:#fff;white-space:nowrap;flex-shrink:0;letter-spacing:.06em;text-transform:uppercase;
-      box-shadow:0 2px 8px rgba(0,0,0,.2);
-    }
-    .ficha-name{
-      font-family:'Cormorant Garamond',serif;
-      font-size:22px;font-weight:600;color:var(--text2);line-height:1.1;
-    }
-    .ficha-winery{font-size:11px;color:var(--muted);margin-top:4px;font-weight:300;letter-spacing:.04em;text-transform:uppercase}
-    .ficha-note{
-      background:var(--madera-dk);border-radius:12px;padding:14px 16px;
-      font-size:13px;color:rgba(200,164,106,.85);font-style:italic;
-      line-height:1.7;margin-bottom:14px;
-      border-left:2px solid var(--madera);
-    }
-    .ficha-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-    .ficha-item{
-      background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:11px 13px;
-      transition:border-color .15s;
+      border-radius:var(--r-card);padding:18px;margin-bottom:12px;
+      box-shadow:var(--shadow-1);
+      animation:fadeUp .3s var(--ease);
     }
     .fi-label{
-      font-size:11px;letter-spacing:.01em;
-      color:var(--muted);margin-bottom:4px;font-weight:600;
+      font-size:var(--text-kicker);letter-spacing:.01em;
+      color:var(--ink-3);margin-bottom:4px;font-weight:600;
     }
-    .fi-val{font-size:12px;font-weight:500;color:var(--text);line-height:1.3}
-    .ficha-placeholder{text-align:center;padding:56px 0;color:var(--muted);font-size:13px;line-height:1.8}
+    .ficha-placeholder{text-align:center;padding:56px 0;color:var(--ink-3);font-size:var(--text-data);line-height:1.8}
+
+    /* Hero editorial */
+    .ficha-hero{
+      background:var(--bg2);border-radius:var(--r-surface);
+      padding:20px 20px 22px;margin-bottom:16px;position:relative;overflow:visible;
+    }
+    .ficha-hero-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .ficha-name{
+      font-family:var(--font-serif);
+      font-size:30px;font-weight:700;color:var(--ink);line-height:1.08;max-width:72%;
+    }
+    .ficha-winery{font-size:var(--text-kicker);color:var(--ink-3);margin-top:5px;font-weight:300;letter-spacing:.04em;text-transform:uppercase}
+    .ficha-hero-price{font-family:var(--font-serif);font-size:28px;font-weight:600;color:var(--accent);margin-top:14px;line-height:1}
+    .ficha-hero-price-cap{font-size:11px;font-family:var(--font-sans);font-weight:400;color:var(--ink-3);margin-left:6px}
+    .ficha-botella{
+      position:absolute;right:-6px;bottom:-24px;height:200px;max-width:44%;object-fit:contain;
+      mix-blend-mode:multiply;
+      filter:drop-shadow(-10px 14px 18px rgba(60,35,10,.3)) saturate(1.05);
+      transform:rotate(4deg);
+      pointer-events:none;
+    }
+
+    /* Nota de cata — pull quote */
+    .ficha-quote-kicker{
+      font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;
+      color:var(--madera-dk);text-align:center;margin-bottom:8px;font-weight:500;
+    }
+    .ficha-quote{
+      font-family:var(--font-serif);font-style:italic;font-size:var(--text-name);color:var(--ink);
+      text-align:center;line-height:1.5;margin-bottom:18px;padding:0 6px;
+    }
+
+    /* Datos técnicos — lista contra-etiqueta */
+    .ficha-data-list{margin-bottom:14px}
+    .ficha-data-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+    .ficha-data-row:last-child{border-bottom:none}
+    .ficha-data-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;flex-shrink:0}
+    .ficha-data-value{font-size:var(--text-data);color:var(--ink);font-weight:500;text-align:right}
 
     /* Maridaje */
     .maridaje-section{margin-bottom:14px}
     .maridaje-title{
-      font-size:11px;letter-spacing:.01em;
-      color:var(--muted);margin-bottom:9px;font-weight:600;
+      font-size:var(--text-kicker);letter-spacing:.01em;
+      color:var(--ink-3);margin-bottom:9px;font-weight:600;
     }
     .maridaje-pills{display:flex;flex-wrap:wrap;gap:6px}
     .maridaje-pill{
       display:flex;align-items:center;gap:5px;
       background:rgba(240,228,204,.5);border:1px solid rgba(139,106,58,.15);
-      border-radius:20px;padding:5px 12px;font-size:11px;color:var(--text);font-weight:400;
+      border-radius:var(--r-surface);padding:5px 12px;font-size:var(--text-kicker);color:var(--ink);font-weight:400;
     }
-    .maridaje-icon{font-size:13px}
+    .maridaje-icon{font-size:var(--text-data)}
 
     /* Perfil de sabor */
     .perfil-section{margin-bottom:14px}
     .perfil-title{
-      font-size:11px;letter-spacing:.01em;
-      color:var(--muted);margin-bottom:10px;font-weight:600;
+      font-size:var(--text-kicker);letter-spacing:.01em;
+      color:var(--ink-3);margin-bottom:10px;font-weight:600;
     }
     .perfil-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-    .perfil-label{font-size:11px;color:var(--muted);width:56px;flex-shrink:0;font-weight:300}
-    .perfil-bar-bg{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
-    .perfil-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s ease}
-    .perfil-val{font-size:10px;color:var(--muted);width:16px;text-align:right;flex-shrink:0}
+    .perfil-label{font-size:var(--text-kicker);color:var(--ink-3);width:56px;flex-shrink:0;font-weight:300}
+    .perfil-bar-bg{flex:1;height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+    .perfil-bar-fill{height:100%;border-radius:2px;background:var(--accent-grad);width:0;transition:width .6s var(--ease)}
+    .perfil-val{font-size:10px;color:var(--ink-3);width:16px;text-align:right;flex-shrink:0}
 
     /* Bodega info */
     .bodega-section{
-      background:var(--madera-dk);border-radius:14px;padding:15px 16px;margin-bottom:0;
+      background:var(--dark);border-radius:var(--r-surface);padding:16px 17px;margin-bottom:0;
       border:1px solid rgba(200,164,106,.15);
     }
-    .bodega-label{font-size:11px;letter-spacing:.01em;color:var(--madera);margin-bottom:6px;font-weight:600}
-    .bodega-text{font-size:12px;color:rgba(250,245,235,.85);line-height:1.7;font-weight:300}
+    .bodega-label{font-size:var(--text-kicker);letter-spacing:.01em;color:var(--madera);margin-bottom:6px;font-weight:600}
+    .bodega-text{font-family:var(--font-serif);font-style:italic;font-size:17px;color:rgba(245,237,224,.85);line-height:1.6;font-weight:400}
 
     .charc-price{
       font-family:'Cormorant Garamond',serif;
-      font-size:17px;font-weight:600;color:var(--text);white-space:nowrap;
+      font-size:var(--text-voice);font-weight:600;color:var(--ink);white-space:nowrap;
     }
 
     /* ══════════════════════════════
        SOMMELIER
     ══════════════════════════════ */
     .somm-intro{
-      background:var(--madera-dk);border-radius:18px;padding:24px 20px;margin-bottom:16px;
+      background:var(--madera-dk);border-radius:var(--r-surface);padding:24px 20px;margin-bottom:16px;
       text-align:center;border:1px solid rgba(200,164,106,.18);
       position:relative;overflow:hidden;
       box-shadow:0 4px 24px rgba(40,20,8,.2);
@@ -447,89 +493,85 @@
       background:radial-gradient(ellipse at 50% 0%,rgba(155,32,48,.15) 0%,transparent 70%);
       pointer-events:none;
     }
-    .somm-intro h3{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--dark-text);margin-bottom:8px;font-style:italic}
-    .somm-intro p{font-size:13px;color:var(--dark-sub);line-height:1.6;font-weight:300}
-    .somm-start-btn{
-      margin-top:16px;background:var(--accent);color:#fff;border:none;
-      border-radius:12px;padding:13px 28px;font-size:13px;font-weight:500;
-      cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;
-      letter-spacing:.06em;text-transform:uppercase;
-      box-shadow:0 4px 16px rgba(155,32,48,.3);
-      transition:box-shadow .2s,transform .15s;
+    .somm-intro h3{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--ink-dark);margin-bottom:8px;font-style:italic}
+    .somm-intro p{font-size:var(--text-data);color:var(--ink-dark-2);line-height:1.6;font-weight:300}
+    /* Botones · 3 niveles, radio píldora (handoff Paso 6) */
+    .btn-primario,.btn-secundario,.btn-terciario{
+      border-radius:var(--r-pill);padding:15px;width:100%;
+      font-family:var(--font-sans);font-size:12px;font-weight:500;
+      letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      border:none;transition:transform var(--t-feedback) var(--ease);
     }
-    .somm-start-btn:active{transform:scale(.98)}
+    .btn-primario:active,.btn-secundario:active,.btn-terciario:active{transform:scale(.98)}
+    .btn-primario{background:var(--accent-grad);color:#fff;box-shadow:0 4px 20px rgba(155,32,53,.3)}
+    .btn-secundario{background:var(--madera-dk);color:var(--ink-dark)}
+    .btn-terciario{background:none;color:var(--ink-2);border:1px solid var(--line-strong)}
+
+    .somm-start-btn{margin-top:16px}
     .somm-step{display:none}
     .somm-step.active{display:block;animation:fadeUp .25s ease}
-    .somm-question{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text);margin-bottom:6px;line-height:1.25}
-    .somm-sub{font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:300}
+    .somm-question{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--ink);margin-bottom:6px;line-height:1.25}
+    .somm-sub{font-size:var(--text-data);color:var(--ink-3);margin-bottom:16px;font-weight:300}
     .somm-options{display:flex;flex-direction:column;gap:9px}
     .somm-opt{
-      background:var(--card);border:1px solid var(--border);border-radius:14px;
+      background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
       padding:15px 16px;cursor:pointer;
       transition:all .2s;display:flex;align-items:center;gap:13px;
-      box-shadow:var(--shadow-sm);
+      box-shadow:var(--shadow-1);
     }
-    .somm-opt:hover{border-color:rgba(139,106,58,.25);box-shadow:var(--shadow-md)}
-    .somm-opt:active,.somm-opt.selected{background:rgba(240,228,204,.6);border-color:var(--madera-mid)}
+    .somm-opt:hover{border-color:rgba(139,106,58,.25);box-shadow:var(--shadow-2)}
+    .somm-opt:active,.somm-opt.selected{background:rgba(240,228,204,.6);border-color:var(--madera)}
     .somm-opt-icon{font-size:22px;flex-shrink:0}
-    .somm-opt-text{font-size:14px;font-weight:500;color:var(--text)}
-    .somm-opt-sub{font-size:12px;color:var(--muted);margin-top:2px;font-weight:300}
+    .somm-opt-text{font-size:14px;font-weight:500;color:var(--ink)}
+    .somm-opt-sub{font-size:var(--text-caption);color:var(--ink-3);margin-top:2px;font-weight:300}
     .somm-progress{display:flex;gap:4px;margin-bottom:20px}
-    .somm-dot{height:2px;flex:1;border-radius:2px;background:var(--border);transition:background .3s}
-    .somm-dot.done{background:var(--text)}
+    .somm-dot{height:2px;flex:1;border-radius:2px;background:var(--line);transition:background .3s}
+    .somm-dot.done{background:var(--ink)}
     .somm-dot.active{background:var(--accent)}
     .somm-results{display:none;animation:fadeUp .3s cubic-bezier(.22,1,.36,1)}
-    .somm-results h3{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--text);margin-bottom:5px}
-    .somm-results p{font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:300}
+    .somm-results h3{font-family:'Cormorant Garamond',serif;font-size:var(--text-name);color:var(--ink);margin-bottom:5px}
+    .somm-results p{font-size:var(--text-data);color:var(--ink-3);margin-bottom:16px;font-weight:300}
+    @keyframes revealCard{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
     .somm-result-card{
       background:rgba(255,255,255,.75);
-      border:1px solid rgba(80,55,30,.12);border-radius:16px;
+      border:1px solid rgba(80,55,30,.12);border-radius:var(--r-card);
       padding:15px;margin-bottom:10px;cursor:pointer;
-      transition:border-color .2s,box-shadow .2s;box-shadow:var(--shadow-sm);
+      transition:border-color .2s,box-shadow .2s;box-shadow:var(--shadow-1);
+      animation:revealCard .4s var(--ease) both;
     }
-    .somm-result-card:hover{box-shadow:var(--shadow-md);border-color:rgba(60,40,20,.18)}
+    .somm-result-card:hover{box-shadow:var(--shadow-2);border-color:rgba(60,40,20,.18)}
     .src-header{display:flex;align-items:flex-start;gap:11px;margin-bottom:8px}
-    .src-rank{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-    .src-name{font-size:14px;font-weight:500;color:var(--text);line-height:1.2}
-    .src-why{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.45;font-weight:300}
-    .src-price{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--text);margin-top:8px}
+    .src-rank{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:var(--text-caption);font-weight:600;color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+    .src-name{font-size:14px;font-weight:500;color:var(--ink);line-height:1.2}
+    .src-why{font-size:var(--text-caption);color:var(--ink-3);margin-top:2px;line-height:1.45;font-weight:300}
+    .src-price{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--ink);margin-top:8px}
     .src-maridaje{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-    .src-pill{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--text);font-weight:300}
-    .somm-restart{background:transparent;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;margin-top:4px;transition:border-color .2s}
-    .somm-restart:hover{border-color:var(--text)}
+    .src-pill{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-surface);padding:3px 10px;font-size:var(--text-kicker);color:var(--ink);font-weight:300}
+    .somm-restart{margin-top:4px}
 
     /* ══════════════════════════════
        COMPRAR
     ══════════════════════════════ */
-    .comprar-btn{
-      display:flex;align-items:center;justify-content:center;gap:8px;
-      margin-top:16px;padding:15px;width:100%;
-      background:linear-gradient(135deg,var(--accent) 0%,#9B2035 100%);
-      color:#fff;border-radius:13px;font-size:13px;font-weight:500;
-      text-decoration:none;font-family:'DM Sans',sans-serif;
-      letter-spacing:.06em;text-transform:uppercase;
-      box-shadow:0 4px 20px rgba(155,32,48,.3);
-      transition:box-shadow .2s,transform .15s;
-    }
-    .comprar-btn:active{opacity:.9;transform:scale(.99)}
+    .comprar-btn{margin-top:16px;text-decoration:none}
 
     /* ══════════════════════════════
        CATA OVERLAY — se abre desde el CTA de "Mis catas"
     ══════════════════════════════ */
     .cata-overlay{
-      position:fixed;inset:0;z-index:600;background:var(--dark);
-      overflow-y:auto;animation:lightsDown .42s cubic-bezier(.22,1,.36,1);
+      position:fixed;inset:0;z-index:600;background:var(--dark-cata);
+      overflow-y:auto;animation:lightsDown var(--t-ritual) var(--ease);
     }
     .cata-overlay.hidden{display:none}
-    .cata-overlay.closing{animation:lightsUp .28s cubic-bezier(.4,0,.6,1) forwards}
+    .cata-overlay.closing{animation:lightsUp var(--t-ritual) var(--ease) forwards}
     @keyframes lightsDown{from{opacity:0;transform:scale(1.03)}to{opacity:1;transform:none}}
     @keyframes lightsUp{from{opacity:1;transform:none}to{opacity:0;transform:scale(.97)}}
     .cata-overlay-inner{max-width:430px;margin:0 auto;min-height:100%}
     .cata-overlay-header{position:sticky;top:0;z-index:10;display:flex;justify-content:flex-end;
-      padding:14px 16px 0;background:var(--dark)}
+      padding:14px 16px 0;background:var(--dark-cata)}
     .cata-overlay-close{
       width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.12);color:var(--dark-text);font-size:15px;
+      border:1px solid rgba(255,255,255,.12);color:var(--ink-dark);font-size:var(--text-body);
       cursor:pointer;display:flex;align-items:center;justify-content:center;
       font-family:'DM Sans',sans-serif;transition:background .15s;
     }
@@ -540,45 +582,45 @@
     ══════════════════════════════ */
     .miscatas-email-row{
       display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.7);
-      border:1px solid rgba(80,55,30,.14);border-radius:11px;padding:10px 14px;margin-bottom:16px;
+      border:1px solid rgba(80,55,30,.14);border-radius:var(--r-card);padding:10px 14px;margin-bottom:16px;
     }
-    .miscatas-email-row svg{color:var(--muted);flex-shrink:0}
-    .miscatas-email-row span{font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .miscatas-email-row svg{color:var(--ink-3);flex-shrink:0}
+    .miscatas-email-row span{font-size:var(--text-data);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .miscatas-email-row button{
-      margin-left:auto;background:none;border:none;color:var(--accent);font-size:11px;
+      margin-left:auto;background:none;border:none;color:var(--accent);font-size:var(--text-kicker);
       text-transform:uppercase;letter-spacing:.05em;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;
     }
     .cta-cata{
       display:flex;align-items:center;gap:12px;cursor:pointer;
-      background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);
-      color:#fff;border-radius:16px;padding:18px;margin-bottom:24px;
+      background:linear-gradient(135deg,var(--accent) 0%,var(--accent-2) 100%);
+      color:#fff;border-radius:var(--r-card);padding:18px;margin-bottom:24px;
       box-shadow:0 6px 24px rgba(155,32,48,.32);transition:transform .15s;
     }
     .cta-cata:active{transform:scale(.98)}
     .cta-cata .icon{font-size:24px;flex-shrink:0}
     .cta-cata .txt-main{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;font-style:italic}
-    .cta-cata .txt-sub{font-size:11px;opacity:.85;margin-top:2px;font-weight:300}
+    .cta-cata .txt-sub{font-size:var(--text-kicker);opacity:.85;margin-top:2px;font-weight:300}
     .miscatas-divider{
-      font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);
+      font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--ink-3);
       margin-bottom:12px;display:flex;align-items:center;gap:8px;
     }
-    .miscatas-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+    .miscatas-divider::after{content:'';flex:1;height:1px;background:var(--line)}
 
     /* ══════════════════════════════
        CATA — formulario dentro del overlay
     ══════════════════════════════ */
     .form-card{
-      background:var(--card);border:1px solid var(--border);border-radius:18px;
-      padding:20px;margin-bottom:12px;box-shadow:var(--shadow-sm);
+      background:var(--surface);border:1px solid var(--line);border-radius:var(--r-surface);
+      padding:20px;margin-bottom:12px;box-shadow:var(--shadow-1);
     }
-    .form-card h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);margin-bottom:5px;font-weight:600}
-    .form-card .form-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5;font-weight:300}
+    .form-card h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink);margin-bottom:5px;font-weight:600}
+    .form-card .form-sub{font-size:var(--text-data);color:var(--ink-3);margin-bottom:20px;line-height:1.5;font-weight:300}
     .field-group{margin-bottom:20px}
-    .field-label{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:11px}
-    .field-label span{font-size:10px;color:var(--muted);font-weight:300;margin-left:4px;text-transform:none;letter-spacing:0}
+    .field-label{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:11px}
+    .field-label span{font-size:10px;color:var(--ink-3);font-weight:300;margin-left:4px;text-transform:none;letter-spacing:0}
     .wine-select{
       width:100%;background:rgba(255,255,255,.7);border:1px solid rgba(80,55,30,.14);
-      border-radius:11px;padding:11px 14px;font-size:13px;color:var(--text);
+      border-radius:var(--r-card);padding:11px 14px;font-size:var(--text-data);color:var(--ink);
       font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer;
       transition:border-color .2s;
     }
@@ -589,35 +631,35 @@
       font-size:64px;font-weight:700;color:var(--accent);line-height:1;
       text-shadow:0 2px 8px rgba(155,32,48,.15);
     }
-    .score-lbl{font-size:13px;color:var(--muted);margin-top:5px;min-height:18px;font-weight:300}
+    .score-lbl{font-size:var(--text-data);color:var(--ink-3);margin-top:5px;min-height:18px;font-weight:300}
     .main-track-wrap{position:relative;padding-bottom:26px}
-    .main-track{height:4px;background:var(--border);border-radius:2px;position:relative;cursor:pointer}
-    .main-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+    .main-track{height:4px;background:var(--line);border-radius:2px;position:relative;cursor:pointer}
+    .main-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
     .main-handle{position:absolute;top:50%;transform:translate(-50%,-50%);cursor:grab;z-index:3;transition:transform .1s}
     .main-handle:active{transform:translate(-50%,-50%) scale(1.2)}
     .main-ticks{display:flex;justify-content:space-between;margin-top:8px}
-    .main-ticks span{font-size:10px;color:var(--muted);width:10px;text-align:center}
-    .main-ticks span.hi{color:var(--accent);font-weight:600;font-size:11px}
+    .main-ticks span{font-size:10px;color:var(--ink-3);width:10px;text-align:center}
+    .main-ticks span.hi{color:var(--accent);font-weight:600;font-size:var(--text-kicker)}
     .attr-list{display:flex;flex-direction:column;gap:18px}
     .attr-row{display:flex;align-items:center;gap:12px}
-    .attr-name{font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text);width:62px;flex-shrink:0}
+    .attr-name{font-size:var(--text-kicker);font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);width:62px;flex-shrink:0}
     .attr-slider-wrap{flex:1}
-    .attr-track{height:4px;background:var(--border);border-radius:2px;position:relative;cursor:pointer}
+    .attr-track{height:4px;background:var(--line);border-radius:2px;position:relative;cursor:pointer}
     .attr-fill{height:100%;border-radius:2px}
     .attr-handle{position:absolute;top:50%;transform:translate(-50%,-50%);cursor:grab;z-index:3}
     .attr-handle:active{transform:translate(-50%,-50%) scale(1.15)}
     .attr-dots{display:flex;gap:5px;margin-top:6px}
     .attr-dot{width:7px;height:7px;border-radius:50%}
-    .attr-val{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;width:28px;text-align:right;flex-shrink:0}
+    .attr-val{font-family:'Cormorant Garamond',serif;font-size:var(--text-body);font-weight:600;width:28px;text-align:right;flex-shrink:0}
     .opinion-input{
-      width:100%;background:rgba(255,255,255,.7);border:1px solid rgba(80,55,30,.14);border-radius:11px;
-      padding:11px 14px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;
+      width:100%;background:rgba(255,255,255,.7);border:1px solid rgba(80,55,30,.14);border-radius:var(--r-card);
+      padding:11px 14px;font-size:var(--text-data);color:var(--ink);font-family:'DM Sans',sans-serif;
       outline:none;resize:none;line-height:1.6;font-weight:300;transition:border-color .2s;
     }
     .opinion-input:focus{border-color:var(--accent);background:rgba(255,255,255,.9)}
     .submit-btn{
-      width:100%;background:var(--madera-dk);color:#fff;border:none;border-radius:13px;
-      padding:15px;font-size:13px;font-weight:500;cursor:pointer;
+      width:100%;background:var(--madera-dk);color:#fff;border:none;border-radius:var(--r-card);
+      padding:15px;font-size:var(--text-data);font-weight:500;cursor:pointer;
       font-family:'DM Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;
       display:flex;align-items:center;justify-content:center;gap:8px;
       transition:opacity .15s,transform .15s;margin-top:6px;
@@ -627,16 +669,16 @@
     .submit-btn:disabled{opacity:.4;cursor:not-allowed}
     .form-success{
       background:var(--madera-dk);
-      border:1px solid rgba(200,164,106,.2);border-radius:18px;
+      border:1px solid rgba(200,164,106,.2);border-radius:var(--r-surface);
       padding:28px 20px;text-align:center;margin-bottom:12px;
     }
     .form-success .success-icon{font-size:40px;margin-bottom:12px;display:block}
-    .form-success h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--dark-text);margin-bottom:6px}
-    .form-success p{font-size:13px;color:rgba(245,237,224,.65);line-height:1.55;font-weight:300}
+    .form-success h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--ink-dark);margin-bottom:6px}
+    .form-success p{font-size:var(--text-data);color:rgba(245,237,224,.65);line-height:1.55;font-weight:300}
     .form-success button{
-      margin-top:16px;background:transparent;border:1px solid rgba(100,180,100,.3);
-      border-radius:10px;padding:10px 22px;font-size:12px;color:rgba(200,232,200,.8);
-      cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;
+      margin-top:16px;background:transparent;border:1px solid var(--line-dark-strong);
+      border-radius:var(--r-pill);padding:10px 22px;font-size:var(--text-caption);color:var(--ink-dark-2);
+      cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;
       transition:border-color .2s;
     }
 
@@ -648,29 +690,26 @@
       width:100%;max-width:430px;animation:slideUp .3s cubic-bezier(.22,1,.36,1);
       border-top:1px solid rgba(139,106,58,.18);box-shadow:0 -8px 40px rgba(60,35,10,.18);
     }
-    .wa-sheet h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);margin-bottom:6px;font-weight:600}
-    .wa-sheet p{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:20px;font-weight:300}
+    .wa-sheet h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink);margin-bottom:6px;font-weight:600}
+    .wa-sheet p{font-size:var(--text-data);color:var(--ink-3);line-height:1.55;margin-bottom:20px;font-weight:300}
     .wa-phone-input{
-      width:100%;background:var(--bg);border:1px solid var(--border);border-radius:11px;
-      padding:13px 15px;font-size:15px;color:var(--text);font-family:'DM Sans',sans-serif;
+      width:100%;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-card);
+      padding:13px 15px;font-size:var(--text-body);color:var(--ink);font-family:'DM Sans',sans-serif;
       outline:none;margin-bottom:10px;letter-spacing:.02em;transition:border-color .2s;
     }
     .wa-phone-input:focus{border-color:#25D366}
+    /* Verde de WhatsApp intencional — excepción de marca, no se tokeniza */
     .wa-send-btn{
-      width:100%;background:#25D366;color:#fff;border:none;border-radius:13px;
-      padding:15px;font-size:13px;font-weight:500;cursor:pointer;
-      font-family:'DM Sans',sans-serif;display:flex;align-items:center;
+      width:100%;background:#25D366;color:#fff;border:none;border-radius:var(--r-pill);
+      padding:15px;font-size:12px;font-weight:500;cursor:pointer;
+      font-family:var(--font-sans);display:flex;align-items:center;
       justify-content:center;gap:8px;margin-bottom:10px;
-      letter-spacing:.06em;text-transform:uppercase;
-      box-shadow:0 4px 16px rgba(37,211,102,.25);transition:opacity .15s;
+      letter-spacing:.12em;text-transform:uppercase;
+      box-shadow:0 4px 16px rgba(37,211,102,.25);
+      transition:transform var(--t-feedback) var(--ease);
     }
-    .wa-send-btn:active{opacity:.85}
-    .wa-skip-btn{
-      width:100%;background:transparent;border:1px solid var(--border);border-radius:13px;
-      padding:13px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;
-      color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color .2s;
-    }
-    .wa-skip-btn:hover{border-color:var(--text)}
+    .wa-send-btn:active{transform:scale(.98)}
+    .wa-skip-btn{margin-bottom:0}
 
     /* ══════════════════════════════
        FOOTER
@@ -680,8 +719,8 @@
       border-top:1px solid rgba(196,160,90,.2);
       box-shadow:0 -4px 24px rgba(20,10,0,.15);
     }
-    .footer p{font-size:11px;color:var(--dark-muted);line-height:1.9;font-weight:300;letter-spacing:.02em}
-    .footer strong{color:var(--gold);font-weight:400}
+    .footer p{font-size:var(--text-kicker);color:var(--ink-3);line-height:1.9;font-weight:300;letter-spacing:.02em}
+    .footer strong{color:var(--madera);font-weight:400}
 
     /* ══════════════════════════════
        LOADING
@@ -698,11 +737,11 @@
     }
     #loading h2{
       font-family:'Cormorant Garamond',serif;
-      font-size:48px;font-weight:700;color:var(--madera-dk);letter-spacing:-.02em;
+      font-size:var(--text-display);font-weight:700;color:var(--madera-dk);letter-spacing:-.02em;
     }
     #loading h2 span{color:var(--accent);font-style:italic;font-weight:300}
     #loading h2{animation:loadPulse 1.8s ease-in-out infinite}
-    #loading p{font-size:11px;color:var(--muted);margin-top:14px;letter-spacing:.2em;text-transform:uppercase}
+    #loading p{font-size:var(--text-kicker);color:var(--ink-3);margin-top:14px;letter-spacing:.2em;text-transform:uppercase}
     .loading-bar{
       width:120px;height:2px;border-radius:2px;overflow:hidden;
       background:rgba(139,106,58,.15);margin-top:20px;position:relative;
@@ -727,16 +766,16 @@
       display:flex;flex-direction:column;gap:4px;
     }
     .zoom-btn{
-      width:28px;height:28px;border-radius:8px;
+      width:28px;height:28px;border-radius:var(--r-sm);
       background:rgba(28,25,23,.75);border:1px solid rgba(196,160,90,.25);
-      color:var(--dark-text);font-size:16px;font-weight:300;
+      color:var(--ink-dark);font-size:16px;font-weight:300;
       cursor:pointer;display:flex;align-items:center;justify-content:center;
       transition:background .15s,border-color .15s;
       font-family:'DM Sans',sans-serif;line-height:1;
     }
     .zoom-btn:hover{background:rgba(28,25,23,.9);border-color:rgba(196,160,90,.5)}
     .zoom-btn:active{transform:scale(.92)}
-    .zoom-reset{font-size:12px}
+    .zoom-reset{font-size:var(--text-caption)}
     .zoom-hint{
       position:absolute;bottom:8px;right:48px;
       font-size:9px;letter-spacing:.12em;text-transform:uppercase;
@@ -749,7 +788,7 @@
     .pin-zoom-label{
       position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);
       font-size:8px;font-weight:500;color:rgba(255,255,255,.9);
-      background:rgba(20,15,10,.75);border-radius:4px;padding:1px 5px;
+      background:rgba(20,15,10,.75);border-radius:var(--r-sm);padding:1px 5px;
       white-space:nowrap;pointer-events:none;letter-spacing:.01em;
       opacity:0;transition:opacity .25s;
       max-width:70px;overflow:hidden;text-overflow:ellipsis;
@@ -760,13 +799,13 @@
     .axis-desc{
       margin-top:10px;display:flex;flex-direction:column;gap:3px;
     }
-    .axis-desc span{font-size:11px;color:rgba(220,210,195,.8);font-weight:300}
-    .axis-desc strong{color:var(--dark-text);font-weight:500}
-    .axis-map-hint{font-size:11px;color:var(--dark-muted);margin-top:6px;font-weight:300}
+    .axis-desc span{font-size:var(--text-kicker);color:rgba(220,210,195,.8);font-weight:300}
+    .axis-desc strong{color:var(--ink-dark);font-weight:500}
+    .axis-map-hint{font-size:var(--text-kicker);color:var(--ink-3);margin-top:6px;font-weight:300}
 </style>
 </head>
 <body>
-<noscript><div style="padding:32px;text-align:center;font-family:sans-serif;color:#333">Esta carta requiere JavaScript. Activalo en tu navegador para ver la carta de vinos.</div></noscript>
+<noscript><div style="padding:32px;text-align:center;font-family:sans-serif;color:var(--ink)">Esta carta requiere JavaScript. Activalo en tu navegador para ver la carta de vinos.</div></noscript>
 
 <div id="loading">
   <h2>125<span>cc</span></h2>
@@ -806,13 +845,13 @@
       </div>
     </div>
     <div class="legend-row">
-      <div class="legend-pill" id="pill-all" onclick="filterMap(null)" style="border-color:rgba(196,160,90,.4);color:var(--dark-text)">Todos</div>
+      <div class="legend-pill" id="pill-all" onclick="filterMap(null)" style="border-color:rgba(196,160,90,.4);color:var(--ink-dark)">Todos</div>
       <div class="legend-pill" id="pill-Tinto" onclick="filterMap('Tinto')"><div class="legend-dot" style="background:var(--tinto)"></div>Tinto</div>
       <div class="legend-pill" id="pill-Blanco" onclick="filterMap('Blanco')"><div class="legend-dot" style="background:var(--blanco)"></div>Blanco</div>
       <div class="legend-pill" id="pill-Rosado" onclick="filterMap('Rosado')"><div class="legend-dot" style="background:var(--rosado)"></div>Rosado</div>
       <div class="legend-pill" id="pill-Naranja" onclick="filterMap('Naranja')"><div class="legend-dot" style="background:var(--naranja)"></div>Naranjo</div>
     </div>
-    <div style="margin-top:8px;font-size:11px;color:var(--dark-muted);transition:opacity .3s" id="mapHintText">Tocá una copita para ver la ficha del vino</div>
+    <div style="margin-top:8px;font-size:var(--text-kicker);color:var(--ink-3);transition:opacity .3s" id="mapHintText">Tocá una copita para ver la ficha del vino</div>
   </div>
 
   <div class="tab-bar">
@@ -836,7 +875,7 @@
   <div class="tab-content" id="tab-ficha">
     <div id="fichaContent">
       <div class="ficha-placeholder">
-        <div style="font-size:32px;margin-bottom:8px">🍷</div>
+        <div style="font-size:var(--text-title);margin-bottom:8px">🍷</div>
         Tocá una copita en el mapa<br>o un vino de la carta<br>para ver su ficha completa.
       </div>
     </div>
@@ -871,7 +910,30 @@
 </div>
 
 <script>
-const TYPE_COLOR={Tinto:"#8B0000",Blanco:"#7ab83a",Rosado:"#d94060",Naranja:"#d4721a"};
+const _rootStyle=getComputedStyle(document.documentElement);
+let _copitaUid=0;
+// SVG de marca (handoff Paso 7). state: 'empty'|'filled'|'selected' controla
+// el nivel de líquido; selected agrega el glow/escala de "copita elegida".
+function copitaSVG(color,{size=22,state='filled',selected=false}={}){
+  const fillY = state==='empty'?36:state==='selected'?8:14;
+  const h = Math.round(size*60/44);
+  const clipId = 'copaClip-'+(_copitaUid++);
+  return `<svg class="copita" viewBox="0 0 44 60" width="${size}" height="${h}" fill="none" style="flex-shrink:0${selected?';transform:scale(1.35);filter:drop-shadow(0 0 8px rgba(200,164,106,.65))':''}">
+    <defs><clipPath id="${clipId}"><path d="M10 4 H34 V20 C34 30 28.5 36 22 36 C15.5 36 10 30 10 20 Z"/></clipPath></defs>
+    <g clip-path="url(#${clipId})">
+      <rect x="10" y="4" width="24" height="34" fill="${color}" opacity=".9" style="transition:transform .5s var(--ease-copa);transform:translateY(${fillY}px)"/>
+    </g>
+    <path d="M10 4 H34 V20 C34 30 28.5 36 22 36 C15.5 36 10 30 10 20 Z" stroke="${selected?'var(--madera)':'var(--madera-dk)'}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M22 36 V50" stroke="var(--madera-dk)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M13 52 H31" stroke="var(--madera-dk)" stroke-width="2" stroke-linecap="round"/>
+  </svg>`;
+}
+const TYPE_COLOR={
+  Tinto:   _rootStyle.getPropertyValue('--tinto').trim(),
+  Blanco:  _rootStyle.getPropertyValue('--blanco').trim(),
+  Rosado:  _rootStyle.getPropertyValue('--rosado').trim(),
+  Naranja: _rootStyle.getPropertyValue('--naranja').trim(),
+};
 const TYPE_LABEL={Tinto:"Tinto",Blanco:"Blanco",Rosado:"Rosado",Naranja:"Naranjo"};
 function esc(s){ return s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -983,8 +1045,8 @@ fetch('./vinos.json').then(r=>r.json()).then(config=>{
   .catch(()=>{
     document.getElementById('loading').innerHTML=`
       <p style="color:#f87171;font-size:14px;padding:20px;text-align:center">Error cargando el menú.<br>Verificá tu conexión.</p>
-      <button onclick="location.reload()" style="background:var(--accent);color:#fff;border:none;border-radius:12px;
-        padding:12px 28px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;
+      <button onclick="location.reload()" style="background:var(--accent);color:#fff;border:none;border-radius:var(--r-card);
+        padding:12px 28px;font-size:var(--text-data);font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;
         letter-spacing:.06em;text-transform:uppercase">Reintentar</button>`;
   });
 
@@ -1000,19 +1062,18 @@ function buildMap(){
   const old = document.getElementById('mapPreview');
   if(old) old.remove();
 
-  wines.forEach((w, idx) => {
+  wines.forEach((w) => {
     const left = 50 + w.x * 0.4, top = 50 - w.y * 0.36;
     const color = TYPE_COLOR[w.tipo] || '#888';
-    const num   = idx + 1;
     const pin   = document.createElement('div');
     pin.className = 'wine-pin';
     pin.style.cssText = `left:${left}%;top:${top}%`;
     const belowClass = top < 50 ? ' below' : '';
     pin.innerHTML = `
-      ${copaSVG(color, 26, num)}
+      ${copitaSVG(color, {size:22})}
       <div class="pin-zoom-label">${esc(w.nombre.split(' ')[0])}</div>
       <div class="pin-tooltip${belowClass}" id="tip-${w.id}">
-        <div class="pt-name">${num}. ${esc(w.nombre)}</div>
+        <div class="pt-name">${esc(w.nombre)}</div>
         <div class="pt-price">${fmtPrecio(w.precio)} · ${esc(TYPE_LABEL[w.tipo]||w.tipo)}</div>
       </div>`;
 
@@ -1034,7 +1095,7 @@ function buildMap(){
     });
 
     pinElements[w.id]  = pin;
-    pinPositions[w.id] = { w, left, top, num };
+    pinPositions[w.id] = { w, left, top };
     c.appendChild(pin);
   });
 
@@ -1046,12 +1107,14 @@ function updateMapSelectionClasses(){
   wines.forEach(w => {
     const pin = pinElements[w.id];
     if(!pin) return;
+    const filterDimmed = !!(activeFilter && w.tipo !== activeFilter);
     pin.classList.toggle('pin-selected', w.id === selectedId);
-    pin.classList.toggle('pin-dimmed',   !!(activeFilter && w.tipo !== activeFilter));
+    pin.classList.toggle('pin-dimmed', filterDimmed);
+    pin.classList.toggle('pin-unselected-dim', !!selectedId && w.id !== selectedId && !filterDimmed);
   });
   if(selectedId){
     const pos = pinPositions[selectedId];
-    if(pos) showMapPreview(pos.w, pos.left, pos.top, pos.num);
+    if(pos) showMapPreview(pos.w, pos.left, pos.top);
   } else {
     const p = document.getElementById('mapPreview');
     if(p) p.remove();
@@ -1066,13 +1129,7 @@ document.addEventListener('click', e => {
     renderWineList();
   }
 });
-function copaSVG(color,size,num){
-  const w=size, h=Math.round(size*1.4);
-  const numEl = num!=null ? `<text x="10" y="10.5" text-anchor="middle" font-size="5.5" font-weight="700" fill="rgba(255,255,255,0.95)" font-family="sans-serif">${num}</text>` : '';
-  return `<svg class="copa-icon" width="${w}" height="${h}" viewBox="0 0 20 30" fill="none"><path d="M7 2 C7 2 5.5 6 5.5 8.5 C5.5 11.5 7.2 13.5 9.5 14.2 L9.5 22 L7.5 22 L7 24 L13 24 L12.5 22 L10.5 22 L10.5 14.2 C12.8 13.5 14.5 11.5 14.5 8.5 C14.5 6 13 2 13 2 Z" fill="${color}" stroke="rgba(255,255,255,0.45)" stroke-width="0.6"/>${numEl}</svg>`;
-}
-
-function showMapPreview(w, leftPct, topPct, num){
+function showMapPreview(w, leftPct, topPct){
   const canvas = document.getElementById('mapCanvas');
   const old = document.getElementById('mapPreview');
   if(old) old.remove();
@@ -1112,7 +1169,7 @@ function showMapPreview(w, leftPct, topPct, num){
   preview.innerHTML = `
     <div class="map-preview-inner">
       <div class="mpv-header">
-        <div class="mpv-num">${num}</div>
+        ${copitaSVG(color,{size:18})}
         <div>
           <div class="mpv-name">${esc(w.nombre)}</div>
           <div class="mpv-bodega">${esc(w.bodega)}</div>
@@ -1359,21 +1416,20 @@ function renderWineList(){
   }
   if(!filtered.length){
     document.getElementById('wineList').innerHTML =
-      `<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">No encontramos vinos para "${esc(searchQuery)}"</div>`;
+      `<div style="text-align:center;padding:32px 0;color:var(--ink-3);font-size:var(--text-data)">No encontramos vinos para "${esc(searchQuery)}"</div>`;
     return;
   }
-  document.getElementById('wineList').innerHTML = filtered.map((w, idx) => {
+  document.getElementById('wineList').innerHTML = filtered.map((w) => {
     const color = TYPE_COLOR[w.tipo] || '#888';
+    const isActive = w.id===selectedId;
     const thumb = w.imagen
       ? `<img class="wc-thumb" src="${esc(w.imagen)}" alt="" loading="lazy" onerror="this.remove()">`
       : '';
-    return `<div class="wine-card${w.id===selectedId?' active':''}" onclick="selectWine(${w.id})">
-      <div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:${color};
-        display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
-        color:#fff;margin-top:2px;box-shadow:0 2px 6px rgba(0,0,0,.2)">${idx+1}</div>
+    return `<div class="wine-card${isActive?' active':''}" onclick="selectWine(${w.id})">
+      ${copitaSVG(color,{size:22,state:isActive?'selected':'filled',selected:isActive})}
       ${thumb}
       <div class="wc-info"><div class="wc-name">${esc(w.nombre)}</div><div class="wc-sub">${esc(w.bodega)} · ${esc(TYPE_LABEL[w.tipo]||w.tipo)}${favoritos.has(w.nombre)?' <span style="color:var(--accent);font-weight:600">· ★ Favorito del bar</span>':''}</div></div>
-      <div class="wc-price">${fmtPrecio(w.precio)}</div>
+      <div class="wc-price"><div class="wc-price-num">${fmtPrecio(w.precio)}</div><div class="wc-price-cap">copa 125&nbsp;cc</div></div>
     </div>`;
   }).join('');
 }
@@ -1396,7 +1452,7 @@ function selectWine(id){ selectWineAndShowFicha(id); }
 /* ── FICHA ── */
 function renderFicha(w){
   if(!w){
-    document.getElementById('fichaContent').innerHTML=`<div class="ficha-placeholder"><div style="font-size:32px;margin-bottom:8px">🍷</div>Tocá una copita en el mapa<br>o un vino de la carta.</div>`;
+    document.getElementById('fichaContent').innerHTML=`<div class="ficha-placeholder"><div style="font-size:var(--text-title);margin-bottom:8px">🍷</div>Tocá una copita en el mapa<br>o un vino de la carta.</div>`;
     return;
   }
   const color=TYPE_COLOR[w.tipo]||'#888';
@@ -1404,47 +1460,58 @@ function renderFicha(w){
   const perfilRows=w.perfil?Object.entries({Cuerpo:w.perfil.cuerpo,Frescura:w.perfil.frescura,Taninos:w.perfil.taninos}).map(([k,v])=>`
     <div class="perfil-row">
       <div class="perfil-label">${k}</div>
-      <div class="perfil-bar-bg"><div class="perfil-bar-fill" style="width:${v/5*100}%"></div></div>
+      <div class="perfil-bar-bg"><div class="perfil-bar-fill" data-target="${v/5*100}%"></div></div>
       <div class="perfil-val">${v}/5</div>
     </div>`).join(''):'';
 
-  const bottleSection = w.imagen ? `
-    <div style="display:flex;flex-direction:column;align-items:center;padding:16px 0 8px;border-top:.5px solid var(--border);margin-top:4px">
-      <img src="${esc(w.imagen)}" alt="${esc(w.nombre)}" loading="lazy"
-        onerror="this.parentElement.style.display='none'"
-        style="max-width:140px;max-height:320px;width:auto;height:auto;object-fit:contain;border-radius:8px;filter:drop-shadow(0 4px 16px rgba(0,0,0,.35))">
-    </div>` : '';
+  const datosRows=[['Varietal',w.varietal],['Región',w.region],['Altitud',w.altitud],['Suelo',w.suelo],['Crianza',w.crianza],['Temperatura',w.temperatura]]
+    .filter(([,v])=>v)
+    .map(([l,v])=>`<div class="ficha-data-row"><div class="ficha-data-label">${l}</div><div class="ficha-data-value">${esc(v)}</div></div>`).join('');
+
+  const botella = w.imagen ? `<img class="ficha-botella" src="${esc(w.imagen)}" alt="${esc(w.nombre)}" loading="lazy" onerror="this.remove()">` : '';
 
   document.getElementById('fichaContent').innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <span onclick="volverAlMapa()" style="font-size:12px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:4px">← Volver al mapa</span>
-      <span onclick="compartirVino(${w.id})" style="font-size:12px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:4px"><span id="shareBtnLabel">Compartir</span> ↗</span>
+      <span onclick="volverAlMapa()" style="font-size:var(--text-caption);color:var(--ink-3);cursor:pointer;display:inline-flex;align-items:center;gap:4px">← Volver al mapa</span>
+      <span onclick="compartirVino(${w.id})" style="font-size:var(--text-caption);color:var(--ink-3);cursor:pointer;display:inline-flex;align-items:center;gap:4px"><span id="shareBtnLabel">Compartir</span> ↗</span>
     </div>
     <div class="ficha-card">
-      <div class="ficha-header">
-        <div style="flex:1;min-width:0">
-          <div class="fi-label" style="margin-bottom:6px">Ficha técnica</div>
-          <div class="ficha-name">${esc(w.nombre)}</div>
-          <div class="ficha-winery">${esc(w.bodega)}</div>
-          ${favoritos.has(w.nombre) ? '<div style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;font-weight:600;color:var(--accent)">★ Favorito del bar</div>' : ''}
+      <div class="ficha-hero">
+        <div class="ficha-hero-top">
+          ${copitaSVG(color,{size:26})}
+          ${favoritos.has(w.nombre) ? '<div style="display:inline-flex;align-items:center;gap:4px;font-size:var(--text-kicker);font-weight:600;color:var(--accent)">★ Favorito del bar</div>' : ''}
         </div>
-        <div class="ficha-tipo-badge" style="background:${color}">${fmtPrecio(w.precio)}</div>
+        <div class="fi-label">Ficha técnica</div>
+        <div class="ficha-name">${esc(w.nombre)}</div>
+        <div class="ficha-winery">${esc(w.bodega)}</div>
+        <div class="ficha-hero-price">${fmtPrecio(w.precio)}<span class="ficha-hero-price-cap">copa 125&nbsp;cc</span></div>
+        ${botella}
       </div>
-      <div class="ficha-note">${esc(w.nota)}</div>
-      <div class="ficha-grid">
-        ${[['Varietal',w.varietal],['Región',w.region],['Altitud',w.altitud],['Suelo',w.suelo],['Crianza',w.crianza],['Temperatura',w.temperatura]].map(([l,v])=>`
-          <div class="ficha-item"><div class="fi-label">${l}</div><div class="fi-val">${esc(v)}</div></div>`).join('')}
-      </div>
-      ${w.perfil?`<div class="perfil-section"><div class="perfil-title">Perfil del vino <span style="font-size:10px;color:var(--muted);font-weight:400">según la bodega</span></div>${perfilRows}</div>`:''}
+      ${w.nota?`<div class="ficha-quote-kicker">La nota del somm</div><div class="ficha-quote">“${esc(w.nota)}”</div>`:''}
+      ${datosRows?`<div class="ficha-data-list">${datosRows}</div>`:''}
+      ${w.perfil?`<div class="perfil-section"><div class="perfil-title">Perfil del vino <span style="font-size:10px;color:var(--ink-3);font-weight:400">según la bodega</span></div>${perfilRows}</div>`:''}
       ${w.maridaje&&w.maridaje.length?`<div class="maridaje-section"><div class="maridaje-title">Va bien con</div><div class="maridaje-pills">${maridajePills}</div></div>`:''}
       ${w.bodega_info?`<div class="bodega-section"><div class="bodega-label">Sobre la bodega y el terruño</div><div class="bodega-text">${esc(w.bodega_info)}</div></div>`:''}
-      ${bottleSection}
       ${w.tienda_url?`
-        <a href="${esc(w.tienda_url)}" target="_blank" rel="noopener" class="comprar-btn">
+        <a href="${esc(w.tienda_url)}" target="_blank" rel="noopener" class="comprar-btn btn-primario">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           Comprá este vino en nuestra tienda
         </a>`:''}
     </div>`;
+  animatePerfilBars();
+}
+
+// Cascada de barras sensoriales al entrar en viewport (handoff Paso 5/10).
+function animatePerfilBars(){
+  const bars = document.querySelectorAll('#fichaContent .perfil-bar-fill');
+  if(!bars.length) return;
+  const section = document.querySelector('#fichaContent .perfil-section');
+  const reveal = () => bars.forEach((bar,i) => setTimeout(() => { bar.style.width = bar.dataset.target; }, i*60));
+  if(!section || typeof IntersectionObserver === 'undefined'){ reveal(); return; }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if(entry.isIntersecting){ reveal(); io.disconnect(); } });
+  }, {threshold:.2});
+  io.observe(section);
 }
 
 function volverAlMapa(){
@@ -1524,8 +1591,8 @@ function renderSommIntro(){
       <div style="font-size:28px;margin-bottom:8px">🍾</div>
       <h3>¿No sabés por dónde empezar?</h3>
       <p style="margin-bottom:10px">4 preguntas rápidas y te orientamos hacia los vinos que mejor te van esta noche.</p>
-      <p style="font-size:12px;color:var(--dark-muted);margin-bottom:14px">Nuestro sommelier está en el salón — después podés consultarle cualquier duda.</p>
-      <button class="somm-start-btn" onclick="startSommelier()">Ayudame a elegir</button>
+      <p style="font-size:var(--text-caption);color:var(--ink-3);margin-bottom:14px">Nuestro sommelier está en el salón — después podés consultarle cualquier duda.</p>
+      <button class="somm-start-btn btn-primario" onclick="startSommelier()">Ayudame a elegir</button>
     </div>`;
 }
 
@@ -1537,7 +1604,7 @@ function startSommelier(){
 function renderSommStep(step){
   const p=PREGUNTAS[step];
   const progressDots=PREGUNTAS.map((_,i)=>`<div class="somm-dot${i<step?' done':i===step?' active':''}"></div>`).join('');
-  const backBtn=step>0?`<button onclick="goBackSomm()" style="background:transparent;border:none;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;margin-bottom:14px">← Volver</button>`:'';
+  const backBtn=step>0?`<button onclick="goBackSomm()" style="background:transparent;border:none;color:var(--ink-3);font-size:var(--text-data);font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;margin-bottom:14px">← Volver</button>`:'';
   document.getElementById('sommContent').innerHTML=`
     <div class="somm-progress">${progressDots}</div>
     ${backBtn}
@@ -1644,7 +1711,7 @@ function renderSommResults(){
       <h3>Tus vinos de esta noche</h3>
       <p>Basado en lo que nos dijiste</p>
       ${scored.map((w,i)=>`
-        <div class="somm-result-card" onclick="selectWineFromSomm(${w.id})">
+        <div class="somm-result-card" style="animation-delay:${i*380}ms" onclick="selectWineFromSomm(${w.id})">
           <div class="src-header">
             <div class="src-rank" style="background:${rankColors[i]}">${i+1}</div>
             <div>
@@ -1657,11 +1724,11 @@ function renderSommResults(){
             ${(w.maridaje||[]).slice(0,3).map(m=>`<div class="src-pill">${MARIDAJE_ICON[m]||''} ${esc(m)}</div>`).join('')}
           </div>
         </div>`).join('')}
-      <div style="background:var(--dark);border-radius:12px;padding:14px;margin-top:4px;margin-bottom:8px;text-align:center">
-        <div style="font-size:11px;color:var(--dark-muted);margin-bottom:4px;letter-spacing:.08em;text-transform:uppercase">Sommelier en el salón</div>
-        <div style="font-size:13px;color:var(--dark-sub);line-height:1.5">Contale tus preferencias y te guía al vino perfecto para esta noche.</div>
+      <div style="background:var(--dark);border-radius:var(--r-card);padding:14px;margin-top:4px;margin-bottom:8px;text-align:center">
+        <div style="font-size:var(--text-kicker);color:var(--ink-3);margin-bottom:4px;letter-spacing:.08em;text-transform:uppercase">Sommelier en el salón</div>
+        <div style="font-size:var(--text-data);color:var(--ink-dark-2);line-height:1.5">Contale tus preferencias y te guía al vino perfecto para esta noche.</div>
       </div>
-      <button class="somm-restart" onclick="startSommelier()">Volver a empezar</button>
+      <button class="somm-restart btn-terciario" onclick="startSommelier()">Volver a empezar</button>
     </div>`;
 }
 
@@ -1703,8 +1770,8 @@ function renderMisCatas(){
 
   container.innerHTML = `
     <div style="margin-bottom:18px">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--text);margin-bottom:4px">Mis catas</div>
-      <div style="font-size:13px;color:var(--muted);font-weight:300">Tu historial y tus catas en 125cc</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--ink);margin-bottom:4px">Mis catas</div>
+      <div style="font-size:var(--text-data);color:var(--ink-3);font-weight:300">Tu historial y tus catas en 125cc</div>
     </div>
 
     <div id="miscatas-email-row"></div>
@@ -1740,16 +1807,16 @@ function renderMisCatasEmailRow(email){
           <label class="field-label" for="miscatas-email">Tu email</label>
           <input type="email" id="miscatas-email"
             placeholder="el que usaste al catar"
-            style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:11px;
-                   padding:12px 14px;font-size:14px;color:var(--text);font-family:'DM Sans',sans-serif;
+            style="width:100%;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-card);
+                   padding:12px 14px;font-size:14px;color:var(--ink);font-family:'DM Sans',sans-serif;
                    outline:none;transition:border-color .2s"
-            onfocus="this.style.borderColor='var(--text)'"
-            onblur="this.style.borderColor='var(--border)'"
+            onfocus="this.style.borderColor='var(--ink)'"
+            onblur="this.style.borderColor='var(--line)'"
             onkeydown="if(event.key==='Enter')buscarMisCatasFromInput()">
         </div>
         <button onclick="buscarMisCatasFromInput()"
-          style="width:100%;background:var(--text);color:var(--bg);border:none;border-radius:12px;
-                 padding:14px;font-size:13px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+          style="width:100%;background:var(--ink);color:var(--bg);border:none;border-radius:var(--r-card);
+                 padding:14px;font-size:var(--text-data);font-weight:500;letter-spacing:.06em;text-transform:uppercase;
                  cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;
                  box-shadow:0 4px 16px rgba(20,10,0,.2)">
           Ver mis catas →
@@ -1773,7 +1840,7 @@ function buscarMisCatasFromInput(){
 async function buscarMisCatas(email){
   const results = document.getElementById('miscatas-results');
   if(!results) return;
-  results.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--muted);font-size:13px">Buscando tus catas...</div>`;
+  results.innerHTML = `<div style="text-align:center;padding:32px 0;color:var(--ink-3);font-size:var(--text-data)">Buscando tus catas...</div>`;
 
   try{
     const r = await fetch('/api/stats', {
@@ -1786,24 +1853,24 @@ async function buscarMisCatas(email){
 
     if(!catas.length){
       results.innerHTML = `
-        <div style="text-align:center;padding:40px 16px;color:var(--muted);font-size:13px;line-height:1.8">
+        <div style="text-align:center;padding:40px 16px;color:var(--ink-3);font-size:var(--text-data);line-height:1.8">
           🍷<br><br>Todavía no tenés catas registradas.<br>
-          <span style="font-size:11px">Tocá "Catar un vino ahora" para empezar.</span>
+          <span style="font-size:var(--text-kicker)">Tocá "Catar un vino ahora" para empezar.</span>
         </div>`;
       return;
     }
 
     results.innerHTML = `
-      <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">
+      <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px">
         ${catas.length} cata${catas.length!==1?'s':''} registrada${catas.length!==1?'s':''}
       </div>
       ${catas.map((c,i) => buildMiCataCard(c, i)).join('')}`;
 
   } catch(err){
     results.innerHTML = `
-      <div style="text-align:center;padding:32px 16px;color:var(--muted);font-size:13px;line-height:1.8">
+      <div style="text-align:center;padding:32px 16px;color:var(--ink-3);font-size:var(--text-data);line-height:1.8">
         ⚠️<br><br>No se pudo cargar el historial.<br>
-        <span style="font-size:11px">Verificá tu conexión.</span>
+        <span style="font-size:var(--text-kicker)">Verificá tu conexión.</span>
       </div>`;
   }
 }
@@ -1821,7 +1888,7 @@ function buildMiCataCard(c, idx){
   const rep    = c.repetiria || '';
 
   const chips = (txt) => txt ? txt.split(',').filter(s=>s.trim()).slice(0,5)
-    .map(s=>`<span style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--text);margin:2px">${esc(s.trim())}</span>`).join('') : '';
+    .map(s=>`<span style="display:inline-block;padding:4px 10px;border-radius:var(--r-surface);font-size:var(--text-kicker);background:var(--bg);border:1px solid var(--line);color:var(--ink);margin:2px">${esc(s.trim())}</span>`).join('') : '';
 
   const puntColor = punt>=90?'#4CAF50':punt>=80?'#C4A05A':punt>=70?'#FF9800':'#888';
 
@@ -1829,36 +1896,36 @@ function buildMiCataCard(c, idx){
     <div style="display:flex;align-items:center;gap:12px">
       <div style="text-align:center;flex-shrink:0;width:52px">
         <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:${puntColor};line-height:1">${esc(punt)}</div>
-        <div style="font-size:9px;color:var(--muted);letter-spacing:.05em">/100</div>
+        <div style="font-size:9px;color:var(--ink-3);letter-spacing:.05em">/100</div>
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(vino)}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;font-weight:300">${esc(fecha)}</div>
+        <div style="font-size:14px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(vino)}</div>
+        <div style="font-size:var(--text-kicker);color:var(--ink-3);margin-top:2px;font-weight:300">${esc(fecha)}</div>
         <div style="display:inline-block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
-                    padding:3px 10px;border-radius:12px;margin-top:5px;font-weight:600;
+                    padding:3px 10px;border-radius:var(--r-card);margin-top:5px;font-weight:600;
                     background:${nivel==='sommelier'?'rgba(196,160,90,.1)':'rgba(200,70,58,.08)'};
-                    color:${nivel==='sommelier'?'var(--gold)':'var(--accent)'}">
+                    color:${nivel==='sommelier'?'var(--madera)':'var(--accent)'}">
           ${nivel==='sommelier'?'Sommelier':'Simple'}
         </div>
       </div>
-      <div style="font-size:16px;color:var(--muted);opacity:.5;transition:transform .2s" id="chev_${id}">▾</div>
+      <div style="font-size:16px;color:var(--ink-3);opacity:.5;transition:transform .2s" id="chev_${id}">▾</div>
     </div>
 
-    <div id="det_${id}" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);animation:fadeUp .2s ease">
-      ${color ? `<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Color</div><div style="margin-bottom:12px"><span style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--text)">${esc(color)}</span></div>` : ''}
-      ${aromas ? `<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Aromas</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${chips(aromas)}</div>` : ''}
-      ${sabor  ? `<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">En boca</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${chips(sabor)}</div>` : ''}
+    <div id="det_${id}" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);animation:fadeUp .2s ease">
+      ${color ? `<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Color</div><div style="margin-bottom:12px"><span style="display:inline-block;padding:4px 12px;border-radius:var(--r-surface);font-size:var(--text-kicker);background:var(--bg);border:1px solid var(--line);color:var(--ink)">${esc(color)}</span></div>` : ''}
+      ${aromas ? `<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Aromas</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${chips(aromas)}</div>` : ''}
+      ${sabor  ? `<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">En boca</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${chips(sabor)}</div>` : ''}
       ${nivel==='sommelier' && (c.acidez||c.taninos||c.cuerpo) ? `
-        <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Atributos</div>
+        <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px">Atributos</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
           ${[['Acidez',c.acidez],['Taninos',c.taninos],['Cuerpo',c.cuerpo],['Final',c.final_boca||c.final_en_boca]].filter(a=>a[1]).map(([n,v])=>`
-            <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-              <span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">${n}</span>
-              <span style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text);font-weight:600">${v}/5</span>
+            <div style="background:var(--bg);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em">${n}</span>
+              <span style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--ink);font-weight:600">${v}/5</span>
             </div>`).join('')}
         </div>` : ''}
-      ${rep ? `<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">¿Lo pedirías de nuevo?</div><div style="font-size:13px;color:var(--text);margin-bottom:12px">${esc(rep)}</div>` : ''}
-      ${desc ? `<div style="background:var(--bg);border-left:2px solid var(--gold);border-radius:0 10px 10px 0;padding:12px 14px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--text);line-height:1.65;font-style:italic">&ldquo;${esc(desc)}&rdquo;</div>` : ''}
+      ${rep ? `<div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">¿Lo pedirías de nuevo?</div><div style="font-size:var(--text-data);color:var(--ink);margin-bottom:12px">${esc(rep)}</div>` : ''}
+      ${desc ? `<div style="background:var(--bg);border-left:2px solid var(--madera);border-radius:0 10px 10px 0;padding:12px 14px;font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--ink);line-height:1.65;font-style:italic">&ldquo;${esc(desc)}&rdquo;</div>` : ''}
     </div>
   </div>`;
 }
@@ -1931,15 +1998,15 @@ let cataState = {
 
 function buildColorGrid(){
   const cols = COLORES_VINO.map(col=>`
-    <div onclick="selectColor('${col.n}')" style="border:1.5px solid ${cataState.color===col.n?'var(--gold)':'rgba(255,255,255,.08)'};border-radius:14px;padding:12px 8px;text-align:center;cursor:pointer;background:${cataState.color===col.n?'rgba(196,160,90,.12)':'var(--dark3)'};transition:all .2s;position:relative;">
-      ${cataState.color===col.n?'<div style="position:absolute;top:5px;right:5px;width:14px;height:14px;border-radius:50%;background:var(--gold);font-size:8px;display:flex;align-items:center;justify-content:center;color:#111">✓</div>':''}
+    <div onclick="selectColor('${col.n}')" style="border:1.5px solid ${cataState.color===col.n?'var(--madera)':'rgba(255,255,255,.08)'};border-radius:var(--r-card);padding:12px 8px;text-align:center;cursor:pointer;background:${cataState.color===col.n?'rgba(196,160,90,.12)':'var(--dark-3)'};transition:all .2s;position:relative;">
+      ${cataState.color===col.n?'<div style="position:absolute;top:5px;right:5px;width:14px;height:14px;border-radius:50%;background:var(--madera);font-size:8px;display:flex;align-items:center;justify-content:center;color:#111">✓</div>':''}
       <div style="width:36px;height:36px;border-radius:50%;background:${col.c};margin:0 auto 8px;border:.5px solid rgba(0,0,0,.2);box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>
-      <div style="font-size:10px;color:var(--dark-sub);line-height:1.3">${col.n}</div>
+      <div style="font-size:10px;color:var(--ink-dark-2);line-height:1.3">${col.n}</div>
     </div>`).join('');
   const otroSel = cataState.color==='__otro__';
-  const otroCard = `<div onclick="selectColor('__otro__')" style="grid-column:span 3;border:1.5px solid ${otroSel?'var(--gold)':'rgba(255,255,255,.08)'};border-radius:14px;padding:12px 14px;cursor:pointer;background:${otroSel?'rgba(196,160,90,.08)':'var(--dark3)'};transition:all .2s">
-    <div style="font-size:10px;color:var(--gold);margin-bottom:${otroSel?'8':'0'}px">✏️ Otro color...</div>
-    ${otroSel?`<input id="colorOtroInput" type="text" value="${cataState.colorOtro}" placeholder="Describí el color..." oninput="cataState.colorOtro=this.value" onclick="event.stopPropagation()" style="width:100%;background:var(--dark2);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--dark-text);font-family:'DM Sans',sans-serif;outline:none">`:''}
+  const otroCard = `<div onclick="selectColor('__otro__')" style="grid-column:span 3;border:1.5px solid ${otroSel?'var(--madera)':'rgba(255,255,255,.08)'};border-radius:var(--r-card);padding:12px 14px;cursor:pointer;background:${otroSel?'rgba(196,160,90,.08)':'var(--dark-3)'};transition:all .2s">
+    <div style="font-size:10px;color:var(--madera);margin-bottom:${otroSel?'8':'0'}px">✏️ Otro color...</div>
+    ${otroSel?`<input id="colorOtroInput" type="text" value="${cataState.colorOtro}" placeholder="Describí el color..." oninput="cataState.colorOtro=this.value" onclick="event.stopPropagation()" style="width:100%;background:var(--dark-2);border:1px solid rgba(255,255,255,.1);border-radius:var(--r-sm);padding:8px 12px;font-size:var(--text-data);color:var(--ink-dark);font-family:'DM Sans',sans-serif;outline:none">`:''}
   </div>`;
   return cols + otroCard;
 }
@@ -1952,7 +2019,7 @@ function selectColor(name){
 function buildChips(arr, selected, fn){
   return arr.map(item=>{
     const s=selected.includes(item);
-    return `<div onclick="${fn}('${item}')" style="padding:9px 15px;border-radius:24px;font-size:12px;cursor:pointer;border:1px solid ${s?'var(--gold)':'rgba(255,255,255,.1)'};background:${s?'rgba(196,160,90,.15)':'var(--dark3)'};color:${s?'var(--gold)':'var(--dark-sub)'};transition:all .2s">${item}</div>`;
+    return `<div onclick="${fn}('${item}')" style="padding:9px 15px;border-radius:var(--r-pill);font-size:var(--text-caption);cursor:pointer;border:1px solid ${s?'var(--madera)':'rgba(255,255,255,.1)'};background:${s?'rgba(196,160,90,.15)':'var(--dark-3)'};color:${s?'var(--madera)':'var(--ink-dark-2)'};transition:all .2s">${item}</div>`;
   }).join('');
 }
 function getCataOtro(key){
@@ -1974,11 +2041,11 @@ function buildOtroField(inputId, stateKey, placeholder){
   return `<div style="width:100%;margin-top:6px">
     <input id="${inputId}" type="text" value="${val.replace(/"/g,'&quot;')}" placeholder="✏️ ${placeholder}"
       oninput="setCataOtro('${stateKey}',this.value)"
-      style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);border-radius:24px;
-             padding:9px 16px;font-size:12px;color:var(--dark-sub);font-family:'DM Sans',sans-serif;outline:none;
+      style="width:100%;background:var(--dark-3);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-pill);
+             padding:9px 16px;font-size:var(--text-caption);color:var(--ink-dark-2);font-family:'DM Sans',sans-serif;outline:none;
              transition:border-color .2s"
-      onfocus="this.style.borderColor='var(--gold)';this.style.color='var(--dark-text)'"
-      onblur="this.style.borderColor='rgba(255,255,255,.08)';this.style.color='var(--dark-sub)'">
+      onfocus="this.style.borderColor='var(--madera)';this.style.color='var(--ink-dark)'"
+      onblur="this.style.borderColor='rgba(255,255,255,.08)';this.style.color='var(--ink-dark-2)'">
   </div>`;
 }
 function toggleAroma(item){
@@ -1990,7 +2057,7 @@ function refreshAromasSomm(){
   const g=document.getElementById('aromasGridSomm'); if(!g)return;
   g.innerHTML=Object.entries(AROMAS_SOMM).map(([cat,items])=>`
     <div style="margin-bottom:16px">
-      <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;opacity:.7">${cat}</div>
+      <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px;opacity:.7">${cat}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">${buildChips(items,cataState.aromas,'toggleAroma')}</div>
     </div>`).join('')+buildOtroField('aromaOtro','cataState.aromasOtro','Otro aroma que no esté en la lista...');
 }
@@ -2006,33 +2073,33 @@ function toggleMaridaje(item){
 function buildScoreSlider(id,val){
   const pct=Math.round((val-60)/40*100);
   return `<div style="text-align:center;padding:20px 0 8px">
-    <div id="scoreDisplay_${id}" style="font-family:'Cormorant Garamond',serif;font-size:72px;font-weight:700;color:var(--gold);line-height:1">${val}</div>
-    <div id="scoreLbl_${id}" style="font-size:14px;color:var(--dark-muted);margin-top:4px;font-style:italic">${CATA_SCORE_LABELS[val]||''}</div>
+    <div id="scoreDisplay_${id}" style="font-family:'Cormorant Garamond',serif;font-size:76px;font-weight:700;color:${val>=92?'var(--madera)':'var(--ink-dark)'};line-height:1">${val}</div>
+    <div id="scoreLbl_${id}" style="font-size:14px;color:var(--ink-3);margin-top:4px;font-style:italic">${CATA_SCORE_LABELS[val]||''}</div>
   </div>
   <input type="range" min="60" max="100" value="${val}" step="1" id="scoreSlider_${id}"
     oninput="updateScore('${id}',+this.value)"
-    style="width:100%;-webkit-appearance:none;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--gold) ${pct}%,rgba(255,255,255,.1) ${pct}%);outline:none;cursor:pointer;margin-bottom:8px">
-  <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dark-muted)"><span>60 · Defectuoso</span><span>100 · Obra maestra</span></div>`;
+    style="width:100%;-webkit-appearance:none;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--madera) ${pct}%,rgba(255,255,255,.1) ${pct}%);outline:none;cursor:pointer;margin-bottom:8px">
+  <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3)"><span>60 · Defectuoso</span><span>100 · Obra maestra</span></div>`;
 }
 function updateScore(id,val){
   cataState.puntuacion=val;
-  const d=document.getElementById('scoreDisplay_'+id); if(d)d.textContent=val;
+  const d=document.getElementById('scoreDisplay_'+id); if(d){d.textContent=val;d.style.color=val>=92?'var(--madera)':'var(--ink-dark)';}
   const l=document.getElementById('scoreLbl_'+id); if(l)l.textContent=CATA_SCORE_LABELS[val]||'';
   const sl=document.getElementById('scoreSlider_'+id);
-  if(sl){const p=Math.round((val-60)/40*100);sl.style.background=`linear-gradient(90deg,var(--gold) ${p}%,rgba(255,255,255,.1) ${p}%)`;}
+  if(sl){const p=Math.round((val-60)/40*100);sl.style.background=`linear-gradient(90deg,var(--madera) ${p}%,rgba(255,255,255,.1) ${p}%)`;}
 }
 
 function buildAttrSlider(key,label,desc,val){
   const pct=(val-1)/4*100;
   return `<div style="margin-bottom:20px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-      <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dark-sub)">${label}</div>
-      <div id="attrNum_${key}" style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gold)">${val}/5</div>
+      <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-dark-2)">${label}</div>
+      <div id="attrNum_${key}" style="font-family:'Cormorant Garamond',serif;font-size:var(--text-name);color:var(--madera)">${val}/5</div>
     </div>
     <input type="range" min="1" max="5" value="${val}" step="1" id="attr_${key}"
       oninput="updateAttrCata('${key}',+this.value)"
       style="width:100%;-webkit-appearance:none;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--accent) ${pct}%,rgba(255,255,255,.1) ${pct}%);outline:none;cursor:pointer">
-    <div id="attrDesc_${key}" style="font-size:11px;color:var(--dark-muted);margin-top:5px;font-style:italic">${desc[val]||''}</div>
+    <div id="attrDesc_${key}" style="font-size:var(--text-kicker);color:var(--ink-3);margin-top:5px;font-style:italic">${desc[val]||''}</div>
   </div>`;
 }
 const ATTR_DESC_MAP = {acidez:ACIDEZ_DESC,taninos:TANINOS_DESC,cuerpo:CUERPO_DESC,final:FINAL_DESC,
@@ -2049,14 +2116,14 @@ function updateAttrCata(key,val){
 function buildProgress(step,total,label){
   const pct=Math.round(step/total*100);
   return `<div style="padding:16px 16px 0">
-    <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dark-muted);margin-bottom:8px"><span>${label}</span><span>${step}/${total}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px"><span>${label}</span><span>${step}/${total}</span></div>
     <div style="height:2px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden">
-      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .4s ease"></div>
+      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:2px;transition:width .4s ease"></div>
     </div>
   </div>`;
 }
 
-const NAVBTN = (back,label,fn,gold=false)=>`<button onclick="${fn}" style="flex:${back?1:2};background:${back?'transparent':`linear-gradient(135deg,${gold?'var(--gold),#E8C878':'var(--accent),var(--accent2)'})`};border:${back?'1px solid rgba(255,255,255,.12)':'none'};border-radius:13px;padding:14px;font-size:${back?12:13}px;${back?'':'font-weight:500;'}color:${back?(gold?'var(--dark-muted)':'var(--dark-muted)'):(gold?'var(--dark)':'#fff')};cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;${gold&&!back?'box-shadow:0 4px 16px rgba(196,160,90,.25)':''};transition:all .2s">${label}</button>`;
+const NAVBTN = (back,label,fn,gold=false)=>`<button onclick="${fn}" style="flex:${back?1:2};background:${back?'transparent':`linear-gradient(135deg,${gold?'var(--madera),#E8C878':'var(--accent),var(--accent-2)'})`};border:${back?'1px solid var(--line-dark-strong)':'none'};border-radius:var(--r-pill);padding:14px;font-size:12px;${back?'':'font-weight:500;'}color:${back?'var(--ink-3)':(gold?'var(--dark)':'#fff')};cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;${gold&&!back?'box-shadow:0 4px 16px rgba(196,160,90,.25)':''};transition:transform var(--t-feedback) var(--ease)">${label}</button>`;
 
 function renderFormPuntuar(){
   if(!wines.length)return;
@@ -2077,42 +2144,42 @@ function renderCataStep(){
 function renderCataWelcome(){
   return `<div style="padding:0 0 8px;animation:fadeUp .3s cubic-bezier(.22,1,.36,1)">
     <!-- Email — identidad del catador -->
-    <div style="background:var(--dark2);border-radius:18px;padding:18px 20px;margin-bottom:12px;border:1px solid rgba(196,160,90,.15)">
-      <div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">Tu email</div>
+    <div style="background:var(--dark-2);border-radius:var(--r-surface);padding:18px 20px;margin-bottom:12px;border:1px solid rgba(196,160,90,.15)">
+      <div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--madera);margin-bottom:10px">Tu email</div>
       <input type="email" id="cata-email-input" value="${cataState.email}" placeholder="para guardar tu historial de catas"
         oninput="cataState.email=this.value.trim()"
-        style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);border-radius:11px;
-               padding:12px 14px;font-size:14px;color:var(--dark-text);font-family:'DM Sans',sans-serif;
+        style="width:100%;background:var(--dark-3);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-card);
+               padding:12px 14px;font-size:14px;color:var(--ink-dark);font-family:'DM Sans',sans-serif;
                outline:none;transition:border-color .2s;letter-spacing:.01em"
-        onfocus="this.style.borderColor='var(--gold)'"
+        onfocus="this.style.borderColor='var(--madera)'"
         onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-      <div style="font-size:11px;color:var(--dark-muted);margin-top:7px;line-height:1.5">
+      <div style="font-size:var(--text-kicker);color:var(--ink-3);margin-top:7px;line-height:1.5">
         📒 Con tu email podés ver tu historial de catas en el bar. No lo compartimos con nadie.
       </div>
     </div>
 
-    <div style="background:var(--dark2);border-radius:18px;padding:20px;margin-bottom:16px;border:1px solid rgba(196,160,90,.15)">
-      <div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:10px">¿Qué vino querés catar?</div>
-      <select id="cata-wine-sel" onchange="cataState.vinoId=parseInt(this.value)" style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:12px 14px;font-size:13px;color:var(--dark-text);font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;cursor:pointer">
+    <div style="background:var(--dark-2);border-radius:var(--r-surface);padding:20px;margin-bottom:16px;border:1px solid rgba(196,160,90,.15)">
+      <div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--madera);margin-bottom:10px">¿Qué vino querés catar?</div>
+      <select id="cata-wine-sel" onchange="cataState.vinoId=parseInt(this.value)" style="width:100%;background:var(--dark-3);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-card);padding:12px 14px;font-size:var(--text-data);color:var(--ink-dark);font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;cursor:pointer">
         ${wines.map(w=>`<option value="${w.id}" ${w.id===cataState.vinoId?'selected':''}>${esc(w.nombre)}</option>`).join('')}
       </select>
     </div>
 
-    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--dark-text);text-align:center;margin-bottom:18px">¿Qué tipo de cata?</div>
-    <div onclick="startCata('simple')" style="background:var(--dark2);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px 20px;margin-bottom:12px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink-dark);text-align:center;margin-bottom:18px">¿Qué tipo de cata?</div>
+    <div onclick="startCata('simple')" style="background:var(--dark-2);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-surface);padding:22px 20px;margin-bottom:12px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden">
       <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:3px 0 0 3px"></div>
-      <div style="display:inline-flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);padding:3px 12px;border-radius:20px;background:rgba(200,70,58,.1);border:1px solid rgba(200,70,58,.2);margin-bottom:12px">🍷 Cata Simple</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--dark-text);margin-bottom:6px">Rápida y directa</div>
-      <div style="font-size:13px;color:var(--dark-muted);line-height:1.6;margin-bottom:14px">Color, aromas, sensaciones en boca y puntuación 60–100.</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">${['Color','Aromas','En boca','Puntuación 60–100'].map(f=>`<span style="font-size:11px;color:var(--dark-sub);background:var(--dark3);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:4px 11px">${f}</span>`).join('')}</div>
+      <div style="display:inline-flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);padding:3px 12px;border-radius:var(--r-surface);background:rgba(200,70,58,.1);border:1px solid rgba(200,70,58,.2);margin-bottom:12px">🍷 Cata Simple</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink-dark);margin-bottom:6px">Rápida y directa</div>
+      <div style="font-size:var(--text-data);color:var(--ink-3);line-height:1.6;margin-bottom:14px">Color, aromas, sensaciones en boca y puntuación 60–100.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${['Color','Aromas','En boca','Puntuación 60–100'].map(f=>`<span style="font-size:var(--text-kicker);color:var(--ink-dark-2);background:var(--dark-3);border:1px solid rgba(255,255,255,.06);border-radius:var(--r-surface);padding:4px 11px">${f}</span>`).join('')}</div>
       <div style="position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:22px;color:rgba(255,255,255,.2)">›</div>
     </div>
-    <div onclick="startCata('sommelier')" style="background:var(--dark2);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px 20px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden">
-      <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);border-radius:3px 0 0 3px"></div>
-      <div style="display:inline-flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);padding:3px 12px;border-radius:20px;background:rgba(196,160,90,.1);border:1px solid rgba(196,160,90,.2);margin-bottom:12px">⭐ Cata Sommelier</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--dark-text);margin-bottom:6px">Análisis completo</div>
-      <div style="font-size:13px;color:var(--dark-muted);line-height:1.6;margin-bottom:14px">Visual, olfativo, gustativo, atributos y maridaje.</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">${['Visual','Olfativo','Gustativo','Atributos','Puntuación 60–100'].map(f=>`<span style="font-size:11px;color:var(--dark-sub);background:var(--dark3);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:4px 11px">${f}</span>`).join('')}</div>
+    <div onclick="startCata('sommelier')" style="background:var(--dark-2);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-surface);padding:22px 20px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--madera);border-radius:3px 0 0 3px"></div>
+      <div style="display:inline-flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);padding:3px 12px;border-radius:var(--r-surface);background:rgba(196,160,90,.1);border:1px solid rgba(196,160,90,.2);margin-bottom:12px">⭐ Cata Sommelier</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink-dark);margin-bottom:6px">Análisis completo</div>
+      <div style="font-size:var(--text-data);color:var(--ink-3);line-height:1.6;margin-bottom:14px">Visual, olfativo, gustativo, atributos y maridaje.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${['Visual','Olfativo','Gustativo','Atributos','Puntuación 60–100'].map(f=>`<span style="font-size:var(--text-kicker);color:var(--ink-dark-2);background:var(--dark-3);border:1px solid rgba(255,255,255,.06);border-radius:var(--r-surface);padding:4px 11px">${f}</span>`).join('')}</div>
       <div style="position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:22px;color:rgba(255,255,255,.2)">›</div>
     </div>
   </div>`;
@@ -2129,10 +2196,10 @@ function startCata(nivel){
 }
 
 function stepCard(paso,label,titulo,hint,content){
-  return `<div style="background:var(--dark2);border:1px solid rgba(255,255,255,.08);border-radius:18px;margin:14px 16px;padding:22px;animation:fadeUp .3s cubic-bezier(.22,1,.36,1)">
-    <div style="font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:4px">${paso}</div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--dark-text);margin-bottom:4px;line-height:1.2">${titulo}</div>
-    <div style="font-size:12px;color:var(--dark-muted);margin-bottom:20px">${hint}</div>
+  return `<div style="background:var(--dark-2);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-surface);margin:14px 16px;padding:22px;animation:fadeUp .3s cubic-bezier(.22,1,.36,1)">
+    <div style="font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--madera);margin-bottom:4px">${paso}</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink-dark);margin-bottom:4px;line-height:1.2">${titulo}</div>
+    <div style="font-size:var(--text-caption);color:var(--ink-3);margin-bottom:20px">${hint}</div>
     ${content}
   </div>`;
 }
@@ -2148,7 +2215,7 @@ function renderStepSimple(){
 
   if(s===1) h+=stepCard('Paso 1 de 4','','Color','¿Qué color ves en la copa?',`<div id="colorGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">${buildColorGrid()}</div>`);
   else if(s===2) h+=stepCard('Paso 2 de 4','','Aromas','¿Qué aromas identificás? Podés elegir varios.',`<div id="aromasGrid" style="display:flex;flex-wrap:wrap;gap:8px">${buildChips(AROMAS_SIMPLES,cataState.aromas,'toggleAroma')}${buildOtroField('aromaOtro','cataState.aromasOtro','Otro aroma...')}</div>`);
-  else if(s===3) h+=stepCard('Paso 3 de 4','','Sensaciones en boca','¿Qué sentís al probarlo?',`<div id="saborGrid" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">${buildChips(['Ácido','Dulce','Amargo','Tánico','Untuoso','Fresco','Cálido','Seco','Frutal','Especiado','Mineral'],cataState.sabor,'toggleSabor')}${buildOtroField('saborOtro','cataState.saborOtro','Otra sensación...')}</div><div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Descripción libre</div><textarea id="cata-desc" rows="3" placeholder="Anotá lo que sentís…" oninput="cataState.descripcion=this.value" style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:12px 14px;font-size:13px;color:var(--dark-text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.6">${cataState.descripcion}</textarea>`);
+  else if(s===3) h+=stepCard('Paso 3 de 4','','Sensaciones en boca','¿Qué sentís al probarlo?',`<div id="saborGrid" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">${buildChips(['Ácido','Dulce','Amargo','Tánico','Untuoso','Fresco','Cálido','Seco','Frutal','Especiado','Mineral'],cataState.sabor,'toggleSabor')}${buildOtroField('saborOtro','cataState.saborOtro','Otra sensación...')}</div><div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px">Descripción libre</div><textarea id="cata-desc" rows="3" placeholder="Anotá lo que sentís…" oninput="cataState.descripcion=this.value" style="width:100%;background:var(--dark-3);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-card);padding:12px 14px;font-size:var(--text-data);color:var(--ink-dark);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.6">${cataState.descripcion}</textarea>`);
   else if(s===4) h+=stepCard('Paso 4 de 4','','Puntuación','Escala 60–100 estilo Parker',buildScoreSlider('simple',cataState.puntuacion));
 
   c.innerHTML=h+navBtns;
@@ -2165,17 +2232,17 @@ function renderStepSommelier(){
   </div>`;
 
   if(s===1) h+=stepCard('Paso 1 · Visual','','Fase Visual','Observá el color y la intensidad.',`<div id="colorGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">${buildColorGrid()}</div>${buildAttrSlider('visual','Intensidad visual',ATTR_DESC_MAP.visual,cataState.visual)}`);
-  else if(s===2) h+=stepCard('Paso 2 · Olfativo','','Fase Olfativa','¿Qué aromas percibís?',`<div id="aromasGridSomm">${Object.entries(AROMAS_SOMM).map(([cat,items])=>`<div style="margin-bottom:16px"><div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;opacity:.7">${cat}</div><div style="display:flex;flex-wrap:wrap;gap:6px">${buildChips(items,cataState.aromas,'toggleAroma')}</div></div>`).join('')}${buildOtroField('aromaOtro','cataState.aromasOtro','Otro aroma que no esté en la lista...')}</div>${buildAttrSlider('olfativo','Intensidad aromática',ATTR_DESC_MAP.olfativo,cataState.olfativo)}`);
+  else if(s===2) h+=stepCard('Paso 2 · Olfativo','','Fase Olfativa','¿Qué aromas percibís?',`<div id="aromasGridSomm">${Object.entries(AROMAS_SOMM).map(([cat,items])=>`<div style="margin-bottom:16px"><div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px;opacity:.7">${cat}</div><div style="display:flex;flex-wrap:wrap;gap:6px">${buildChips(items,cataState.aromas,'toggleAroma')}</div></div>`).join('')}${buildOtroField('aromaOtro','cataState.aromasOtro','Otro aroma que no esté en la lista...')}</div>${buildAttrSlider('olfativo','Intensidad aromática',ATTR_DESC_MAP.olfativo,cataState.olfativo)}`);
   else if(s===3) h+=stepCard('Paso 3 · Gustativo','','Fase Gustativa','Atributos técnicos en boca.',buildAttrSlider('acidez','Acidez',ACIDEZ_DESC,cataState.acidez)+buildAttrSlider('taninos','Taninos',TANINOS_DESC,cataState.taninos)+buildAttrSlider('cuerpo','Cuerpo',CUERPO_DESC,cataState.cuerpo)+buildAttrSlider('final','Final en boca',FINAL_DESC,cataState.final));
   else if(s===4) h+=stepCard('Paso 4 · Conclusión','','Tu impresión final','Contanos con tus palabras qué te pareció el vino.',`
-    <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">¿Lo pedirías de nuevo?</div>
+    <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px">¿Lo pedirías de nuevo?</div>
     <div style="display:flex;gap:10px;margin-bottom:20px">
-      ${['Sí, sin dudarlo 🙌','Quizás 🤔','No por ahora 🙅'].map(op=>`<div onclick="cataState.repetiria='${op}';document.querySelectorAll('.repbtn').forEach(b=>b.style.background='var(--dark3)');this.style.background='rgba(196,160,90,.15)';this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" class="repbtn" style="flex:1;padding:12px 6px;text-align:center;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:${cataState.repetiria===op?'rgba(196,160,90,.15)':'var(--dark3)'};color:${cataState.repetiria===op?'var(--gold)':'var(--dark-sub)'};font-size:11px;cursor:pointer;transition:all .2s">${op}</div>`).join('')}
+      ${['Sí, sin dudarlo 🙌','Quizás 🤔','No por ahora 🙅'].map(op=>`<div onclick="cataState.repetiria='${op}';document.querySelectorAll('.repbtn').forEach(b=>b.style.background='var(--dark-3)');this.style.background='rgba(196,160,90,.15)';this.style.borderColor='var(--madera)';this.style.color='var(--madera)'" class="repbtn" style="flex:1;padding:12px 6px;text-align:center;border-radius:var(--r-card);border:1px solid rgba(255,255,255,.08);background:${cataState.repetiria===op?'rgba(196,160,90,.15)':'var(--dark-3)'};color:${cataState.repetiria===op?'var(--madera)':'var(--ink-dark-2)'};font-size:var(--text-kicker);cursor:pointer;transition:all .2s">${op}</div>`).join('')}
     </div>
-    <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Descripción libre <span style="opacity:.6;font-weight:300;text-transform:none;letter-spacing:0">· opcional</span></div>
-    <textarea id="cata-desc" rows="4" placeholder="Fresco, muy tomable, especiado, le faltó cuerpo… lo que sea que sentiste." oninput="cataState.descripcion=this.value" style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:12px 14px;font-size:13px;color:var(--dark-text);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.6">${cataState.descripcion}</textarea>
+    <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px">Descripción libre <span style="opacity:.6;font-weight:300;text-transform:none;letter-spacing:0">· opcional</span></div>
+    <textarea id="cata-desc" rows="4" placeholder="Fresco, muy tomable, especiado, le faltó cuerpo… lo que sea que sentiste." oninput="cataState.descripcion=this.value" style="width:100%;background:var(--dark-3);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-card);padding:12px 14px;font-size:var(--text-data);color:var(--ink-dark);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.6">${cataState.descripcion}</textarea>
   `);
-  else if(s===5) h+=stepCard('Paso 5 · Puntuación','','Puntuación final','Escala 60–100 estilo Parker',buildScoreSlider('somm',cataState.puntuacion)+`<div style="background:var(--dark3);border-radius:12px;padding:14px;margin-top:16px;border-left:2px solid var(--gold)"><div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Referencia</div><div style="font-size:11px;color:var(--dark-muted);line-height:1.9"><b style="color:var(--dark-sub)">95–100</b> · Excepcional<br><b style="color:var(--dark-sub)">90–94</b> · Sobresaliente<br><b style="color:var(--dark-sub)">85–89</b> · Muy bueno<br><b style="color:var(--dark-sub)">80–84</b> · Bueno<br><b style="color:var(--dark-sub)">70–79</b> · Correcto<br><b style="color:var(--dark-sub)">60–69</b> · Defectuoso</div></div>`);
+  else if(s===5) h+=stepCard('Paso 5 · Puntuación','','Puntuación final','Escala 60–100 estilo Parker',buildScoreSlider('somm',cataState.puntuacion)+`<div style="background:var(--dark-3);border-radius:var(--r-card);padding:14px;margin-top:16px;border-left:2px solid var(--madera)"><div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px">Referencia</div><div style="font-size:var(--text-kicker);color:var(--ink-3);line-height:1.9"><b style="color:var(--ink-dark-2)">95–100</b> · Excepcional<br><b style="color:var(--ink-dark-2)">90–94</b> · Sobresaliente<br><b style="color:var(--ink-dark-2)">85–89</b> · Muy bueno<br><b style="color:var(--ink-dark-2)">80–84</b> · Bueno<br><b style="color:var(--ink-dark-2)">70–79</b> · Correcto<br><b style="color:var(--ink-dark-2)">60–69</b> · Defectuoso</div></div>`);
 
   c.innerHTML=h+navBtns;
 }
@@ -2213,7 +2280,7 @@ function mostrarPopupWA(){
       <input type="tel" class="wa-phone-input" id="waPhoneInput"
         placeholder="+54 9 11 1234-5678"
         style="width:100%;background:rgba(255,255,255,.7);border:1px solid rgba(80,55,30,.15);
-               border-radius:11px;padding:13px 15px;font-size:15px;color:var(--text);
+               border-radius:var(--r-card);padding:13px 15px;font-size:var(--text-body);color:var(--ink);
                font-family:'DM Sans',sans-serif;outline:none;margin-bottom:10px;
                letter-spacing:.02em;transition:border-color .2s"
         onfocus="this.style.borderColor='#25D366'"
@@ -2222,7 +2289,7 @@ function mostrarPopupWA(){
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
         Enviar resumen por WhatsApp
       </button>
-      <button class="wa-skip-btn" onclick="enviarSinWA();cerrarPopupWA()">
+      <button class="wa-skip-btn btn-terciario" onclick="enviarSinWA();cerrarPopupWA()">
         Guardar sin WhatsApp →
       </button>
     </div>`;
@@ -2325,6 +2392,7 @@ async function enviarPuntuacion(phone){
 
     document.getElementById('puntuarContent').innerHTML =
       `<div class="form-success">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:700;color:var(--accent);line-height:1;margin-bottom:6px">${payload.puntuacion}</div>
         <span class="success-icon">🍷</span>
         <h3>¡Cata guardada!</h3>
         <p>${nl} de <strong>${esc(w.nombre)}</strong> registrada correctamente.${
