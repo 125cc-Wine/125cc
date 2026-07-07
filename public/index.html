@@ -510,7 +510,7 @@
 
     .somm-start-btn{margin-top:16px}
     .somm-step{display:none}
-    .somm-step.active{display:block;animation:fadeUp .25s ease}
+    .somm-step.active{display:block;animation:fadeUp .25s var(--ease)}
     .somm-question{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--ink);margin-bottom:6px;line-height:1.25}
     .somm-sub{font-size:var(--text-data);color:var(--ink-3);margin-bottom:16px;font-weight:300}
     .somm-options{display:flex;flex-direction:column;gap:9px}
@@ -521,15 +521,22 @@
       box-shadow:var(--shadow-1);
     }
     .somm-opt:hover{border-color:rgba(139,106,58,.25);box-shadow:var(--shadow-2)}
-    .somm-opt:active,.somm-opt.selected{background:rgba(240,228,204,.6);border-color:var(--madera)}
-    .somm-opt-icon{font-size:22px;flex-shrink:0}
+    .somm-opt:active{background:rgba(240,228,204,.6);border-color:var(--madera)}
+    .somm-opt.selected{background:rgba(240,228,204,.7);border-color:var(--madera);box-shadow:0 0 0 3px rgba(200,164,106,.18)}
+    .somm-opt.selected .somm-opt-icon{transform:scale(1.15)}
+    .somm-options.locked .somm-opt:not(.selected){opacity:.45}
+    .somm-opt-icon{font-size:22px;flex-shrink:0;transition:transform .2s var(--ease-copa)}
     .somm-opt-text{font-size:14px;font-weight:500;color:var(--ink)}
     .somm-opt-sub{font-size:var(--text-caption);color:var(--ink-3);margin-top:2px;font-weight:300}
     .somm-progress{display:flex;gap:4px;margin-bottom:20px}
     .somm-dot{height:2px;flex:1;border-radius:2px;background:var(--line);transition:background .3s}
     .somm-dot.done{background:var(--ink)}
     .somm-dot.active{background:var(--accent)}
-    .somm-results{display:none;animation:fadeUp .3s cubic-bezier(.22,1,.36,1)}
+    .somm-thinking{text-align:center;padding:56px 0;animation:fadeUp .3s var(--ease)}
+    .somm-thinking-glass{font-size:36px;animation:sommPulse 1.1s ease-in-out infinite}
+    .somm-thinking-text{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:var(--text-name);color:var(--ink-3);margin-top:14px}
+    @keyframes sommPulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.12);opacity:1}}
+    .somm-results{display:none;animation:fadeUp .3s var(--ease)}
     .somm-results h3{font-family:'Cormorant Garamond',serif;font-size:var(--text-name);color:var(--ink);margin-bottom:5px}
     .somm-results p{font-size:var(--text-data);color:var(--ink-3);margin-bottom:16px;font-weight:300}
     @keyframes revealCard{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -1613,7 +1620,7 @@ function renderSommStep(step){
       <div class="somm-sub">${p.sub}</div>
       <div class="somm-options">
         ${p.opciones.map(o=>`
-          <div class="somm-opt" onclick="answerSomm('${p.id}','${o.val}')">
+          <div class="somm-opt" onclick="answerSomm(this,'${p.id}','${o.val}')">
             <div class="somm-opt-icon">${o.icon}</div>
             <div>
               <div class="somm-opt-text">${o.label}</div>
@@ -1632,11 +1639,27 @@ function goBackSomm(){
   }
 }
 
-function answerSomm(qid, val){
+// Reconocimiento táctil antes de avanzar: se marca la opción elegida y recién
+// después de una pausa breve pasa a la siguiente pregunta (o al momento de
+// "consultando" antes de mostrar los resultados).
+function answerSomm(el, qid, val){
+  const optionsEl = el ? el.closest('.somm-options') : null;
+  if(optionsEl && optionsEl.classList.contains('locked')) return;
   sommAnswers[qid]=val;
-  sommStep++;
-  if(sommStep<PREGUNTAS.length){ renderSommStep(sommStep); }
-  else { renderSommResults(); }
+  if(el){ el.classList.add('selected'); if(optionsEl) optionsEl.classList.add('locked'); }
+  setTimeout(()=>{
+    sommStep++;
+    if(sommStep<PREGUNTAS.length){ renderSommStep(sommStep); }
+    else { renderSommThinking(); setTimeout(renderSommResults, 700); }
+  }, 220);
+}
+
+function renderSommThinking(){
+  document.getElementById('sommContent').innerHTML = `
+    <div class="somm-thinking">
+      <div class="somm-thinking-glass">🍷</div>
+      <div class="somm-thinking-text">Consultando con el sommelier…</div>
+    </div>`;
 }
 
 // Terciles de precio sobre el catálogo VIGENTE — reemplaza umbrales fijos que
