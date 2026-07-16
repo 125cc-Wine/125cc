@@ -4,17 +4,17 @@
   "description": "Carta de vinos interactiva · Wine Bar Mar del Plata",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1c110a",
-  "theme_color": "#2E1E10",
+  "background_color": "#1D242A",
+  "theme_color": "#2A333C",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%232E1E10'/><path d='M72 24 C72 24 52 72 52 86 C52 108 68 124 92 126 L92 156 L76 156 L74 168 L118 168 L116 156 L100 156 L100 126 C124 124 140 108 140 86 C140 72 120 24 120 24 Z' fill='%23c8463a'/></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%232A333C'/><path d='M72 24 C72 24 52 72 52 86 C52 108 68 124 92 126 L92 156 L76 156 L74 168 L118 168 L116 156 L100 156 L100 126 C124 124 140 108 140 86 C140 72 120 24 120 24 Z' fill='%23c8463a'/></svg>",
       "sizes": "192x192",
       "type": "image/svg+xml"
     },
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%232E1E10'/><path d='M192 64 C192 64 138 192 138 228 C138 288 178 330 244 334 L244 416 L202 416 L198 448 L314 448 L310 416 L268 416 L268 334 C334 330 374 288 374 228 C374 192 320 64 320 64 Z' fill='%23c8463a'/></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%232A333C'/><path d='M192 64 C192 64 138 192 138 228 C138 288 178 330 244 334 L244 416 L202 416 L198 448 L314 448 L310 416 L268 416 L268 334 C334 330 374 288 374 228 C374 192 320 64 320 64 Z' fill='%23c8463a'/></svg>",
       "sizes": "512x512",
       "type": "image/svg+xml"
     }
