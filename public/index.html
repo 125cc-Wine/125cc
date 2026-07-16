@@ -177,12 +177,10 @@
       margin-bottom:12px;margin-top:2px;
     }
     .map-canvas{
-      background:
-        radial-gradient(ellipse at 50% 50%, #EEE4D4 0%, #DDD0C0 45%, #CEC0AC 100%);
+      background:#DED0BA;
       border-radius:var(--r-surface);position:relative;height:296px;overflow:hidden;
       touch-action:none;-webkit-user-select:none;user-select:none;
       box-shadow:inset 0 1px 0 rgba(255,255,255,.5),
-                 inset 0 0 60px rgba(80,50,20,.1),
                  0 6px 32px rgba(60,35,10,.2),
                  0 2px 0 rgba(80,55,30,.12);
       border:1px solid rgba(80,55,30,.18);
@@ -190,12 +188,6 @@
     }
     .map-canvas.zoomed{cursor:grab}
     .map-canvas.zoomed:active{cursor:grabbing}
-    /* Viñeta atmosférica en los bordes del mapa */
-    .map-canvas::after{
-      content:'';position:absolute;inset:0;pointer-events:none;
-      background:radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(60,35,15,.12) 100%);
-      border-radius:var(--r-surface);
-    }
     .map-axis-h{position:absolute;top:50%;left:6%;right:6%;height:.5px;background:rgba(80,55,35,.18);pointer-events:none}
     .map-axis-v{position:absolute;left:50%;top:10%;bottom:8%;width:.5px;background:rgba(80,55,35,.18);pointer-events:none}
     .map-label{
