@@ -31,6 +31,9 @@
   .wine-list-item-sub{font-size:10px;color:var(--muted);margin-top:2px}
   .add-wine-btn{margin:10px;padding:10px;background:var(--wine);border:none;border-radius:10px;color:#fff;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:.05em;text-transform:uppercase;transition:background .15s;width:calc(100% - 20px)}
   .add-wine-btn:hover{background:var(--wine2)}
+  .sync-price-btn{margin:0 10px 10px;padding:9px;background:transparent;border:.5px solid var(--border);border-radius:10px;color:var(--sub);font-size:11px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:.04em;transition:border-color .15s,color .15s;width:calc(100% - 20px)}
+  .sync-price-btn:hover{border-color:var(--sub);color:var(--text)}
+  .sync-price-btn:disabled{opacity:.5;cursor:default}
 
   .wine-edit-form{background:var(--card);border:.5px solid var(--border);border-radius:14px;padding:20px}
   .wine-edit-form h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);margin-bottom:16px}
@@ -325,6 +328,7 @@
           <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">Cargando...</div>
         </div>
         <button class="add-wine-btn" onclick="newWine()">+ Agregar vino</button>
+        <button class="sync-price-btn" id="syncPreciosBtn" onclick="syncPrecios()">↻ Sincronizar precios de tienda</button>
       </div>
       <div class="wine-edit-form" id="wineEditForm">
         <div class="no-selection">
@@ -944,6 +948,37 @@ function previewImg(url){
   el.innerHTML = url
     ? `<img src="${esc(url)}" style="max-height:100px;max-width:100%;object-fit:contain" onerror="this.parentNode.innerHTML='<span style=color:var(--muted);font-size:12px>URL inválida</span>'">`
     : '<span style="color:var(--muted);font-size:12px">Sin imagen</span>';
+}
+
+async function syncPrecios(){
+  const btn = document.getElementById('syncPreciosBtn');
+  const original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Sincronizando...';
+
+  try{
+    const res = await fetch('/api/sync-precios', {
+      method: 'POST',
+      headers: adminAuthHeader()
+    });
+    handleAuthResponse(res);
+    const data = await res.json();
+    if(!res.ok || !data.ok){
+      showToast(data.error || 'Error sincronizando precios', 'error');
+      return;
+    }
+    const cambios = data.actualizados.length;
+    const fallas  = data.errores.length;
+    let msg = cambios
+      ? `✓ ${cambios} precio${cambios===1?'':'s'} actualizado${cambios===1?'':'s'} de ${data.revisados}`
+      : `✓ Sin cambios (${data.revisados} revisados)`;
+    if(fallas) msg += ` · ${fallas} con error`;
+    showToast(msg, fallas && !cambios ? 'error' : 'success');
+    if(cambios) await loadWinesForEditor();
+  } catch(e){
+    showToast('Error de conexión','error');
+  } finally {
+    btn.disabled = false; btn.textContent = original;
+  }
 }
 
 async function extraerImagenDeLink(){
