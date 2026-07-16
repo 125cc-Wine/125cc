@@ -32,10 +32,10 @@
       --dark-3: #3F4D5A;        /* superficie oscura elevada 2 (inputs/chips dentro del modo cata) */
       --dark-cata: #1D242A;     /* fondo del ritual de cata */
       --ink-dark: #F5EDE0;      /* texto sobre oscuro */
-      --ink-dark-2: #C8A878;    /* texto secundario sobre oscuro */
+      --ink-dark-2: #D2B470;    /* texto secundario sobre oscuro */
 
       /* ── Color · materiales del local ───────────────────────── */
-      --madera: #C8A46A;
+      --madera: #CFAC59;
       --madera-dk: #455463;
       --piedra: #C4785A;
       --cuero: #A0622A;
@@ -54,8 +54,8 @@
       /* ── Bordes ─────────────────────────────────────────────── */
       --line: rgba(69, 84, 99, .15);       /* hairline en claro */
       --line-strong: rgba(69, 84, 99, .24);
-      --line-dark: rgba(200, 164, 106, .18); /* hairline en oscuro */
-      --line-dark-strong: rgba(200, 164, 106, .32);
+      --line-dark: rgba(207, 172, 89, .18); /* hairline en oscuro */
+      --line-dark-strong: rgba(207, 172, 89, .32);
 
       /* ── Tipografía · escala modular 1.25 / base 16 ─────────── */
       --font-serif: 'Cormorant Garamond', serif;
@@ -137,16 +137,16 @@
     .header::before{
       content:'';position:absolute;inset:0;
       background:radial-gradient(ellipse at 80% 0%, rgba(196,120,90,.2) 0%, transparent 60%),
-                 radial-gradient(ellipse at 0% 100%, rgba(200,164,106,.1) 0%, transparent 50%);
+                 radial-gradient(ellipse at 0% 100%, rgba(207,172,89,.1) 0%, transparent 50%);
       pointer-events:none;
     }
     .header::after{
       content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-      background:linear-gradient(90deg,transparent,rgba(200,164,106,.35),transparent);
+      background:linear-gradient(90deg,transparent,rgba(207,172,89,.35),transparent);
     }
     .eyebrow{
       font-size:10px;letter-spacing:.45em;text-transform:uppercase;
-      color:rgba(200,164,106,.75);margin-bottom:8px;font-weight:500;
+      color:rgba(207,172,89,.75);margin-bottom:8px;font-weight:500;
     }
     .header h1{
       font-family:'Cormorant Garamond',serif;
@@ -469,7 +469,7 @@
     /* Bodega info */
     .bodega-section{
       background:var(--dark);border-radius:var(--r-surface);padding:16px 17px;margin-bottom:0;
-      border:1px solid rgba(200,164,106,.15);
+      border:1px solid rgba(207,172,89,.15);
     }
     .bodega-label{font-size:var(--text-kicker);letter-spacing:.01em;color:var(--madera);margin-bottom:6px;font-weight:600}
     .bodega-text{font-family:var(--font-serif);font-style:italic;font-size:17px;color:rgba(245,237,224,.85);line-height:1.6;font-weight:400}
@@ -484,7 +484,7 @@
     ══════════════════════════════ */
     .somm-intro{
       background:var(--madera-dk);border-radius:var(--r-surface);padding:24px 20px;margin-bottom:16px;
-      text-align:center;border:1px solid rgba(200,164,106,.18);
+      text-align:center;border:1px solid rgba(207,172,89,.18);
       position:relative;overflow:hidden;
       box-shadow:0 4px 24px rgba(40,20,8,.2);
     }
@@ -522,7 +522,7 @@
     }
     .somm-opt:hover{border-color:rgba(139,106,58,.25);box-shadow:var(--shadow-2)}
     .somm-opt:active{background:rgba(240,228,204,.6);border-color:var(--madera)}
-    .somm-opt.selected{background:rgba(240,228,204,.7);border-color:var(--madera);box-shadow:0 0 0 3px rgba(200,164,106,.18)}
+    .somm-opt.selected{background:rgba(240,228,204,.7);border-color:var(--madera);box-shadow:0 0 0 3px rgba(207,172,89,.18)}
     .somm-opt.selected .somm-opt-icon{transform:scale(1.15)}
     .somm-options.locked .somm-opt:not(.selected){opacity:.45}
     .somm-opt-icon{font-size:22px;flex-shrink:0;transition:transform .2s var(--ease-copa)}
@@ -676,7 +676,7 @@
     .submit-btn:disabled{opacity:.4;cursor:not-allowed}
     .form-success{
       background:var(--madera-dk);
-      border:1px solid rgba(200,164,106,.2);border-radius:var(--r-surface);
+      border:1px solid rgba(207,172,89,.2);border-radius:var(--r-surface);
       padding:28px 20px;text-align:center;margin-bottom:12px;
     }
     .form-success .success-icon{font-size:40px;margin-bottom:12px;display:block}
@@ -925,7 +925,7 @@ function copitaSVG(color,{size=22,state='filled',selected=false}={}){
   const fillY = state==='empty'?36:state==='selected'?8:14;
   const h = Math.round(size*60/44);
   const clipId = 'copaClip-'+(_copitaUid++);
-  return `<svg class="copita" viewBox="0 0 44 60" width="${size}" height="${h}" fill="none" style="flex-shrink:0${selected?';transform:scale(1.35);filter:drop-shadow(0 0 8px rgba(200,164,106,.65))':''}">
+  return `<svg class="copita" viewBox="0 0 44 60" width="${size}" height="${h}" fill="none" style="flex-shrink:0${selected?';transform:scale(1.35);filter:drop-shadow(0 0 8px rgba(207,172,89,.65))':''}">
     <defs><clipPath id="${clipId}"><path d="M10 4 H34 V20 C34 30 28.5 36 22 36 C15.5 36 10 30 10 20 Z"/></clipPath></defs>
     <g clip-path="url(#${clipId})">
       <rect x="10" y="4" width="24" height="34" fill="${color}" opacity=".9" style="transition:transform .5s var(--ease-copa);transform:translateY(${fillY}px)"/>

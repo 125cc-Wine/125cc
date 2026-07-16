@@ -16,10 +16,10 @@
   --dark-2: #323D48;        /* superficie oscura elevada */
   --dark-cata: #1D242A;     /* fondo del ritual de cata */
   --ink-dark: #F5EDE0;      /* texto sobre oscuro */
-  --ink-dark-2: #C8A878;    /* texto secundario sobre oscuro */
+  --ink-dark-2: #D2B470;    /* texto secundario sobre oscuro */
 
   /* ── Color · materiales del local ───────────────────────── */
-  --madera: #C8A46A;
+  --madera: #CFAC59;
   --madera-dk: #455463;
   --piedra: #C4785A;
   --cuero: #A0622A;
@@ -39,8 +39,8 @@
   /* ── Bordes ─────────────────────────────────────────────── */
   --line: rgba(69, 84, 99, .15);       /* hairline en claro */
   --line-strong: rgba(69, 84, 99, .24);
-  --line-dark: rgba(200, 164, 106, .18); /* hairline en oscuro */
-  --line-dark-strong: rgba(200, 164, 106, .32);
+  --line-dark: rgba(207, 172, 89, .18); /* hairline en oscuro */
+  --line-dark-strong: rgba(207, 172, 89, .32);
 
   /* ── Tipografía · escala modular 1.25 / base 16 ─────────── */
   --font-serif: 'Cormorant Garamond', serif;
