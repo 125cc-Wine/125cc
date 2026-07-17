@@ -44,7 +44,14 @@ body{
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 @media(max-width:600px){.grid2{grid-template-columns:1fr}.grid3{grid-template-columns:1fr 1fr}}
 .field label{font-size:12px;color:var(--muted);display:block;margin-bottom:8px}
-.field input[type=range]{width:100%;accent-color:var(--tinto);cursor:pointer;height:4px}
+.field-row{display:flex;align-items:center;gap:10px}
+.field input[type=range]{flex:1;accent-color:var(--tinto);cursor:pointer;height:4px;min-width:0}
+.num-input{
+  width:100px;flex-shrink:0;background:#fff;border:1px solid var(--border);border-radius:8px;
+  padding:7px 9px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;color:var(--text);
+  text-align:right;outline:none;transition:border-color .15s;
+}
+.num-input:focus{border-color:var(--tinto)}
 .field-val{display:flex;justify-content:space-between;align-items:center;margin-top:5px}
 .field-val span{font-size:11px;color:var(--muted)}
 .field-val strong{font-size:14px;font-weight:500;color:var(--text)}
@@ -113,32 +120,50 @@ body{
     <div class="grid2">
       <div class="field">
         <label>Precio copa promedio (ARS)</label>
-        <input type="range" min="2000" max="12000" step="500" value="4000" id="precio">
+        <div class="field-row">
+          <input type="range" min="2000" max="12000" step="500" value="4000" id="precio">
+          <input type="number" class="num-input" min="0" step="100" value="4000" id="precioNum">
+        </div>
         <div class="field-val"><span>$2.000</span><strong id="precioVal">$4.000</strong><span>$12.000</span></div>
       </div>
       <div class="field">
         <label>Costos fijos mensuales (ARS)</label>
-        <input type="range" min="2000000" max="15000000" step="200000" value="5000000" id="costos">
+        <div class="field-row">
+          <input type="range" min="2000000" max="15000000" step="200000" value="5000000" id="costos">
+          <input type="number" class="num-input" min="0" step="10000" value="5000000" id="costosNum">
+        </div>
         <div class="field-val"><span>$2M</span><strong id="costosVal">$5M</strong><span>$15M</span></div>
       </div>
       <div class="field">
         <label>Noches operativas por mes</label>
-        <input type="range" min="8" max="28" step="1" value="16" id="noches">
+        <div class="field-row">
+          <input type="range" min="8" max="28" step="1" value="16" id="noches">
+          <input type="number" class="num-input" min="0" step="1" value="16" id="nochesNum">
+        </div>
         <div class="field-val"><span>8</span><strong id="nochesVal">16</strong><span>28</span></div>
       </div>
       <div class="field">
         <label>Bodegas socias en carta (de 14)</label>
-        <input type="range" min="0" max="14" step="1" value="6" id="bodegas">
+        <div class="field-row">
+          <input type="range" min="0" max="14" step="1" value="6" id="bodegas">
+          <input type="number" class="num-input" min="0" max="14" step="1" value="6" id="bodegasNum">
+        </div>
         <div class="field-val"><span>0</span><strong id="bodegasVal">6 (43%)</strong><span>14</span></div>
       </div>
       <div class="field">
         <label>Ingreso club de socios / mes</label>
-        <input type="range" min="0" max="3000000" step="50000" value="0" id="club">
+        <div class="field-row">
+          <input type="range" min="0" max="3000000" step="50000" value="0" id="club">
+          <input type="number" class="num-input" min="0" step="10000" value="0" id="clubNum">
+        </div>
         <div class="field-val"><span>$0</span><strong id="clubVal">$0</strong><span>$3M</span></div>
       </div>
       <div class="field">
         <label>Ganancia neta objetivo / mes</label>
-        <input type="range" min="0" max="10000000" step="100000" value="1000000" id="objetivo">
+        <div class="field-row">
+          <input type="range" min="0" max="10000000" step="100000" value="1000000" id="objetivo">
+          <input type="number" class="num-input" min="0" step="50000" value="1000000" id="objetivoNum">
+        </div>
         <div class="field-val"><span>$0</span><strong id="objetivoVal">$1M</strong><span>$10M</span></div>
       </div>
     </div>
@@ -150,12 +175,18 @@ body{
     <div class="grid2">
       <div class="field">
         <label>Ticket promedio de tapeo por persona (ARS)</label>
-        <input type="range" min="0" max="8000" step="200" value="2000" id="tapeoTicket">
+        <div class="field-row">
+          <input type="range" min="0" max="8000" step="200" value="2000" id="tapeoTicket">
+          <input type="number" class="num-input" min="0" step="100" value="2000" id="tapeoTicketNum">
+        </div>
         <div class="field-val"><span>$0</span><strong id="tapeoTicketVal">$2.000</strong><span>$8.000</span></div>
       </div>
       <div class="field">
         <label>% de personas que piden tapeo</label>
-        <input type="range" min="0" max="100" step="5" value="40" id="tapeoPct">
+        <div class="field-row">
+          <input type="range" min="0" max="100" step="5" value="40" id="tapeoPct">
+          <input type="number" class="num-input" min="0" max="100" step="1" value="40" id="tapeoPctNum">
+        </div>
         <div class="field-val"><span>0%</span><strong id="tapeoPctVal">40%</strong><span>100%</span></div>
       </div>
     </div>
@@ -206,16 +237,16 @@ const fmtM = n => {
 };
 
 function calc(){
-  const precio       = +document.getElementById('precio').value;
-  const costos       = +document.getElementById('costos').value;
-  const noches       = +document.getElementById('noches').value;
-  const bodegas      = +document.getElementById('bodegas').value;
-  const club         = +document.getElementById('club').value;
-  const objetivo     = +document.getElementById('objetivo').value;
-  const tapeoTicket  = +document.getElementById('tapeoTicket').value;
-  const tapeoPct     = +document.getElementById('tapeoPct').value / 100;
+  const precio       = +document.getElementById('precioNum').value || 0;
+  const costos       = +document.getElementById('costosNum').value || 0;
+  const noches       = +document.getElementById('nochesNum').value || 0;
+  const bodegas      = +document.getElementById('bodegasNum').value || 0;
+  const club         = +document.getElementById('clubNum').value || 0;
+  const objetivo     = +document.getElementById('objetivoNum').value || 0;
+  const tapeoTicket  = +document.getElementById('tapeoTicketNum').value || 0;
+  const tapeoPct     = Math.min(100, +document.getElementById('tapeoPctNum').value || 0) / 100;
 
-  const pct    = bodegas / 14;
+  const pct    = Math.min(1, bodegas / 14);
   const margen = pct * 1.0 + (1 - pct) * 0.60;
   const margenPct = Math.round(margen * 100);
   const margenTapeo = 0.65; // margen del tapeo estimado
@@ -355,8 +386,21 @@ function calc(){
     </div>`;
 }
 
+// Cada variable tiene un slider (aproximado, para tantear rápido) y un input
+// numérico (fuente de verdad — ahí se puede tipear el número exacto, incluso
+// fuera del rango del slider). Se mantienen sincronizados en las dos direcciones.
+function syncPair(rangeId, numId){
+  const r = document.getElementById(rangeId);
+  const n = document.getElementById(numId);
+  r.addEventListener('input', ()=>{ n.value = r.value; calc(); });
+  n.addEventListener('input', ()=>{
+    const v = n.value === '' ? 0 : +n.value;
+    r.value = Math.min(+r.max, Math.max(+r.min, v));
+    calc();
+  });
+}
 ['precio','costos','noches','bodegas','club','objetivo','tapeoTicket','tapeoPct'].forEach(id=>
-  document.getElementById(id).addEventListener('input', calc));
+  syncPair(id, id+'Num'));
 calc();
 </script>
 </body>
