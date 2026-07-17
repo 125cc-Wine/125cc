@@ -33,6 +33,7 @@
       --dark-cata: #1D242A;     /* fondo del ritual de cata */
       --ink-dark: #F5EDE0;      /* texto sobre oscuro */
       --ink-dark-2: #D2B470;    /* texto secundario sobre oscuro */
+      --ink-dark-3: rgba(245, 237, 224, .58); /* texto terciario sobre oscuro — NO usar --ink-3 (gris-azulado) acá, se pierde contra el azul de --dark-2/--dark-3 */
 
       /* ── Color · materiales del local ───────────────────────── */
       --madera: #CFAC59;
@@ -44,6 +45,7 @@
       --accent: #7A1428;
       --accent-2: #9B2035;
       --accent-grad: linear-gradient(135deg, #7A1428, #9B2035);
+      --accent-bright: #E8677A; /* variante clara de --accent para texto sobre fondo oscuro (--accent solo tiene contraste sobre claro) */
 
       /* ── Color · tipos de vino (única fuente de verdad) ────── */
       --tinto: #7A1428;
@@ -2182,12 +2184,12 @@ function buildScoreSlider(id,val){
   const pct=Math.round((val-60)/40*100);
   return `<div style="text-align:center;padding:20px 0 8px">
     <div id="scoreDisplay_${id}" style="font-family:'Cormorant Garamond',serif;font-size:76px;font-weight:700;color:${val>=92?'var(--madera)':'var(--ink-dark)'};line-height:1">${val}</div>
-    <div id="scoreLbl_${id}" style="font-size:14px;color:var(--ink-3);margin-top:4px;font-style:italic">${CATA_SCORE_LABELS[val]||''}</div>
+    <div id="scoreLbl_${id}" style="font-size:14px;color:var(--ink-dark-3);margin-top:4px;font-style:italic">${CATA_SCORE_LABELS[val]||''}</div>
   </div>
   <input type="range" min="60" max="100" value="${val}" step="1" id="scoreSlider_${id}"
     oninput="updateScore('${id}',+this.value)"
     style="width:100%;-webkit-appearance:none;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--madera) ${pct}%,rgba(255,255,255,.1) ${pct}%);outline:none;cursor:pointer;margin-bottom:8px">
-  <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3)"><span>60 · Defectuoso</span><span>100 · Obra maestra</span></div>`;
+  <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-dark-3)"><span>60 · Defectuoso</span><span>100 · Obra maestra</span></div>`;
 }
 function updateScore(id,val){
   cataState.puntuacion=val;
@@ -2207,7 +2209,7 @@ function buildAttrSlider(key,label,desc,val){
     <input type="range" min="1" max="5" value="${val}" step="1" id="attr_${key}"
       oninput="updateAttrCata('${key}',+this.value)"
       style="width:100%;-webkit-appearance:none;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--accent) ${pct}%,rgba(255,255,255,.1) ${pct}%);outline:none;cursor:pointer">
-    <div id="attrDesc_${key}" style="font-size:var(--text-kicker);color:var(--ink-3);margin-top:5px;font-style:italic">${desc[val]||''}</div>
+    <div id="attrDesc_${key}" style="font-size:var(--text-kicker);color:var(--ink-dark-3);margin-top:5px;font-style:italic">${desc[val]||''}</div>
   </div>`;
 }
 const ATTR_DESC_MAP = {acidez:ACIDEZ_DESC,taninos:TANINOS_DESC,cuerpo:CUERPO_DESC,final:FINAL_DESC,
@@ -2224,14 +2226,14 @@ function updateAttrCata(key,val){
 function buildProgress(step,total,label){
   const pct=Math.round(step/total*100);
   return `<div style="padding:16px 16px 0">
-    <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px"><span>${label}</span><span>${step}/${total}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-dark-3);margin-bottom:8px"><span>${label}</span><span>${step}/${total}</span></div>
     <div style="height:2px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden">
       <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:2px;transition:width .4s ease"></div>
     </div>
   </div>`;
 }
 
-const NAVBTN = (back,label,fn,gold=false)=>`<button onclick="${fn}" style="flex:${back?1:2};background:${back?'transparent':`linear-gradient(135deg,${gold?'var(--madera),#E8C878':'var(--accent),var(--accent-2)'})`};border:${back?'1px solid var(--line-dark-strong)':'none'};border-radius:var(--r-pill);padding:14px;font-size:12px;${back?'':'font-weight:500;'}color:${back?'var(--ink-3)':(gold?'var(--dark)':'#fff')};cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;${gold&&!back?'box-shadow:0 4px 16px rgba(196,160,90,.25)':''};transition:transform var(--t-feedback) var(--ease)">${label}</button>`;
+const NAVBTN = (back,label,fn,gold=false)=>`<button onclick="${fn}" style="flex:${back?1:2};background:${back?'transparent':`linear-gradient(135deg,${gold?'var(--madera),#E8C878':'var(--accent),var(--accent-2)'})`};border:${back?'1px solid var(--line-dark-strong)':'none'};border-radius:var(--r-pill);padding:14px;font-size:12px;${back?'':'font-weight:500;'}color:${back?'var(--ink-dark-3)':(gold?'var(--dark)':'#fff')};cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;${gold&&!back?'box-shadow:0 4px 16px rgba(196,160,90,.25)':''};transition:transform var(--t-feedback) var(--ease)">${label}</button>`;
 
 function renderFormPuntuar(){
   if(!wines.length)return;
@@ -2256,7 +2258,7 @@ let cataWineSearch = '';
 function buildCataWineHero(){
   const w = cataState.vinoId ? wines.find(x=>x.id===cataState.vinoId) : null;
   if(!w){
-    return `<div onclick="toggleCataWinePicker()" style="text-align:center;padding:14px;color:var(--ink-3);font-size:var(--text-data);cursor:pointer;border:1px dashed rgba(255,255,255,.15);border-radius:var(--r-card)">Elegí un vino para catar →</div>${buildCataWinePickerWrap()}`;
+    return `<div onclick="toggleCataWinePicker()" style="text-align:center;padding:14px;color:var(--ink-dark-3);font-size:var(--text-data);cursor:pointer;border:1px dashed rgba(255,255,255,.15);border-radius:var(--r-card)">Elegí un vino para catar →</div>${buildCataWinePickerWrap()}`;
   }
   const color = TYPE_COLOR[w.tipo] || '#888';
   const thumb = w.imagen
@@ -2266,7 +2268,7 @@ function buildCataWineHero(){
     ${thumb}
     <div style="flex:1;min-width:0">
       <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--ink-dark);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(w.nombre)}</div>
-      <div style="font-size:12px;color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(w.bodega)} · ${esc(TYPE_LABEL[w.tipo]||w.tipo)} · ${fmtPrecio(w.precio)}</div>
+      <div style="font-size:12px;color:var(--ink-dark-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(w.bodega)} · ${esc(TYPE_LABEL[w.tipo]||w.tipo)} · ${fmtPrecio(w.precio)}</div>
     </div>
     <div style="flex-shrink:0;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--madera);border:1px solid rgba(196,160,90,.3);border-radius:var(--r-pill);padding:6px 12px">Cambiar</div>
   </div>${buildCataWinePickerWrap()}`;
@@ -2298,7 +2300,7 @@ function onCataWineSearch(v){
 function buildCataWinePickList(){
   const q = normalizeSearch(cataWineSearch);
   const filtered = q ? wines.filter(w=>normalizeSearch(w.nombre).includes(q)||normalizeSearch(w.bodega).includes(q)) : wines;
-  if(!filtered.length) return `<div style="text-align:center;padding:20px 0;color:var(--ink-3);font-size:var(--text-kicker)">No encontramos vinos para "${esc(cataWineSearch)}"</div>`;
+  if(!filtered.length) return `<div style="text-align:center;padding:20px 0;color:var(--ink-dark-3);font-size:var(--text-kicker)">No encontramos vinos para "${esc(cataWineSearch)}"</div>`;
   return filtered.map(w=>{
     const active = w.id===cataState.vinoId;
     const color = TYPE_COLOR[w.tipo] || '#888';
@@ -2310,7 +2312,7 @@ function buildCataWinePickList(){
       ${thumb}
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(w.nombre)}</div>
-        <div style="font-size:10px;color:var(--ink-3)">${esc(w.bodega)} · ${esc(TYPE_LABEL[w.tipo]||w.tipo)}</div>
+        <div style="font-size:10px;color:var(--ink-dark-3)">${esc(w.bodega)} · ${esc(TYPE_LABEL[w.tipo]||w.tipo)}</div>
       </div>
       <div style="font-size:11px;color:var(--ink-dark-2);flex-shrink:0">${fmtPrecio(w.precio)}</div>
     </div>`;
@@ -2337,7 +2339,7 @@ function renderCataWelcome(){
                outline:none;transition:border-color .2s;letter-spacing:.01em"
         onfocus="this.style.borderColor='var(--madera)'"
         onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-      <div style="font-size:var(--text-kicker);color:var(--ink-3);margin-top:7px;line-height:1.5">
+      <div style="font-size:var(--text-kicker);color:var(--ink-dark-3);margin-top:7px;line-height:1.5">
         📒 Con tu email podés ver tu historial de catas en el bar. No lo compartimos con nadie.
       </div>
     </div>
@@ -2350,9 +2352,9 @@ function renderCataWelcome(){
     <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink-dark);text-align:center;margin-bottom:18px">¿Qué tipo de cata?</div>
     <div onclick="startCata('simple')" style="background:var(--dark-2);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-surface);padding:22px 20px;margin-bottom:12px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden">
       <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:3px 0 0 3px"></div>
-      <div style="display:inline-flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);padding:3px 12px;border-radius:var(--r-surface);background:rgba(200,70,58,.1);border:1px solid rgba(200,70,58,.2);margin-bottom:12px">🍷 Cata Simple</div>
+      <div style="display:inline-flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent-bright);padding:3px 12px;border-radius:var(--r-surface);background:rgba(200,70,58,.16);border:1px solid rgba(200,70,58,.3);margin-bottom:12px">🍷 Cata Simple</div>
       <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink-dark);margin-bottom:6px">Rápida y directa</div>
-      <div style="font-size:var(--text-data);color:var(--ink-3);line-height:1.6;margin-bottom:14px">Color, aromas, sensaciones en boca y puntuación 60–100.</div>
+      <div style="font-size:var(--text-data);color:var(--ink-dark-3);line-height:1.6;margin-bottom:14px">Color, aromas, sensaciones en boca y puntuación 60–100.</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">${['Color','Aromas','En boca','Puntuación 60–100'].map(f=>`<span style="font-size:var(--text-kicker);color:var(--ink-dark-2);background:var(--dark-3);border:1px solid rgba(255,255,255,.06);border-radius:var(--r-surface);padding:4px 11px">${f}</span>`).join('')}</div>
       <div style="position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:22px;color:rgba(255,255,255,.2)">›</div>
     </div>
@@ -2360,7 +2362,7 @@ function renderCataWelcome(){
       <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--madera);border-radius:3px 0 0 3px"></div>
       <div style="display:inline-flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);padding:3px 12px;border-radius:var(--r-surface);background:rgba(196,160,90,.1);border:1px solid rgba(196,160,90,.2);margin-bottom:12px">⭐ Cata Sommelier</div>
       <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink-dark);margin-bottom:6px">Análisis completo</div>
-      <div style="font-size:var(--text-data);color:var(--ink-3);line-height:1.6;margin-bottom:14px">Visual, olfativo, gustativo, atributos y maridaje.</div>
+      <div style="font-size:var(--text-data);color:var(--ink-dark-3);line-height:1.6;margin-bottom:14px">Visual, olfativo, gustativo, atributos y maridaje.</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">${['Visual','Olfativo','Gustativo','Atributos','Puntuación 60–100'].map(f=>`<span style="font-size:var(--text-kicker);color:var(--ink-dark-2);background:var(--dark-3);border:1px solid rgba(255,255,255,.06);border-radius:var(--r-surface);padding:4px 11px">${f}</span>`).join('')}</div>
       <div style="position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:22px;color:rgba(255,255,255,.2)">›</div>
     </div>
@@ -2382,7 +2384,7 @@ function stepCard(paso,label,titulo,hint,content,tip){
   return `<div style="background:var(--dark-2);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-surface);margin:14px 16px;padding:22px;animation:${anim} .38s cubic-bezier(.22,1,.36,1)">
     <div style="font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--madera);margin-bottom:4px">${paso}</div>
     <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink-dark);margin-bottom:4px;line-height:1.2">${titulo}</div>
-    <div style="font-size:var(--text-caption);color:var(--ink-3);margin-bottom:20px">${hint}</div>
+    <div style="font-size:var(--text-caption);color:var(--ink-dark-3);margin-bottom:20px">${hint}</div>
     ${content}
     ${tip ? helpBox(tip) : ''}
   </div>`;
@@ -2392,7 +2394,7 @@ function stepCard(paso,label,titulo,hint,content,tip){
 function helpBox(text){
   return `<div style="margin-top:16px;padding:11px 13px;background:rgba(196,160,90,.08);border:1px solid rgba(196,160,90,.15);border-radius:var(--r-card);display:flex;gap:9px;align-items:flex-start">
     <span style="flex-shrink:0;font-size:13px;line-height:1.5">💡</span>
-    <span style="font-size:var(--text-kicker);color:var(--ink-3);line-height:1.65">${text}</span>
+    <span style="font-size:var(--text-kicker);color:var(--ink-dark-3);line-height:1.65">${text}</span>
   </div>`;
 }
 
@@ -2434,7 +2436,7 @@ function renderStepSommelier(){
     <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px">Descripción libre <span style="opacity:.6;font-weight:300;text-transform:none;letter-spacing:0">· opcional</span></div>
     <textarea id="cata-desc" rows="4" placeholder="Fresco, muy tomable, especiado, le faltó cuerpo… lo que sea que sentiste." oninput="cataState.descripcion=this.value" style="width:100%;background:var(--dark-3);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-card);padding:12px 14px;font-size:var(--text-data);color:var(--ink-dark);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.6">${cataState.descripcion}</textarea>
   `);
-  else if(s===5) h+=stepCard('Paso 5 · Puntuación','','Puntuación final','Escala 60–100 estilo Parker',buildScoreSlider('somm',cataState.puntuacion)+`<div style="background:var(--dark-3);border-radius:var(--r-card);padding:14px;margin-top:16px;border-left:2px solid var(--madera)"><div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px">Referencia</div><div style="font-size:var(--text-kicker);color:var(--ink-3);line-height:1.9"><b style="color:var(--ink-dark-2)">95–100</b> · Excepcional<br><b style="color:var(--ink-dark-2)">90–94</b> · Sobresaliente<br><b style="color:var(--ink-dark-2)">85–89</b> · Muy bueno<br><b style="color:var(--ink-dark-2)">80–84</b> · Bueno<br><b style="color:var(--ink-dark-2)">70–79</b> · Correcto<br><b style="color:var(--ink-dark-2)">60–69</b> · Defectuoso</div></div>`);
+  else if(s===5) h+=stepCard('Paso 5 · Puntuación','','Puntuación final','Escala 60–100 estilo Parker',buildScoreSlider('somm',cataState.puntuacion)+`<div style="background:var(--dark-3);border-radius:var(--r-card);padding:14px;margin-top:16px;border-left:2px solid var(--madera)"><div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px">Referencia</div><div style="font-size:var(--text-kicker);color:var(--ink-dark-3);line-height:1.9"><b style="color:var(--ink-dark-2)">95–100</b> · Excepcional<br><b style="color:var(--ink-dark-2)">90–94</b> · Sobresaliente<br><b style="color:var(--ink-dark-2)">85–89</b> · Muy bueno<br><b style="color:var(--ink-dark-2)">80–84</b> · Bueno<br><b style="color:var(--ink-dark-2)">70–79</b> · Correcto<br><b style="color:var(--ink-dark-2)">60–69</b> · Defectuoso</div></div>`);
 
   c.innerHTML=h+navBtns;
 }
