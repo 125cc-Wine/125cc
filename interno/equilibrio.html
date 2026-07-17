@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>125cc Wine Bar · Calculadora de Equilibrio</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --dk:#2E1E10;--madera:#C8A46A;--piedra:#C4785A;
+  --cream:#FAF5EE;--cream2:#F0E8DA;--cream3:#E4D8C8;
+  --tinto:#7A1428;--text:#2A1A08;--muted:#8A7060;--sub:#5A4030;
+  --card:rgba(255,255,255,.92);--border:rgba(139,106,58,.18);
+  --green:#2D6A2D;--green-bg:#EAF3DE;
+  --amber:#854F0B;--amber-bg:#FAEEDA;
+  --red:#8B1A1A;--red-bg:#FCEBEB;
+}
+body{
+  font-family:'DM Sans',sans-serif;font-weight:300;
+  background:radial-gradient(ellipse at 50% 0%, #F5EDE0 0%, #E8DDD0 50%, #D8CDBC 100%);
+  background-attachment:fixed;min-height:100vh;color:var(--text);
+}
+.page{max-width:900px;margin:0 auto;padding:32px 20px 60px}
+
+/* HEADER */
+.header{text-align:center;margin-bottom:40px;padding:40px 20px 32px;
+  background:var(--dk);border-radius:20px;position:relative;overflow:hidden}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--madera),transparent)}
+.header-eye{font-size:10px;letter-spacing:.4em;text-transform:uppercase;
+  color:rgba(200,164,106,.6);margin-bottom:10px}
+.header-title{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;
+  color:#F5EDE0;line-height:.9;letter-spacing:-.02em;margin-bottom:6px}
+.header-title em{color:var(--piedra);font-style:italic}
+.header-sub{font-size:13px;color:rgba(245,237,224,.45);font-weight:300;letter-spacing:.03em}
+
+/* CONTROLS */
+.section{background:var(--card);border-radius:16px;padding:24px;margin-bottom:16px;
+  border:.5px solid var(--border)}
+.section-title{font-size:10px;letter-spacing:.25em;text-transform:uppercase;
+  color:var(--tinto);margin-bottom:18px;font-weight:400}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:600px){.grid2{grid-template-columns:1fr}.grid3{grid-template-columns:1fr 1fr}}
+.field label{font-size:12px;color:var(--muted);display:block;margin-bottom:8px}
+.field input[type=range]{width:100%;accent-color:var(--tinto);cursor:pointer;height:4px}
+.field-val{display:flex;justify-content:space-between;align-items:center;margin-top:5px}
+.field-val span{font-size:11px;color:var(--muted)}
+.field-val strong{font-size:14px;font-weight:500;color:var(--text)}
+
+/* KPIS */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:700px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+.kpi{background:var(--card);border-radius:14px;padding:14px 12px;text-align:center;
+  border:.5px solid var(--border)}
+.kpi-label{font-size:10px;color:var(--muted);margin-bottom:5px;line-height:1.3}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:var(--text);line-height:1}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* BANNER */
+.banner{border-radius:12px;padding:14px 18px;margin-bottom:16px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+  background:var(--amber-bg);border:.5px solid rgba(213,161,21,.3)}
+.banner-text{font-size:13px;color:var(--amber)}
+.banner-pill{font-size:11px;color:var(--amber);background:rgba(255,255,255,.6);
+  padding:4px 12px;border-radius:20px;font-weight:400;white-space:nowrap}
+
+/* CHART */
+.chart-wrap{background:var(--card);border-radius:16px;padding:20px;margin-bottom:16px;
+  border:.5px solid var(--border)}
+.chart-legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.legend-line{width:24px;height:2px;border-radius:2px}
+.chart-canvas-wrap{position:relative;width:100%;height:280px}
+
+/* SCENARIOS */
+.scen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:600px){.scen-grid{grid-template-columns:1fr}}
+.scen{background:var(--card);border-radius:14px;padding:16px;border:.5px solid var(--border)}
+.scen-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;font-weight:400}
+.scen-info{font-size:12px;color:var(--muted);margin-bottom:4px}
+.scen-result{border-radius:8px;padding:8px 12px;margin-top:10px}
+.scen-result-label{font-size:12px;font-weight:500}
+.scen-result-obj{font-size:11px;margin-top:3px}
+
+/* FACTURACION */
+.fact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fact-item{border-radius:10px;padding:12px;text-align:center;background:rgba(240,228,204,.3)}
+.fact-label{font-size:10px;color:var(--muted);margin-bottom:5px}
+.fact-val{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--text)}
+.fact-sub{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* FOOTER */
+.footer{text-align:center;margin-top:32px;font-size:11px;color:var(--muted);
+  letter-spacing:.05em}
+.footer strong{color:var(--tinto);font-weight:400}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-eye">Wine Bar · Mar del Plata</div>
+    <div class="header-title">125<em>cc</em></div>
+    <div class="header-sub">Calculadora de punto de equilibrio y rentabilidad</div>
+  </div>
+
+  <!-- CONTROLES -->
+  <div class="section">
+    <div class="section-title">Variables del negocio</div>
+    <div class="grid2">
+      <div class="field">
+        <label>Precio copa promedio (ARS)</label>
+        <input type="range" min="2000" max="12000" step="500" value="4000" id="precio">
+        <div class="field-val"><span>$2.000</span><strong id="precioVal">$4.000</strong><span>$12.000</span></div>
+      </div>
+      <div class="field">
+        <label>Costos fijos mensuales (ARS)</label>
+        <input type="range" min="2000000" max="15000000" step="200000" value="5000000" id="costos">
+        <div class="field-val"><span>$2M</span><strong id="costosVal">$5M</strong><span>$15M</span></div>
+      </div>
+      <div class="field">
+        <label>Noches operativas por mes</label>
+        <input type="range" min="8" max="28" step="1" value="16" id="noches">
+        <div class="field-val"><span>8</span><strong id="nochesVal">16</strong><span>28</span></div>
+      </div>
+      <div class="field">
+        <label>Bodegas socias en carta (de 14)</label>
+        <input type="range" min="0" max="14" step="1" value="6" id="bodegas">
+        <div class="field-val"><span>0</span><strong id="bodegasVal">6 (43%)</strong><span>14</span></div>
+      </div>
+      <div class="field">
+        <label>Ingreso club de socios / mes</label>
+        <input type="range" min="0" max="3000000" step="50000" value="0" id="club">
+        <div class="field-val"><span>$0</span><strong id="clubVal">$0</strong><span>$3M</span></div>
+      </div>
+      <div class="field">
+        <label>Ganancia neta objetivo / mes</label>
+        <input type="range" min="0" max="10000000" step="100000" value="1000000" id="objetivo">
+        <div class="field-val"><span>$0</span><strong id="objetivoVal">$1M</strong><span>$10M</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAPEO -->
+  <div class="section">
+    <div class="section-title">Tapeo</div>
+    <div class="grid2">
+      <div class="field">
+        <label>Ticket promedio de tapeo por persona (ARS)</label>
+        <input type="range" min="0" max="8000" step="200" value="2000" id="tapeoTicket">
+        <div class="field-val"><span>$0</span><strong id="tapeoTicketVal">$2.000</strong><span>$8.000</span></div>
+      </div>
+      <div class="field">
+        <label>% de personas que piden tapeo</label>
+        <input type="range" min="0" max="100" step="5" value="40" id="tapeoPct">
+        <div class="field-val"><span>0%</span><strong id="tapeoPctVal">40%</strong><span>100%</span></div>
+      </div>
+    </div>
+    <div id="tapeoResumen" style="margin-top:14px;padding:12px 16px;background:rgba(240,228,204,.4);border-radius:10px;font-size:12px;color:var(--muted);border:.5px solid var(--border)"></div>
+  </div>
+
+  <!-- KPIS -->
+  <div class="kpi-grid" id="kpis"></div>
+
+  <!-- BANNER -->
+  <div id="metaBanner"></div>
+
+  <!-- GRAFICO -->
+  <div class="chart-wrap">
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-line" style="background:#7A1428"></div>Ingreso neto (margen)</div>
+      <div class="legend-item"><div class="legend-line" style="background:#e24b4a;border-top:2px dashed #e24b4a;height:0"></div>Costos fijos</div>
+      <div class="legend-item" id="legendObj" style="display:none"><div class="legend-line" style="background:#C8A46A;border-top:2px dashed #C8A46A;height:0"></div>Costos + objetivo</div>
+    </div>
+    <div class="chart-canvas-wrap">
+      <canvas id="chart" role="img" aria-label="Gráfico de punto de equilibrio para 125cc Wine Bar"></canvas>
+    </div>
+  </div>
+
+  <!-- ESCENARIOS -->
+  <div class="scen-grid" id="scenarios"></div>
+
+  <!-- FACTURACION -->
+  <div class="section">
+    <div class="section-title">Facturación bruta mensual necesaria</div>
+    <div class="fact-grid" id="facturacion"></div>
+  </div>
+
+  <div class="footer">
+    <strong>125cc Wine Bar</strong> &nbsp;·&nbsp; 125cc.com.ar &nbsp;·&nbsp; Uso interno &nbsp;·&nbsp; Actualizado julio 2026
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let chart;
+const fmt  = n => '$' + Math.round(n).toLocaleString('es-AR');
+const fmtM = n => {
+  const s = n < 0 ? '-' : '';
+  const a = Math.abs(n);
+  return s + '$' + (Math.round(a/100000)/10).toFixed(1) + 'M';
+};
+
+function calc(){
+  const precio       = +document.getElementById('precio').value;
+  const costos       = +document.getElementById('costos').value;
+  const noches       = +document.getElementById('noches').value;
+  const bodegas      = +document.getElementById('bodegas').value;
+  const club         = +document.getElementById('club').value;
+  const objetivo     = +document.getElementById('objetivo').value;
+  const tapeoTicket  = +document.getElementById('tapeoTicket').value;
+  const tapeoPct     = +document.getElementById('tapeoPct').value / 100;
+
+  const pct    = bodegas / 14;
+  const margen = pct * 1.0 + (1 - pct) * 0.60;
+  const margenPct = Math.round(margen * 100);
+  const margenTapeo = 0.65; // margen del tapeo estimado
+
+  document.getElementById('precioVal').textContent      = fmt(precio);
+  document.getElementById('costosVal').textContent      = fmtM(costos);
+  document.getElementById('nochesVal').textContent      = noches;
+  document.getElementById('bodegasVal').textContent     = bodegas + ' (' + Math.round(pct*100) + '%)';
+  document.getElementById('clubVal').textContent        = club > 0 ? fmtM(club) : '$0';
+  document.getElementById('objetivoVal').textContent    = objetivo > 0 ? fmtM(objetivo) : '$0';
+  document.getElementById('tapeoTicketVal').textContent = fmt(tapeoTicket);
+  document.getElementById('tapeoPctVal').textContent    = Math.round(tapeoPct*100) + '%';
+
+  // Ingreso extra por persona por noche (tapeo neto)
+  const tapeoXpersona = tapeoTicket * tapeoPct * margenTapeo;
+
+  // Ingreso TOTAL por copa (vino + tapeo proporcional)
+  // Asumimos 2.5 copas por persona → tapeo se divide entre 2.5
+  const ingresoXcopa = precio * margen + tapeoXpersona / 2.5;
+
+  const costosEf  = costos - club;
+  const copasEq   = Math.ceil(costosEf / ingresoXcopa);
+  const copasObj  = Math.ceil((costosEf + objetivo) / ingresoXcopa);
+  const cnEq      = Math.ceil(copasEq / noches);
+  const cnObj     = Math.ceil(copasObj / noches);
+  const perEq     = Math.ceil(cnEq / 2.5);
+  const perObj    = Math.ceil(cnObj / 2.5);
+  const factEq    = copasEq * precio;
+  const factObj   = copasObj * precio;
+
+  // Tapeo mensual estimado (en equilibrio)
+  const tapeoMensualBruto = Math.round(perEq * noches * tapeoTicket * tapeoPct);
+  const tapeoMensualNeto  = Math.round(tapeoMensualBruto * margenTapeo);
+
+  // Resumen tapeo
+  document.getElementById('tapeoResumen').innerHTML = tapeoTicket > 0
+    ? `Con <strong style="color:var(--text)">${Math.round(tapeoPct*100)}%</strong> de las personas pidiendo tapeo a <strong style="color:var(--text)">${fmt(tapeoTicket)}</strong> promedio — el tapeo aporta aproximadamente <strong style="color:var(--tinto)">${fmtM(tapeoMensualNeto)} neto/mes</strong> (${fmtM(tapeoMensualBruto)} bruto) en el escenario de equilibrio. Esto reduce las copas necesarias en <strong style="color:var(--text)">${Math.max(0, Math.ceil(costosEf/(precio*margen)) - copasEq)}</strong> copas por mes.`
+    : '<span style="color:var(--muted)">Mové el ticket promedio para ver el impacto del tapeo en el equilibrio.</span>';
+
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Margen vino</div><div class="kpi-val">${margenPct}%</div></div>
+    <div class="kpi"><div class="kpi-label">Copas equilibrio</div><div class="kpi-val">${copasEq.toLocaleString('es-AR')}</div><div class="kpi-sub">${cnEq}/noche · ${perEq} pers</div></div>
+    <div class="kpi"><div class="kpi-label">Copas con objetivo</div><div class="kpi-val">${copasObj.toLocaleString('es-AR')}</div><div class="kpi-sub">${cnObj}/noche · ${perObj} pers</div></div>
+    <div class="kpi"><div class="kpi-label">Fact. equilibrio</div><div class="kpi-val" style="font-size:20px">${fmtM(factEq)}</div><div class="kpi-sub">copas bruto/mes</div></div>
+    <div class="kpi"><div class="kpi-label">Tapeo neto/mes</div><div class="kpi-val" style="font-size:20px;color:var(--tinto)">${tapeoTicket>0?fmtM(tapeoMensualNeto):'—'}</div><div class="kpi-sub">${tapeoTicket>0?fmtM(tapeoMensualBruto)+' bruto':''}</div></div>`;
+
+  const banner = document.getElementById('metaBanner');
+  document.getElementById('legendObj').style.display = objetivo > 0 ? 'flex' : 'none';
+  banner.innerHTML = objetivo > 0
+    ? `<div class="banner"><span class="banner-text">Para quedarte limpio <strong>${fmtM(objetivo)}/mes</strong> necesitás <strong>${cnObj} copas/noche</strong> con <strong>${perObj} personas</strong></span><span class="banner-pill">+${cnObj - cnEq} copas sobre el equilibrio</span></div>`
+    : '';
+
+  // GRÁFICO
+  const maxC = Math.max(copasObj * 1.5, copasEq * 1.8, 150);
+  const steps = 24, labels = [], ing = [], cost = [], obj = [];
+  for(let i=0;i<=steps;i++){
+    const c = Math.round(maxC * i / steps);
+    labels.push(c);
+    // Ingreso neto total = vino + tapeo proporcional + club
+    const personas = c / 2.5;
+    ing.push(Math.round(c * precio * margen + personas * tapeoXpersona + club));
+    cost.push(costos);
+    obj.push(costos + objetivo);
+  }
+
+  const ctx = document.getElementById('chart').getContext('2d');
+  if(chart) chart.destroy();
+  chart = new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Ingreso neto total',data:ing,borderColor:'#7A1428',backgroundColor:'rgba(122,20,40,0.06)',borderWidth:2.5,pointRadius:0,fill:true,tension:0.1},
+      {label:'Costos',data:cost,borderColor:'#e24b4a',borderWidth:2,borderDash:[6,3],pointRadius:0,fill:false},
+      ...(objetivo>0?[{label:'Costos+Obj',data:obj,borderColor:'#C8A46A',borderWidth:2,borderDash:[4,4],pointRadius:0,fill:false}]:[])
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{intersect:false,mode:'index'},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          title:c=>c[0].label.toLocaleString('es-AR')+' copas/mes',
+          label:c=>c.dataset.label+': '+fmtM(c.raw)
+        }}
+      },
+      scales:{
+        x:{title:{display:true,text:'Copas vendidas por mes',color:'#8A7060',font:{size:11,family:'DM Sans'}},
+           ticks:{color:'#8A7060',maxTicksLimit:8,callback:(v,i)=>labels[i]?.toLocaleString('es-AR')},
+           grid:{color:'rgba(139,106,58,.1)'}},
+        y:{ticks:{color:'#8A7060',callback:v=>fmtM(v),font:{family:'DM Sans'}},
+           grid:{color:'rgba(139,106,58,.1)'}}
+      }
+    }
+  });
+
+  // ESCENARIOS
+  function scen(titulo, copas){
+    const personas = copas / 2.5;
+    const ingNeto = Math.round(copas * noches * precio * margen + personas * noches * tapeoXpersona + club);
+    const res = ingNeto - costos;
+    const sobreObj = res - objetivo;
+    const superaObj = res >= objetivo;
+    const ok = res >= 0;
+    const rc = superaObj ? '#2D6A2D' : ok ? '#854F0B' : '#8B1A1A';
+    const rb = superaObj ? '#EAF3DE' : ok ? '#FAEEDA' : '#FCEBEB';
+    const tapeoN = Math.round(personas * noches * tapeoTicket * tapeoPct);
+    return `<div class="scen">
+      <div class="scen-title">${titulo}</div>
+      <div class="scen-info">${copas} copas/noche · ${Math.ceil(personas)} personas</div>
+      <div class="scen-info">${fmtM(copas*noches*precio)} vino${tapeoTicket>0?' + '+fmtM(tapeoN)+' tapeo':''}</div>
+      <div class="scen-result" style="background:${rb}">
+        <div class="scen-result-label" style="color:${rc}">Neto: ${res>=0?'+':''}${fmtM(res)}</div>
+        ${objetivo>0?`<div class="scen-result-obj" style="color:${rc}">Sobre objetivo: ${sobreObj>=0?'+':''}${fmtM(sobreObj)}</div>`:''}
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('scenarios').innerHTML =
+    scen('25 personas/noche', Math.ceil(25*2.5)) +
+    scen('Ocupación media (30p)', Math.ceil(30*2.5)) +
+    scen('Lleno con rotación', Math.ceil(20*2.5*2.5));
+
+  document.getElementById('facturacion').innerHTML = `
+    <div class="fact-item">
+      <div class="fact-label">Fact. vino equilibrio</div>
+      <div class="fact-val">${fmtM(factEq)}</div>
+      <div class="fact-sub">${fmt(Math.round(factEq/4))}/semana</div>
+    </div>
+    <div class="fact-item" style="background:var(--amber-bg)">
+      <div class="fact-label" style="color:var(--amber)">Con objetivo de ganancia</div>
+      <div class="fact-val" style="color:var(--amber)">${fmtM(factObj)}</div>
+      <div class="fact-sub" style="color:var(--amber)">${fmt(Math.round(factObj/4))}/semana</div>
+    </div>
+    <div class="fact-item" style="background:var(--green-bg)">
+      <div class="fact-label" style="color:var(--green)">Tapeo neto mensual</div>
+      <div class="fact-val" style="color:var(--green)">${tapeoTicket>0?fmtM(tapeoMensualNeto):'—'}</div>
+      <div class="fact-sub" style="color:var(--green)">${tapeoTicket>0?Math.round(tapeoPct*100)+'% de personas':''}</div>
+    </div>`;
+}
+
+['precio','costos','noches','bodegas','club','objetivo','tapeoTicket','tapeoPct'].forEach(id=>
+  document.getElementById(id).addEventListener('input', calc));
+calc();
+</script>
+</body>
+</html>
