@@ -53,6 +53,7 @@ module.exports = async function handler(req, res) {
     const degustaciones = rows.slice(1)
       .filter(r => r.length > 1 && (r[2] || r[0]))
       .map(r => ({
+        id:          col(r, "id"),
         fecha:       col(r, "fecha"),
         hora:        col(r, "hora"),
         email:       col(r, "email") || "",

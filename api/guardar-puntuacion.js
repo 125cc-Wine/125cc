@@ -55,6 +55,36 @@ module.exports = async function handler(req, res) {
     const fecha = ahora.toLocaleDateString("es-AR");
     const hora  = ahora.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 
+    // Auto-migración: la columna "id" (W) puede no existir todavía en hojas
+    // creadas antes de este cambio. La agregamos on-the-fly si falta, así no
+    // depende de que alguien la agregue a mano en la sheet. Si esto falla no
+    // debe frenar el guardado de la cata (el id igual se escribe en la fila).
+    try {
+      const headerCheckRes = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!W1`,
+        { headers: { "Authorization": `Bearer ${token}` } }
+      );
+      let needsIdHeader = true;
+      if (headerCheckRes.ok) {
+        const hd = await headerCheckRes.json();
+        const val = (hd.values && hd.values[0] && hd.values[0][0]) || '';
+        needsIdHeader = val.toString().trim().toLowerCase() !== 'id';
+      }
+      if (needsIdHeader) {
+        await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!W1?valueInputOption=USER_ENTERED`,
+          {
+            method:  "PUT",
+            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+            body:    JSON.stringify({ values: [["id"]] }),
+          }
+        );
+      }
+    } catch (e) { /* no bloquea el guardado */ }
+
+    // Id estable de la fila, generado server-side (no confiar en el cliente).
+    const cataId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
     const colorFinal = color === '__otro__' ? (color_otro || '—') : (color || '—');
     const aromasArr  = aromas ? aromas.split(',').map(s => s.trim()).filter(Boolean) : [];
     if (aromas_otro?.trim()) aromasArr.push(aromas_otro.trim());
@@ -83,10 +113,11 @@ module.exports = async function handler(req, res) {
       olfativo    ?? '—',
       copa        || '125 cc',
       varietal    || '—',
+      cataId,
     ];
 
     const r = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A:V:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A:W:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
       {
         method:  "POST",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
@@ -97,7 +128,7 @@ module.exports = async function handler(req, res) {
       const e = await r.json();
       return res.status(502).json({ error: "Error Sheets", detail: e?.error?.message });
     }
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, id: cataId });
 
   } catch (err) {
     return res.status(500).json({ error: "Error interno.", detail: err.message });
