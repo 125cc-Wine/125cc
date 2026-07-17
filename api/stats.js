@@ -20,7 +20,7 @@ module.exports = async function handler(req, res) {
     const token = await getReadOnlyToken(GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY);
 
     const sheetRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A1:V20000`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A1:W20000`,
       { headers: { "Authorization": `Bearer ${token}` } }
     );
     if (!sheetRes.ok) {
