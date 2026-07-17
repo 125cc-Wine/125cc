@@ -2,6 +2,22 @@
 
 const { getReadWriteToken } = require('./_lib/google-auth');
 
+function normHeader(h) {
+  return (h || '').toString().trim().toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
+}
+
+function colLetter(idx) {
+  let n = idx + 1, s = '';
+  while (n > 0) {
+    const m = (n - 1) % 26;
+    s = String.fromCharCode(65 + m) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -55,35 +71,44 @@ module.exports = async function handler(req, res) {
     const fecha = ahora.toLocaleDateString("es-AR");
     const hora  = ahora.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 
-    // Auto-migración: la columna "id" (W) puede no existir todavía en hojas
-    // creadas antes de este cambio. La agregamos on-the-fly si falta, así no
-    // depende de que alguien la agregue a mano en la sheet. Si esto falla no
-    // debe frenar el guardado de la cata (el id igual se escribe en la fila).
-    try {
-      const headerCheckRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!W1`,
-        { headers: { "Authorization": `Bearer ${token}` } }
-      );
-      let needsIdHeader = true;
-      if (headerCheckRes.ok) {
-        const hd = await headerCheckRes.json();
-        const val = (hd.values && hd.values[0] && hd.values[0][0]) || '';
-        needsIdHeader = val.toString().trim().toLowerCase() !== 'id';
-      }
-      if (needsIdHeader) {
+    // Leemos los headers REALES de la sheet y armamos la fila mapeando por
+    // nombre de columna (igual que editar-cata.js) en vez de asumir un orden
+    // fijo — si alguien reordena o inserta columnas a mano en Sheets, un
+    // array posicional queda desalineado en silencio y los datos se guardan
+    // en la columna equivocada.
+    const headerRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!1:1`,
+      { headers: { "Authorization": `Bearer ${token}` } }
+    );
+    if (!headerRes.ok) {
+      const err = await headerRes.json();
+      return res.status(502).json({ error: "Error leyendo Sheets.", detail: err?.error?.message });
+    }
+    const headerData = await headerRes.json();
+    const headersRaw = (headerData.values && headerData.values[0]) || [];
+    let headers = headersRaw.map(normHeader);
+
+    // Auto-migración: agrega la columna "id" si todavía no existe. Si falla,
+    // no debe frenar el guardado (se guarda igual, sin id, como fila legacy).
+    if (headers.indexOf('id') === -1) {
+      const idColLetter = colLetter(headers.length);
+      try {
         await fetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!W1?valueInputOption=USER_ENTERED`,
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!${idColLetter}1?valueInputOption=USER_ENTERED`,
           {
             method:  "PUT",
             headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
             body:    JSON.stringify({ values: [["id"]] }),
           }
         );
-      }
-    } catch (e) { /* no bloquea el guardado */ }
+        headers = [...headers, 'id'];
+      } catch (e) { /* no bloquea el guardado */ }
+    }
 
     // Id estable de la fila, generado server-side (no confiar en el cliente).
-    const cataId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const cataId = headers.indexOf('id') !== -1
+      ? Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+      : '';
 
     const colorFinal = color === '__otro__' ? (color_otro || '—') : (color || '—');
     const aromasArr  = aromas ? aromas.split(',').map(s => s.trim()).filter(Boolean) : [];
@@ -91,33 +116,42 @@ module.exports = async function handler(req, res) {
     const saborArr   = sabor ? sabor.split(',').map(s => s.trim()).filter(Boolean) : [];
     if (sabor_otro?.trim()) saborArr.push(sabor_otro.trim());
 
-    const fila = [
+    const fieldMap = {
       fecha, hora,
-      email       || '—',
-      vino        || '—',
-      bodega      || '—',
-      tipo        || '—',
-      precio      || '—',
-      puntuacionNum,
-      acidez      ?? '—',
-      cuerpo      ?? '—',
-      taninos     ?? '—',
-      visual      ?? '—',
-      repetiria   || '—',
-      descripcion || '—',
-      nivel       || 'simple',
-      colorFinal,
-      aromasArr.join(', ') || '—',
-      saborArr.join(', ')  || '—',
-      final_boca  ?? '—',
-      olfativo    ?? '—',
-      copa        || '125 cc',
-      varietal    || '—',
-      cataId,
-    ];
+      email:       email       || '—',
+      vino:        vino        || '—',
+      bodega:      bodega      || '—',
+      tipo:        tipo        || '—',
+      precio:      precio      || '—',
+      puntuacion:  puntuacionNum,
+      puntuaci_n:  puntuacionNum,
+      puntuaci__n: puntuacionNum,
+      acidez:      acidez      ?? '—',
+      cuerpo:      cuerpo      ?? '—',
+      taninos:     taninos     ?? '—',
+      visual:      visual      ?? '—',
+      repetiria:   repetiria   || '—',
+      descripcion: descripcion || '—',
+      opinion:     descripcion || '—',
+      opini_n:     descripcion || '—',
+      nivel:       nivel       || 'simple',
+      color:       colorFinal,
+      aromas:      aromasArr.join(', ') || '—',
+      sabor:       saborArr.join(', ')  || '—',
+      final_en_boca: final_boca ?? '—',
+      final_boca:    final_boca ?? '—',
+      gusto:       olfativo    ?? '—',
+      olfativo:    olfativo    ?? '—',
+      copa:        copa        || '125 cc',
+      varietal:    varietal    || '—',
+      id:          cataId,
+    };
+
+    const fila = headers.map(h => fieldMap[h] !== undefined ? fieldMap[h] : '');
+    const lastCol = colLetter(headers.length - 1);
 
     const r = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A:W:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A:${lastCol}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
       {
         method:  "POST",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
