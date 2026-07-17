@@ -1771,6 +1771,7 @@ function cerrarCataOverlay(){
   document.body.style.overflow='';
   setTimeout(()=>{ ov.classList.add('hidden'); ov.classList.remove('closing'); }, 280);
   cataState.editingId = null; // salir del overlay siempre sale del modo edición
+  cataWinePickerOpen = false; cataWineSearch = '';
 }
 
 /* ══════════════════════════════════════════════
@@ -2218,6 +2219,82 @@ function renderCataStep(){
   else renderStepSommelier();
 }
 
+/* ── Selección de vino a catar — hero con la botella + picker con imagen, bodega y precio ── */
+let cataWinePickerOpen = false;
+let cataWineSearch = '';
+
+function buildCataWineHero(){
+  const w = cataState.vinoId ? wines.find(x=>x.id===cataState.vinoId) : null;
+  if(!w){
+    return `<div onclick="toggleCataWinePicker()" style="text-align:center;padding:14px;color:var(--ink-3);font-size:var(--text-data);cursor:pointer;border:1px dashed rgba(255,255,255,.15);border-radius:var(--r-card)">Elegí un vino para catar →</div>${buildCataWinePickerWrap()}`;
+  }
+  const color = TYPE_COLOR[w.tipo] || '#888';
+  const thumb = w.imagen
+    ? `<img src="${esc(w.imagen)}" alt="" loading="lazy" onerror="this.remove()" style="width:56px;height:56px;border-radius:var(--r-sm);object-fit:contain;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);flex-shrink:0">`
+    : `<div style="width:56px;height:56px;border-radius:var(--r-sm);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);flex-shrink:0;display:flex;align-items:center;justify-content:center">${copitaSVG(color,{size:24})}</div>`;
+  return `<div onclick="toggleCataWinePicker()" style="display:flex;align-items:center;gap:14px;cursor:pointer">
+    ${thumb}
+    <div style="flex:1;min-width:0">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--ink-dark);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(w.nombre)}</div>
+      <div style="font-size:12px;color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(w.bodega)} · ${esc(TYPE_LABEL[w.tipo]||w.tipo)} · ${fmtPrecio(w.precio)}</div>
+    </div>
+    <div style="flex-shrink:0;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--madera);border:1px solid rgba(196,160,90,.3);border-radius:var(--r-pill);padding:6px 12px">Cambiar</div>
+  </div>${buildCataWinePickerWrap()}`;
+}
+
+function toggleCataWinePicker(force){
+  cataWinePickerOpen = typeof force==='boolean' ? force : !cataWinePickerOpen;
+  if(!cataWinePickerOpen) cataWineSearch = '';
+  const wrap = document.getElementById('cataWinePickerWrap');
+  if(wrap) wrap.outerHTML = buildCataWinePickerWrap();
+  if(cataWinePickerOpen) setTimeout(()=>{ const i=document.getElementById('cataWineSearchInput'); if(i) i.focus(); }, 50);
+}
+
+function buildCataWinePickerWrap(){
+  if(!cataWinePickerOpen) return `<div id="cataWinePickerWrap"></div>`;
+  return `<div id="cataWinePickerWrap" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);animation:fadeUp .2s ease">
+    <input id="cataWineSearchInput" type="text" value="${esc(cataWineSearch)}" placeholder="Buscar vino o bodega..." oninput="onCataWineSearch(this.value)"
+      style="width:100%;background:var(--dark-3);border:1px solid rgba(255,255,255,.1);border-radius:var(--r-card);padding:11px 14px;font-size:13px;color:var(--ink-dark);font-family:'DM Sans',sans-serif;outline:none;margin-bottom:8px">
+    <div id="cataWinePickList" style="max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:2px">${buildCataWinePickList()}</div>
+  </div>`;
+}
+
+function onCataWineSearch(v){
+  cataWineSearch = v;
+  const list = document.getElementById('cataWinePickList');
+  if(list) list.innerHTML = buildCataWinePickList();
+}
+
+function buildCataWinePickList(){
+  const q = normalizeSearch(cataWineSearch);
+  const filtered = q ? wines.filter(w=>normalizeSearch(w.nombre).includes(q)||normalizeSearch(w.bodega).includes(q)) : wines;
+  if(!filtered.length) return `<div style="text-align:center;padding:20px 0;color:var(--ink-3);font-size:var(--text-kicker)">No encontramos vinos para "${esc(cataWineSearch)}"</div>`;
+  return filtered.map(w=>{
+    const active = w.id===cataState.vinoId;
+    const color = TYPE_COLOR[w.tipo] || '#888';
+    const thumb = w.imagen
+      ? `<img src="${esc(w.imagen)}" alt="" loading="lazy" onerror="this.remove()" style="width:34px;height:34px;border-radius:var(--r-sm);object-fit:contain;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);flex-shrink:0">`
+      : `<div style="width:34px;height:34px;flex-shrink:0"></div>`;
+    return `<div onclick="selectCataWine(${w.id})" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r-card);cursor:pointer;background:${active?'rgba(196,160,90,.12)':'transparent'};border:1px solid ${active?'var(--madera)':'transparent'};transition:background .15s">
+      ${copitaSVG(color,{size:15,state:active?'selected':'filled',selected:active})}
+      ${thumb}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(w.nombre)}</div>
+        <div style="font-size:10px;color:var(--ink-3)">${esc(w.bodega)} · ${esc(TYPE_LABEL[w.tipo]||w.tipo)}</div>
+      </div>
+      <div style="font-size:11px;color:var(--ink-dark-2);flex-shrink:0">${fmtPrecio(w.precio)}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectCataWine(id){
+  cataState.vinoId = id;
+  cataWinePickerOpen = false;
+  cataWineSearch = '';
+  const hero = document.getElementById('cataWineHero');
+  if(hero) hero.innerHTML = buildCataWineHero();
+}
+
 function renderCataWelcome(){
   return `<div style="padding:0 0 8px;animation:fadeUp .3s cubic-bezier(.22,1,.36,1)">
     <!-- Email — identidad del catador -->
@@ -2236,10 +2313,8 @@ function renderCataWelcome(){
     </div>
 
     <div style="background:var(--dark-2);border-radius:var(--r-surface);padding:20px;margin-bottom:16px;border:1px solid rgba(196,160,90,.15)">
-      <div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--madera);margin-bottom:10px">¿Qué vino querés catar?</div>
-      <select id="cata-wine-sel" onchange="cataState.vinoId=parseInt(this.value)" style="width:100%;background:var(--dark-3);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-card);padding:12px 14px;font-size:var(--text-data);color:var(--ink-dark);font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;cursor:pointer">
-        ${wines.map(w=>`<option value="${w.id}" ${w.id===cataState.vinoId?'selected':''}>${esc(w.nombre)}</option>`).join('')}
-      </select>
+      <div style="font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--madera);margin-bottom:12px">¿Qué vino querés catar?</div>
+      <div id="cataWineHero">${buildCataWineHero()}</div>
     </div>
 
     <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink-dark);text-align:center;margin-bottom:18px">¿Qué tipo de cata?</div>
@@ -2266,8 +2341,6 @@ function startCata(nivel){
   // Tomar email del input
   const emailEl=document.getElementById('cata-email-input');
   if(emailEl) cataState.email=emailEl.value.trim();
-  // Tomar vino seleccionado
-  const s=document.getElementById('cata-wine-sel'); if(s)cataState.vinoId=parseInt(s.value);
   cataState.nivel=nivel; cataState.step=1;
   renderCataStep();
 }
