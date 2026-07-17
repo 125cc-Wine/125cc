@@ -125,6 +125,10 @@
     /* ── ANIMATIONS ── */
     @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
     @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    @keyframes stepEnterNext{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+    @keyframes stepEnterBack{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+    @keyframes revealGlow{from{opacity:0;transform:translateX(-50%) scale(.5)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+    @keyframes revealPop{0%{transform:scale(.7);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
 
     /* ══════════════════════════════
        HEADER
@@ -667,9 +671,21 @@
     .submit-btn:active{opacity:.85;transform:scale(.99)}
     .submit-btn:disabled{opacity:.4;cursor:not-allowed}
     .form-success{
-      background:var(--madera-dk);
+      background:var(--madera-dk);position:relative;overflow:hidden;
       border:1px solid rgba(207,172,89,.2);border-radius:var(--r-surface);
       padding:28px 20px;text-align:center;margin-bottom:12px;
+    }
+    .form-success .reveal-glow{
+      position:absolute;top:-30%;left:50%;width:240px;height:240px;
+      background:radial-gradient(circle,rgba(207,172,89,.4),transparent 70%);
+      animation:revealGlow .9s var(--ease) forwards;pointer-events:none;
+    }
+    .form-success .reveal-score{
+      position:relative;font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:700;
+      color:var(--accent);line-height:1;margin-bottom:2px;animation:revealPop .5s var(--ease) .1s both;
+    }
+    .form-success .reveal-label{
+      position:relative;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--madera);margin-bottom:14px;
     }
     .form-success .success-icon{font-size:40px;margin-bottom:12px;display:block}
     .form-success h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--ink-dark);margin-bottom:6px}
@@ -2341,16 +2357,28 @@ function startCata(nivel){
   // Tomar email del input
   const emailEl=document.getElementById('cata-email-input');
   if(emailEl) cataState.email=emailEl.value.trim();
-  cataState.nivel=nivel; cataState.step=1;
+  cataState.nivel=nivel; cataState.step=1; cataNavDir='next';
   renderCataStep();
 }
 
-function stepCard(paso,label,titulo,hint,content){
-  return `<div style="background:var(--dark-2);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-surface);margin:14px 16px;padding:22px;animation:fadeUp .3s cubic-bezier(.22,1,.36,1)">
+let cataNavDir = 'next'; // dirección del último paso navegado — anima la entrada de stepCard en consecuencia
+
+function stepCard(paso,label,titulo,hint,content,tip){
+  const anim = cataNavDir==='back' ? 'stepEnterBack' : 'stepEnterNext';
+  return `<div style="background:var(--dark-2);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-surface);margin:14px 16px;padding:22px;animation:${anim} .38s cubic-bezier(.22,1,.36,1)">
     <div style="font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--madera);margin-bottom:4px">${paso}</div>
     <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--ink-dark);margin-bottom:4px;line-height:1.2">${titulo}</div>
     <div style="font-size:var(--text-caption);color:var(--ink-3);margin-bottom:20px">${hint}</div>
     ${content}
+    ${tip ? helpBox(tip) : ''}
+  </div>`;
+}
+
+/* Ayuda contextual breve para quien nunca cató — se muestra debajo del contenido del paso */
+function helpBox(text){
+  return `<div style="margin-top:16px;padding:11px 13px;background:rgba(196,160,90,.08);border:1px solid rgba(196,160,90,.15);border-radius:var(--r-card);display:flex;gap:9px;align-items:flex-start">
+    <span style="flex-shrink:0;font-size:13px;line-height:1.5">💡</span>
+    <span style="font-size:var(--text-kicker);color:var(--ink-3);line-height:1.65">${text}</span>
   </div>`;
 }
 
@@ -2363,10 +2391,10 @@ function renderStepSimple(){
     ${s<T?NAVBTN(false,'Siguiente →',`cataNavNext(${T})`):(cataState.editingId?NAVBTN(false,'💾 Guardar cambios','guardarEdicionCata()'):NAVBTN(false,'🍷 Guardar cata','mostrarPopupWA()'))}
   </div>`;
 
-  if(s===1) h+=stepCard('Paso 1 de 4','','Color','¿Qué color ves en la copa?',`<div id="colorGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">${buildColorGrid()}</div>`);
-  else if(s===2) h+=stepCard('Paso 2 de 4','','Aromas','¿Qué aromas identificás? Podés elegir varios.',`<div id="aromasGrid" style="display:flex;flex-wrap:wrap;gap:8px">${buildChips(AROMAS_SIMPLES,cataState.aromas,'toggleAroma')}${buildOtroField('aromaOtro','cataState.aromasOtro','Otro aroma...')}</div>`);
-  else if(s===3) h+=stepCard('Paso 3 de 4','','Sensaciones en boca','¿Qué sentís al probarlo?',`<div id="saborGrid" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">${buildChips(['Ácido','Dulce','Amargo','Tánico','Untuoso','Fresco','Cálido','Seco','Frutal','Especiado','Mineral'],cataState.sabor,'toggleSabor')}${buildOtroField('saborOtro','cataState.saborOtro','Otra sensación...')}</div><div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px">Descripción libre</div><textarea id="cata-desc" rows="3" placeholder="Anotá lo que sentís…" oninput="cataState.descripcion=this.value" style="width:100%;background:var(--dark-3);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-card);padding:12px 14px;font-size:var(--text-data);color:var(--ink-dark);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.6">${cataState.descripcion}</textarea>`);
-  else if(s===4) h+=stepCard('Paso 4 de 4','','Puntuación','Escala 60–100 estilo Parker',buildScoreSlider('simple',cataState.puntuacion));
+  if(s===1) h+=stepCard('Paso 1 de 4','','Color','¿Qué color ves en la copa?',`<div id="colorGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">${buildColorGrid()}</div>`,'Inclina la copa sobre una superficie blanca y mirá el borde, no el centro — ahí se nota mejor el matiz real del vino.');
+  else if(s===2) h+=stepCard('Paso 2 de 4','','Aromas','¿Qué aromas identificás? Podés elegir varios.',`<div id="aromasGrid" style="display:flex;flex-wrap:wrap;gap:8px">${buildChips(AROMAS_SIMPLES,cataState.aromas,'toggleAroma')}${buildOtroField('aromaOtro','cataState.aromasOtro','Otro aroma...')}</div>`,'Girá la copa un par de veces antes de oler: eso libera los aromas. Meté la nariz bien adentro y pensá en frutas, flores o especias.');
+  else if(s===3) h+=stepCard('Paso 3 de 4','','Sensaciones en boca','¿Qué sentís al probarlo?',`<div id="saborGrid" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">${buildChips(['Ácido','Dulce','Amargo','Tánico','Untuoso','Fresco','Cálido','Seco','Frutal','Especiado','Mineral'],cataState.sabor,'toggleSabor')}${buildOtroField('saborOtro','cataState.saborOtro','Otra sensación...')}</div><div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px">Descripción libre</div><textarea id="cata-desc" rows="3" placeholder="Anotá lo que sentís…" oninput="cataState.descripcion=this.value" style="width:100%;background:var(--dark-3);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-card);padding:12px 14px;font-size:var(--text-data);color:var(--ink-dark);font-family:'DM Sans',sans-serif;outline:none;resize:none;line-height:1.6">${cataState.descripcion}</textarea>`,'¿Te seca la lengua? Es tánico. ¿Te dan ganas de tomar agua? Es ácido. No hay respuesta incorrecta, es lo que vos sentís.');
+  else if(s===4) h+=stepCard('Paso 4 de 4','','Puntuación','Escala 60–100 estilo Parker',buildScoreSlider('simple',cataState.puntuacion),'No hay una nota correcta — puntuá según cuánto lo disfrutaste. 80 ya es un vino bueno; abajo de 70 es porque algo no te cerró.');
 
   c.innerHTML=h+navBtns;
 }
@@ -2381,9 +2409,9 @@ function renderStepSommelier(){
     ${s<T?NAVBTN(false,'Siguiente →',`cataNavNext(${T})`,true):(cataState.editingId?NAVBTN(false,'💾 Guardar cambios','guardarEdicionCata()',true):NAVBTN(false,'⭐ Guardar cata','mostrarPopupWA()',true))}
   </div>`;
 
-  if(s===1) h+=stepCard('Paso 1 · Visual','','Fase Visual','Observá el color y la intensidad.',`<div id="colorGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">${buildColorGrid()}</div>${buildAttrSlider('visual','Intensidad visual',ATTR_DESC_MAP.visual,cataState.visual)}`);
-  else if(s===2) h+=stepCard('Paso 2 · Olfativo','','Fase Olfativa','¿Qué aromas percibís?',`<div id="aromasGridSomm">${Object.entries(AROMAS_SOMM).map(([cat,items])=>`<div style="margin-bottom:16px"><div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px;opacity:.7">${cat}</div><div style="display:flex;flex-wrap:wrap;gap:6px">${buildChips(items,cataState.aromas,'toggleAroma')}</div></div>`).join('')}${buildOtroField('aromaOtro','cataState.aromasOtro','Otro aroma que no esté en la lista...')}</div>${buildAttrSlider('olfativo','Intensidad aromática',ATTR_DESC_MAP.olfativo,cataState.olfativo)}`);
-  else if(s===3) h+=stepCard('Paso 3 · Gustativo','','Fase Gustativa','Atributos técnicos en boca.',buildAttrSlider('acidez','Acidez',ACIDEZ_DESC,cataState.acidez)+buildAttrSlider('taninos','Taninos',TANINOS_DESC,cataState.taninos)+buildAttrSlider('cuerpo','Cuerpo',CUERPO_DESC,cataState.cuerpo)+buildAttrSlider('final','Final en boca',FINAL_DESC,cataState.final));
+  if(s===1) h+=stepCard('Paso 1 · Visual','','Fase Visual','Observá el color y la intensidad.',`<div id="colorGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">${buildColorGrid()}</div>${buildAttrSlider('visual','Intensidad visual',ATTR_DESC_MAP.visual,cataState.visual)}`,'Inclina la copa 45° sobre una superficie blanca. Cuanto más opaco y cerrado el borde, más intensidad visual.');
+  else if(s===2) h+=stepCard('Paso 2 · Olfativo','','Fase Olfativa','¿Qué aromas percibís?',`<div id="aromasGridSomm">${Object.entries(AROMAS_SOMM).map(([cat,items])=>`<div style="margin-bottom:16px"><div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px;opacity:.7">${cat}</div><div style="display:flex;flex-wrap:wrap;gap:6px">${buildChips(items,cataState.aromas,'toggleAroma')}</div></div>`).join('')}${buildOtroField('aromaOtro','cataState.aromasOtro','Otro aroma que no esté en la lista...')}</div>${buildAttrSlider('olfativo','Intensidad aromática',ATTR_DESC_MAP.olfativo,cataState.olfativo)}`,'Primera olida sin girar la copa (aromas primarios), después girá y volvé a oler (se abren los secundarios/terciarios). Compará.');
+  else if(s===3) h+=stepCard('Paso 3 · Gustativo','','Fase Gustativa','Atributos técnicos en boca.',buildAttrSlider('acidez','Acidez',ACIDEZ_DESC,cataState.acidez)+buildAttrSlider('taninos','Taninos',TANINOS_DESC,cataState.taninos)+buildAttrSlider('cuerpo','Cuerpo',CUERPO_DESC,cataState.cuerpo)+buildAttrSlider('final','Final en boca',FINAL_DESC,cataState.final),'Acidez: te hace salivar. Taninos: te seca la boca (típico de tintos). Cuerpo: liviano como agua o pesado como leche. Final: cuánto dura el sabor después de tragar.');
   else if(s===4) h+=stepCard('Paso 4 · Conclusión','','Tu impresión final','Contanos con tus palabras qué te pareció el vino.',`
     <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--madera);margin-bottom:8px">¿Lo pedirías de nuevo?</div>
     <div style="display:flex;gap:10px;margin-bottom:20px">
@@ -2398,9 +2426,10 @@ function renderStepSommelier(){
 }
 
 function cataNavNext(total){
-  if(cataState.step<total){ cataState.step++; renderCataStep(); const e=document.getElementById('puntuarContent'); if(e)e.scrollIntoView({behavior:'smooth',block:'start'}); }
+  if(cataState.step<total){ cataNavDir='next'; cataState.step++; renderCataStep(); const e=document.getElementById('puntuarContent'); if(e)e.scrollIntoView({behavior:'smooth',block:'start'}); }
 }
 function cataNavBack(){
+  cataNavDir='back';
   if(cataState.step<=1){cataState.nivel=null;cataState.step=0;} else cataState.step--;
   renderCataStep();
 }
@@ -2414,6 +2443,27 @@ function normalizarTelefono(phone){
 }
 function ratingText(n){ return CATA_SCORE_LABELS[n]||''; }
 function enviarSinWA(){ enviarPuntuacion(null); }
+
+/* Momento de revelación: el puntaje se arma en cámara lenta en vez de aparecer de golpe */
+function animateRevealScore(target){
+  const el = document.getElementById('revealScore');
+  const lbl = document.getElementById('revealLabel');
+  if(!el) return;
+  target = Math.round(target);
+  const start = Math.max(60, target - 22);
+  const duration = 750;
+  const t0 = performance.now();
+  function tick(now){
+    const p = Math.min(1, (now - t0) / duration);
+    const eased = 1 - Math.pow(1 - p, 3);
+    const val = Math.round(start + (target - start) * eased);
+    el.textContent = val;
+    if(lbl) lbl.textContent = ratingText(val) || '';
+    if(p < 1) requestAnimationFrame(tick);
+    else { el.textContent = target; if(lbl) lbl.textContent = ratingText(target) || ''; }
+  }
+  requestAnimationFrame(tick);
+}
 
 function mostrarPopupWA(){
   // Crear overlay si no existe
@@ -2542,7 +2592,9 @@ async function enviarPuntuacion(phone){
 
     document.getElementById('puntuarContent').innerHTML =
       `<div class="form-success">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:700;color:var(--accent);line-height:1;margin-bottom:6px">${payload.puntuacion}</div>
+        <div class="reveal-glow"></div>
+        <div class="reveal-score" id="revealScore">60</div>
+        <div class="reveal-label" id="revealLabel"></div>
         <span class="success-icon">🍷</span>
         <h3>¡Cata guardada!</h3>
         <p>${nl} de <strong>${esc(w.nombre)}</strong> registrada correctamente.${
@@ -2553,6 +2605,7 @@ async function enviarPuntuacion(phone){
           <button onclick="cerrarCataOverlay();renderMisCatas()" style="flex:1;margin-top:0">Ver mis catas</button>
         </div>
       </div>`;
+    animateRevealScore(payload.puntuacion);
 
   } catch(err){
     alert('No se pudo guardar la cata.\n\n' + err.message);
@@ -2613,7 +2666,9 @@ async function guardarEdicionCata(){
 
     document.getElementById('puntuarContent').innerHTML =
       `<div class="form-success">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:700;color:var(--accent);line-height:1;margin-bottom:6px">${payload.puntuacion}</div>
+        <div class="reveal-glow"></div>
+        <div class="reveal-score" id="revealScore">60</div>
+        <div class="reveal-label" id="revealLabel"></div>
         <span class="success-icon">💾</span>
         <h3>¡Cata actualizada!</h3>
         <p>${nl} de <strong>${esc(w.nombre)}</strong> actualizada correctamente.</p>
@@ -2621,6 +2676,7 @@ async function guardarEdicionCata(){
           <button onclick="cerrarCataOverlay();renderMisCatas()" style="flex:1;margin-top:0">Ver mis catas</button>
         </div>
       </div>`;
+    animateRevealScore(payload.puntuacion);
 
   } catch(err){
     alert('No se pudieron guardar los cambios.\n\n' + err.message);
