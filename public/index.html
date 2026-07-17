@@ -1907,7 +1907,7 @@ function buildMiCataCard(c, idx){
 
   const puntColor = punt>=90?'#4CAF50':punt>=80?'#C4A05A':punt>=70?'#FF9800':'#888';
 
-  return `<div class="wine-card" id="${id}" onclick="toggleMiCataCard('${id}')" style="cursor:pointer;margin-bottom:10px">
+  return `<div class="wine-card" id="${id}" onclick="toggleMiCataCard('${id}')" style="cursor:pointer;margin-bottom:10px;flex-direction:column;align-items:stretch">
     <div style="display:flex;align-items:center;gap:12px">
       <div style="text-align:center;flex-shrink:0;width:52px">
         <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:${puntColor};line-height:1">${esc(punt)}</div>
