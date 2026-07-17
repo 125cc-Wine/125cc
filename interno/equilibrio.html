@@ -169,6 +169,38 @@ body{
         <div class="field-val"><span>8</span><strong id="nochesVal">16</strong><span>28</span></div>
       </div>
       <div class="field">
+        <label>Ingreso club de socios / mes</label>
+        <div class="field-row">
+          <input type="range" min="0" max="3000000" step="50000" value="0" id="club">
+          <input type="number" class="num-input" min="0" step="10000" value="0" id="clubNum">
+        </div>
+        <div class="field-val"><span>$0</span><strong id="clubVal">$0</strong><span>$3M</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COSTEO DEL VINO -->
+  <div class="section">
+    <div class="section-title">Costeo del vino</div>
+    <div class="section-note">El precio de copa ya incluye IVA. El % de costo del vino se aplica sobre el precio de copa cobrado, y solo a las copas "pagas" — las que caen dentro de la cuota de cajas gratis de bodegas socias tienen costo de vino $0 (pero igual pagan IVA y comisión, porque igual se cobran al precio de lista).</div>
+    <div class="grid2">
+      <div class="field">
+        <label>% costo del vino (sobre precio de copa)</label>
+        <div class="field-row">
+          <input type="range" min="0" max="80" step="1" value="40" id="costoVinoPct">
+          <input type="number" class="num-input" min="0" max="100" step="1" value="40" id="costoVinoPctNum">
+        </div>
+        <div class="field-val"><span>0%</span><strong id="costoVinoPctVal">40%</strong><span>80%</span></div>
+      </div>
+      <div class="field">
+        <label>Copas por botella</label>
+        <div class="field-row">
+          <input type="range" min="4" max="8" step="1" value="6" id="copasPorBotella">
+          <input type="number" class="num-input" min="1" step="1" value="6" id="copasPorBotellaNum">
+        </div>
+        <div class="field-val"><span>4</span><strong id="copasPorBotellaVal">6</strong><span>8</span></div>
+      </div>
+      <div class="field">
         <label>Bodegas socias en carta (de 14)</label>
         <div class="field-row">
           <input type="range" min="0" max="14" step="1" value="6" id="bodegas">
@@ -177,12 +209,44 @@ body{
         <div class="field-val"><span>0</span><strong id="bodegasVal">6 (43%)</strong><span>14</span></div>
       </div>
       <div class="field">
-        <label>Ingreso club de socios / mes</label>
+        <label>Cajas gratis por bodega socia / mes</label>
         <div class="field-row">
-          <input type="range" min="0" max="3000000" step="50000" value="0" id="club">
-          <input type="number" class="num-input" min="0" step="10000" value="0" id="clubNum">
+          <input type="range" min="0" max="10" step="1" value="2" id="cajasGratis">
+          <input type="number" class="num-input" min="0" step="1" value="2" id="cajasGratisNum">
         </div>
-        <div class="field-val"><span>$0</span><strong id="clubVal">$0</strong><span>$3M</span></div>
+        <div class="field-val"><span>0</span><strong id="cajasGratisVal">2</strong><span>10</span></div>
+      </div>
+      <div class="field">
+        <label>Botellas por caja</label>
+        <div class="field-row">
+          <input type="range" min="1" max="12" step="1" value="6" id="botellasPorCaja">
+          <input type="number" class="num-input" min="1" step="1" value="6" id="botellasPorCajaNum">
+        </div>
+        <div class="field-val"><span>1</span><strong id="botellasPorCajaVal">6</strong><span>12</span></div>
+      </div>
+    </div>
+    <div id="cajasResumen" style="margin-top:14px;padding:12px 16px;background:rgba(240,228,204,.4);border-radius:10px;font-size:12px;color:var(--muted);border:.5px solid var(--border)"></div>
+  </div>
+
+  <!-- IMPUESTOS Y COMISIONES -->
+  <div class="section">
+    <div class="section-title">Impuestos y comisiones</div>
+    <div class="grid2">
+      <div class="field">
+        <label>IVA sobre el precio de copa</label>
+        <div class="field-row">
+          <input type="range" min="0" max="27" step="0.5" value="21" id="ivaPct">
+          <input type="number" class="num-input" min="0" max="100" step="0.5" value="21" id="ivaPctNum">
+        </div>
+        <div class="field-val"><span>0%</span><strong id="ivaPctVal">21%</strong><span>27%</span></div>
+      </div>
+      <div class="field">
+        <label>Comisión tarjeta / QR (aún sin definir — dejalo en 0 hasta tener el % real)</label>
+        <div class="field-row">
+          <input type="range" min="0" max="10" step="0.5" value="0" id="comisionPct">
+          <input type="number" class="num-input" min="0" max="100" step="0.5" value="0" id="comisionPctNum">
+        </div>
+        <div class="field-val"><span>0%</span><strong id="comisionPctVal">0%</strong><span>10%</span></div>
       </div>
     </div>
   </div>
@@ -326,14 +390,20 @@ document.getElementById('rubros').innerHTML = RUBROS.map(r => `
   </div>`).join('');
 
 function calc(){
-  const precio       = +document.getElementById('precioNum').value || 0;
-  const noches       = +document.getElementById('nochesNum').value || 0;
-  const bodegas      = +document.getElementById('bodegasNum').value || 0;
-  const club         = +document.getElementById('clubNum').value || 0;
-  const objetivo     = +document.getElementById('objetivoNum').value || 0;
-  const objetivoAmb  = +document.getElementById('objetivoAmbNum').value || 0;
-  const tapeoTicket  = +document.getElementById('tapeoTicketNum').value || 0;
-  const tapeoPct     = Math.min(100, +document.getElementById('tapeoPctNum').value || 0) / 100;
+  const precio         = +document.getElementById('precioNum').value || 0;
+  const noches         = +document.getElementById('nochesNum').value || 0;
+  const bodegas        = +document.getElementById('bodegasNum').value || 0;
+  const club           = +document.getElementById('clubNum').value || 0;
+  const objetivo       = +document.getElementById('objetivoNum').value || 0;
+  const objetivoAmb    = +document.getElementById('objetivoAmbNum').value || 0;
+  const tapeoTicket    = +document.getElementById('tapeoTicketNum').value || 0;
+  const tapeoPct       = Math.min(100, +document.getElementById('tapeoPctNum').value || 0) / 100;
+  const costoVinoPct   = Math.min(100, +document.getElementById('costoVinoPctNum').value || 0);
+  const copasPorBotella= Math.max(1, +document.getElementById('copasPorBotellaNum').value || 6);
+  const cajasGratis    = +document.getElementById('cajasGratisNum').value || 0;
+  const botellasPorCaja= Math.max(1, +document.getElementById('botellasPorCajaNum').value || 6);
+  const ivaPct         = +document.getElementById('ivaPctNum').value || 0;
+  const comisionPct    = +document.getElementById('comisionPctNum').value || 0;
 
   // Costos fijos = suma de los rubros
   const rubroVals = RUBROS.map(r => +document.getElementById(r.id+'Num').value || 0);
@@ -344,68 +414,118 @@ function calc(){
     ? '≈ ' + fmt(costos/noches) + ' por noche operativa (' + noches + ' noches)'
     : '';
 
-  const pct    = Math.min(1, bodegas / 14);
-  const margen = pct * 1.0 + (1 - pct) * 0.60;
-  const margenPct = Math.round(margen * 100);
-  const margenTapeo = 0.65; // margen del tapeo estimado
+  const margenTapeo = 0.65; // margen del tapeo estimado — sin cambios, no es el foco de este ajuste
 
-  document.getElementById('precioVal').textContent      = fmt(precio);
-  document.getElementById('nochesVal').textContent      = noches;
-  document.getElementById('bodegasVal').textContent     = bodegas + ' (' + Math.round(pct*100) + '%)';
-  document.getElementById('clubVal').textContent        = club > 0 ? fmtM(club) : '$0';
-  document.getElementById('objetivoVal').textContent    = objetivo > 0 ? fmtM(objetivo) : '$0';
-  document.getElementById('objetivoAmbVal').textContent = objetivoAmb > 0 ? fmtM(objetivoAmb) : '$0';
-  document.getElementById('tapeoTicketVal').textContent = fmt(tapeoTicket);
-  document.getElementById('tapeoPctVal').textContent    = Math.round(tapeoPct*100) + '%';
+  // ---------------------------------------------------------------
+  // COSTEO REAL DEL VINO
+  // El precio de copa se cobra CON IVA incluido, así que primero se le saca
+  // el IVA y la comisión de tarjeta (si hay) — eso es plata que nunca es
+  // ingreso real, sea la copa gratis o pagada. Recién sobre lo que queda se
+  // resta el costo del vino, y SOLO en las copas que superan la cuota de
+  // cajas gratis que dan las bodegas socias (esas copas se siguen cobrando
+  // al precio de lista, pero no tienen costo de vino).
+  // ---------------------------------------------------------------
+  const ivaFrac      = ivaPct / (100 + ivaPct);         // fracción del precio bruto que es IVA
+  const comisionFrac = comisionPct / 100;                // fracción del precio bruto que se va en comisión
+  const costoVinoFrac= costoVinoPct / 100;                // costo del vino como % del precio de copa
 
-  // Ingreso extra por persona por noche (tapeo neto)
+  const netoBaseXcopa    = precio * (1 - ivaFrac - comisionFrac); // lo que queda de una copa después de IVA + comisión
+  const costoVinoXcopa   = precio * costoVinoFrac;
+  const margenXcopaGratis= netoBaseXcopa;                          // copa de cuota gratis: no resta costo de vino
+  const margenXcopaPaga  = netoBaseXcopa - costoVinoXcopa;         // copa fuera de cuota
+
+  const copasGratisMes = Math.round(bodegas * cajasGratis * botellasPorCaja * copasPorBotella);
+
+  document.getElementById('cajasResumen').innerHTML = copasGratisMes > 0
+    ? `<strong style="color:var(--text)">${bodegas}</strong> bodega${bodegas!==1?'s':''} socia${bodegas!==1?'s':''} × <strong style="color:var(--text)">${cajasGratis}</strong> caja${cajasGratis!==1?'s':''} gratis/mes × <strong style="color:var(--text)">${botellasPorCaja}</strong> botellas × <strong style="color:var(--text)">${copasPorBotella}</strong> copas/botella = <strong style="color:var(--tinto)">${copasGratisMes.toLocaleString('es-AR')} copas/mes sin costo de vino</strong> (el resto paga ${costoVinoPct}% de costo).`
+    : '<span style="color:var(--muted)">Sin bodegas socias o sin cajas gratis configuradas — todas las copas pagan el costo de vino.</span>';
+
+  document.getElementById('precioVal').textContent       = fmt(precio);
+  document.getElementById('nochesVal').textContent       = noches;
+  document.getElementById('bodegasVal').textContent      = bodegas;
+  document.getElementById('clubVal').textContent         = club > 0 ? fmtM(club) : '$0';
+  document.getElementById('objetivoVal').textContent     = objetivo > 0 ? fmtM(objetivo) : '$0';
+  document.getElementById('objetivoAmbVal').textContent  = objetivoAmb > 0 ? fmtM(objetivoAmb) : '$0';
+  document.getElementById('tapeoTicketVal').textContent  = fmt(tapeoTicket);
+  document.getElementById('tapeoPctVal').textContent     = Math.round(tapeoPct*100) + '%';
+  document.getElementById('costoVinoPctVal').textContent = costoVinoPct + '%';
+  document.getElementById('copasPorBotellaVal').textContent = copasPorBotella;
+  document.getElementById('cajasGratisVal').textContent  = cajasGratis;
+  document.getElementById('botellasPorCajaVal').textContent = botellasPorCaja;
+  document.getElementById('ivaPctVal').textContent       = ivaPct + '%';
+  document.getElementById('comisionPctVal').textContent  = comisionPct + '%';
+
+  // Ingreso extra por copa por tapeo (asumiendo 2.5 copas por persona) — aplica
+  // igual en la banda gratis y en la paga, el tapeo no depende del vino.
   const tapeoXpersona = tapeoTicket * tapeoPct * margenTapeo;
+  const otrosXcopa    = tapeoXpersona / 2.5;
 
-  // Ingreso TOTAL por copa (vino + tapeo proporcional)
-  // Asumimos 2.5 copas por persona → tapeo se divide entre 2.5
-  const ingresoXcopa = precio * margen + tapeoXpersona / 2.5;
+  const contribGratis = margenXcopaGratis + otrosXcopa; // aporte de cada copa dentro de la cuota gratis
+  const contribPaga   = margenXcopaPaga + otrosXcopa;   // aporte de cada copa fuera de la cuota gratis
 
-  const costosEf  = costos - club;
-  const copasEq   = Math.ceil(costosEf / ingresoXcopa);
-  const copasObj  = Math.ceil((costosEf + objetivo) / ingresoXcopa);
-  const cnEq      = Math.ceil(copasEq / noches);
-  const cnObj     = Math.ceil(copasObj / noches);
+  const costosEf = costos - club;
+
+  // Resuelve cuántas copas hacen falta para cubrir costosEf + objetivo,
+  // usando primero la cuota de copas gratis (más rentable) y recién después
+  // copas pagas. Devuelve null si ni vendiendo infinitas copas se llega
+  // (costo del vino + IVA + comisión superan el precio de venta).
+  function solveCopas(target){
+    const need = Math.max(0, costosEf + target);
+    if(need <= 0) return 0;
+    if(copasGratisMes > 0 && contribGratis > 0){
+      const techoGratis = copasGratisMes * contribGratis;
+      if(need <= techoGratis) return Math.ceil(need / contribGratis);
+      if(contribPaga <= 0) return null;
+      const restante = need - techoGratis;
+      return copasGratisMes + Math.ceil(restante / contribPaga);
+    }
+    if(contribPaga <= 0) return null;
+    return Math.ceil(need / contribPaga);
+  }
+
+  const copasEq  = solveCopas(0);
+  const copasObj = solveCopas(objetivo);
+  const inalcanzable = copasEq === null || copasObj === null;
+  const cnEq      = !inalcanzable && noches > 0 ? Math.ceil(copasEq / noches) : 0;
+  const cnObj     = !inalcanzable && noches > 0 ? Math.ceil(copasObj / noches) : 0;
   const perEq     = Math.ceil(cnEq / 2.5);
   const perObj    = Math.ceil(cnObj / 2.5);
-  const factEq    = copasEq * precio;
-  const factObj   = copasObj * precio;
+  const factEq    = (copasEq||0) * precio;
+  const factObj   = (copasObj||0) * precio;
 
   // Tapeo mensual estimado (en equilibrio)
   const tapeoMensualBruto = Math.round(perEq * noches * tapeoTicket * tapeoPct);
   const tapeoMensualNeto  = Math.round(tapeoMensualBruto * margenTapeo);
+  const copasSinTapeo     = contribPaga > 0 && otrosXcopa > 0 ? Math.round(tapeoMensualNeto / contribPaga) : 0;
 
   // Resumen tapeo
   document.getElementById('tapeoResumen').innerHTML = tapeoTicket > 0
-    ? `Con <strong style="color:var(--text)">${Math.round(tapeoPct*100)}%</strong> de las personas pidiendo tapeo a <strong style="color:var(--text)">${fmt(tapeoTicket)}</strong> promedio — el tapeo aporta aproximadamente <strong style="color:var(--tinto)">${fmtM(tapeoMensualNeto)} neto/mes</strong> (${fmtM(tapeoMensualBruto)} bruto) en el escenario de equilibrio. Esto reduce las copas necesarias en <strong style="color:var(--text)">${Math.max(0, Math.ceil(costosEf/(precio*margen)) - copasEq)}</strong> copas por mes.`
+    ? `Con <strong style="color:var(--text)">${Math.round(tapeoPct*100)}%</strong> de las personas pidiendo tapeo a <strong style="color:var(--text)">${fmt(tapeoTicket)}</strong> promedio — el tapeo aporta aproximadamente <strong style="color:var(--tinto)">${fmtM(tapeoMensualNeto)} neto/mes</strong> (${fmtM(tapeoMensualBruto)} bruto) en el escenario de equilibrio. Esto reduce las copas necesarias en <strong style="color:var(--text)">${copasSinTapeo}</strong> copas por mes.`
     : '<span style="color:var(--muted)">Mové el ticket promedio para ver el impacto del tapeo en el equilibrio.</span>';
 
-  document.getElementById('kpis').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Margen vino</div><div class="kpi-val">${margenPct}%</div></div>
+  document.getElementById('kpis').innerHTML = inalcanzable ? `
+    <div class="kpi" style="grid-column:1/-1"><div class="kpi-label" style="color:var(--red)">El costo del vino + IVA + comisión superan el precio de copa — ninguna cantidad de copas cubre los costos. Bajá el % de costo del vino o subí el precio.</div></div>` : `
+    <div class="kpi"><div class="kpi-label">Copas gratis/mes</div><div class="kpi-val">${copasGratisMes.toLocaleString('es-AR')}</div><div class="kpi-sub">de bodegas socias</div></div>
     <div class="kpi"><div class="kpi-label">Copas equilibrio</div><div class="kpi-val">${copasEq.toLocaleString('es-AR')}</div><div class="kpi-sub">${cnEq}/noche · ${perEq} pers</div></div>
     <div class="kpi"><div class="kpi-label">Copas obj. conservador</div><div class="kpi-val">${copasObj.toLocaleString('es-AR')}</div><div class="kpi-sub">${cnObj}/noche · ${perObj} pers</div></div>
     <div class="kpi"><div class="kpi-label">Fact. equilibrio</div><div class="kpi-val" style="font-size:20px">${fmtM(factEq)}</div><div class="kpi-sub">copas bruto/mes</div></div>
     <div class="kpi"><div class="kpi-label">Tapeo neto/mes</div><div class="kpi-val" style="font-size:20px;color:var(--tinto)">${tapeoTicket>0?fmtM(tapeoMensualNeto):'—'}</div><div class="kpi-sub">${tapeoTicket>0?fmtM(tapeoMensualBruto)+' bruto':''}</div></div>`;
 
   const banner = document.getElementById('metaBanner');
-  document.getElementById('legendObj').style.display = objetivo > 0 ? 'flex' : 'none';
-  banner.innerHTML = objetivo > 0
+  document.getElementById('legendObj').style.display = objetivo > 0 && !inalcanzable ? 'flex' : 'none';
+  banner.innerHTML = (objetivo > 0 && !inalcanzable)
     ? `<div class="banner"><span class="banner-text">Para quedarte limpio <strong>${fmtM(objetivo)}/mes</strong> necesitás <strong>${cnObj} copas/noche</strong> con <strong>${perObj} personas</strong></span><span class="banner-pill">+${cnObj - cnEq} copas sobre el equilibrio</span></div>`
     : '';
 
-  // GRÁFICO
-  const maxC = Math.max(copasObj * 1.5, copasEq * 1.8, 150);
+  // GRÁFICO — la pendiente cambia una vez agotada la cuota de copas gratis
+  const maxC = inalcanzable ? 500 : Math.max(copasObj * 1.5, copasEq * 1.8, 150);
   const steps = 24, labels = [], ing = [], cost = [], obj = [];
   for(let i=0;i<=steps;i++){
     const c = Math.round(maxC * i / steps);
     labels.push(c);
-    // Ingreso neto total = vino + tapeo proporcional + club
-    const personas = c / 2.5;
-    ing.push(Math.round(c * precio * margen + personas * tapeoXpersona + club));
+    const cFree = Math.min(c, copasGratisMes);
+    const cPaid = Math.max(0, c - copasGratisMes);
+    ing.push(Math.round(cFree*contribGratis + cPaid*contribPaga + club));
     cost.push(costos);
     obj.push(costos + objetivo);
   }
@@ -443,20 +563,24 @@ function calc(){
   // PLANILLA DE OBJETIVOS — P&L mensual por escenario de meta
   // ---------------------------------------------------------------
   function metaEscenario(nombre, R){
-    const valido = ingresoXcopa > 0 && noches > 0;
+    const valido = !inalcanzable && noches > 0;
     if(!valido) return {nombre, R, valido:false};
-    const copas       = Math.max(0, Math.ceil(Math.max(0, costosEf + R) / ingresoXcopa));
+    const copas       = solveCopas(R);
+    const copasFree   = Math.min(copas, copasGratisMes);
+    const copasPaid   = Math.max(0, copas - copasGratisMes);
     const personasMes = copas / 2.5;
     const vinoBruto   = copas * precio;
+    const ivaVino     = vinoBruto * ivaFrac;
+    const comisionVino= vinoBruto * comisionFrac;
+    const costoVino   = copasPaid * costoVinoXcopa;
     const tapeoBruto  = personasMes * tapeoTicket * tapeoPct;
-    const ingresoTot  = vinoBruto + tapeoBruto + club;
-    const costoVino   = vinoBruto * (1 - margen);
     const costoTapeo  = tapeoBruto * (1 - margenTapeo);
-    const margenBruto = ingresoTot - costoVino - costoTapeo;
+    const ingresoTot  = vinoBruto + tapeoBruto + club;
+    const margenBruto = vinoBruto - ivaVino - comisionVino - costoVino + tapeoBruto - costoTapeo + club;
     const neto        = margenBruto - costos;
     return {
-      nombre, R, valido:true, copas, vinoBruto, tapeoBruto, ingresoTot,
-      costoVino, costoTapeo, margenBruto, neto,
+      nombre, R, valido:true, copas, copasFree, copasPaid, vinoBruto, ivaVino, comisionVino,
+      costoVino, tapeoBruto, costoTapeo, ingresoTot, margenBruto, neto,
       cn: Math.ceil(copas / noches),
       pn: Math.ceil(Math.ceil(copas / noches) / 2.5),
       factBruta: vinoBruto + tapeoBruto,
@@ -479,12 +603,15 @@ function calc(){
       ${metas.map(m => `<th><div class="pl-th-name">${m.nombre}</div><div class="pl-th-sub">${m.R > 0 ? 'meta: ' + fmtC(m.R) + ' netos' : 'resultado neto $0'}</div></th>`).join('')}
     </tr>
     ${grp('Ingresos')}
-    ${row('Vino (bruto)', m => fmt(m.vinoBruto))}
+    ${row('Vino (bruto, IVA incluido)', m => fmt(m.vinoBruto))}
     ${row('Tapeo (bruto)', m => fmt(m.tapeoBruto))}
     ${row('Club de socios', m => fmt(club))}
     ${row('Ingreso total', m => fmt(m.ingresoTot), 'pl-total')}
+    ${grp('Impuestos y comisiones')}
+    ${row('IVA a pagar (' + document.getElementById('ivaPctNum').value + '%)', m => '− ' + fmt(m.ivaVino), 'pl-neg')}
+    ${row('Comisión tarjeta/QR', m => '− ' + fmt(m.comisionVino), 'pl-neg')}
     ${grp('Costos variables')}
-    ${row('Costo del vino (' + (100 - margenPct) + '%)', m => '− ' + fmt(m.costoVino), 'pl-neg')}
+    ${row('Costo del vino (' + costoVinoPct + '% · solo copas pagas)', m => '− ' + fmt(m.costoVino), 'pl-neg')}
     ${row('Costo del tapeo (35%)', m => '− ' + fmt(m.costoTapeo), 'pl-neg')}
     ${row('Margen bruto', m => fmt(m.margenBruto), 'pl-total')}
     ${grp('Costos fijos')}
@@ -492,7 +619,7 @@ function calc(){
     ${row('Total costos fijos', m => '− ' + fmt(costos), 'pl-total pl-neg')}
     ${row('Resultado neto', m => `<span style="color:${m.neto >= 0 ? 'var(--green)' : 'var(--red)'}">${m.neto >= 0 ? '+' : ''}${fmt(m.neto)}</span>`, 'pl-neto')}
     ${grp('Qué hace falta para llegar')}
-    ${row('Copas por mes', m => m.copas.toLocaleString('es-AR'))}
+    ${row('Copas por mes (gratis / pagas)', m => `${m.copas.toLocaleString('es-AR')} <span style="color:var(--muted)">(${m.copasFree.toLocaleString('es-AR')} / ${m.copasPaid.toLocaleString('es-AR')})</span>`)}
     ${row('Copas por noche', m => `${m.cn}<span class="pl-unit"> copas</span>`, 'pl-big')}
     ${row('Personas por noche', m => `${m.pn}<span class="pl-unit"> pers</span>`, 'pl-big')}
     ${row('Facturación bruta / mes', m => fmtC(m.factBruta), 'pl-foot')}
@@ -500,9 +627,10 @@ function calc(){
 
   // ESCENARIOS
   function scen(titulo, copas){
+    const cFree = Math.min(copas*noches, copasGratisMes);
+    const cPaid = Math.max(0, copas*noches - copasGratisMes);
     const personas = copas / 2.5;
-    const ingNeto = Math.round(copas * noches * precio * margen + personas * noches * tapeoXpersona + club);
-    const res = ingNeto - costos;
+    const res = Math.round(cFree*contribGratis + cPaid*contribPaga) + club - costos;
     const sobreObj = res - objetivo;
     const superaObj = res >= objetivo;
     const ok = res >= 0;
@@ -556,7 +684,8 @@ function syncPair(rangeId, numId){
     calc();
   });
 }
-['precio','noches','bodegas','club','objetivo','objetivoAmb','tapeoTicket','tapeoPct']
+['precio','noches','bodegas','club','objetivo','objetivoAmb','tapeoTicket','tapeoPct',
+ 'costoVinoPct','copasPorBotella','cajasGratis','botellasPorCaja','ivaPct','comisionPct']
   .concat(RUBROS.map(r=>r.id))
   .forEach(id => syncPair(id, id+'Num'));
 calc();
