@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>125cc Wine Bar · Calculadora de Equilibrio</title>
+<title>125cc Wine Bar · Planilla de Objetivos y Equilibrio</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -40,6 +40,7 @@ body{
   border:.5px solid var(--border)}
 .section-title{font-size:10px;letter-spacing:.25em;text-transform:uppercase;
   color:var(--tinto);margin-bottom:18px;font-weight:400}
+.section-note{font-size:11px;color:var(--muted);margin:-12px 0 18px;line-height:1.5}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 @media(max-width:600px){.grid2{grid-template-columns:1fr}.grid3{grid-template-columns:1fr 1fr}}
@@ -55,6 +56,16 @@ body{
 .field-val{display:flex;justify-content:space-between;align-items:center;margin-top:5px}
 .field-val span{font-size:11px;color:var(--muted)}
 .field-val strong{font-size:14px;font-weight:500;color:var(--text)}
+
+/* SUBTOTAL COSTOS */
+.subtotal-band{margin-top:22px;padding:16px 20px;border-radius:12px;
+  background:var(--dk);display:flex;justify-content:space-between;align-items:baseline;
+  flex-wrap:wrap;gap:8px}
+.subtotal-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(200,164,106,.7)}
+.subtotal-val{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:400;
+  color:#F5EDE0;line-height:1}
+.subtotal-sub{font-size:11px;color:rgba(245,237,224,.5)}
 
 /* KPIS */
 .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
@@ -80,6 +91,29 @@ body{
 .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .legend-line{width:24px;height:2px;border-radius:2px}
 .chart-canvas-wrap{position:relative;width:100%;height:280px}
+
+/* PLANILLA P&L */
+.pl-wrap{overflow-x:auto;margin-top:20px;border-radius:12px;border:.5px solid var(--border);
+  background:rgba(255,255,255,.5)}
+.pl-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:600px}
+.pl-table th{padding:12px 14px;text-align:right;font-weight:400;vertical-align:bottom;
+  border-bottom:1px solid var(--border);background:rgba(240,228,204,.45)}
+.pl-table th:first-child{text-align:left}
+.pl-th-name{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--text);line-height:1.1}
+.pl-th-sub{font-size:10px;color:var(--muted);font-weight:300;margin-top:3px}
+.pl-table td{padding:6px 14px;text-align:right;color:var(--text);font-weight:400;
+  white-space:nowrap;font-variant-numeric:tabular-nums}
+.pl-table td:first-child{text-align:left;color:var(--sub);white-space:normal}
+.pl-group td{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--tinto);
+  padding-top:16px;padding-bottom:4px;border-bottom:.5px solid var(--border)}
+.pl-neg td:not(:first-child){color:var(--muted)}
+.pl-total td{font-weight:500;border-top:.5px solid var(--border);
+  background:rgba(240,228,204,.35)}
+.pl-neto td{font-weight:500;border-top:1.5px solid var(--madera);padding-top:10px;padding-bottom:10px}
+.pl-neto td:not(:first-child){font-family:'Cormorant Garamond',serif;font-size:21px}
+.pl-big td:not(:first-child){font-family:'Cormorant Garamond',serif;font-size:24px;padding-top:2px;padding-bottom:2px}
+.pl-big td .pl-unit{font-family:'DM Sans',sans-serif;font-size:10px;color:var(--muted)}
+.pl-foot td{font-size:11px;color:var(--muted);padding-bottom:14px}
 
 /* SCENARIOS */
 .scen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
@@ -111,10 +145,10 @@ body{
   <div class="header">
     <div class="header-eye">Wine Bar · Mar del Plata</div>
     <div class="header-title">125<em>cc</em></div>
-    <div class="header-sub">Calculadora de punto de equilibrio y rentabilidad</div>
+    <div class="header-sub">Planilla de objetivos, costos y punto de equilibrio</div>
   </div>
 
-  <!-- CONTROLES -->
+  <!-- VARIABLES DEL NEGOCIO -->
   <div class="section">
     <div class="section-title">Variables del negocio</div>
     <div class="grid2">
@@ -125,14 +159,6 @@ body{
           <input type="number" class="num-input" min="0" step="100" value="4000" id="precioNum">
         </div>
         <div class="field-val"><span>$2.000</span><strong id="precioVal">$4.000</strong><span>$12.000</span></div>
-      </div>
-      <div class="field">
-        <label>Costos fijos mensuales (ARS)</label>
-        <div class="field-row">
-          <input type="range" min="2000000" max="15000000" step="200000" value="5000000" id="costos">
-          <input type="number" class="num-input" min="0" step="10000" value="5000000" id="costosNum">
-        </div>
-        <div class="field-val"><span>$2M</span><strong id="costosVal">$5M</strong><span>$15M</span></div>
       </div>
       <div class="field">
         <label>Noches operativas por mes</label>
@@ -158,14 +184,20 @@ body{
         </div>
         <div class="field-val"><span>$0</span><strong id="clubVal">$0</strong><span>$3M</span></div>
       </div>
-      <div class="field">
-        <label>Ganancia neta objetivo / mes</label>
-        <div class="field-row">
-          <input type="range" min="0" max="10000000" step="100000" value="1000000" id="objetivo">
-          <input type="number" class="num-input" min="0" step="50000" value="1000000" id="objetivoNum">
-        </div>
-        <div class="field-val"><span>$0</span><strong id="objetivoVal">$1M</strong><span>$10M</span></div>
+    </div>
+  </div>
+
+  <!-- COSTOS FIJOS DESGLOSADOS -->
+  <div class="section">
+    <div class="section-title">Costos fijos mensuales — desglose por rubro</div>
+    <div class="section-note">Cada rubro es editable. El total de costos fijos que usa toda la planilla es la suma de estos rubros.</div>
+    <div class="grid2" id="rubros"></div>
+    <div class="subtotal-band">
+      <div>
+        <div class="subtotal-label">Total costos fijos / mes</div>
+        <div class="subtotal-val" id="costosTotalVal">—</div>
       </div>
+      <div class="subtotal-sub" id="costosTotalSub"></div>
     </div>
   </div>
 
@@ -211,6 +243,33 @@ body{
     </div>
   </div>
 
+  <!-- PLANILLA DE OBJETIVOS (P&L) -->
+  <div class="section">
+    <div class="section-title">Planilla de objetivos — P&amp;L mensual</div>
+    <div class="section-note">Tres metas para planificar el mes: cubrir costos, un objetivo conservador y uno ambicioso. Cada columna muestra el estado de resultados completo y cuántas copas y personas por noche hacen falta para llegar.</div>
+    <div class="grid2">
+      <div class="field">
+        <label>Objetivo conservador — ganancia neta / mes</label>
+        <div class="field-row">
+          <input type="range" min="0" max="10000000" step="100000" value="1000000" id="objetivo">
+          <input type="number" class="num-input" min="0" step="50000" value="1000000" id="objetivoNum">
+        </div>
+        <div class="field-val"><span>$0</span><strong id="objetivoVal">$1M</strong><span>$10M</span></div>
+      </div>
+      <div class="field">
+        <label>Objetivo ambicioso — ganancia neta / mes</label>
+        <div class="field-row">
+          <input type="range" min="0" max="15000000" step="100000" value="2500000" id="objetivoAmb">
+          <input type="number" class="num-input" min="0" step="50000" value="2500000" id="objetivoAmbNum">
+        </div>
+        <div class="field-val"><span>$0</span><strong id="objetivoAmbVal">$2.5M</strong><span>$15M</span></div>
+      </div>
+    </div>
+    <div class="pl-wrap">
+      <table class="pl-table" id="plTable"></table>
+    </div>
+  </div>
+
   <!-- ESCENARIOS -->
   <div class="scen-grid" id="scenarios"></div>
 
@@ -229,22 +288,61 @@ body{
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 let chart;
-const fmt  = n => '$' + Math.round(n).toLocaleString('es-AR');
+const fmt  = n => (n < 0 ? '-' : '') + '$' + Math.round(Math.abs(n)).toLocaleString('es-AR');
 const fmtM = n => {
   const s = n < 0 ? '-' : '';
   const a = Math.abs(n);
   return s + '$' + (Math.round(a/100000)/10).toFixed(1) + 'M';
 };
+// Compacto: montos grandes en M, chicos completos
+const fmtC = n => Math.abs(n) >= 1000000 ? fmtM(n) : fmt(n);
+
+// ---------------------------------------------------------------
+// RUBROS DE COSTOS FIJOS
+// Valores default como punto de partida (ARS/mes) — todos editables.
+// El total de costos fijos de toda la planilla es la SUMA de estos rubros.
+// ---------------------------------------------------------------
+const RUBROS = [
+  {id:'rAlquiler',      label:'Alquiler del local',                          max:5000000,  step:50000, def:1400000},
+  {id:'rSueldos',       label:'Sueldos y cargas sociales',                   max:6000000,  step:50000, def:1800000},
+  {id:'rServicios',     label:'Servicios (luz, gas, agua, internet)',        max:1500000,  step:10000, def:350000},
+  {id:'rInsumos',       label:'Insumos no-vino (copas, limpieza, descart.)', max:1000000,  step:10000, def:250000},
+  {id:'rMarketing',     label:'Marketing y redes',                           max:1000000,  step:10000, def:200000},
+  {id:'rSeguros',       label:'Seguros',                                     max:600000,   step:10000, def:120000},
+  {id:'rMantenimiento', label:'Mantenimiento del local',                     max:1000000,  step:10000, def:180000},
+  {id:'rImpuestos',     label:'Monotributo y contador',                      max:1200000,  step:10000, def:250000},
+  {id:'rImprevistos',   label:'Imprevistos y otros',                         max:1500000,  step:10000, def:300000},
+];
+
+// Render de los rubros con el mismo patrón slider + número editable
+document.getElementById('rubros').innerHTML = RUBROS.map(r => `
+  <div class="field">
+    <label>${r.label}</label>
+    <div class="field-row">
+      <input type="range" min="0" max="${r.max}" step="${r.step}" value="${r.def}" id="${r.id}">
+      <input type="number" class="num-input" min="0" step="10000" value="${r.def}" id="${r.id}Num">
+    </div>
+    <div class="field-val"><span>$0</span><strong id="${r.id}Val">${fmt(r.def)}</strong><span>${fmtM(r.max)}</span></div>
+  </div>`).join('');
 
 function calc(){
   const precio       = +document.getElementById('precioNum').value || 0;
-  const costos       = +document.getElementById('costosNum').value || 0;
   const noches       = +document.getElementById('nochesNum').value || 0;
   const bodegas      = +document.getElementById('bodegasNum').value || 0;
   const club         = +document.getElementById('clubNum').value || 0;
   const objetivo     = +document.getElementById('objetivoNum').value || 0;
+  const objetivoAmb  = +document.getElementById('objetivoAmbNum').value || 0;
   const tapeoTicket  = +document.getElementById('tapeoTicketNum').value || 0;
   const tapeoPct     = Math.min(100, +document.getElementById('tapeoPctNum').value || 0) / 100;
+
+  // Costos fijos = suma de los rubros
+  const rubroVals = RUBROS.map(r => +document.getElementById(r.id+'Num').value || 0);
+  const costos = rubroVals.reduce((s,v) => s+v, 0);
+  RUBROS.forEach((r,i) => document.getElementById(r.id+'Val').textContent = fmt(rubroVals[i]));
+  document.getElementById('costosTotalVal').textContent = fmt(costos);
+  document.getElementById('costosTotalSub').textContent = noches > 0
+    ? '≈ ' + fmt(costos/noches) + ' por noche operativa (' + noches + ' noches)'
+    : '';
 
   const pct    = Math.min(1, bodegas / 14);
   const margen = pct * 1.0 + (1 - pct) * 0.60;
@@ -252,11 +350,11 @@ function calc(){
   const margenTapeo = 0.65; // margen del tapeo estimado
 
   document.getElementById('precioVal').textContent      = fmt(precio);
-  document.getElementById('costosVal').textContent      = fmtM(costos);
   document.getElementById('nochesVal').textContent      = noches;
   document.getElementById('bodegasVal').textContent     = bodegas + ' (' + Math.round(pct*100) + '%)';
   document.getElementById('clubVal').textContent        = club > 0 ? fmtM(club) : '$0';
   document.getElementById('objetivoVal').textContent    = objetivo > 0 ? fmtM(objetivo) : '$0';
+  document.getElementById('objetivoAmbVal').textContent = objetivoAmb > 0 ? fmtM(objetivoAmb) : '$0';
   document.getElementById('tapeoTicketVal').textContent = fmt(tapeoTicket);
   document.getElementById('tapeoPctVal').textContent    = Math.round(tapeoPct*100) + '%';
 
@@ -289,7 +387,7 @@ function calc(){
   document.getElementById('kpis').innerHTML = `
     <div class="kpi"><div class="kpi-label">Margen vino</div><div class="kpi-val">${margenPct}%</div></div>
     <div class="kpi"><div class="kpi-label">Copas equilibrio</div><div class="kpi-val">${copasEq.toLocaleString('es-AR')}</div><div class="kpi-sub">${cnEq}/noche · ${perEq} pers</div></div>
-    <div class="kpi"><div class="kpi-label">Copas con objetivo</div><div class="kpi-val">${copasObj.toLocaleString('es-AR')}</div><div class="kpi-sub">${cnObj}/noche · ${perObj} pers</div></div>
+    <div class="kpi"><div class="kpi-label">Copas obj. conservador</div><div class="kpi-val">${copasObj.toLocaleString('es-AR')}</div><div class="kpi-sub">${cnObj}/noche · ${perObj} pers</div></div>
     <div class="kpi"><div class="kpi-label">Fact. equilibrio</div><div class="kpi-val" style="font-size:20px">${fmtM(factEq)}</div><div class="kpi-sub">copas bruto/mes</div></div>
     <div class="kpi"><div class="kpi-label">Tapeo neto/mes</div><div class="kpi-val" style="font-size:20px;color:var(--tinto)">${tapeoTicket>0?fmtM(tapeoMensualNeto):'—'}</div><div class="kpi-sub">${tapeoTicket>0?fmtM(tapeoMensualBruto)+' bruto':''}</div></div>`;
 
@@ -340,6 +438,65 @@ function calc(){
       }
     }
   });
+
+  // ---------------------------------------------------------------
+  // PLANILLA DE OBJETIVOS — P&L mensual por escenario de meta
+  // ---------------------------------------------------------------
+  function metaEscenario(nombre, R){
+    const valido = ingresoXcopa > 0 && noches > 0;
+    if(!valido) return {nombre, R, valido:false};
+    const copas       = Math.max(0, Math.ceil(Math.max(0, costosEf + R) / ingresoXcopa));
+    const personasMes = copas / 2.5;
+    const vinoBruto   = copas * precio;
+    const tapeoBruto  = personasMes * tapeoTicket * tapeoPct;
+    const ingresoTot  = vinoBruto + tapeoBruto + club;
+    const costoVino   = vinoBruto * (1 - margen);
+    const costoTapeo  = tapeoBruto * (1 - margenTapeo);
+    const margenBruto = ingresoTot - costoVino - costoTapeo;
+    const neto        = margenBruto - costos;
+    return {
+      nombre, R, valido:true, copas, vinoBruto, tapeoBruto, ingresoTot,
+      costoVino, costoTapeo, margenBruto, neto,
+      cn: Math.ceil(copas / noches),
+      pn: Math.ceil(Math.ceil(copas / noches) / 2.5),
+      factBruta: vinoBruto + tapeoBruto,
+    };
+  }
+
+  const metas = [
+    metaEscenario('Cubrir costos', 0),
+    metaEscenario('Conservador', objetivo),
+    metaEscenario('Ambicioso', objetivoAmb),
+  ];
+
+  const cell = f => metas.map(m => `<td>${m.valido ? f(m) : '—'}</td>`).join('');
+  const row  = (label, f, cls='') => `<tr class="${cls}"><td>${label}</td>${cell(f)}</tr>`;
+  const grp  = label => `<tr class="pl-group"><td colspan="4">${label}</td></tr>`;
+
+  document.getElementById('plTable').innerHTML = `
+    <tr>
+      <th></th>
+      ${metas.map(m => `<th><div class="pl-th-name">${m.nombre}</div><div class="pl-th-sub">${m.R > 0 ? 'meta: ' + fmtC(m.R) + ' netos' : 'resultado neto $0'}</div></th>`).join('')}
+    </tr>
+    ${grp('Ingresos')}
+    ${row('Vino (bruto)', m => fmt(m.vinoBruto))}
+    ${row('Tapeo (bruto)', m => fmt(m.tapeoBruto))}
+    ${row('Club de socios', m => fmt(club))}
+    ${row('Ingreso total', m => fmt(m.ingresoTot), 'pl-total')}
+    ${grp('Costos variables')}
+    ${row('Costo del vino (' + (100 - margenPct) + '%)', m => '− ' + fmt(m.costoVino), 'pl-neg')}
+    ${row('Costo del tapeo (35%)', m => '− ' + fmt(m.costoTapeo), 'pl-neg')}
+    ${row('Margen bruto', m => fmt(m.margenBruto), 'pl-total')}
+    ${grp('Costos fijos')}
+    ${RUBROS.map((r,i) => row(r.label, m => '− ' + fmt(rubroVals[i]), 'pl-neg')).join('')}
+    ${row('Total costos fijos', m => '− ' + fmt(costos), 'pl-total pl-neg')}
+    ${row('Resultado neto', m => `<span style="color:${m.neto >= 0 ? 'var(--green)' : 'var(--red)'}">${m.neto >= 0 ? '+' : ''}${fmt(m.neto)}</span>`, 'pl-neto')}
+    ${grp('Qué hace falta para llegar')}
+    ${row('Copas por mes', m => m.copas.toLocaleString('es-AR'))}
+    ${row('Copas por noche', m => `${m.cn}<span class="pl-unit"> copas</span>`, 'pl-big')}
+    ${row('Personas por noche', m => `${m.pn}<span class="pl-unit"> pers</span>`, 'pl-big')}
+    ${row('Facturación bruta / mes', m => fmtC(m.factBruta), 'pl-foot')}
+  `;
 
   // ESCENARIOS
   function scen(titulo, copas){
@@ -399,8 +556,9 @@ function syncPair(rangeId, numId){
     calc();
   });
 }
-['precio','costos','noches','bodegas','club','objetivo','tapeoTicket','tapeoPct'].forEach(id=>
-  syncPair(id, id+'Num'));
+['precio','noches','bodegas','club','objetivo','objetivoAmb','tapeoTicket','tapeoPct']
+  .concat(RUBROS.map(r=>r.id))
+  .forEach(id => syncPair(id, id+'Num'));
 calc();
 </script>
 </body>
