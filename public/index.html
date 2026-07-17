@@ -1852,6 +1852,9 @@ function buscarMisCatasFromInput(){
   buscarMisCatas(email);
 }
 
+const MIS_CATAS_PAGE = 8;
+let _misCatasAll = [];
+
 async function buscarMisCatas(email){
   const results = document.getElementById('miscatas-results');
   if(!results) return;
@@ -1865,6 +1868,7 @@ async function buscarMisCatas(email){
     });
     const data = await r.json();
     const catas = data.catas || [];
+    _misCatasAll = catas;
 
     if(!catas.length){
       results.innerHTML = `
@@ -1875,11 +1879,14 @@ async function buscarMisCatas(email){
       return;
     }
 
+    const restantes = catas.length - MIS_CATAS_PAGE;
+
     results.innerHTML = `
       <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px">
         ${catas.length} cata${catas.length!==1?'s':''} registrada${catas.length!==1?'s':''}
       </div>
-      ${catas.map((c,i) => buildMiCataCard(c, i)).join('')}`;
+      <div id="miscatas-list">${catas.slice(0, MIS_CATAS_PAGE).map((c,i) => buildMiCataCard(c, i)).join('')}</div>
+      ${restantes > 0 ? `<button id="miscatas-more-btn" class="btn-terciario" style="margin-top:4px" onclick="mostrarMasMisCatas()">Mostrar más (quedan ${restantes})</button>` : ''}`;
 
   } catch(err){
     results.innerHTML = `
@@ -1888,6 +1895,15 @@ async function buscarMisCatas(email){
         <span style="font-size:var(--text-kicker)">Verificá tu conexión.</span>
       </div>`;
   }
+}
+
+function mostrarMasMisCatas(){
+  const list = document.getElementById('miscatas-list');
+  const btn  = document.getElementById('miscatas-more-btn');
+  if(!list) return;
+  const restantes = _misCatasAll.slice(MIS_CATAS_PAGE);
+  list.insertAdjacentHTML('beforeend', restantes.map((c,i) => buildMiCataCard(c, MIS_CATAS_PAGE + i)).join(''));
+  if(btn) btn.remove();
 }
 
 function buildMiCataCard(c, idx){
