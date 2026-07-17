@@ -40,6 +40,16 @@ module.exports = async function handler(req, res) {
     const col  = (row, name) => { const i = headers.indexOf(name); return i >= 0 ? (row[i] || "").toString().trim() : ""; };
     const colN = (row, name) => parseFloat(col(row, name)) || 0;
 
+    // fecha se guarda como D/M/YYYY (es-AR) — new Date() la interpreta como M/D/YYYY
+    // (o directamente Invalid Date si el día es >12), así que el orden salía mal.
+    const fechaHoraTs = (fecha, hora) => {
+      const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((fecha || "").trim());
+      if (!m) { const d = new Date(fecha); return isNaN(d) ? 0 : d.getTime(); }
+      const [, dd, mm, yyyy] = m;
+      const [hh, min] = (hora || "").split(":").map(n => parseInt(n, 10) || 0);
+      return new Date(+yyyy, +mm - 1, +dd, hh || 0, min || 0).getTime();
+    };
+
     const degustaciones = rows.slice(1)
       .filter(r => r.length > 1 && (r[2] || r[0]))
       .map(r => ({
@@ -72,7 +82,7 @@ module.exports = async function handler(req, res) {
     if (emailFiltro) {
       const catas = degustaciones
         .filter(d => d.email.toLowerCase() === emailFiltro)
-        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        .sort((a, b) => fechaHoraTs(b.fecha, b.hora) - fechaHoraTs(a.fecha, a.hora));
       return res.status(200).json({ total: catas.length, catas });
     }
 

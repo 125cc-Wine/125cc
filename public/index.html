@@ -1933,7 +1933,7 @@ function buildMiCataCard(c, idx){
       ${nivel==='sommelier' && (c.acidez||c.taninos||c.cuerpo) ? `
         <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px">Atributos</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
-          ${[['Acidez',c.acidez],['Taninos',c.taninos],['Cuerpo',c.cuerpo],['Final',c.final_boca||c.final_en_boca]].filter(a=>a[1]).map(([n,v])=>`
+          ${[['Acidez',c.acidez],['Taninos',c.taninos],['Cuerpo',c.cuerpo],['Final',c.final_boca||c.final_en_boca],['Visual',c.visual],['Olfativo',c.gusto||c.olfativo]].filter(a=>a[1]).map(([n,v])=>`
             <div style="background:var(--bg);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
               <span style="font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em">${n}</span>
               <span style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--ink);font-weight:600">${v}/5</span>
@@ -1957,6 +1957,8 @@ function toggleMiCataCard(id){
 function fmtMiCataFecha(f){
   if(!f) return '';
   const s = f.toString();
+  const dmy = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s);
+  if(dmy) return dmy[1].padStart(2,'0') + '/' + dmy[2].padStart(2,'0') + '/' + dmy[3];
   if(s.includes('T') || (s.includes('-') && s.length > 8)){
     const d = new Date(s);
     if(!isNaN(d.getTime())){
