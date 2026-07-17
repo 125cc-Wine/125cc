@@ -103,7 +103,17 @@ module.exports = async function handler(req, res) {
       b.taninos    += d.taninos;
       b.visual     += d.visual;
       b.gusto      += d.gusto;
-      if (d.descripcion) b.opiniones.push({ texto: d.descripcion, fecha: d.fecha });
+      // Una entrada por cata (no solo las que tienen texto libre) — el admin
+      // necesita ver color/aromas/sabor/atributos aunque el cliente no haya
+      // escrito nada. Sin email: esto lo consume también la carta pública
+      // (favoritos), no solo el dashboard autenticado.
+      b.opiniones.push({
+        texto: d.descripcion, fecha: d.fecha, hora: d.hora, nivel: d.nivel,
+        puntuacion: d.puntuacion, color: d.color, aromas: d.aromas, sabor: d.sabor,
+        acidez: d.acidez, taninos: d.taninos, cuerpo: d.cuerpo,
+        visual: d.visual, gusto: d.gusto, final_boca: d.final_boca,
+        repetiria: d.repetiria,
+      });
     }
 
     const resumen = Object.values(byVino).map(b => ({
@@ -117,7 +127,7 @@ module.exports = async function handler(req, res) {
       taninos:    +(b.taninos   / b.count).toFixed(1),
       visual:     +(b.visual    / b.count).toFixed(1),
       gusto:      +(b.gusto     / b.count).toFixed(1),
-      opiniones:  b.opiniones,
+      opiniones:  b.opiniones.sort((a, c) => fechaHoraTs(c.fecha, c.hora) - fechaHoraTs(a.fecha, a.hora)),
     })).sort((a, b) => b.puntuacion - a.puntuacion);
 
     // No devolver "degustaciones" crudo sin filtro: expondría email y opiniones
