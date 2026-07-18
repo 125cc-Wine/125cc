@@ -77,22 +77,30 @@ body{
   color:#F5EDE0;line-height:1}
 .subtotal-sub{font-size:11px;color:rgba(245,237,224,.5)}
 
-/* KPIS */
-.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
-@media(max-width:700px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
-.kpi{background:var(--card);border-radius:14px;padding:14px 12px;text-align:center;
-  border:.5px solid var(--border)}
-.kpi-label{font-size:10px;color:var(--muted);margin-bottom:5px;line-height:1.3}
-.kpi-val{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:var(--text);line-height:1}
-.kpi-sub{font-size:10px;color:var(--muted);margin-top:3px}
+/* HERO — los números que importan, uno por objetivo */
+.hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+@media(max-width:600px){.hero-grid{grid-template-columns:1fr}}
+.hero-card{background:rgba(255,255,255,.65);border:.5px solid var(--border);border-radius:14px;
+  padding:20px 14px 16px;text-align:center}
+.hero-card-title{font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--tinto);font-weight:400}
+.hero-card-meta{font-size:11px;color:var(--muted);margin-top:3px;min-height:14px}
+.hero-card-num{font-family:'Cormorant Garamond',serif;font-size:54px;font-weight:400;
+  color:var(--text);line-height:1;margin-top:12px}
+.hero-card-unit{font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);margin-top:4px}
+.hero-card-pers{font-size:13px;color:var(--sub);margin-top:12px;padding-top:10px;
+  border-top:.5px solid var(--border)}
+.hero-card-pers strong{font-weight:500}
+.hero-warn{grid-column:1/-1;background:var(--red-bg);border:.5px solid rgba(139,26,26,.25);
+  border-radius:14px;padding:16px 18px;font-size:13px;color:var(--red);line-height:1.5}
+.hero-context{margin-top:14px;font-size:12px;color:var(--muted);text-align:center;line-height:1.7}
+.hero-context strong{color:var(--sub);font-weight:500}
 
-/* BANNER */
-.banner{border-radius:12px;padding:14px 18px;margin-bottom:16px;
-  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
-  background:var(--amber-bg);border:.5px solid rgba(213,161,21,.3)}
-.banner-text{font-size:13px;color:var(--amber)}
-.banner-pill{font-size:11px;color:var(--amber);background:rgba(255,255,255,.6);
-  padding:4px 12px;border-radius:20px;font-weight:400;white-space:nowrap}
+/* P&L PLEGADO — el desglose completo vive detrás de un "ver detalle" */
+.pl-details summary{cursor:pointer;font-size:13px;color:var(--tinto);padding:10px 4px;
+  user-select:none;letter-spacing:.02em}
+.pl-details summary:hover{opacity:.75}
 
 /* CHART */
 .chart-wrap{background:var(--card);border-radius:16px;padding:20px;margin-bottom:16px;
@@ -307,33 +315,15 @@ body{
     <div class="zone-divider-num">2</div>
     <div class="zone-divider-text">
       <div class="zone-divider-title">Resultados</div>
-      <div class="zone-divider-sub">Se recalculan solos con lo que cargaste arriba. Los objetivos de la planilla también son editables, ahí mismo.</div>
+      <div class="zone-divider-sub">Se recalculan solos con lo que cargaste arriba. Los dos objetivos de ganancia también son editables, acá abajo.</div>
     </div>
     <div class="zone-divider-line"></div>
   </div>
 
-  <!-- KPIS -->
-  <div class="kpi-grid" id="kpis"></div>
-
-  <!-- BANNER -->
-  <div id="metaBanner"></div>
-
-  <!-- GRAFICO -->
-  <div class="chart-wrap">
-    <div class="chart-legend">
-      <div class="legend-item"><div class="legend-line" style="background:#7A1428"></div>Ingreso neto (margen)</div>
-      <div class="legend-item"><div class="legend-line" style="background:#e24b4a;border-top:2px dashed #e24b4a;height:0"></div>Costos fijos</div>
-      <div class="legend-item" id="legendObj" style="display:none"><div class="legend-line" style="background:#C8A46A;border-top:2px dashed #C8A46A;height:0"></div>Costos + objetivo</div>
-    </div>
-    <div class="chart-canvas-wrap">
-      <canvas id="chart" role="img" aria-label="Gráfico de punto de equilibrio para 125cc Wine Bar"></canvas>
-    </div>
-  </div>
-
-  <!-- PLANILLA DE OBJETIVOS (P&L) -->
+  <!-- OBJETIVOS — los números que importan, de un vistazo -->
   <div class="section">
-    <div class="section-title">Planilla de objetivos — P&amp;L mensual</div>
-    <div class="section-note">Tres metas para planificar el mes: cubrir costos, un objetivo conservador y uno ambicioso. Cada columna muestra el estado de resultados completo y cuántas copas y personas por noche hacen falta para llegar.</div>
+    <div class="section-title">Objetivos — qué hace falta por noche</div>
+    <div class="section-note">Definí las dos metas de ganancia neta y mirá cuántas copas y personas por noche hacen falta para cada una. El desglose de dónde sale cada número está más abajo, en el detalle P&amp;L.</div>
     <div class="grid2">
       <div class="field">
         <label>Objetivo conservador — ganancia neta / mes</label>
@@ -352,9 +342,32 @@ body{
         <div class="field-val"><span>$0</span><strong id="objetivoAmbVal">$2.5M</strong><span>$15M</span></div>
       </div>
     </div>
-    <div class="pl-wrap">
-      <table class="pl-table" id="plTable"></table>
+    <div class="hero-grid" id="heroObjetivos"></div>
+    <div class="hero-context" id="heroContext"></div>
+  </div>
+
+  <!-- GRAFICO -->
+  <div class="chart-wrap">
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-line" style="background:#7A1428"></div>Ingreso neto (margen)</div>
+      <div class="legend-item"><div class="legend-line" style="background:#e24b4a;border-top:2px dashed #e24b4a;height:0"></div>Costos fijos</div>
+      <div class="legend-item" id="legendObj" style="display:none"><div class="legend-line" style="background:#C8A46A;border-top:2px dashed #C8A46A;height:0"></div>Costos + objetivo</div>
     </div>
+    <div class="chart-canvas-wrap">
+      <canvas id="chart" role="img" aria-label="Gráfico de punto de equilibrio para 125cc Wine Bar"></canvas>
+    </div>
+  </div>
+
+  <!-- PLANILLA DE OBJETIVOS (P&L) — detalle plegado -->
+  <div class="section">
+    <div class="section-title">Detalle — P&amp;L mensual por objetivo</div>
+    <div class="section-note">El estado de resultados completo de cada meta: ingresos, IVA, comisión, costo del vino y del tapeo, cada rubro fijo y el resultado neto.</div>
+    <details class="pl-details">
+      <summary>Ver el desglose completo — de dónde sale cada número</summary>
+      <div class="pl-wrap">
+        <table class="pl-table" id="plTable"></table>
+      </div>
+    </details>
   </div>
 
   <!-- ESCENARIOS -->
@@ -508,10 +521,7 @@ function calc(){
   const copasObj = solveCopas(objetivo);
   const inalcanzable = copasEq === null || copasObj === null;
   const cnEq      = !inalcanzable && noches > 0 ? Math.ceil(copasEq / noches) : 0;
-  const cnObj     = !inalcanzable && noches > 0 ? Math.ceil(copasObj / noches) : 0;
   const perEq     = Math.ceil(cnEq / 2.5);
-  const perObj    = Math.ceil(cnObj / 2.5);
-  const factEq    = (copasEq||0) * precio;
 
   // Tapeo mensual estimado (en equilibrio)
   const tapeoMensualBruto = Math.round(perEq * noches * tapeoTicket * tapeoPct);
@@ -523,19 +533,7 @@ function calc(){
     ? `Con <strong style="color:var(--text)">${Math.round(tapeoPct*100)}%</strong> de las personas pidiendo tapeo a <strong style="color:var(--text)">${fmt(tapeoTicket)}</strong> promedio — el tapeo aporta aproximadamente <strong style="color:var(--tinto)">${fmtM(tapeoMensualNeto)} neto/mes</strong> (${fmtM(tapeoMensualBruto)} bruto) en el escenario de equilibrio. Esto reduce las copas necesarias en <strong style="color:var(--text)">${copasSinTapeo}</strong> copas por mes.`
     : '<span style="color:var(--muted)">Mové el ticket promedio para ver el impacto del tapeo en el equilibrio.</span>';
 
-  document.getElementById('kpis').innerHTML = inalcanzable ? `
-    <div class="kpi" style="grid-column:1/-1"><div class="kpi-label" style="color:var(--red)">El costo del vino + IVA + comisión superan el precio de copa — ninguna cantidad de copas cubre los costos. Bajá el % de costo del vino o subí el precio.</div></div>` : `
-    <div class="kpi"><div class="kpi-label">Copas gratis/mes</div><div class="kpi-val">${copasGratisMes.toLocaleString('es-AR')}</div><div class="kpi-sub">de bodegas socias</div></div>
-    <div class="kpi"><div class="kpi-label">Copas equilibrio</div><div class="kpi-val">${copasEq.toLocaleString('es-AR')}</div><div class="kpi-sub">${cnEq}/noche · ${perEq} pers</div></div>
-    <div class="kpi"><div class="kpi-label">Copas obj. conservador</div><div class="kpi-val">${copasObj.toLocaleString('es-AR')}</div><div class="kpi-sub">${cnObj}/noche · ${perObj} pers</div></div>
-    <div class="kpi"><div class="kpi-label">Fact. equilibrio</div><div class="kpi-val" style="font-size:20px">${fmtM(factEq)}</div><div class="kpi-sub">copas bruto/mes</div></div>
-    <div class="kpi"><div class="kpi-label">Tapeo neto/mes</div><div class="kpi-val" style="font-size:20px;color:var(--tinto)">${tapeoTicket>0?fmtM(tapeoMensualNeto):'—'}</div><div class="kpi-sub">${tapeoTicket>0?fmtM(tapeoMensualBruto)+' bruto':''}</div></div>`;
-
-  const banner = document.getElementById('metaBanner');
   document.getElementById('legendObj').style.display = objetivo > 0 && !inalcanzable ? 'flex' : 'none';
-  banner.innerHTML = (objetivo > 0 && !inalcanzable)
-    ? `<div class="banner"><span class="banner-text">Para quedarte limpio <strong>${fmtM(objetivo)}/mes</strong> necesitás <strong>${cnObj} copas/noche</strong> con <strong>${perObj} personas</strong></span><span class="banner-pill">+${cnObj - cnEq} copas sobre el equilibrio</span></div>`
-    : '';
 
   // GRÁFICO — la pendiente cambia una vez agotada la cuota de copas gratis
   const maxC = inalcanzable ? 500 : Math.max(copasObj * 1.5, copasEq * 1.8, 150);
@@ -619,6 +617,25 @@ function calc(){
     metaEscenario('Conservador', objetivo),
     metaEscenario('Ambicioso', objetivoAmb),
   ];
+
+  // HERO — los números que importan de un vistazo: por cada objetivo,
+  // cuántas copas y personas por noche hacen falta. El desglose completo
+  // (mismo cálculo, línea por línea) vive plegado en el detalle P&L.
+  document.getElementById('heroObjetivos').innerHTML = inalcanzable
+    ? `<div class="hero-warn">El costo del vino + IVA + comisión superan el precio de copa — ninguna cantidad de copas cubre los costos. Bajá el % de costo del vino o subí el precio.</div>`
+    : metas.map(m => `
+      <div class="hero-card">
+        <div class="hero-card-title">${m.nombre}</div>
+        <div class="hero-card-meta">${m.R > 0 ? 'quedarte limpio ' + fmtC(m.R) + '/mes' : 'resultado neto $0'}</div>
+        <div class="hero-card-num">${m.valido ? m.cn : '—'}</div>
+        <div class="hero-card-unit">copas por noche</div>
+        <div class="hero-card-pers">${m.valido ? '≈ <strong>' + m.pn + '</strong> personas por noche' : '—'}</div>
+      </div>`).join('');
+  document.getElementById('heroContext').innerHTML = inalcanzable ? '' : [
+    `Costos fijos <strong>${fmtC(costos)}/mes</strong>` + (noches > 0 ? ' (≈ ' + fmt(costos/noches) + ' por noche)' : ''),
+    copasGratisMes > 0 ? `copas gratis de bodegas: <strong>${copasGratisMes.toLocaleString('es-AR')}/mes</strong>` : '',
+    tapeoTicket > 0 ? `el tapeo aporta ≈ <strong>${fmtM(tapeoMensualNeto)} netos/mes</strong> en equilibrio` : '',
+  ].filter(Boolean).join(' &nbsp;·&nbsp; ');
 
   const cell = f => metas.map(m => `<td>${m.valido ? f(m) : '—'}</td>`).join('');
   const row  = (label, f, cls='') => `<tr class="${cls}"><td>${label}</td>${cell(f)}</tr>`;
