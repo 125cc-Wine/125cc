@@ -222,20 +222,20 @@ body{
         <div class="field-val"><span>4</span><strong id="copasPorBotellaVal">6</strong><span>8</span></div>
       </div>
       <div class="field">
-        <label>Bodegas socias en carta (de 14)</label>
+        <label>Bodegas socias</label>
         <div class="field-row">
-          <input type="range" min="0" max="14" step="1" value="6" id="bodegas">
-          <input type="number" class="num-input" min="0" max="14" step="1" value="6" id="bodegasNum">
+          <input type="range" min="0" max="100" step="1" value="60" id="bodegas">
+          <input type="number" class="num-input" min="0" step="1" value="60" id="bodegasNum">
         </div>
-        <div class="field-val"><span>0</span><strong id="bodegasVal">6 (43%)</strong><span>14</span></div>
+        <div class="field-val"><span>0</span><strong id="bodegasVal">60</strong><span>100</span></div>
       </div>
       <div class="field">
-        <label>Cajas gratis por bodega socia / mes</label>
+        <label>Cajas gratis por bodega socia / año</label>
         <div class="field-row">
-          <input type="range" min="0" max="10" step="1" value="2" id="cajasGratis">
-          <input type="number" class="num-input" min="0" step="1" value="2" id="cajasGratisNum">
+          <input type="range" min="0" max="24" step="1" value="4" id="cajasGratis">
+          <input type="number" class="num-input" min="0" step="1" value="4" id="cajasGratisNum">
         </div>
-        <div class="field-val"><span>0</span><strong id="cajasGratisVal">2</strong><span>10</span></div>
+        <div class="field-val"><span>0</span><strong id="cajasGratisVal">4</strong><span>24</span></div>
       </div>
       <div class="field">
         <label>Botellas por caja</label>
@@ -468,10 +468,14 @@ function calc(){
   const margenXcopaGratis= netoBaseXcopa;                          // copa de cuota gratis: no resta costo de vino
   const margenXcopaPaga  = netoBaseXcopa - costoVinoXcopa;         // copa fuera de cuota
 
-  const copasGratisMes = Math.round(bodegas * cajasGratis * botellasPorCaja * copasPorBotella);
+  // cajasGratis se carga como cajas/año por bodega (así es como llega el dato real:
+  // "cada bodega pone 4 cajas al año") — se prorratea a mensual acá adentro, en vez
+  // de pedirle a quien lo carga que haga la cuenta de dividir por 12 a mano.
+  const cajasGratisMes = cajasGratis / 12;
+  const copasGratisMes = Math.round(bodegas * cajasGratisMes * botellasPorCaja * copasPorBotella);
 
   document.getElementById('cajasResumen').innerHTML = copasGratisMes > 0
-    ? `<strong style="color:var(--text)">${bodegas}</strong> bodega${bodegas!==1?'s':''} socia${bodegas!==1?'s':''} × <strong style="color:var(--text)">${cajasGratis}</strong> caja${cajasGratis!==1?'s':''} gratis/mes × <strong style="color:var(--text)">${botellasPorCaja}</strong> botellas × <strong style="color:var(--text)">${copasPorBotella}</strong> copas/botella = <strong style="color:var(--tinto)">${copasGratisMes.toLocaleString('es-AR')} copas/mes sin costo de vino</strong> (el resto paga ${costoVinoPct}% de costo).`
+    ? `<strong style="color:var(--text)">${bodegas}</strong> bodega${bodegas!==1?'s':''} socia${bodegas!==1?'s':''} × <strong style="color:var(--text)">${cajasGratis}</strong> caja${cajasGratis!==1?'s':''} gratis/año (${bodegas * cajasGratis} cajas/año en total, ≈ <strong style="color:var(--text)">${(bodegas*cajasGratisMes).toFixed(1)}</strong> cajas/mes) × <strong style="color:var(--text)">${botellasPorCaja}</strong> botellas × <strong style="color:var(--text)">${copasPorBotella}</strong> copas/botella = <strong style="color:var(--tinto)">${copasGratisMes.toLocaleString('es-AR')} copas/mes sin costo de vino</strong> (el resto paga ${costoVinoPct}% de costo).`
     : '<span style="color:var(--muted)">Sin bodegas socias o sin cajas gratis configuradas — todas las copas pagan el costo de vino.</span>';
 
   document.getElementById('precioVal').textContent       = fmt(precio);
