@@ -846,35 +846,60 @@
       #fichaContent{max-width:640px;margin-left:auto;margin-right:auto}
     }
 
-    /* ── DESKTOP (≥1100px): sidebar fijo (header+mapa+nav) + panel principal ── */
+    /* ── DESKTOP (≥1100px): sidebar fijo a todo el alto + contenido a lo ancho ──
+       App-shell real en vez de tarjeta centrada: el sidebar queda pegado al
+       borde izquierdo y ocupa el 100% de la altura de la ventana; el
+       contenido usa todo el resto del ancho de la pantalla (nada de
+       max-width angosto dejando márgenes vacíos a los costados). */
     @media (min-width:1100px){
       .app{
-        max-width:1280px;
-        display:grid;
-        grid-template-columns:400px 1fr;
-        grid-template-areas:"sidebar main" "footer footer";
-        gap:0 40px;
-        align-items:start;
-        padding:32px 32px 0;
+        max-width:none;
+        display:flex;flex-direction:column;
+        padding-left:440px; /* deja lugar al sidebar fijo */
+        min-height:100vh;
       }
-      .app-sidebar{grid-area:sidebar;position:sticky;top:32px}
-      .app-main{grid-area:main;min-width:0}
-      .footer{grid-area:footer;margin-top:40px}
+      /* .app-main crece para empujar el footer al piso — si no, con poco
+         contenido quedaba un hueco vacío debajo del footer mientras el
+         sidebar (fijo a 100vh) seguía oscuro hasta abajo. */
+      .app-main{flex:1 0 auto}
+      .app-sidebar{
+        position:fixed;left:0;top:0;bottom:0;width:440px;
+        display:flex;flex-direction:column;
+        overflow-y:auto;
+        box-shadow:6px 0 24px rgba(20,10,0,.12);
+      }
+      /* 56px de padding-top era para dejar aire bajo el status bar del
+         celular — en un sidebar de escritorio es espacio de más. */
+      .app-sidebar .header{padding-top:32px}
+      .app-main{
+        max-width:1500px;padding:40px 48px 0;
+      }
+      .footer{max-width:1500px;padding:24px 48px;margin-top:24px}
 
-      /* Nav vertical en vez de tab-bar horizontal scrolleable — el sidebar
-         entero ya es sticky, así que el tab-bar no necesita su propio sticky. */
+      /* El mapa gana bastante alto — en 296px (tamaño mobile) se veía chico
+         perdido dentro de un sidebar de todo el alto de la pantalla. */
+      .map-section{flex:1;display:flex;flex-direction:column}
+      .map-canvas{height:460px;flex-shrink:0}
+
+      /* Nav vertical con presencia real de botón (antes eran links sueltos
+         con un borde fino, se leían como un menú desplegable perdido). */
       .tab-bar{
         flex-direction:column;position:static;box-shadow:none;
         border-bottom:none;overflow:visible;
+        padding:14px;gap:3px;background:var(--dark);flex:1;
       }
       .tab-btn{
-        text-align:left;padding:13px 18px;
-        border-bottom:none;border-left:2px solid transparent;
+        text-align:left;padding:13px 16px;border-radius:var(--r-card);
+        border:none;color:var(--ink-dark-3);
+        transition:background .15s,color .15s;
       }
-      .tab-btn.active{border-bottom-color:transparent;border-left-color:var(--accent)}
+      .tab-btn:hover{background:rgba(255,255,255,.06)}
+      .tab-btn.active{
+        background:rgba(155,32,53,.22);color:var(--ink-dark);font-weight:600;
+      }
 
       /* auto-fill en vez de un número fijo de columnas — se adapta solo al
-         ancho real del panel principal. */
+         ancho real del panel principal, hasta 3 columnas en monitores anchos. */
       #wineList{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
     }
 </style>
