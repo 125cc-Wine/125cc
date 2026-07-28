@@ -138,6 +138,7 @@ module.exports = async function handler(req, res) {
       color:       colorFinal,
       aromas:      aromasArr.join(', ') || '—',
       sabor:       saborArr.join(', ')  || '—',
+      final:         final_boca ?? '—',
       final_en_boca: final_boca ?? '—',
       final_boca:    final_boca ?? '—',
       gusto:       olfativo    ?? '—',

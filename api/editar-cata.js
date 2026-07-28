@@ -142,6 +142,7 @@ module.exports = async function handler(req, res) {
         case 'color':       return colorFinal;
         case 'aromas':      return aromasArr.join(', ') || '—';
         case 'sabor':       return saborArr.join(', ') || '—';
+        case 'final':
         case 'final_en_boca':
         case 'final_boca':
           return final_boca ?? '—';

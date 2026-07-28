@@ -69,7 +69,7 @@ module.exports = async function handler(req, res) {
         acidez:      colN(r, "acidez"),
         taninos:     colN(r, "taninos"),
         cuerpo:      colN(r, "cuerpo"),
-        final_boca:  colN(r, "final_en_boca") || colN(r, "final_boca"),
+        final_boca:  colN(r, "final") || colN(r, "final_en_boca") || colN(r, "final_boca"),
         visual:      colN(r, "visual"),
         gusto:       colN(r, "gusto"),
         repetiria:   col(r, "repetiria"),

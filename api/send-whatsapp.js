@@ -15,29 +15,64 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: "Faltan credenciales de WhatsApp." });
   }
 
-  const { phone, wineName, winery, varietal, price, glass, rating, ratingLabel, sabor, opinion } = req.body;
+  const { phone, wineName, winery, varietal, price, glass, rating, ratingLabel, sabor, opinion } = req.body || {};
 
   if (!phone || !wineName) {
     return res.status(400).json({ error: "Faltan campos obligatorios: phone, wineName." });
   }
 
-  const saborLine   = sabor && sabor.trim()   ? `\n*En boca:* ${sabor}` : '';
-  const opinionLine = opinion && opinion.trim() ? `\n*Opinión:* "${opinion}"` : '';
+  // Este endpoint es público (no requiere login) y termina mandando un
+  // WhatsApp real con las credenciales del negocio — sin estos chequeos,
+  // cualquiera puede pegarle directo a la API (sin pasar por la UI) para
+  // mandar mensajes con texto arbitrario a un número arbitrario.
+  const phoneDigits = phone.toString().replace(/[^\d+]/g, '');
+  if (!/^\+?\d{8,15}$/.test(phoneDigits)) {
+    return res.status(400).json({ error: "Teléfono inválido." });
+  }
+
+  const strField = (val, max) => {
+    if (val == null) return '';
+    if (typeof val !== 'string') return null;
+    return val.length <= max ? val : null;
+  };
+  const wineNameV = strField(wineName, 200);
+  const wineryV   = strField(winery, 200);
+  const varietalV = strField(varietal, 200);
+  const glassV    = strField(glass, 50);
+  const priceV    = strField(price, 50);
+  const ratingLabelV = strField(ratingLabel, 50);
+  const saborV    = strField(sabor, 500);
+  const opinionV  = strField(opinion, 500);
+  if ([wineNameV, wineryV, varietalV, glassV, priceV, ratingLabelV, saborV, opinionV].includes(null)) {
+    return res.status(400).json({ error: "Algún campo es inválido o demasiado largo." });
+  }
+  if (!wineNameV) return res.status(400).json({ error: "Falta el nombre del vino." });
+
+  let ratingV = '';
+  if (rating !== undefined && rating !== null && rating !== '') {
+    const n = Number(rating);
+    if (!Number.isFinite(n) || n < 0 || n > 100)
+      return res.status(400).json({ error: "Puntuación inválida." });
+    ratingV = n;
+  }
+
+  const saborLine   = saborV   ? `\n*En boca:* ${saborV}` : '';
+  const opinionLine = opinionV ? `\n*Opinión:* "${opinionV}"` : '';
 
   const messageBody = {
     messaging_product: "whatsapp",
-    to:   phone,
+    to:   phoneDigits,
     type: "text",
     text: {
       preview_url: false,
       body:
 `🍷 *Degustación en Wine Bar 125cc*
 
-*Vino:* ${wineName} · ${winery}
-*Varietal:* ${varietal || '—'}
-*Copa:* ${glass || '125 cc'} · ${price}
+*Vino:* ${wineNameV} · ${wineryV || '—'}
+*Varietal:* ${varietalV || '—'}
+*Copa:* ${glassV || '125 cc'} · ${priceV || '—'}
 
-*Puntuación:* ${rating}/100 — _${ratingLabel}_${saborLine}${opinionLine}
+*Puntuación:* ${ratingV || '—'}/100 — _${ratingLabelV || '—'}_${saborLine}${opinionLine}
 
 📍 ${new Date().toLocaleDateString("es-AR", {
   weekday: "long", year: "numeric", month: "long", day: "numeric",
