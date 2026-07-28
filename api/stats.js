@@ -79,8 +79,9 @@ module.exports = async function handler(req, res) {
       }))
       .filter(d => d.vino);
 
-    // Filtro por email → historial personal
+    // Filtro por email → historial personal. Nunca cacheable (datos personales).
     if (emailFiltro) {
+      res.setHeader("Cache-Control", "private, no-store");
       const catas = degustaciones
         .filter(d => d.email.toLowerCase() === emailFiltro)
         .sort((a, b) => fechaHoraTs(b.fecha, b.hora) - fechaHoraTs(a.fecha, a.hora));
@@ -130,10 +131,42 @@ module.exports = async function handler(req, res) {
       opiniones:  b.opiniones.sort((a, c) => fechaHoraTs(c.fecha, c.hora) - fechaHoraTs(a.fecha, a.hora)),
     })).sort((a, b) => b.puntuacion - a.puntuacion);
 
+    // Agregados para el dashboard de stats — solo conteos, nunca email ni texto
+    // libre, así esta rama sigue siendo segura de servir pública/cacheada.
+    const porDia = {};
+    const porTipo = {};
+    const porNivel = {};
+    const emailsUnicos = new Set();
+    const treintaDiasMs = 30 * 24 * 60 * 60 * 1000;
+    const ahora = Date.now();
+    for (const d of degustaciones) {
+      const ts = fechaHoraTs(d.fecha, d.hora);
+      if (ts && ahora - ts <= treintaDiasMs) {
+        const dt = new Date(ts);
+        const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+        porDia[key] = (porDia[key] || 0) + 1;
+      }
+      const tipo = d.tipo || "Otro";
+      porTipo[tipo] = (porTipo[tipo] || 0) + 1;
+      const nivel = (d.nivel || "").toLowerCase() === "sommelier" ? "Sommelier" : "Simple";
+      porNivel[nivel] = (porNivel[nivel] || 0) + 1;
+      if (d.email) emailsUnicos.add(d.email.toLowerCase());
+    }
+
     // No devolver "degustaciones" crudo sin filtro: expondría email y opiniones
     // de todos los clientes a cualquier caller anónimo. "resumen" (agregado, sin
     // email) es lo único que consume el dashboard admin y la carta pública.
-    return res.status(200).json({ total: degustaciones.length, resumen });
+    // Ventana corta de cache — mismo patrón que obtener-vinos.js — para no pegarle
+    // a Sheets en cada request del dashboard sin volverse stale por mucho tiempo.
+    res.setHeader("Cache-Control", "public, max-age=20, stale-while-revalidate=20");
+    return res.status(200).json({
+      total: degustaciones.length,
+      resumen,
+      porDia,
+      porTipo,
+      porNivel,
+      clientesUnicos: emailsUnicos.size,
+    });
 
   } catch (err) {
     return res.status(500).json({ error: "Error interno.", detail: err.message });
