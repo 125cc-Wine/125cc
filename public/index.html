@@ -562,6 +562,15 @@
     .src-maridaje{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
     .src-pill{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-surface);padding:3px 10px;font-size:var(--text-kicker);color:var(--ink);font-weight:300}
     .somm-restart{margin-top:4px}
+    .somm-fb-row{display:flex;gap:6px;margin-top:10px}
+    .somm-fb-btn{
+      background:none;border:1px solid var(--line);border-radius:var(--r-pill);
+      padding:4px 11px;font-size:13px;cursor:pointer;opacity:.55;line-height:1.4;
+      transition:opacity .15s,border-color .15s,background .15s;
+    }
+    .somm-fb-btn:hover{opacity:1}
+    .somm-fb-btn.active-like{opacity:1;background:rgba(90,138,42,.14);border-color:rgba(90,138,42,.4)}
+    .somm-fb-btn.active-dislike{opacity:1;background:rgba(200,70,58,.14);border-color:rgba(200,70,58,.4)}
 
     /* ══════════════════════════════
        COMPRAR
@@ -1715,6 +1724,27 @@ const PREGUNTAS=[
 
 let sommAnswers={}, sommStep=0, sommStarted=false;
 let perfilImplicitoCliente=null; // {cuerpo,frescura,taninos,ultimaCata} o null — ver cargarPerfilImplicito()
+let sommShownIds=new Set(); // ids ya mostrados en esta sesión — para "Dame otras 3"
+
+// Feedback 👍/👎 sobre recomendaciones puntuales, guardado en localStorage
+// (por dispositivo, sin requerir email) — a diferencia del perfil implícito
+// (que viene del historial de catas en el Sheet), esto es una señal directa
+// e inmediata: "no me lo recomiendes de nuevo" / "priorizá este".
+const SOMM_FEEDBACK_KEY='125cc_somm_feedback';
+function leerFeedbackSomm(){
+  try{ return JSON.parse(localStorage.getItem(SOMM_FEEDBACK_KEY)||'{}'); }catch(e){ return {}; }
+}
+function marcarFeedbackSomm(id, valor, btnEl){
+  const fb = leerFeedbackSomm();
+  fb[id] = fb[id]===valor ? undefined : valor; // tocar el mismo botón de nuevo lo saca
+  if(fb[id]===undefined) delete fb[id];
+  try{ localStorage.setItem(SOMM_FEEDBACK_KEY, JSON.stringify(fb)); }catch(e){}
+  const row = btnEl.closest('.somm-fb-row');
+  if(row){
+    row.querySelectorAll('.somm-fb-btn').forEach(b=>b.classList.remove('active-like','active-dislike'));
+    if(fb[id]) btnEl.classList.add(valor==='like'?'active-like':'active-dislike');
+  }
+}
 
 function initSommelier(){
   renderSommIntro();
@@ -1784,6 +1814,7 @@ function renderSommIntro(){
 function startSommelierAtajo(){
   sommStarted = true;
   sommAnswers = {};
+  sommShownIds = new Set();
   renderSommThinking();
   setTimeout(renderSommResults, 700);
 }
@@ -1791,6 +1822,7 @@ function startSommelierAtajo(){
 function startSommelier(){
   sommStarted = true;
   sommAnswers={}; sommStep=0;
+  sommShownIds = new Set();
   renderSommStep(0);
 }
 
@@ -1863,7 +1895,15 @@ function precioBandThresholds(){
 
 function renderSommResults(){
   const {low:precioLow, high:precioHigh} = precioBandThresholds();
-  const scored=wines.map(w=>{
+  const sommFeedback = leerFeedbackSomm();
+
+  // Pool para "Dame otras 3": si excluir lo ya mostrado en esta sesión deja
+  // menos de 3 vinos, reiniciamos el pool en vez de mostrar menos — así el
+  // reroll nunca se queda sin opciones, simplemente empieza a repetir.
+  let pool = wines.filter(w => !sommShownIds.has(w.id));
+  if(pool.length < 3){ sommShownIds = new Set(); pool = wines; }
+
+  const scored=pool.map(w=>{
     let score=0, reasons=[];
     const {color,estilo,comida}=sommAnswers;
 
@@ -1931,8 +1971,16 @@ function renderSommResults(){
       if(rating.puntuacion>=90) reasons.push('muy bien puntuado por otros clientes');
     }
 
+    // feedback 👍/👎 de este dispositivo sobre recomendaciones anteriores —
+    // señal directa e inmediata, aparte del perfil implícito.
+    const fb = sommFeedback[w.id];
+    if(fb==='like'){ score+=2; reasons.push('ya te gustó antes'); }
+    if(fb==='dislike'){ score-=5; }
+
     return {...w, score, reasons, _perfil:{cuerpo,frescura,taninos}};
   }).sort((a,b)=>b.score-a.score).slice(0,3);
+
+  scored.forEach(w => sommShownIds.add(w.id));
 
   const rankColors=['#c8463a','#78716c','#a8a29e'];
   const rankLabel=['Ideal para vos','Segunda opción','También podría ser'];
@@ -1973,8 +2021,13 @@ function renderSommResults(){
           <div class="src-maridaje">
             ${(w.maridaje||[]).slice(0,3).map(m=>`<div class="src-pill">${MARIDAJE_ICON[m]||''} ${esc(m)}</div>`).join('')}
           </div>
+          <div class="somm-fb-row" onclick="event.stopPropagation()">
+            <button class="somm-fb-btn${sommFeedback[w.id]==='like'?' active-like':''}" onclick="marcarFeedbackSomm(${w.id},'like',this)" aria-label="Me gustó">👍</button>
+            <button class="somm-fb-btn${sommFeedback[w.id]==='dislike'?' active-dislike':''}" onclick="marcarFeedbackSomm(${w.id},'dislike',this)" aria-label="No me convence">👎</button>
+          </div>
         </div>`;
       }).join('')}
+      <button class="btn-terciario" style="margin-bottom:8px" onclick="renderSommResults()">🔁 Dame otras 3</button>
       <button class="btn-terciario" style="margin-bottom:12px" onclick="verEnMapaDesdeSomm([${scored.map(w=>w.id).join(',')}])">📍 Ver estos 3 en el mapa</button>
       <div style="background:var(--dark);border-radius:var(--r-card);padding:14px;margin-top:4px;margin-bottom:8px;text-align:center">
         <div style="font-size:var(--text-kicker);color:var(--ink-3);margin-bottom:4px;letter-spacing:.08em;text-transform:uppercase">Sommelier en el salón</div>
