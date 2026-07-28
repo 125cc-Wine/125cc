@@ -876,17 +876,24 @@
       }
       .footer{max-width:1500px;padding:24px 48px;margin-top:24px}
 
-      /* El mapa gana bastante alto — en 296px (tamaño mobile) se veía chico
-         perdido dentro de un sidebar de todo el alto de la pantalla. */
-      .map-section{flex:1;display:flex;flex-direction:column}
-      .map-canvas{height:460px;flex-shrink:0}
+      /* El mapa gana alto (más presencia que el tamaño mobile de 296px) pero
+         se achica solo si el viewport es más bajo — antes con height fijo
+         de 460px, en una laptop de 720-800px de alto el sidebar completo
+         (header+mapa+nav) no entraba y quedaba con scroll interno, tapando
+         "Mis catas" del nav. min-height:0 es necesario para que un item
+         flex pueda encogerse por debajo de su contenido en un flex column
+         anidado — sin eso, max-height no alcanza a frenar el desborde. */
+      .map-section{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+      .map-canvas{flex:1 1 auto;height:auto;min-height:200px;max-height:460px}
 
       /* Nav vertical con presencia real de botón (antes eran links sueltos
-         con un borde fino, se leían como un menú desplegable perdido). */
+         con un borde fino, se leían como un menú desplegable perdido).
+         flex:0 0 auto — a diferencia del mapa, el nav nunca se comprime,
+         siempre se ven las 4 opciones completas. */
       .tab-bar{
         flex-direction:column;position:static;box-shadow:none;
         border-bottom:none;overflow:visible;
-        padding:14px;gap:3px;background:var(--dark);flex:1;
+        padding:14px;gap:3px;background:var(--dark);flex:0 0 auto;
       }
       .tab-btn{
         text-align:left;padding:13px 16px;border-radius:var(--r-card);
