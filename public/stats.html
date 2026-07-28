@@ -31,6 +31,9 @@
   .wine-list-search{padding:12px;border-bottom:1px solid var(--line-dark)}
   .wine-list-search input{width:100%;background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:10px 12px;color:var(--ink-dark);font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
   .wine-list-search input:focus{border-color:var(--accent)}
+  .wine-type-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+  .wine-type-chip{background:none;border:1px solid var(--line-dark);color:var(--ink-dark-3);font-size:10px;font-weight:500;letter-spacing:.04em;padding:5px 10px;border-radius:var(--r-pill);cursor:pointer;font-family:'DM Sans',sans-serif;transition:background var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
+  .wine-type-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
   .wine-list-items{overflow-y:auto;flex:1}
   .wine-list-item{padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line-dark);transition:background .1s}
   .wine-list-item:hover{background:var(--dark-3)}
@@ -51,10 +54,13 @@
   .form-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-dark-3);margin-bottom:5px;display:block}
   .form-input{width:100%;background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:11px 13px;color:var(--ink-dark);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
   .form-input:focus{border-color:var(--accent)}
+  .form-input.input-error{border-color:#f87171;box-shadow:0 0 0 2px rgba(248,113,113,.15)}
   select.form-input{-webkit-appearance:none;cursor:pointer}
   textarea.form-input{resize:vertical;min-height:80px;line-height:1.5}
   .form-section{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--madera);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line-dark)}
   .form-actions{display:flex;gap:10px;margin-top:20px}
+  .btn-duplicate{flex:1;background:none;border:1px solid var(--line-dark-strong);border-radius:var(--r-pill);padding:15px;color:var(--ink-dark-2);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-family:'DM Sans',sans-serif;cursor:pointer;transition:border-color var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
+  .btn-duplicate:hover{border-color:var(--ink-dark-2);color:var(--ink-dark)}
   .btn-save{flex:2;background:var(--accent-grad);border:none;border-radius:var(--r-pill);padding:15px;color:#fff;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:transform var(--t-feedback) var(--ease);letter-spacing:.12em;text-transform:uppercase;box-shadow:0 4px 20px rgba(155,32,53,.3)}
   .btn-save:active{transform:scale(.98)}
   .btn-delete{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,80,80,.3);border-radius:var(--r-pill);padding:15px;color:#f87171;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background var(--t-feedback) var(--ease)}
@@ -352,7 +358,7 @@
           <div id="mapPins"></div>
         </div>
         <div style="margin-top:10px;font-size:11px;color:var(--ink-dark-3);text-align:center;font-weight:300">
-          Los ejes van de −100 a +100. Centro = 0,0
+          Los ejes van de −100 a +100. Centro = 0,0 · con un vino seleccionado, las flechas del teclado ajustan ±1 (Shift ±5)
         </div>
       </div>
 
@@ -399,7 +405,14 @@
     <div class="wine-editor-grid">
       <div class="wine-list-sidebar">
         <div class="wine-list-search">
-          <input type="text" placeholder="Buscar vino..." oninput="filterWineList(this.value)" id="wineSearchInput">
+          <input type="text" placeholder="Buscar vino..." oninput="filterWineList()" id="wineSearchInput">
+          <div class="wine-type-chips">
+            <button class="wine-type-chip active" onclick="setWineTypeFilter('Todos',this)">Todos</button>
+            <button class="wine-type-chip" onclick="setWineTypeFilter('Tinto',this)">Tinto</button>
+            <button class="wine-type-chip" onclick="setWineTypeFilter('Blanco',this)">Blanco</button>
+            <button class="wine-type-chip" onclick="setWineTypeFilter('Rosado',this)">Rosado</button>
+            <button class="wine-type-chip" onclick="setWineTypeFilter('Naranjo',this)">Naranjo</button>
+          </div>
         </div>
         <div class="wine-list-items" id="wineListItems">
           <div style="padding:20px;text-align:center;color:var(--ink-dark-3);font-size:12px">Cargando...</div>
@@ -899,6 +912,37 @@ function updateFromInput(){
   }
 }
 
+// Ajuste fino con teclado: con un vino seleccionado en el tab Mapa, las
+// flechas mueven ±1 (Shift ±5) sin necesitar arrastrar con precisión.
+document.addEventListener('keydown', function(e){
+  if(!selectedWineId) return;
+  const panelMapa = document.getElementById('panel-mapa');
+  if(!panelMapa || !panelMapa.classList.contains('active')) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return; // no interferir con los inputs X/Y
+  const deltas = { ArrowLeft:[-1,0], ArrowRight:[1,0], ArrowUp:[0,1], ArrowDown:[0,-1] };
+  const delta = deltas[e.key];
+  if(!delta) return;
+  e.preventDefault();
+  const w = wines.find(w=>w.id===selectedWineId);
+  if(!w) return;
+  const step = e.shiftKey ? 5 : 1;
+  const current = pendingChanges[selectedWineId] || {x:parseFloat(w.x)||0, y:parseFloat(w.y)||0};
+  const x = Math.max(-100, Math.min(100, current.x + delta[0]*step));
+  const y = Math.max(-100, Math.min(100, current.y + delta[1]*step));
+  const clamped = {x, y};
+  pendingChanges[selectedWineId] = clamped;
+  updateSidebar(selectedWineId, clamped);
+  const pin = document.getElementById('pin-'+selectedWineId);
+  if(pin){
+    const py = mapToPercent(-y);
+    pin.style.left = mapToPercent(x)+'%';
+    pin.style.top  = py+'%';
+    pin.classList.toggle('below-mid', py > 50);
+  }
+  document.getElementById('saveSingleBtn').disabled = false;
+});
+
 function renderMapWineList(){
   document.getElementById('mapWineList').innerHTML = wines.map((w,i)=>`
     <div class="map-wine-item${w.id===selectedWineId?' active-item':''}"
@@ -969,6 +1013,7 @@ function showToast(msg, type=''){
 let editorWines = [];
 let editingId = null;
 let editorLoaded = false;
+let wineTypeFilter = 'Todos';
 
 function switchTab(tab, btnEl){
   document.querySelectorAll('.dash-panel').forEach(p=>p.classList.remove('active'));
@@ -1002,11 +1047,24 @@ async function loadWinesForEditor(){
   }
 }
 
-function filterWineList(q){
-  const filtered = q
-    ? editorWines.filter(w => w.nombre.toLowerCase().includes(q.toLowerCase()) || (w.bodega||'').toLowerCase().includes(q.toLowerCase()))
-    : editorWines;
-  renderWineListSidebar(filtered);
+// Combina búsqueda de texto + chip de tipo — un solo lugar para no repetir
+// el mismo filtro en filterWineList/editWine/duplicateWine por separado.
+function getFilteredWineList(){
+  const q = (document.getElementById('wineSearchInput')?.value || '').toLowerCase();
+  return editorWines.filter(w => {
+    const matchesQ = !q || w.nombre.toLowerCase().includes(q) || (w.bodega||'').toLowerCase().includes(q);
+    const matchesType = wineTypeFilter === 'Todos' || w.tipo === wineTypeFilter;
+    return matchesQ && matchesType;
+  });
+}
+function filterWineList(){
+  renderWineListSidebar(getFilteredWineList());
+}
+function setWineTypeFilter(tipo, btn){
+  wineTypeFilter = tipo;
+  document.querySelectorAll('.wine-type-chip').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderWineListSidebar(getFilteredWineList());
 }
 
 function renderWineListSidebar(list){
@@ -1029,11 +1087,23 @@ function editWine(id){
   editingId = id;
   const w = editorWines.find(x=>x.id===id);
   if(!w) return;
-  renderWineListSidebar(editorWines.filter(x => {
-    const q = document.getElementById('wineSearchInput').value;
-    return !q || x.nombre.toLowerCase().includes(q.toLowerCase()) || (x.bodega||'').toLowerCase().includes(q.toLowerCase());
-  }));
+  renderWineListSidebar(getFilteredWineList());
   renderWineForm(w);
+}
+
+// Precarga el form con una copia del vino seleccionado (sin id/nombre) y lo
+// deja como "nuevo" — no toca el sheet hasta que el admin guarde. Útil para
+// el recambio de carta cada 14 días, donde muchos vinos nuevos parten de una
+// ficha parecida a uno que ya está cargado.
+function duplicateWine(id){
+  const w = editorWines.find(x=>x.id===id);
+  if(!w) return;
+  const maxId = editorWines.length ? Math.max(...editorWines.map(x=>x.id)) : 0;
+  const copy = {...w, id: maxId+1, nombre: w.nombre + ' (copia)'};
+  editingId = null;
+  renderWineListSidebar(getFilteredWineList());
+  renderWineForm(copy, true);
+  showToast('Duplicado — revisá los datos y guardá para crearlo', 'success');
 }
 
 function newWine(){
@@ -1192,6 +1262,7 @@ function renderWineForm(w, isNew=false){
       <button class="btn-save" onclick="saveWine(${w.id}, ${isNew})">
         ${isNew ? '✦ Crear vino' : '✦ Guardar cambios'}
       </button>
+      ${!isNew ? `<button class="btn-duplicate" onclick="duplicateWine(${w.id})">Duplicar</button>` : ''}
       ${!isNew ? `<button class="btn-delete" onclick="deleteWine(${w.id})">Eliminar</button>` : ''}
     </div>`;
   refreshChecklist();
@@ -1349,7 +1420,20 @@ document.getElementById('wineEditForm')?.addEventListener('change', refreshCheck
 
 async function saveWine(id, isNew){
   const data = getFormData(id, isNew);
-  if(!data.nombre){ showToast('El nombre es obligatorio','error'); return; }
+  const nombreInput = document.getElementById('ef-nombre');
+  if(!data.nombre){
+    if(nombreInput){
+      nombreInput.classList.add('input-error');
+      nombreInput.focus();
+      nombreInput.addEventListener('input', function clearNombreError(){
+        nombreInput.classList.remove('input-error');
+        nombreInput.removeEventListener('input', clearNombreError);
+      });
+    }
+    showToast('El nombre es obligatorio','error');
+    return;
+  }
+  if(nombreInput) nombreInput.classList.remove('input-error');
 
   showToast('Guardando...');
   try{
