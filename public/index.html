@@ -546,6 +546,14 @@
       animation:revealCard .4s var(--ease) both;
     }
     .somm-result-card:hover{box-shadow:var(--shadow-2);border-color:rgba(60,40,20,.18)}
+    /* El resultado #1 gana peso propio — más padding, fondo sólido y borde
+       acento — en vez de las 3 opciones lucir todas igual de relevantes. */
+    .somm-result-hero{
+      background:var(--surface);padding:18px;
+      border-color:rgba(122,20,40,.25);box-shadow:var(--shadow-2);
+    }
+    .somm-result-hero .src-rank{width:34px;height:34px;font-size:15px}
+    .somm-result-hero .src-name{font-size:17px;font-family:'Cormorant Garamond',serif;font-weight:600}
     .src-header{display:flex;align-items:flex-start;gap:11px;margin-bottom:8px}
     .src-rank{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:var(--text-caption);font-weight:600;color:#fff;flex-shrink:0;box-shadow:var(--shadow-1)}
     .src-name{font-size:14px;font-weight:500;color:var(--ink);line-height:1.2}
@@ -1073,6 +1081,7 @@ const MARIDAJE_ICON={"carnes rojas":"🥩","quesos duros":"🧀","quesos blandos
 let wines=[], selectedId=null;
 let favoritos=new Set(); // nombres de vinos mejor puntuados por clientes reales
 let wineRatings=new Map(); // nombre del vino → {puntuacion, count} — para el boost del sommelier
+let sommHighlightIds=null; // Set de ids resaltados en el mapa desde "Ver estos 3 en el mapa"
 
 function fetchFavoritos(){
   fetch('/api/stats').then(r=>r.json()).then(d=>{
@@ -1196,6 +1205,7 @@ function buildMap(){
       if(activeFilter && w.tipo !== activeFilter) return;
       const wasSelected = selectedId === w.id;
       selectedId = wasSelected ? null : w.id;
+      sommHighlightIds = null;
       updateMapSelectionClasses();
       renderWineList();
       hideMapHint();
@@ -1222,6 +1232,14 @@ function updateMapSelectionClasses(){
     const pin = pinElements[w.id];
     if(!pin) return;
     const filterDimmed = !!(activeFilter && w.tipo !== activeFilter);
+    // Modo "Ver estos 3 en el mapa" (desde resultados del Sommelier): apaga
+    // todo lo que no esté en la lista resaltada, ignora la selección normal.
+    if(sommHighlightIds){
+      pin.classList.remove('pin-selected');
+      pin.classList.toggle('pin-dimmed', filterDimmed || !sommHighlightIds.has(w.id));
+      pin.classList.remove('pin-unselected-dim');
+      return;
+    }
     pin.classList.toggle('pin-selected', w.id === selectedId);
     pin.classList.toggle('pin-dimmed', filterDimmed);
     pin.classList.toggle('pin-unselected-dim', !!selectedId && w.id !== selectedId && !filterDimmed);
@@ -1237,8 +1255,9 @@ function updateMapSelectionClasses(){
 
 document.addEventListener('click', e => {
   if(e.target.closest('.legend-pill,.tab-btn,.wine-card,.map-preview,.filter-btn,button,input,select,textarea,a')) return;
-  if(selectedId !== null){
+  if(selectedId !== null || sommHighlightIds){
     selectedId = null;
+    sommHighlightIds = null;
     updateMapSelectionClasses();
     renderWineList();
   }
@@ -1503,6 +1522,7 @@ let activeFilter = null;
 function filterMap(tipo){
   activeFilter = tipo;
   selectedId   = null;
+  sommHighlightIds = null;
   document.querySelectorAll('.legend-pill').forEach(p => p.classList.remove('active'));
   if(tipo){
     document.getElementById('pill-'+tipo)?.classList.add('active');
@@ -1693,24 +1713,83 @@ const PREGUNTAS=[
   }
 ];
 
-let sommAnswers={}, sommStep=0;
+let sommAnswers={}, sommStep=0, sommStarted=false;
+let perfilImplicitoCliente=null; // {cuerpo,frescura,taninos,ultimaCata} o null — ver cargarPerfilImplicito()
 
 function initSommelier(){
   renderSommIntro();
+  cargarPerfilImplicito().then(()=>{
+    // Si el perfil tardó en llegar y el cliente ya arrancó el wizard (o
+    // volvió a la carta), no le pisamos la pantalla — solo refresca la
+    // intro si todavía está parado ahí.
+    if(!sommStarted) renderSommIntro();
+  });
+}
+
+// Deriva un perfil de gusto implícito a partir del historial guardado en
+// localStorage (mismo email que usa "Mis catas", sin login nuevo). Solo se
+// activa con señal real: ≥2 catas Sommelier (las que tienen acidez/cuerpo/
+// taninos cargados) puntuadas 85+ — si no, el flujo clásico de 4 preguntas
+// queda exactamente igual que antes.
+async function cargarPerfilImplicito(){
+  perfilImplicitoCliente = null;
+  let email = '';
+  try{ email = localStorage.getItem('125cc_email')||''; }catch(e){}
+  if(!email) return;
+  try{
+    const r = await fetch('/api/stats', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email})
+    });
+    const data = await r.json();
+    const todas = data.catas || [];
+    if(!todas.length) return;
+    const buenas = todas.filter(c => (c.nivel||'').toLowerCase()==='sommelier' && Number(c.puntuacion)>=85);
+    if(buenas.length < 2) return;
+    const avg = key => buenas.reduce((s,c)=>s+(Number(c[key])||0),0)/buenas.length;
+    perfilImplicitoCliente = {
+      cuerpo: avg('cuerpo'),
+      frescura: avg('acidez'), // la cata no guarda "frescura" — acidez es el proxy sensorial más cercano
+      taninos: avg('taninos'),
+      ultimaCata: todas[0], // la más reciente en general (no solo las que alimentan el perfil)
+    };
+  }catch(e){ perfilImplicitoCliente = null; }
 }
 
 function renderSommIntro(){
-  document.getElementById('sommContent').innerHTML=`
-    <div class="somm-intro">
-      <div style="font-size:28px;margin-bottom:8px">🍾</div>
-      <h3>¿No sabés por dónde empezar?</h3>
-      <p style="margin-bottom:10px">4 preguntas rápidas y te orientamos hacia los vinos que mejor te van esta noche.</p>
-      <p style="font-size:var(--text-caption);color:var(--ink-3);margin-bottom:14px">Nuestro sommelier está en el salón — después podés consultarle cualquier duda.</p>
-      <button class="somm-start-btn btn-primario" onclick="startSommelier()">Ayudame a elegir</button>
-    </div>`;
+  const el = document.getElementById('sommContent');
+  if(perfilImplicitoCliente && perfilImplicitoCliente.ultimaCata){
+    const u = perfilImplicitoCliente.ultimaCata;
+    el.innerHTML=`
+      <div class="somm-intro">
+        <div style="font-size:28px;margin-bottom:8px">👋</div>
+        <h3>De nuevo por acá</h3>
+        <p style="margin-bottom:14px">La última vez tomaste <strong>${esc(u.vino)}</strong>${u.puntuacion?` · ${esc(u.puntuacion)} pts`:''}. ¿Buscamos algo parecido o arrancamos de cero?</p>
+        <button class="somm-start-btn btn-primario" onclick="startSommelierAtajo()">✨ Algo parecido a lo que me gustó</button>
+        <button class="somm-restart btn-terciario" style="margin-top:10px" onclick="startSommelier()">Las 4 preguntas de siempre</button>
+      </div>`;
+  } else {
+    el.innerHTML=`
+      <div class="somm-intro">
+        <div style="font-size:28px;margin-bottom:8px">🍾</div>
+        <h3>¿No sabés por dónde empezar?</h3>
+        <p style="margin-bottom:10px">4 preguntas rápidas y te orientamos hacia los vinos que mejor te van esta noche.</p>
+        <p style="font-size:var(--text-caption);color:var(--ink-3);margin-bottom:14px">Nuestro sommelier está en el salón — después podés consultarle cualquier duda.</p>
+        <button class="somm-start-btn btn-primario" onclick="startSommelier()">Ayudame a elegir</button>
+      </div>`;
+  }
+}
+
+// Atajo: usa directamente el perfil implícito, sin las 4 preguntas.
+function startSommelierAtajo(){
+  sommStarted = true;
+  sommAnswers = {};
+  renderSommThinking();
+  setTimeout(renderSommResults, 700);
 }
 
 function startSommelier(){
+  sommStarted = true;
   sommAnswers={}; sommStep=0;
   renderSommStep(0);
 }
@@ -1804,11 +1883,20 @@ function renderSommResults(){
     }
     if(color==='cualquiera'){score+=1;}
 
-    // estilo match
+    // estilo match — perfil declarado (cuerpo/frescura/taninos) + posición
+    // real del vino en el mapa (eje Y: Suave↔Potente) como score continuo,
+    // en vez de un corte binario — dos vinos "serios" ya no empatan aunque
+    // uno sea mucho más extremo que el otro.
     const cuerpo=w.perfil?w.perfil.cuerpo:3;
     const frescura=w.perfil?w.perfil.frescura:3;
-    if(estilo==='fresco'&&frescura>=4){score+=3;reasons.push('entra fácil');}
-    if(estilo==='serio'&&cuerpo>=4){score+=3;reasons.push('tiene estructura y cuerpo');}
+    const taninos=w.perfil?w.perfil.taninos:3;
+    if(estilo==='fresco'||estilo==='serio'){
+      const yTarget = estilo==='fresco' ? -55 : 55;
+      const proximidad = Math.max(0, 1-Math.abs((Number(w.y)||0)-yTarget)/160); // 0..1
+      score += proximidad*3;
+      if(estilo==='fresco' && frescura>=4){score+=1;reasons.push('entra fácil');}
+      if(estilo==='serio' && (cuerpo>=4||taninos>=4)){score+=1;reasons.push('tiene estructura y cuerpo');}
+    }
     if(estilo==='cualquiera'){score+=1;}
 
     // comida match
@@ -1823,6 +1911,19 @@ function renderSommResults(){
     if(sommAnswers.precio==='alto'  && precioNum>precioHigh){score+=3;reasons.push('lo mejor de la carta');}
     if(sommAnswers.precio==='bajo'  && precioNum>precioHigh){score-=2;} // penalizar si pide barato y el vino es caro
 
+    // perfil implícito del cliente (cargarPerfilImplicito) — catas Sommelier
+    // propias bien puntuadas. Corre siempre que haya perfil, no solo en el
+    // atajo "Algo parecido", así el flujo clásico también se afina con tu
+    // historial real.
+    if(perfilImplicitoCliente){
+      const dist = Math.abs(cuerpo-perfilImplicitoCliente.cuerpo)
+                 + Math.abs(frescura-perfilImplicitoCliente.frescura)
+                 + Math.abs(taninos-perfilImplicitoCliente.taninos);
+      const afinidad = Math.max(0, 2-dist*0.3);
+      score += afinidad;
+      if(afinidad>=1.3) reasons.push('parecido a lo que más te gustó antes');
+    }
+
     // boost suave por puntuación real de clientes — desempata sin dominar el match de perfil
     const rating = wineRatings.get(w.nombre);
     if(rating && rating.count>=3){
@@ -1830,36 +1931,68 @@ function renderSommResults(){
       if(rating.puntuacion>=90) reasons.push('muy bien puntuado por otros clientes');
     }
 
-    return {...w, score, reasons};
+    return {...w, score, reasons, _perfil:{cuerpo,frescura,taninos}};
   }).sort((a,b)=>b.score-a.score).slice(0,3);
 
   const rankColors=['#c8463a','#78716c','#a8a29e'];
   const rankLabel=['Ideal para vos','Segunda opción','También podría ser'];
+  const sinPreguntas = !sommAnswers.color && !sommAnswers.estilo && !sommAnswers.comida && !sommAnswers.precio;
+  const subtitulo = sinPreguntas && perfilImplicitoCliente ? 'Basado en lo que más te gustó antes' : 'Basado en lo que nos dijiste';
+
+  const barraPerfil = (label,val,color) => `
+    <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+      <div style="width:56px;font-size:10px;color:var(--ink-3);flex-shrink:0">${label}</div>
+      <div style="flex:1;height:3px;background:var(--line);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${(val/5*100)}%;background:${color}"></div>
+      </div>
+    </div>`;
 
   document.getElementById('sommContent').innerHTML=`
     <div class="somm-results" style="display:block">
       <h3>Tus vinos de esta noche</h3>
-      <p>Basado en lo que nos dijiste</p>
-      ${scored.map((w,i)=>`
-        <div class="somm-result-card" style="animation-delay:${i*380}ms" onclick="selectWineFromSomm(${w.id})">
+      <p>${subtitulo}</p>
+      ${scored.map((w,i)=>{
+        const color = TYPE_COLOR[w.tipo] || '#888';
+        const isHero = i===0;
+        return `
+        <div class="somm-result-card${isHero?' somm-result-hero':''}" style="animation-delay:${i*380}ms" onclick="selectWineFromSomm(${w.id})">
           <div class="src-header">
             <div class="src-rank" style="background:${rankColors[i]}">${i+1}</div>
-            <div>
+            <div style="flex:1;min-width:0">
               <div class="src-name">${esc(w.nombre)}</div>
-              <div class="src-why">${esc(rankLabel[i])} · ${esc(w.reasons.slice(0,2).join(', '))}</div>
+              <div class="src-why">${esc(rankLabel[i])}${w.reasons.length?' · '+esc(w.reasons.join(', ')):''}</div>
             </div>
           </div>
           <div class="src-price">${fmtPrecio(w.precio)} · ${esc(w.copa||'125 cc')}</div>
+          ${isHero ? `
+          <div style="margin-top:10px">
+            ${barraPerfil('Cuerpo', w._perfil.cuerpo, color)}
+            ${barraPerfil('Frescura', w._perfil.frescura, color)}
+            ${barraPerfil('Taninos', w._perfil.taninos, color)}
+          </div>` : ''}
           <div class="src-maridaje">
             ${(w.maridaje||[]).slice(0,3).map(m=>`<div class="src-pill">${MARIDAJE_ICON[m]||''} ${esc(m)}</div>`).join('')}
           </div>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
+      <button class="btn-terciario" style="margin-bottom:12px" onclick="verEnMapaDesdeSomm([${scored.map(w=>w.id).join(',')}])">📍 Ver estos 3 en el mapa</button>
       <div style="background:var(--dark);border-radius:var(--r-card);padding:14px;margin-top:4px;margin-bottom:8px;text-align:center">
         <div style="font-size:var(--text-kicker);color:var(--ink-3);margin-bottom:4px;letter-spacing:.08em;text-transform:uppercase">Sommelier en el salón</div>
         <div style="font-size:var(--text-data);color:var(--ink-dark-2);line-height:1.5">Contale tus preferencias y te guía al vino perfecto para esta noche.</div>
       </div>
       <button class="somm-restart btn-terciario" onclick="startSommelier()">Volver a empezar</button>
     </div>`;
+}
+
+// "Ver estos 3 en el mapa" — apaga todos los pines salvo los recomendados
+// (mismo mecanismo de dimming que ya usa la selección normal) y lleva el
+// mapa a la vista (en mobile el mapa vive arriba de las tabs, hace falta
+// scrollear; en desktop ya está siempre visible en el sidebar).
+function verEnMapaDesdeSomm(ids){
+  selectedId = null;
+  sommHighlightIds = new Set(ids);
+  updateMapSelectionClasses();
+  document.querySelector('.map-section')?.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 function selectWineFromSomm(id){ selectWineAndShowFicha(id); }
