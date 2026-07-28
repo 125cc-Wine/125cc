@@ -1857,11 +1857,7 @@ function renderMisCatasEmailRow(email){
             onblur="this.style.borderColor='var(--line)'"
             onkeydown="if(event.key==='Enter')buscarMisCatasFromInput()">
         </div>
-        <button onclick="buscarMisCatasFromInput()"
-          style="width:100%;background:var(--ink);color:var(--bg);border:none;border-radius:var(--r-card);
-                 padding:14px;font-size:var(--text-data);font-weight:500;letter-spacing:.06em;text-transform:uppercase;
-                 cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;
-                 box-shadow:0 4px 16px rgba(20,10,0,.2)">
+        <button class="btn-secundario" onclick="buscarMisCatasFromInput()">
           Ver mis catas →
         </button>
       </div>`;
