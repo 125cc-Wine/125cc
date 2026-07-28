@@ -828,6 +828,55 @@
     .axis-desc span{font-size:var(--text-kicker);color:rgba(220,210,195,.8);font-weight:300}
     .axis-desc strong{color:var(--ink-dark);font-weight:500}
     .axis-map-hint{font-size:var(--text-kicker);color:var(--ink-3);margin-top:6px;font-weight:300}
+
+    /* ══════════════════════════════════════════════
+       RESPONSIVE — tablet y desktop
+       Mobile (<768px) queda exactamente igual que antes.
+       ══════════════════════════════════════════════ */
+
+    /* ── TABLET (768–1099px): columna única más ancha + grid de 2 en la carta ── */
+    @media (min-width:768px){
+      .app{max-width:760px}
+      .tab-content{padding:28px 24px 56px}
+      #wineList{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;align-items:start}
+      #wineList .wine-card{margin-bottom:0}
+      /* Wizards/formularios no ganan nada estirándose al ancho completo —
+         mismo criterio que ya usa .cata-overlay-inner. */
+      #sommContent,#misCatasContent{max-width:520px;margin-left:auto;margin-right:auto}
+      #fichaContent{max-width:640px;margin-left:auto;margin-right:auto}
+    }
+
+    /* ── DESKTOP (≥1100px): sidebar fijo (header+mapa+nav) + panel principal ── */
+    @media (min-width:1100px){
+      .app{
+        max-width:1280px;
+        display:grid;
+        grid-template-columns:400px 1fr;
+        grid-template-areas:"sidebar main" "footer footer";
+        gap:0 40px;
+        align-items:start;
+        padding:32px 32px 0;
+      }
+      .app-sidebar{grid-area:sidebar;position:sticky;top:32px}
+      .app-main{grid-area:main;min-width:0}
+      .footer{grid-area:footer;margin-top:40px}
+
+      /* Nav vertical en vez de tab-bar horizontal scrolleable — el sidebar
+         entero ya es sticky, así que el tab-bar no necesita su propio sticky. */
+      .tab-bar{
+        flex-direction:column;position:static;box-shadow:none;
+        border-bottom:none;overflow:visible;
+      }
+      .tab-btn{
+        text-align:left;padding:13px 18px;
+        border-bottom:none;border-left:2px solid transparent;
+      }
+      .tab-btn.active{border-bottom-color:transparent;border-left-color:var(--accent)}
+
+      /* auto-fill en vez de un número fijo de columnas — se adapta solo al
+         ancho real del panel principal. */
+      #wineList{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+    }
 </style>
 </head>
 <body>
@@ -841,6 +890,7 @@
 
 <div class="app" id="app" style="display:none">
 
+  <div class="app-sidebar">
   <div class="header">
     <div class="eyebrow" id="bar-eyebrow">Wine Bar</div>
     <h1 id="titulo">125<span>cc</span></h1>
@@ -886,7 +936,9 @@
     <button class="tab-btn" onclick="showTab('sommelier',this)">Sommelier</button>
     <button class="tab-btn" onclick="showTab('miscatas',this)">Mis catas</button>
   </div>
+  </div>
 
+  <div class="app-main">
   <!-- CARTA -->
   <div class="tab-content active" id="tab-carta">
     <div class="section-title">Carta por copa</div>
@@ -917,6 +969,7 @@
     <div id="misCatasContent">
       <!-- Se renderiza por JS -->
     </div>
+  </div>
   </div>
 
   <div class="footer">
@@ -1043,7 +1096,10 @@ function initApp(config, apiWines){
     const l=document.getElementById('loading');
     l.classList.add('hidden');
     setTimeout(()=>{l.style.display='none';},500);
-    document.getElementById('app').style.display='flex';
+    // Vacío en vez de 'flex' fijo: así el media query de desktop puede pisar
+    // el display de .app a 'grid' — un inline style siempre gana sobre
+    // cualquier regla del stylesheet, sin importar el breakpoint.
+    document.getElementById('app').style.display='';
   },200);
 }
 
