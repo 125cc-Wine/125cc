@@ -4,6 +4,7 @@
 // nombre real de columna (no asume orden fijo), igual que hace stats.js.
 
 const { getReadWriteToken } = require('./_lib/google-auth');
+const { sheetSafeRow }      = require('./_lib/sheets-safe');
 
 function normHeader(h) {
   return (h || '').toString().trim().toLowerCase()
@@ -158,12 +159,17 @@ module.exports = async function handler(req, res) {
     const rowNum = rowIndex + 1; // rows[] está alineado 1:1 con filas de la sheet (rows[0] = fila 1)
     const range  = `Degustaciones!A${rowNum}:${colLetter(headers.length - 1)}${rowNum}`;
 
+    // El "auth" de este endpoint es solo que el email coincida — cualquiera
+    // que lo sepa puede llegar hasta acá, así que sanitizamos igual que en
+    // guardar-puntuacion.js antes de escribir.
+    const newRowSeguro = sheetSafeRow(newRow);
+
     const updRes = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
       {
         method:  "PUT",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-        body:    JSON.stringify({ values: [newRow] }),
+        body:    JSON.stringify({ values: [newRowSeguro] }),
       }
     );
     if (!updRes.ok) {

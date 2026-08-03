@@ -1,6 +1,7 @@
 // api/guardar-puntuacion.js — v2 con email + campos cata completa
 
 const { getReadWriteToken } = require('./_lib/google-auth');
+const { sheetSafeRow }      = require('./_lib/sheets-safe');
 
 function normHeader(h) {
   return (h || '').toString().trim().toLowerCase()
@@ -148,7 +149,10 @@ module.exports = async function handler(req, res) {
       id:          cataId,
     };
 
-    const fila = headers.map(h => fieldMap[h] !== undefined ? fieldMap[h] : '');
+    // Sheet público: la fila entera pasa por sheetSafeRow antes de escribir
+    // — este endpoint no tiene auth, así que cualquier campo puede traer un
+    // valor armado para que Sheets lo lea como fórmula.
+    const fila = sheetSafeRow(headers.map(h => fieldMap[h] !== undefined ? fieldMap[h] : ''));
     const lastCol = colLetter(headers.length - 1);
 
     const r = await fetch(
