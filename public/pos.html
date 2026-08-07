@@ -1183,12 +1183,23 @@ async function togglePanel(name){
   document.getElementById('modalBackdrop').classList.add('open');
   panelAbierto = name;
 
-  if (name === 'reportes') await loadReportes();
+  if (name === 'reportes') { await cargarAlertasMargen(); await loadReportes(); }
   else if (name === 'caja') await loadCaja();
   else if (name === 'stock'){
     if (!productos.length) await loadProductos();
+    await cargarAlertasMargen();
     renderStockList();
   }
+}
+
+// ── ALERTAS DE MARGEN ────────────────────────────────────────────
+let alertasMargen = [];
+
+async function cargarAlertasMargen(){
+  try {
+    const data = await api('/api/pos?r=productos-alertas');
+    alertasMargen = data.productos;
+  } catch(e){ alertasMargen = []; }
 }
 
 // ── REPORTES ──────────────────────────────────────────────────────
@@ -1212,8 +1223,15 @@ async function loadReportes(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
+let ultimoReporte = null;
+
 function renderReportes(data){
+  ultimoReporte = data;
   const box = document.getElementById('reportesContent');
+  const alerta = alertasMargen.length
+    ? `<div style="background:rgba(196,120,90,.14);color:var(--red);padding:10px 12px;border-radius:var(--r-sm);margin-bottom:16px;font-weight:600;font-size:var(--fs-sm)">
+        ⚠ ${alertasMargen.length} producto${alertasMargen.length===1?'':'s'} con margen bajo o negativo — revisalo en el panel Stock.
+      </div>` : '';
   const porMedio = data.totalesPorMedio.map(m => `
     <div class="stock-row"><div class="stock-row-name">${MEDIO_LABEL[m.medio_pago] || m.medio_pago || '—'}</div><div>${fmtMoney(m.total)} <span class="stock-row-name-sub">(${m.cantidad})</span></div></div>
   `).join('') || '<div class="items-empty">Sin ventas en el período.</div>';
@@ -1244,6 +1262,7 @@ function renderReportes(data){
   `).join('') || '<div class="items-empty">Sin anulaciones.</div>';
 
   box.innerHTML = `
+    ${alerta}
     <div class="total-bar" style="border-radius:var(--r-md);margin-bottom:8px">
       <div class="total-label">Total período</div>
       <div class="total-val">${fmtMoney(data.totalGeneral.total)} <span style="font-size:var(--fs-sm);font-weight:400">(${data.totalGeneral.cantidad})</span></div>
@@ -1263,7 +1282,43 @@ function renderReportes(data){
     ${cajas}
     <div class="section-title" style="margin-top:16px">Anulaciones recientes</div>
     ${anulados}
+    <button class="btn-outline" style="width:100%;margin-top:16px" onclick="exportarReportesCSV()">⇩ Exportar CSV</button>
   `;
+}
+
+// Arma un CSV en el cliente a partir del reporte ya cargado — Excel lo
+// abre nativo, no hace falta ninguna librería de planillas para esto.
+function exportarReportesCSV(){
+  if (!ultimoReporte) return;
+  const d = ultimoReporte;
+  const filas = [];
+  filas.push(['125cc — Reporte', `Últimos ${d.dias} días`]);
+  filas.push([]);
+  filas.push(['Total período', fmtMoney(d.totalGeneral.total), `${d.totalGeneral.cantidad} comandas`]);
+  filas.push(['Margen real', fmtMoney(d.margenGeneral.margen)]);
+  filas.push([]);
+  filas.push(['Por medio de pago']);
+  filas.push(['Medio', 'Total', 'Cantidad']);
+  d.totalesPorMedio.forEach(m => filas.push([MEDIO_LABEL[m.medio_pago] || m.medio_pago || '—', m.total, m.cantidad]));
+  filas.push([]);
+  filas.push(['Productos más vendidos']);
+  filas.push(['Producto', 'Unidades', 'Total']);
+  d.topProductos.forEach(p => filas.push([p.nombre_snapshot, p.unidades, p.total]));
+  filas.push([]);
+  filas.push(['Productos más rentables']);
+  filas.push(['Producto', 'Margen']);
+  d.topPorMargen.forEach(p => filas.push([p.nombre_snapshot, p.margen]));
+
+  const csv = filas.map(fila => fila.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `125cc-reporte-${d.dias}dias-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ── CAJA ──────────────────────────────────────────────────────────
@@ -1366,10 +1421,11 @@ async function cerrarCajaAction(){
 function renderStockList(){
   const box = document.getElementById('stockList');
   if (!productos.length){ box.innerHTML = '<div class="items-empty">Todavía no hay productos cargados.</div>'; return; }
+  const idsAlerta = new Set(alertasMargen.map(a => a.id));
   box.innerHTML = productos.map(p => `
     <div class="stock-row" style="flex-wrap:wrap">
       <div style="flex-basis:100%">
-        <div class="stock-row-name">${escapeHtml(p.nombre)}</div>
+        <div class="stock-row-name">${escapeHtml(p.nombre)}${idsAlerta.has(p.id) ? ' <span style="color:var(--red);font-weight:700">· margen bajo</span>' : ''}</div>
         <div class="stock-row-name-sub">${escapeHtml(p.categoria)} · ${p.unidad_venta} · vende ${fmtMoney(p.precio)}</div>
       </div>
       <input type="number" class="stock-input" id="stockAct_${p.id}" value="${p.stock_actual ?? ''}" placeholder="Actual" min="0">

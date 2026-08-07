@@ -112,3 +112,15 @@ CREATE TABLE IF NOT EXISTS caja_movimientos (
   created_at      timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_caja_movimientos_sesion ON caja_movimientos(caja_sesion_id);
+
+-- ── pos_config (config chica de una sola clave/valor, reusable) ──
+-- Ej: umbral de alerta de margen bajo, umbral de "cliente frecuente"
+-- más adelante — evita crear una tabla de una sola fila por cada
+-- parámetro chico que aparezca.
+CREATE TABLE IF NOT EXISTS pos_config (
+  clave       text PRIMARY KEY,
+  valor       jsonb NOT NULL,
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO pos_config (clave, valor) VALUES ('margen_alerta_pct', '30')
+  ON CONFLICT (clave) DO NOTHING;
