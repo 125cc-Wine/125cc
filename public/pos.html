@@ -141,6 +141,16 @@
   .cobrar-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow);padding:16px;margin-bottom:20px;display:none}
   .cobrar-panel.open{display:block}
 
+  /* ── STOCK ── */
+  .stock-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
+  .stock-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .stock-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .stock-row:last-child{border-bottom:none}
+  .stock-row-name{flex:1;font-size:12.5px;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .stock-row-name-sub{font-size:9.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em}
+  .stock-input{width:56px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-sm);padding:7px 8px;font-size:12px;text-align:center;outline:none;flex-shrink:0}
+  .stock-input:focus{border-color:var(--accent)}
+
   /* Toast */
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navbar);color:#fff;padding:10px 20px;border-radius:var(--r-pill);font-size:13px;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:200;box-shadow:var(--shadow-md)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -174,11 +184,20 @@
     </div>
     <div class="top-right">
       <div class="top-staff" id="topStaff"></div>
+      <button class="logout-btn" onclick="toggleStockPanel()">Stock</button>
       <button class="logout-btn" onclick="logout()">Salir</button>
     </div>
   </div>
 
   <div class="view">
+    <div class="stock-panel" id="stockPanel" style="display:none">
+      <div class="stock-panel-header">
+        <div class="section-title" style="margin-bottom:0">Stock por producto</div>
+        <button class="close-btn" onclick="toggleStockPanel()" title="Cerrar">✕</button>
+      </div>
+      <div id="stockList"><div class="items-empty">Cargando...</div></div>
+    </div>
+
     <div class="salon-split">
 
       <!-- IZQUIERDA: plano del salón -->
@@ -298,7 +317,12 @@ async function api(path, opts){
   const res = await fetch(path, { method: opts.method || 'GET', headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
   if (res.status === 401){ logout(); throw new Error('No autorizado'); }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || ('Error ' + res.status));
+  if (!res.ok) {
+    const err = new Error(data.error || ('Error ' + res.status));
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
   return data;
 }
 
@@ -577,28 +601,47 @@ async function refreshComanda(){
 }
 
 // Agregar/sumar una unidad de un producto — el backend consolida en la
-// misma línea si ya hay una activa para ese producto (stepper +).
-async function agregarProducto(productoId){
+// misma línea si ya hay una activa para ese producto (stepper +), y
+// descuenta stock si el producto lo trackea. Sin stock disponible el
+// backend devuelve 409 — se ofrece cargar igual (forzar:true) por si se
+// abrió una botella nueva que todavía no se registró.
+async function agregarProducto(productoId, forzar){
   try {
-    await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, producto_id: productoId } });
+    await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, producto_id: productoId, forzar: !!forzar } });
     await refreshComanda();
-  } catch(e){ toast(e.message, 'error'); }
+    await refreshStockBadges();
+  } catch(e){
+    if (e.status === 409 && e.data && 'disponible' in e.data) {
+      if (confirm('Sin stock cargado para este producto. ¿Agregar igual?')) return agregarProducto(productoId, true);
+      return;
+    }
+    toast(e.message, 'error');
+  }
 }
 
 // Restar una unidad (stepper −); si llega a 0 la línea se anula sola.
+// Restaura 1 unidad de stock.
 async function restarItem(itemId){
   try {
     await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'restar', item_id: itemId } });
     await refreshComanda();
+    await refreshStockBadges();
   } catch(e){ toast(e.message, 'error'); }
 }
 
 // Quitar la línea entera de una, sin importar la cantidad (botón ✕).
+// Restaura todo el stock de esa línea.
 async function anularItem(itemId){
   try {
     await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'anular', item_id: itemId } });
     await refreshComanda();
+    await refreshStockBadges();
   } catch(e){ toast(e.message, 'error'); }
+}
+
+async function refreshStockBadges(){
+  await loadProductos();
+  renderProductos();
 }
 
 function toggleCobrarPanel(){
@@ -675,6 +718,52 @@ async function importarVinos(){
     btn.disabled = false;
     btn.textContent = '↻ Importar vinos del menú';
   }
+}
+
+// ── STOCK ─────────────────────────────────────────────────────────
+let stockPanelOpen = false;
+
+async function toggleStockPanel(){
+  stockPanelOpen = !stockPanelOpen;
+  document.getElementById('stockPanel').style.display = stockPanelOpen ? 'block' : 'none';
+  if (stockPanelOpen){
+    if (!productos.length) await loadProductos();
+    renderStockList();
+  }
+}
+
+function renderStockList(){
+  const box = document.getElementById('stockList');
+  if (!productos.length){ box.innerHTML = '<div class="items-empty">Todavía no hay productos cargados.</div>'; return; }
+  box.innerHTML = productos.map(p => `
+    <div class="stock-row">
+      <div>
+        <div class="stock-row-name">${escapeHtml(p.nombre)}</div>
+        <div class="stock-row-name-sub">${escapeHtml(p.categoria)} · ${p.unidad_venta}</div>
+      </div>
+      <input type="number" class="stock-input" id="stockAct_${p.id}" value="${p.stock_actual ?? ''}" placeholder="Actual" min="0">
+      <input type="number" class="stock-input" id="stockMin_${p.id}" value="${p.stock_minimo ?? ''}" placeholder="Mín" min="0">
+      <button class="btn-outline" onclick="guardarStock(${p.id})">Guardar</button>
+    </div>`).join('');
+}
+
+async function guardarStock(productoId){
+  const p = productos.find(x => x.id === productoId);
+  if (!p) return;
+  const stockActVal = document.getElementById('stockAct_' + productoId).value;
+  const stockMinVal = document.getElementById('stockMin_' + productoId).value;
+  try {
+    await api('/api/pos?r=productos', { method: 'POST', body: {
+      id: productoId, nombre: p.nombre, categoria: p.categoria, unidad_venta: p.unidad_venta, precio: p.precio,
+      stock_actual: stockActVal === '' ? null : stockActVal,
+      stock_minimo: stockMinVal === '' ? null : stockMinVal,
+      activo: p.activo,
+    }});
+    toast('Stock actualizado', 'success');
+    await loadProductos();
+    renderStockList();
+    renderProductos();
+  } catch(e){ toast(e.message, 'error'); }
 }
 
 function toggleProductoForm(){
