@@ -10,12 +10,28 @@
 // escribir en Sheets desde acá reintroduciría el problema de escritura
 // concurrente que justificó mover el POS a Postgres.
 //
-// El precio del Sheet es precio de COPA (125cc vende únicamente por copa;
-// el campo "copa" del Sheet es el tamaño de la porción en cc, no un precio
-// aparte) — se importa como unidad_venta='copa'.
+// El Sheet solo tiene precio de BOTELLA (el campo "copa" es el tamaño de
+// la porción en cc, no un precio). 125cc vende únicamente por copa, así
+// que se deriva el precio de copa con LA MISMA fórmula que ya usa
+// public/index.html (fmtPrecio) para mostrarle el precio al cliente en
+// el menú — así el mozo cobra en el POS exactamente lo mismo que el
+// cliente ve en la carta. Si esa fórmula cambia en index.html, hay que
+// actualizarla acá también (no está compartida en un módulo común
+// porque index.html corre en el browser del cliente, sin build step).
 const { sql } = require('../db');
 
 const TIPO_A_CATEGORIA = { Tinto: 'tinto', Blanco: 'blanco', Rosado: 'rosado', Naranjo: 'naranjo' };
+
+// Espejo exacto de fmtPrecio() en public/index.html.
+function precioCopa(botella) {
+  if (!botella) return 0;
+  let factor = 1.50;
+  if (botella < 14000)      factor = 1.70;
+  else if (botella < 18000) factor = 1.60;
+  else if (botella < 30000) factor = 1.50;
+  else                      factor = 1.25;
+  return Math.round(((botella / 6) * factor) / 500) * 500;
+}
 
 async function importVinos(req, res) {
   const host = req.headers['x-forwarded-host'] || req.headers.host;
@@ -34,7 +50,8 @@ async function importVinos(req, res) {
   let creados = 0, actualizados = 0, omitidos = 0;
 
   for (const v of vinos) {
-    const precio = parseFloat(v.precio);
+    const botella = parseFloat(v.precio);
+    const precio = precioCopa(botella);
     if (!v.nombre || !Number.isFinite(precio) || precio <= 0) { omitidos++; continue; }
 
     const categoria = TIPO_A_CATEGORIA[v.tipo] || 'otros';

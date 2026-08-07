@@ -6,37 +6,52 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>125cc · POS</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/tokens.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="/manifest.json">
 <style>
+  /* Paleta propia para esta página — tema claro tipo Fudo, independiente
+     de los tokens oscuros de handoff/tokens.css (esos son para el menú
+     de clientes; este es un panel de trabajo de piso). */
+  :root{
+    --bg:#F2F3F5; --surface:#FFFFFF; --ink:#1C1E21; --ink-2:#6B7280; --ink-3:#9AA1AC;
+    --line:#E4E6EA;
+    --navbar:#32373E; --navbar-2:#3D434B;
+    --green:#33C46E; --red:#EF4A40; --blue:#3D82F4; --amber:#FFB300;
+    --accent:#F4511E; --accent-dk:#D8430F;
+    --black:#1A1A1A;
+    --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
+    --shadow:0 1px 3px rgba(20,20,25,.08), 0 1px 2px rgba(20,20,25,.06);
+    --shadow-md:0 4px 14px rgba(20,20,25,.10);
+    --ease:cubic-bezier(.22,1,.36,1); --t:150ms;
+  }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--dark);color:var(--ink-dark);font-family:'DM Sans',sans-serif;min-height:100vh;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;min-height:100vh;-webkit-tap-highlight-color:transparent}
   button,input,select{font-family:inherit}
 
   /* ── LOGIN ── */
-  #loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
-  .login-box{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-surface);box-shadow:var(--shadow-dark);padding:40px 32px;width:100%;max-width:340px;text-align:center}
-  .login-logo{font-family:var(--font-serif);font-size:44px;color:var(--accent);margin-bottom:2px}
-  .login-sub{font-size:11px;letter-spacing:.2em;color:var(--ink-dark-2);text-transform:uppercase;margin-bottom:28px}
-  .login-box input{width:100%;background:var(--dark-3,#3F4D5A);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:14px 16px;color:var(--ink-dark);font-size:15px;outline:none;text-align:center;margin-bottom:12px}
+  #loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:var(--navbar)}
+  .login-box{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow-md);padding:40px 32px;width:100%;max-width:340px;text-align:center}
+  .login-logo{font-weight:700;font-size:32px;color:var(--accent);letter-spacing:-.02em;margin-bottom:2px}
+  .login-sub{font-size:11px;letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase;margin-bottom:28px}
+  .login-box input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px;color:var(--ink);font-size:15px;outline:none;text-align:center;margin-bottom:12px}
   .login-box input:focus{border-color:var(--accent)}
-  .login-btn{width:100%;background:var(--accent-grad);border:none;border-radius:var(--r-pill);padding:15px;color:#fff;font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:transform var(--t-feedback) var(--ease);box-shadow:0 4px 20px rgba(155,32,53,.3)}
+  .login-btn{width:100%;background:var(--accent);border:none;border-radius:var(--r-md);padding:15px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:transform var(--t) var(--ease),background var(--t) var(--ease)}
   .login-btn:active{transform:scale(.98)}
-  .login-error{font-size:12px;color:#f87171;margin-top:10px;display:none}
+  .login-btn:hover{background:var(--accent-dk)}
+  .login-error{font-size:12px;color:var(--red);margin-top:10px;display:none}
 
   /* ── SHELL ── */
   #app{display:none}
-  .top-bar{background:var(--dark-2);border-bottom:1px solid var(--line-dark);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-  .top-logo{font-family:var(--font-serif);font-size:24px;color:var(--accent);line-height:1}
-  .top-label{font-size:10px;letter-spacing:.18em;color:var(--ink-dark-2);text-transform:uppercase;margin-top:2px}
+  .top-bar{background:var(--navbar);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(0,0,0,.15)}
+  .top-logo{font-weight:700;font-size:19px;color:var(--accent);letter-spacing:-.02em}
+  .top-label{font-size:9.5px;letter-spacing:.16em;color:rgba(255,255,255,.5);text-transform:uppercase;margin-top:1px}
   .top-right{display:flex;align-items:center;gap:14px}
-  .top-staff{font-size:11px;color:var(--ink-dark-2)}
-  .logout-btn{font-size:12px;color:var(--ink-dark-2);cursor:pointer;background:none;border:none}
-  .logout-btn:hover{color:var(--ink-dark)}
+  .top-staff{font-size:11.5px;color:rgba(255,255,255,.75)}
+  .logout-btn{font-size:12px;color:rgba(255,255,255,.6);cursor:pointer;background:none;border:none}
+  .logout-btn:hover{color:#fff}
   .view{padding:16px 16px 40px}
 
-  .section-title{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--ink-dark-2);margin-bottom:12px}
+  .section-title{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin-bottom:12px;font-weight:700}
 
   /* ── LAYOUT DIVIDIDO: salón + comanda ── */
   .salon-split{display:flex;flex-direction:column;gap:16px}
@@ -48,82 +63,89 @@
 
   .salon-toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
 
-  .salon-stage{position:relative;background:linear-gradient(145deg,#333f4a,#2c353f);border-radius:var(--r-card);height:220px;border:1px solid var(--line-dark);box-shadow:var(--shadow-dark);overflow:hidden;touch-action:none}
-  .salon-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink-dark-2);font-size:11px;text-align:center;padding:16px;pointer-events:none}
+  .salon-stage{position:relative;background:var(--surface);border-radius:var(--r-lg);height:220px;border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;touch-action:none}
+  .salon-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:11px;text-align:center;padding:16px;pointer-events:none}
   .salon-pin{position:absolute;transform:translate(-50%,-50%);width:48px;text-align:center;user-select:none;-webkit-user-select:none;z-index:5;cursor:pointer}
   .salon-pin.dragging{z-index:30}
   .salon-editing .salon-pin{cursor:grab}
   .salon-editing .salon-pin:active{cursor:grabbing}
   .salon-pin-dotwrap{position:relative;width:40px;margin:0 auto}
-  .salon-pin-dot{width:40px;height:40px;border-radius:50%;background:#5A8A2A;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;box-shadow:var(--shadow-dark);border:2px solid rgba(255,255,255,.18);transition:outline .1s}
-  .salon-pin.ocupada .salon-pin-dot{background:var(--accent)}
-  .salon-pin.cuenta_pedida .salon-pin-dot{background:#3B72C4}
-  .salon-pin.selected .salon-pin-dot{outline:3px solid var(--madera);outline-offset:2px}
-  .salon-pin-badge{position:absolute;bottom:-3px;right:-3px;background:var(--dark);color:var(--ink-dark);font-size:8px;font-weight:700;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line-dark)}
-  .salon-pin-label{font-size:8.5px;color:var(--ink-dark-2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px;margin-left:auto;margin-right:auto}
+  .salon-pin-dot{width:40px;height:40px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;box-shadow:var(--shadow);transition:outline .1s}
+  .salon-pin.ocupada .salon-pin-dot{background:var(--red)}
+  .salon-pin.cuenta_pedida .salon-pin-dot{background:var(--blue)}
+  .salon-pin.selected .salon-pin-dot{outline:3px solid var(--amber);outline-offset:2px}
+  .salon-pin-badge{position:absolute;bottom:-3px;right:-3px;background:var(--surface);color:var(--ink);font-size:8px;font-weight:700;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
+  .salon-pin-label{font-size:8.5px;color:var(--ink-2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px;margin-left:auto;margin-right:auto}
 
   .row-btns{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-  .btn-outline{background:none;border:1px solid var(--line-dark-strong);color:var(--ink-dark-2);font-size:11px;font-weight:500;letter-spacing:.06em;padding:11px 16px;border-radius:var(--r-pill);cursor:pointer;transition:border-color var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
-  .btn-outline:hover{border-color:var(--ink-dark-2);color:var(--ink-dark)}
-  .btn-primary{background:var(--accent-grad);border:none;color:#fff;font-size:12px;font-weight:500;letter-spacing:.08em;padding:12px 18px;border-radius:var(--r-pill);cursor:pointer;box-shadow:0 4px 20px rgba(155,32,53,.3);transition:transform var(--t-feedback) var(--ease)}
+  .btn-outline{background:var(--surface);border:1px solid var(--line);color:var(--ink-2);font-size:12px;font-weight:500;padding:11px 16px;border-radius:var(--r-sm);cursor:pointer;transition:border-color var(--t) var(--ease),color var(--t) var(--ease)}
+  .btn-outline:hover{border-color:var(--ink-3);color:var(--ink)}
+  .btn-primary{background:var(--accent);border:none;color:#fff;font-size:12px;font-weight:700;padding:12px 18px;border-radius:var(--r-sm);cursor:pointer;transition:transform var(--t) var(--ease),background var(--t) var(--ease)}
   .btn-primary:active{transform:scale(.97)}
+  .btn-primary:hover{background:var(--accent-dk)}
+  .btn-black{background:var(--black);border:none;color:#fff;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:14px 18px;border-radius:var(--r-sm);cursor:pointer;transition:opacity var(--t) var(--ease)}
+  .btn-black:hover{opacity:.85}
 
-  .quick-form{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:16px;margin-bottom:14px;display:none}
+  .quick-form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:16px;margin-bottom:14px;display:none;box-shadow:var(--shadow)}
   .quick-form.open{display:block}
   .quick-form .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-  .quick-form input,.quick-form select{width:100%;background:var(--dark-3,#3F4D5A);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:10px 11px;color:var(--ink-dark);font-size:13px;outline:none}
+  .quick-form input,.quick-form select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 11px;color:var(--ink);font-size:13px;outline:none}
   .quick-form input:focus,.quick-form select:focus{border-color:var(--accent)}
   .quick-form-actions{display:flex;gap:8px;margin-top:4px}
 
   /* ── PANEL DE COMANDA ── */
-  .panel-empty{padding:44px 20px;text-align:center;color:var(--ink-dark-2);font-size:12.5px;line-height:1.6;background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card)}
-  .comanda-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:10px}
-  .comanda-title{font-family:var(--font-serif);font-size:24px;color:var(--ink-dark)}
-  .comanda-sub{font-size:11px;color:var(--ink-dark-2);margin-top:2px}
-  .close-btn{background:none;border:1px solid var(--line-dark);color:var(--ink-dark-2);font-size:14px;cursor:pointer;width:30px;height:30px;border-radius:50%;flex-shrink:0}
-  .close-btn:hover{color:var(--ink-dark);border-color:var(--ink-dark-2)}
+  .panel-empty{padding:44px 20px;text-align:center;color:var(--ink-3);font-size:12.5px;line-height:1.6;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg)}
+  .comanda-card{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
+  .comanda-header{background:var(--red);padding:16px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .comanda-header.takeaway{background:var(--blue)}
+  .comanda-title{font-size:18px;font-weight:700;color:#fff;letter-spacing:.02em}
+  .comanda-sub{font-size:11.5px;color:rgba(255,255,255,.8);margin-top:2px}
+  .close-btn{background:rgba(255,255,255,.18);border:none;color:#fff;font-size:13px;cursor:pointer;width:28px;height:28px;border-radius:50%;flex-shrink:0}
+  .close-btn:hover{background:rgba(255,255,255,.3)}
 
-  .items-box{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);margin-bottom:18px;overflow:hidden}
-  .item-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line-dark)}
+  .items-box{border-top:1px solid var(--line)}
+  .item-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line)}
   .item-row:last-child{border-bottom:none}
-  .item-row.anulado{opacity:.4}
-  .item-name{font-size:13.5px;color:var(--ink-dark)}
-  .item-sub{font-size:11px;color:var(--ink-dark-2);margin-top:1px}
-  .item-right{display:flex;align-items:center;gap:10px}
-  .item-price{font-family:var(--font-serif);font-size:16px;color:var(--ink-dark)}
-  .item-void{background:none;border:none;color:#f87171;font-size:11px;cursor:pointer;padding:4px}
-  .items-empty{padding:24px;text-align:center;color:var(--ink-dark-2);font-size:12.5px}
+  .qty-stepper{display:flex;align-items:center;gap:6px;flex-shrink:0}
+  .qty-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink-2);font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .qty-btn:hover{border-color:var(--ink-3);color:var(--ink)}
+  .qty-val{font-size:13px;font-weight:700;color:var(--ink);width:16px;text-align:center;flex-shrink:0}
+  .item-name{font-size:13px;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item-price{font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0}
+  .item-remove{background:none;border:none;color:var(--ink-3);font-size:14px;cursor:pointer;padding:2px 4px;flex-shrink:0}
+  .item-remove:hover{color:var(--red)}
+  .items-empty{padding:24px;text-align:center;color:var(--ink-3);font-size:12.5px}
 
-  .total-bar{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-  .total-label{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--madera)}
-  .total-val{font-family:var(--font-serif);font-size:30px;color:var(--ink-dark);font-weight:700}
+  .total-bar{background:var(--navbar-2);padding:15px 18px;display:flex;align-items:center;justify-content:space-between}
+  .total-label{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:700}
+  .total-val{font-size:19px;color:#fff;font-weight:700}
 
-  .prod-search{width:100%;background:var(--dark-3,#3F4D5A);border:1px solid var(--line-dark);border-radius:var(--r-pill);padding:10px 14px;color:var(--ink-dark);font-size:13px;outline:none;margin-bottom:12px}
+  .prod-search{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-pill);padding:10px 14px;color:var(--ink);font-size:13px;outline:none;margin-bottom:10px}
   .prod-search:focus{border-color:var(--accent)}
   .cat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-  .cat-chip{background:none;border:1px solid var(--line-dark);color:var(--ink-dark-2);font-size:10.5px;font-weight:500;letter-spacing:.04em;padding:6px 12px;border-radius:var(--r-pill);cursor:pointer;transition:background var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease)}
-  .cat-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .cat-chip{background:var(--surface);border:1px solid var(--line);color:var(--ink-2);font-size:10.5px;font-weight:500;padding:6px 12px;border-radius:var(--r-pill);cursor:pointer;transition:background var(--t) var(--ease),color var(--t) var(--ease)}
+  .cat-chip.active{background:var(--ink);border-color:var(--ink);color:#fff}
 
   .prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:20px}
-  .prod-card{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:12px;cursor:pointer;transition:transform var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease)}
+  .prod-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:12px;cursor:pointer;box-shadow:var(--shadow);transition:transform var(--t) var(--ease),border-color var(--t) var(--ease)}
   .prod-card:active{transform:scale(.96)}
   .prod-card.sin-stock{opacity:.45}
-  .prod-name{font-size:12.5px;color:var(--ink-dark);line-height:1.3}
-  .prod-unidad{font-size:9.5px;color:var(--ink-dark-2);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
-  .prod-price{font-family:var(--font-serif);font-size:17px;color:var(--madera);margin-top:5px}
-  .prod-stock-low{font-size:9px;color:#fbbf24;margin-top:3px}
+  .prod-name{font-size:12.5px;color:var(--ink);line-height:1.3;font-weight:500}
+  .prod-unidad{font-size:9.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+  .prod-price{font-size:15px;font-weight:700;color:var(--accent);margin-top:5px}
+  .prod-stock-low{font-size:9px;color:#B45309;margin-top:3px;font-weight:500}
 
   .pago-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
-  .pago-chip{flex:1;min-width:90px;background:var(--dark-2);border:1px solid var(--line-dark);color:var(--ink-dark-2);font-size:12px;font-weight:500;padding:13px 8px;border-radius:var(--r-pill);cursor:pointer;text-align:center;transition:background var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease)}
-  .pago-chip.active{background:var(--accent-grad);border-color:var(--accent);color:#fff}
-  .cobrar-panel{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:16px;margin-bottom:20px;display:none}
+  .pago-chip{flex:1;min-width:90px;background:var(--surface);border:1px solid var(--line);color:var(--ink-2);font-size:12px;font-weight:500;padding:13px 8px;border-radius:var(--r-sm);cursor:pointer;text-align:center;transition:background var(--t) var(--ease),color var(--t) var(--ease)}
+  .pago-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .cobrar-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow);padding:16px;margin-bottom:20px;display:none}
   .cobrar-panel.open{display:block}
 
   /* Toast */
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark-2);border:1px solid var(--line-dark);color:var(--ink-dark);padding:10px 20px;border-radius:var(--r-surface);font-size:13px;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navbar);color:#fff;padding:10px 20px;border-radius:var(--r-pill);font-size:13px;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:200;box-shadow:var(--shadow-md)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .toast.success{border-color:rgba(100,200,100,.3);color:#90ee90}
-  .toast.error{border-color:rgba(200,80,80,.3);color:#f87171}
+  .toast.success{background:#1F7A45}
+  .toast.error{background:var(--red)}
 </style>
 </head>
 <body>
@@ -188,24 +210,24 @@
         <div class="panel-empty" id="panelEmpty">Elegí una mesa del plano, o iniciá una comanda takeaway.</div>
 
         <div id="panelContent" style="display:none">
-          <div class="comanda-header">
-            <div style="flex:1">
-              <div class="comanda-title" id="comandaTitle">—</div>
-              <div class="comanda-sub" id="comandaSub"></div>
+          <div class="comanda-card">
+            <div class="comanda-header" id="comandaHeader">
+              <div style="flex:1">
+                <div class="comanda-title" id="comandaTitle">—</div>
+                <div class="comanda-sub" id="comandaSub"></div>
+              </div>
+              <button class="close-btn" onclick="cerrarPanel()" title="Cerrar">✕</button>
             </div>
-            <button class="close-btn" onclick="cerrarPanel()" title="Cerrar">✕</button>
-          </div>
-
-          <div class="items-box" id="itemsBox"></div>
-
-          <div class="total-bar">
-            <div class="total-label">Total</div>
-            <div class="total-val" id="totalVal">$0</div>
+            <div class="items-box" id="itemsBox"></div>
+            <div class="total-bar">
+              <div class="total-label">Total</div>
+              <div class="total-val" id="totalVal">$0</div>
+            </div>
           </div>
 
           <div class="row-btns">
-            <button class="btn-primary" onclick="toggleCobrarPanel()">Cobrar</button>
-            <button class="btn-outline" onclick="toggleProductoForm()">+ Nuevo producto</button>
+            <button class="btn-black" style="flex:1" onclick="toggleCobrarPanel()">Cobrar</button>
+            <button class="btn-outline" onclick="toggleProductoForm()">+ Producto</button>
           </div>
 
           <div class="cobrar-panel" id="cobrarPanel">
@@ -238,12 +260,12 @@
             </div>
           </div>
 
-          <div class="section-title">Agregar producto</div>
-          <div class="row-btns" style="margin-bottom:12px">
-            <button class="btn-outline" onclick="importarVinos()" id="btnImportarVinos">↻ Importar vinos del menú</button>
-          </div>
+          <div class="section-title">Adicionar</div>
           <input type="text" id="prodSearch" class="prod-search" placeholder="Buscar producto..." oninput="renderProductos()">
           <div class="cat-chips" id="catChips"></div>
+          <div class="row-btns" style="margin-bottom:8px">
+            <button class="btn-outline" onclick="importarVinos()" id="btnImportarVinos">↻ Importar vinos del menú</button>
+          </div>
           <div class="prod-grid" id="prodGrid"><div class="items-empty">Cargando...</div></div>
         </div>
       </div>
@@ -502,6 +524,7 @@ async function openComanda(id){
     currentItems = data.items;
     document.getElementById('panelEmpty').style.display = 'none';
     document.getElementById('panelContent').style.display = 'block';
+    document.getElementById('comandaHeader').classList.toggle('takeaway', !currentComanda.mesa_id);
     document.getElementById('comandaTitle').textContent = currentComanda.mesa_nombre || 'Takeaway';
     document.getElementById('comandaSub').textContent = currentComanda.atendido_por ? ('Atiende: ' + currentComanda.atendido_por) : '';
     document.getElementById('cobrarPanel').classList.remove('open');
@@ -523,23 +546,26 @@ function cerrarPanel(){
   loadMesas();
 }
 
+// Solo se muestran los ítems activos (los anulados no quedan en la lista,
+// no hay "historial de borrados" en esta vista).
 function renderItems(){
   const box = document.getElementById('itemsBox');
-  if (!currentItems.length){ box.innerHTML = '<div class="items-empty">Todavía no se agregó nada.</div>'; }
+  const activos = currentItems.filter(i => i.estado === 'activo');
+  if (!activos.length){ box.innerHTML = '<div class="items-empty">Todavía no se agregó nada.</div>'; }
   else {
-    box.innerHTML = currentItems.map(it => `
-      <div class="item-row ${it.estado === 'anulado' ? 'anulado' : ''}">
-        <div>
-          <div class="item-name">${it.cantidad} × ${escapeHtml(it.nombre_snapshot)}</div>
-          <div class="item-sub">${it.estado === 'anulado' ? 'Anulado' : fmtMoney(it.precio_unitario) + ' c/u'}</div>
+    box.innerHTML = activos.map(it => `
+      <div class="item-row">
+        <div class="qty-stepper">
+          <button class="qty-btn" onclick="restarItem(${it.id})">−</button>
+          <div class="qty-val">${it.cantidad}</div>
+          <button class="qty-btn" onclick="agregarProducto(${it.producto_id})">+</button>
         </div>
-        <div class="item-right">
-          <div class="item-price">${fmtMoney(it.precio_unitario * it.cantidad)}</div>
-          ${it.estado === 'activo' ? `<button class="item-void" onclick="anularItem(${it.id})">Anular</button>` : ''}
-        </div>
+        <div class="item-name">${escapeHtml(it.nombre_snapshot)}</div>
+        <div class="item-price">${fmtMoney(it.precio_unitario * it.cantidad)}</div>
+        <button class="item-remove" onclick="anularItem(${it.id})" title="Quitar">✕</button>
       </div>`).join('');
   }
-  const total = currentItems.filter(i => i.estado === 'activo').reduce((s,i) => s + Number(i.precio_unitario) * i.cantidad, 0);
+  const total = activos.reduce((s,i) => s + Number(i.precio_unitario) * i.cantidad, 0);
   document.getElementById('totalVal').textContent = fmtMoney(total);
 }
 
@@ -550,13 +576,24 @@ async function refreshComanda(){
   renderItems();
 }
 
-async function addItem(productoId){
+// Agregar/sumar una unidad de un producto — el backend consolida en la
+// misma línea si ya hay una activa para ese producto (stepper +).
+async function agregarProducto(productoId){
   try {
-    await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, producto_id: productoId, cantidad: 1 } });
+    await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, producto_id: productoId } });
     await refreshComanda();
   } catch(e){ toast(e.message, 'error'); }
 }
 
+// Restar una unidad (stepper −); si llega a 0 la línea se anula sola.
+async function restarItem(itemId){
+  try {
+    await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'restar', item_id: itemId } });
+    await refreshComanda();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// Quitar la línea entera de una, sin importar la cantidad (botón ✕).
 async function anularItem(itemId){
   try {
     await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'anular', item_id: itemId } });
@@ -609,12 +646,12 @@ function renderProductos(){
   const q = (document.getElementById('prodSearch').value || '').trim().toLowerCase();
   let list = catFiltro === 'todas' ? productos : productos.filter(p => p.categoria === catFiltro);
   if (q) list = list.filter(p => p.nombre.toLowerCase().includes(q));
-  if (!list.length){ grid.innerHTML = '<div class="items-empty">Sin productos. Usá "+ Nuevo producto".</div>'; return; }
+  if (!list.length){ grid.innerHTML = '<div class="items-empty">Sin productos. Usá "+ Producto" o importá los vinos del menú.</div>'; return; }
   grid.innerHTML = list.map(p => {
     const sinStock = p.stock_actual != null && p.stock_actual <= 0;
     const stockBajo = p.stock_actual != null && p.stock_minimo != null && p.stock_actual > 0 && p.stock_actual <= p.stock_minimo;
     return `
-    <div class="prod-card ${sinStock ? 'sin-stock' : ''}" onclick="addItem(${p.id})">
+    <div class="prod-card ${sinStock ? 'sin-stock' : ''}" onclick="agregarProducto(${p.id})">
       <div class="prod-name">${escapeHtml(p.nombre)}</div>
       <div class="prod-unidad">${p.unidad_venta}</div>
       <div class="prod-price">${fmtMoney(p.precio)}</div>
