@@ -15,6 +15,7 @@ const { requirePos } = require('./_lib/require-pos');
 const { listMesas, upsertMesa, saveMesasPos } = require('./_lib/pos/mesas');
 const { setMesaEstado } = require('./_lib/pos/mesa-estado');
 const { listProductos, upsertProducto } = require('./_lib/pos/productos');
+const { importVinos } = require('./_lib/pos/productos-import');
 const { listComandas, abrirComanda } = require('./_lib/pos/comandas');
 const { getComanda } = require('./_lib/pos/comanda');
 const { comandaItem } = require('./_lib/pos/comanda-item');
@@ -27,6 +28,7 @@ const ROUTES = {
   'mesa-estado:POST': setMesaEstado,
   'productos:GET': listProductos,
   'productos:POST': upsertProducto,
+  'productos-import:POST': importVinos,
   'comandas:GET': listComandas,
   'comandas:POST': abrirComanda,
   'comanda:GET': getComanda,

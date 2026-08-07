@@ -239,6 +239,9 @@
           </div>
 
           <div class="section-title">Agregar producto</div>
+          <div class="row-btns" style="margin-bottom:12px">
+            <button class="btn-outline" onclick="importarVinos()" id="btnImportarVinos">↻ Importar vinos del menú</button>
+          </div>
           <input type="text" id="prodSearch" class="prod-search" placeholder="Buscar producto..." oninput="renderProductos()">
           <div class="cat-chips" id="catChips"></div>
           <div class="prod-grid" id="prodGrid"><div class="items-empty">Cargando...</div></div>
@@ -618,6 +621,23 @@ function renderProductos(){
       ${sinStock ? '<div class="prod-stock-low">Sin stock</div>' : (stockBajo ? '<div class="prod-stock-low">Stock bajo: ' + p.stock_actual + '</div>' : '')}
     </div>`;
   }).join('');
+}
+
+async function importarVinos(){
+  const btn = document.getElementById('btnImportarVinos');
+  btn.disabled = true;
+  btn.textContent = 'Importando...';
+  try {
+    const data = await api('/api/pos?r=productos-import', { method: 'POST' });
+    toast(`Importados: ${data.creados} nuevos, ${data.actualizados} actualizados`, 'success');
+    await loadProductos();
+    renderCatChips();
+    renderProductos();
+  } catch(e){ toast(e.message, 'error'); }
+  finally {
+    btn.disabled = false;
+    btn.textContent = '↻ Importar vinos del menú';
+  }
 }
 
 function toggleProductoForm(){
