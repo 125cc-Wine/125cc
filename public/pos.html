@@ -46,17 +46,17 @@
 
   .salon-toolbar{display:flex;gap:8px;margin-bottom:14px}
 
-  .salon-stage{position:relative;background:linear-gradient(145deg,#333f4a,#2c353f);border-radius:var(--r-card);aspect-ratio:4/3;border:1px solid var(--line-dark);box-shadow:var(--shadow-dark);overflow:hidden;touch-action:none;margin-bottom:20px}
-  .salon-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink-dark-2);font-size:12px;text-align:center;padding:20px;pointer-events:none}
-  .salon-pin{position:absolute;transform:translate(-50%,-50%);width:60px;text-align:center;user-select:none;-webkit-user-select:none;z-index:5}
+  .salon-stage{position:relative;background:linear-gradient(145deg,#333f4a,#2c353f);border-radius:var(--r-card);height:180px;max-width:360px;border:1px solid var(--line-dark);box-shadow:var(--shadow-dark);overflow:hidden;touch-action:none;margin:0 auto 20px}
+  .salon-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink-dark-2);font-size:11px;text-align:center;padding:16px;pointer-events:none}
+  .salon-pin{position:absolute;transform:translate(-50%,-50%);width:44px;text-align:center;user-select:none;-webkit-user-select:none;z-index:5}
   .salon-pin.dragging{z-index:30}
   .salon-editing .salon-pin{cursor:grab}
   .salon-editing .salon-pin:active{cursor:grabbing}
-  .salon-pin-dot{width:46px;height:46px;border-radius:12px;margin:0 auto;background:var(--dark-2);border:2px solid var(--line-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font-serif);font-size:13px;font-weight:600;color:var(--ink-dark);box-shadow:var(--shadow-dark);transition:box-shadow .15s}
+  .salon-pin-dot{width:34px;height:34px;border-radius:9px;margin:0 auto;background:var(--dark-2);border:2px solid var(--line-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font-serif);font-size:11px;font-weight:600;color:var(--ink-dark);box-shadow:var(--shadow-dark);transition:box-shadow .15s}
   .salon-pin.libre .salon-pin-dot{border-color:#5A8A2A}
   .salon-pin.ocupada .salon-pin-dot{border-color:var(--accent);background:rgba(122,20,40,.22)}
   .salon-pin.cuenta_pedida .salon-pin-dot{border-color:var(--madera);background:rgba(207,172,89,.2)}
-  .salon-pin-label{font-size:9px;color:var(--ink-dark-2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px;margin-left:auto;margin-right:auto}
+  .salon-pin-label{font-size:8px;color:var(--ink-dark-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44px;margin-left:auto;margin-right:auto}
 
   .mesas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:20px}
   .mesa-card{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:16px 10px;text-align:center;cursor:pointer;box-shadow:var(--shadow-dark);transition:transform var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease);border-left:3px solid var(--line-dark)}
@@ -190,7 +190,7 @@
 
     <div class="salon-stage" id="salonStage"></div>
 
-    <div class="section-title">Salón</div>
+    <div class="section-title" id="listaTitle">Salón</div>
     <div class="mesas-grid" id="mesasGrid"><div class="items-empty">Cargando...</div></div>
   </div>
 
@@ -349,6 +349,7 @@ function renderMesas(){
   document.getElementById('salonStage').style.display = vistaMesas === 'plano' ? 'block' : 'none';
   document.getElementById('salonToolbar').style.display = vistaMesas === 'plano' ? 'flex' : 'none';
   document.getElementById('mesasGrid').style.display = vistaMesas === 'lista' ? 'grid' : 'none';
+  document.getElementById('listaTitle').style.display = vistaMesas === 'lista' ? 'block' : 'none';
 
   renderMesasLista();
   renderSalonPlano();
