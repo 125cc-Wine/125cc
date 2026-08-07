@@ -184,12 +184,21 @@
     </div>
     <div class="top-right">
       <div class="top-staff" id="topStaff"></div>
+      <button class="logout-btn" onclick="toggleCajaPanel()">Caja</button>
       <button class="logout-btn" onclick="toggleStockPanel()">Stock</button>
       <button class="logout-btn" onclick="logout()">Salir</button>
     </div>
   </div>
 
   <div class="view">
+    <div class="stock-panel" id="cajaPanel" style="display:none">
+      <div class="stock-panel-header">
+        <div class="section-title" style="margin-bottom:0">Caja</div>
+        <button class="close-btn" onclick="toggleCajaPanel()" title="Cerrar">✕</button>
+      </div>
+      <div id="cajaContent"><div class="items-empty">Cargando...</div></div>
+    </div>
+
     <div class="stock-panel" id="stockPanel" style="display:none">
       <div class="stock-panel-header">
         <div class="section-title" style="margin-bottom:0">Stock por producto</div>
@@ -718,6 +727,108 @@ async function importarVinos(){
     btn.disabled = false;
     btn.textContent = '↻ Importar vinos del menú';
   }
+}
+
+// ── CAJA ──────────────────────────────────────────────────────────
+let cajaPanelOpen = false;
+
+async function toggleCajaPanel(){
+  cajaPanelOpen = !cajaPanelOpen;
+  document.getElementById('cajaPanel').style.display = cajaPanelOpen ? 'block' : 'none';
+  if (cajaPanelOpen) await loadCaja();
+}
+
+async function loadCaja(){
+  try {
+    const data = await api('/api/pos?r=caja');
+    renderCaja(data);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function renderCaja(data){
+  const box = document.getElementById('cajaContent');
+  if (!data.sesion){
+    box.innerHTML = `
+      <div class="form-row">
+        <input type="number" id="cajaMontoInicial" class="stock-input" style="width:100%" placeholder="Monto inicial" min="0" step="100">
+      </div>
+      <button class="btn-primary" style="width:100%" onclick="abrirCajaAction()">Abrir caja</button>`;
+    return;
+  }
+  const t = data.totales || {};
+  const fmt = k => fmtMoney(t[k] || 0);
+  box.innerHTML = `
+    <div class="stock-row"><div class="stock-row-name">Monto inicial</div><div>${fmtMoney(data.sesion.monto_inicial)}</div></div>
+    <div class="stock-row"><div class="stock-row-name">Abierta por</div><div>${escapeHtml(data.sesion.abierta_por || '—')}</div></div>
+
+    <div class="section-title" style="margin-top:16px">Ventas por medio de pago</div>
+    <div class="stock-row"><div class="stock-row-name">Efectivo</div><div>${fmt('venta_efectivo')}</div></div>
+    <div class="stock-row"><div class="stock-row-name">Tarjeta</div><div>${fmt('venta_tarjeta')}</div></div>
+    <div class="stock-row"><div class="stock-row-name">Transferencia</div><div>${fmt('venta_transferencia')}</div></div>
+    <div class="stock-row"><div class="stock-row-name">Mixto/otro</div><div>${fmt('venta_otro')}</div></div>
+
+    <div class="section-title" style="margin-top:16px">Movimientos manuales (efectivo)</div>
+    <div class="stock-row"><div class="stock-row-name">Retiros</div><div>− ${fmt('retiro_efectivo')}</div></div>
+    <div class="stock-row"><div class="stock-row-name">Ingresos</div><div>${fmt('ingreso_efectivo')}</div></div>
+    <div class="stock-row"><div class="stock-row-name">Propinas</div><div>${fmt('propina_efectivo')}</div></div>
+
+    <div class="section-title" style="margin-top:16px">Nuevo movimiento</div>
+    <div class="form-row">
+      <select id="movTipo" class="stock-input" style="width:100%">
+        <option value="retiro">Retiro</option><option value="ingreso">Ingreso</option><option value="propina">Propina</option>
+      </select>
+      <select id="movMedio" class="stock-input" style="width:100%">
+        <option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <input type="number" id="movMonto" class="stock-input" style="width:100%" placeholder="Monto" min="0" step="100">
+      <input type="text" id="movDesc" class="stock-input" style="width:100%" placeholder="Descripción (opcional)" maxlength="200">
+    </div>
+    <button class="btn-outline" style="width:100%;margin-bottom:16px" onclick="registrarMovimientoCaja()">Registrar movimiento</button>
+
+    <div class="section-title">Cerrar caja</div>
+    <div class="form-row">
+      <input type="number" id="cajaMontoContado" class="stock-input" style="width:100%" placeholder="Efectivo contado" min="0" step="100">
+    </div>
+    <button class="btn-black" style="width:100%" onclick="cerrarCajaAction()">Cerrar caja</button>`;
+}
+
+async function abrirCajaAction(){
+  const monto = document.getElementById('cajaMontoInicial').value;
+  try {
+    const staff = sessionStorage.getItem(STAFF_KEY);
+    await api('/api/pos?r=caja', { method: 'POST', body: { monto_inicial: monto || 0, abierta_por: staff } });
+    toast('Caja abierta', 'success');
+    await loadCaja();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function registrarMovimientoCaja(){
+  const tipo = document.getElementById('movTipo').value;
+  const medio_pago = document.getElementById('movMedio').value;
+  const monto = document.getElementById('movMonto').value;
+  const descripcion = document.getElementById('movDesc').value;
+  if (!monto) return toast('Falta el monto', 'error');
+  try {
+    await api('/api/pos?r=caja-movimiento', { method: 'POST', body: { tipo, medio_pago, monto, descripcion } });
+    toast('Movimiento registrado', 'success');
+    await loadCaja();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function cerrarCajaAction(){
+  const contado = document.getElementById('cajaMontoContado').value;
+  if (!contado) return toast('Falta el monto contado', 'error');
+  if (!confirm('¿Cerrar la caja? No se puede deshacer.')) return;
+  try {
+    const staff = sessionStorage.getItem(STAFF_KEY);
+    const data = await api('/api/pos?r=caja-cerrar', { method: 'POST', body: { monto_final_contado: contado, cerrada_por: staff } });
+    const s = data.sesion;
+    const dif = Number(s.diferencia);
+    toast(`Caja cerrada. Diferencia: ${fmtMoney(dif)}`, dif === 0 ? 'success' : 'error');
+    await loadCaja();
+  } catch(e){ toast(e.message, 'error'); }
 }
 
 // ── STOCK ─────────────────────────────────────────────────────────
