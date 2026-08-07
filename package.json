@@ -2,6 +2,6 @@
   "name": "125cc",
   "private": true,
   "dependencies": {
-    "@vercel/postgres": "^0.10.0"
+    "@neondatabase/serverless": "^1.1.0"
   }
 }
