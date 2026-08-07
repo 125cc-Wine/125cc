@@ -6,29 +6,30 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>125cc · POS</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="/manifest.json">
 <style>
   /* Paleta propia para esta página — tema claro tipo Fudo, independiente
      de los tokens oscuros de handoff/tokens.css (esos son para el menú
      de clientes; este es un panel de trabajo de piso). */
   :root{
-    /* Paleta 125cc (madera/piedra/cuero/tinto) — misma familia de la marca
-       en vez del naranja tipo Fudo que había antes. Se mantienen los
-       NOMBRES de variable existentes (--green/--red/--blue/--amber/etc.)
-       para no tener que tocar cada punto donde se usan; solo cambian los
-       valores. Mapeo: --ink=text, --ink-3=muted, --navbar=madera-dk,
-       --navbar-2=madera-mid, --green=vino blanco (libre), --red=tinto
-       (ocupada/error), --blue=piedra (cuenta_pedida — el nombre quedó
-       heredado, ya no es literalmente azul), --amber=madera roble claro
-       (selección), --black=madera-dk (nunca #000 puro). */
-    --bg:#FAF5EE; --surface:#FFFFFF; --ink:#2A1A08; --ink-2:#5A4534; --ink-3:#8A7060;
-    --line:#E4D8C8;
-    --navbar:#4A3020; --navbar-2:#8B6A3A;
-    --green:#5A8A2A; --red:#7A1428; --blue:#C4785A; --amber:#C8A46A;
+    /* Paleta 125cc — valores tomados directo del :root real de
+       public/index.html (lo que corre en 125cc.com.ar), no de memoria.
+       Se mantienen los NOMBRES de variable existentes (--green/--red/
+       --blue/--amber/etc.) para no tocar cada punto donde se usan; solo
+       cambian los valores. Mapeo: --navbar/--navbar-2 = --dark/--dark-2
+       reales (superficie oscura del sitio, no un marrón madera), --green
+       = --blanco (tipo de vino, libre), --red = --tinto/--accent
+       (ocupada/error), --blue = --naranja (cuenta_pedida — nombre de
+       variable heredado, ya no es literalmente azul), --amber = --madera
+       (roble, selección), --black = --ink (nunca #000 puro). */
+    --bg:#FAF5EE; --surface:#FFFFFF; --ink:#151A1E; --ink-2:#384551; --ink-3:#60758A;
+    --line:rgba(69,84,99,.15);
+    --navbar:#2A333C; --navbar-2:#323D48;
+    --green:#5A8A2A; --red:#7A1428; --blue:#C46020; --amber:#CFAC59;
     --accent:#7A1428; --accent-2:#9B2035; --accent-dk:#5E0F1F;
     --accent-grad:linear-gradient(135deg,#7A1428,#9B2035);
-    --black:#4A3020;
+    --black:#151A1E;
     --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
     --shadow:0 1px 3px rgba(20,20,25,.08), 0 1px 2px rgba(20,20,25,.06);
     --shadow-md:0 4px 14px rgba(20,20,25,.10);
@@ -54,7 +55,7 @@
   /* ── LOGIN ── */
   #loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:var(--sp-5);background:var(--navbar)}
   .login-box{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow-md);padding:var(--sp-6) var(--sp-5);width:100%;max-width:340px;text-align:center}
-  .login-logo{font-weight:700;font-size:32px;color:var(--accent);letter-spacing:-.02em;margin-bottom:2px}
+  .login-logo{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:40px;color:var(--accent);letter-spacing:-.01em;margin-bottom:2px}
   .login-sub{font-size:var(--fs-xs);letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase;margin-bottom:var(--sp-6)}
   .login-box input{width:100%;min-height:48px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);padding:0 var(--sp-4);color:var(--ink);font-size:var(--fs-md);outline:none;text-align:center;margin-bottom:var(--sp-3);transition:border-color var(--t) var(--ease)}
   .login-box input:focus{border-color:var(--accent)}
@@ -66,7 +67,7 @@
   /* ── SHELL ── */
   #app{display:none}
   .top-bar{background:var(--navbar);padding:var(--sp-3) var(--sp-4);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 0 rgba(0,0,0,.15)}
-  .top-logo{font-weight:700;font-size:19px;color:var(--accent);letter-spacing:-.02em}
+  .top-logo{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:23px;color:var(--accent);letter-spacing:-.01em}
   .top-label{font-size:var(--fs-2xs);letter-spacing:.16em;color:rgba(255,255,255,.5);text-transform:uppercase;margin-top:1px}
   .top-right{display:flex;align-items:center;gap:var(--sp-4)}
   .top-staff{font-size:var(--fs-xs);color:rgba(255,255,255,.75)}
@@ -138,7 +139,7 @@
   .comanda-card{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);overflow:hidden;margin-bottom:var(--sp-5)}
   .comanda-header{background:var(--red);padding:var(--sp-4) var(--sp-5);display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-2)}
   .comanda-header.takeaway{background:var(--blue)}
-  .comanda-title{font-size:var(--fs-lg);font-weight:700;color:#fff;letter-spacing:.02em}
+  .comanda-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:.01em}
   .comanda-sub{font-size:var(--fs-xs);color:rgba(255,255,255,.8);margin-top:2px}
   .close-btn{background:rgba(255,255,255,.18);border:none;color:#fff;font-size:14px;cursor:pointer;width:32px;height:32px;border-radius:50%;flex-shrink:0;transition:background var(--t) var(--ease)}
   .close-btn:hover{background:rgba(255,255,255,.3)}
@@ -159,7 +160,7 @@
 
   .total-bar{background:var(--navbar-2);padding:var(--sp-4) var(--sp-5);display:flex;align-items:center;justify-content:space-between}
   .total-label{font-size:var(--fs-xs);letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:700}
-  .total-val{font-size:var(--fs-xl);color:#fff;font-weight:700}
+  .total-val{font-family:'Cormorant Garamond',serif;font-size:26px;color:#fff;font-weight:700}
 
   .prod-search{width:100%;min-height:var(--tap-min);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-pill);padding:0 var(--sp-4);color:var(--ink);font-size:var(--fs-base);outline:none;margin-bottom:var(--sp-3);transition:border-color var(--t) var(--ease)}
   .prod-search:focus{border-color:var(--accent)}
@@ -173,7 +174,7 @@
   .prod-card.sin-stock{opacity:.45}
   .prod-name{font-size:var(--fs-sm);color:var(--ink);line-height:1.35;font-weight:500}
   .prod-unidad{font-size:var(--fs-2xs);color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
-  .prod-price{font-size:var(--fs-md);font-weight:700;color:var(--accent);margin-top:5px}
+  .prod-price{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--accent);margin-top:5px}
   .prod-stock-low{font-size:var(--fs-2xs);color:#B45309;margin-top:3px;font-weight:500}
 
   .cobrar-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow);padding:var(--sp-4);margin-bottom:var(--sp-5);display:none}
