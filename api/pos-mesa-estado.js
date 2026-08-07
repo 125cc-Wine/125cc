@@ -1,0 +1,18 @@
+// api/pos-mesa-estado.js — override manual del estado de una mesa
+// (ej: destrabar una mesa que quedó "ocupada" sin comanda por un error).
+const { sql } = require('./_lib/db');
+const { posHandler } = require('./_lib/pos-handler');
+
+const ESTADOS = ['libre', 'ocupada', 'cuenta_pedida'];
+
+module.exports = posHandler(['POST'], async (req, res) => {
+  const { id, estado } = req.body || {};
+  if (!id || !ESTADOS.includes(estado)) {
+    return res.status(400).json({ error: "Falta id o estado inválido." });
+  }
+  const { rows } = await sql`
+    UPDATE mesas SET estado = ${estado}, updated_at = now()
+    WHERE id = ${id} RETURNING id, nombre, estado`;
+  if (!rows.length) return res.status(404).json({ error: "Mesa no encontrada." });
+  return res.status(200).json({ mesa: rows[0] });
+});

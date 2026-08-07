@@ -1,0 +1,92 @@
+/* ═══════════════════════════════════════════════════════════
+   125cc · Design Tokens v1
+   Pegar al inicio del <style> de public/index.html,
+   reemplazando el bloque :root existente.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Color · fondos y tinta ─────────────────────────────── */
+  --bg: #FAF5EE;            /* fondo crema */
+  --bg2: #F0E8DA;           /* superficie arena (hero ficha, zonas destacadas) */
+  --surface: #FFFFFF;       /* cards */
+  --ink: #151A1E;           /* texto principal (nunca #000) */
+  --ink-2: #384551;         /* texto secundario */
+  --ink-3: #60758A;         /* texto terciario / data */
+  --dark: #2A333C;          /* superficie oscura (bodega, modo cata, preview mapa) */
+  --dark-2: #323D48;        /* superficie oscura elevada */
+  --dark-cata: #1D242A;     /* fondo del ritual de cata */
+  --ink-dark: #F5EDE0;      /* texto sobre oscuro */
+  --ink-dark-2: #D2B470;    /* texto secundario sobre oscuro */
+
+  /* ── Color · materiales del local ───────────────────────── */
+  --madera: #CFAC59;
+  --madera-dk: #455463;
+  --piedra: #C4785A;
+  --cuero: #A0622A;
+
+  /* ── Color · acento (SOLO interactivo) ──────────────────── */
+  --accent: #7A1428;
+  --accent-2: #9B2035;
+  --accent-grad: linear-gradient(135deg, #7A1428, #9B2035);
+
+  /* ── Color · tipos de vino (única fuente de verdad;
+        reemplaza también TYPE_COLOR en el JS) ─────────────── */
+  --tinto: #7A1428;
+  --blanco: #5A8A2A;
+  --rosado: #C4306A;
+  --naranja: #C46020;
+
+  /* ── Bordes ─────────────────────────────────────────────── */
+  --line: rgba(69, 84, 99, .15);       /* hairline en claro */
+  --line-strong: rgba(69, 84, 99, .24);
+  --line-dark: rgba(207, 172, 89, .18); /* hairline en oscuro */
+  --line-dark-strong: rgba(207, 172, 89, .32);
+
+  /* ── Tipografía · escala modular 1.25 / base 16 ─────────── */
+  --font-serif: 'Cormorant Garamond', serif;
+  --font-sans: 'DM Sans', sans-serif;
+  --text-display: 48px;   /* Cormorant 700 — hero */
+  --text-title: 32px;     /* Cormorant 600 — título de pantalla */
+  --text-heading: 25px;   /* Cormorant 600 — sección */
+  --text-name: 20px;      /* Cormorant 600 — nombre de vino en card, precio */
+  --text-voice: 17px;     /* Cormorant 400 italic — voz del somm */
+  --text-body: 15px;      /* DM Sans 300 */
+  --text-data: 13px;      /* DM Sans 400 — datos técnicos */
+  --text-caption: 12px;
+  --text-kicker: 11px;    /* DM Sans 500, caps, tracking .28em — ÚNICO uppercase */
+  --kicker-tracking: .28em;
+
+  /* ── Espaciado · base 4 ─────────────────────────────────── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;   /* padding interno de card */
+  --sp-6: 32px;
+  --sp-7: 48px;   /* separación entre secciones */
+  --sp-8: 64px;
+
+  /* ── Radios · 3 pasos + píldora ─────────────────────────── */
+  --r-sm: 8px;
+  --r-card: 14px;
+  --r-surface: 20px;
+  --r-pill: 999px;
+
+  /* ── Elevación · claro = sombra cálida ──────────────────── */
+  --shadow-1: 0 2px 10px rgba(33, 45, 55, .10);   /* card en reposo */
+  --shadow-2: 0 4px 24px rgba(33, 45, 55, .15);   /* hover / sheet */
+  --shadow-3: 0 8px 40px rgba(33, 45, 55, .22);   /* flotante: mapa, modal */
+
+  /* ── Elevación · oscuro = luz ───────────────────────────── */
+  --glow-edge: inset 0 1px 0 rgba(245, 237, 224, .10); /* borde iluminado */
+  --glow-vela: 0 0 24px rgba(155, 32, 53, .22);        /* interactivo */
+  --shadow-dark: 0 12px 40px rgba(0, 0, 0, .5);        /* flotante oscuro */
+
+  /* ── Motion · una curva, tres tiempos ───────────────────── */
+  --ease: cubic-bezier(.22, 1, .36, 1);          /* curva de la casa */
+  --ease-copa: cubic-bezier(.34, 1.56, .64, 1);  /* elástica: SOLO copitas */
+  --t-feedback: 150ms;   /* tap, hover, press */
+  --t-local: 250ms;      /* tabs, filtros, tooltips */
+  --t-ritual: 600ms;     /* entrar/salir de cata, abrir ficha */
+  --stagger: 60ms;       /* cascada de barras */
+}

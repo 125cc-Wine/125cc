@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>125cc · POS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/tokens.css">
+<link rel="manifest" href="/manifest.json">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--dark);color:var(--ink-dark);font-family:'DM Sans',sans-serif;min-height:100vh;-webkit-tap-highlight-color:transparent}
+  button,input,select{font-family:inherit}
+
+  /* ── LOGIN ── */
+  #loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+  .login-box{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-surface);box-shadow:var(--shadow-dark);padding:40px 32px;width:100%;max-width:340px;text-align:center}
+  .login-logo{font-family:var(--font-serif);font-size:44px;color:var(--accent);margin-bottom:2px}
+  .login-sub{font-size:11px;letter-spacing:.2em;color:var(--ink-dark-2);text-transform:uppercase;margin-bottom:28px}
+  .login-box input{width:100%;background:var(--dark-3,#3F4D5A);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:14px 16px;color:var(--ink-dark);font-size:15px;outline:none;text-align:center;margin-bottom:12px}
+  .login-box input:focus{border-color:var(--accent)}
+  .login-btn{width:100%;background:var(--accent-grad);border:none;border-radius:var(--r-pill);padding:15px;color:#fff;font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:transform var(--t-feedback) var(--ease);box-shadow:0 4px 20px rgba(155,32,53,.3)}
+  .login-btn:active{transform:scale(.98)}
+  .login-error{font-size:12px;color:#f87171;margin-top:10px;display:none}
+
+  /* ── SHELL ── */
+  #app{display:none}
+  .top-bar{background:var(--dark-2);border-bottom:1px solid var(--line-dark);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+  .top-logo{font-family:var(--font-serif);font-size:24px;color:var(--accent);line-height:1}
+  .top-label{font-size:10px;letter-spacing:.18em;color:var(--ink-dark-2);text-transform:uppercase;margin-top:2px}
+  .top-right{display:flex;align-items:center;gap:14px}
+  .top-staff{font-size:11px;color:var(--ink-dark-2)}
+  .logout-btn{font-size:12px;color:var(--ink-dark-2);cursor:pointer;background:none;border:none}
+  .logout-btn:hover{color:var(--ink-dark)}
+  .view{display:none;padding:16px 16px 90px}
+  .view.active{display:block}
+
+  .section-title{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--ink-dark-2);margin-bottom:12px}
+
+  /* ── MESAS ── */
+  .mesas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:20px}
+  .mesa-card{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:16px 10px;text-align:center;cursor:pointer;box-shadow:var(--shadow-dark);transition:transform var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease);border-left:3px solid var(--line-dark)}
+  .mesa-card:active{transform:scale(.96)}
+  .mesa-card.libre{border-left-color:#5A8A2A}
+  .mesa-card.ocupada{border-left-color:var(--accent)}
+  .mesa-card.cuenta_pedida{border-left-color:var(--madera)}
+  .mesa-nombre{font-family:var(--font-serif);font-size:19px;color:var(--ink-dark);font-weight:600}
+  .mesa-estado{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dark-2);margin-top:4px}
+  .mesa-cap{font-size:10px;color:var(--ink-dark-2);opacity:.7;margin-top:2px}
+
+  .row-btns{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+  .btn-outline{background:none;border:1px solid var(--line-dark-strong);color:var(--ink-dark-2);font-size:11px;font-weight:500;letter-spacing:.06em;padding:11px 16px;border-radius:var(--r-pill);cursor:pointer;transition:border-color var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
+  .btn-outline:hover{border-color:var(--ink-dark-2);color:var(--ink-dark)}
+  .btn-primary{background:var(--accent-grad);border:none;color:#fff;font-size:12px;font-weight:500;letter-spacing:.08em;padding:12px 18px;border-radius:var(--r-pill);cursor:pointer;box-shadow:0 4px 20px rgba(155,32,53,.3);transition:transform var(--t-feedback) var(--ease)}
+  .btn-primary:active{transform:scale(.97)}
+  .btn-madera{background:var(--madera-dk);border:none;color:var(--ink-dark);font-size:11px;font-weight:500;letter-spacing:.06em;padding:11px 16px;border-radius:var(--r-pill);cursor:pointer;transition:opacity var(--t-feedback) var(--ease)}
+  .btn-madera:hover{opacity:.85}
+
+  .quick-form{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:16px;margin-bottom:20px;display:none}
+  .quick-form.open{display:block}
+  .quick-form .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .quick-form input,.quick-form select{width:100%;background:var(--dark-3,#3F4D5A);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:10px 11px;color:var(--ink-dark);font-size:13px;outline:none}
+  .quick-form input:focus,.quick-form select:focus{border-color:var(--accent)}
+  .quick-form-actions{display:flex;gap:8px;margin-top:4px}
+
+  /* ── COMANDA ── */
+  .comanda-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px}
+  .comanda-title{font-family:var(--font-serif);font-size:24px;color:var(--ink-dark)}
+  .comanda-sub{font-size:11px;color:var(--ink-dark-2);margin-top:2px}
+  .back-btn{background:none;border:none;color:var(--ink-dark-2);font-size:20px;cursor:pointer;padding:4px 8px}
+  .back-btn:hover{color:var(--ink-dark)}
+
+  .items-box{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);margin-bottom:18px;overflow:hidden}
+  .item-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line-dark)}
+  .item-row:last-child{border-bottom:none}
+  .item-row.anulado{opacity:.4}
+  .item-name{font-size:13.5px;color:var(--ink-dark)}
+  .item-sub{font-size:11px;color:var(--ink-dark-2);margin-top:1px}
+  .item-right{display:flex;align-items:center;gap:10px}
+  .item-price{font-family:var(--font-serif);font-size:16px;color:var(--ink-dark)}
+  .item-void{background:none;border:none;color:#f87171;font-size:11px;cursor:pointer;padding:4px}
+  .items-empty{padding:24px;text-align:center;color:var(--ink-dark-2);font-size:12.5px}
+
+  .total-bar{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .total-label{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--madera)}
+  .total-val{font-family:var(--font-serif);font-size:30px;color:var(--ink-dark);font-weight:700}
+
+  .cat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .cat-chip{background:none;border:1px solid var(--line-dark);color:var(--ink-dark-2);font-size:10.5px;font-weight:500;letter-spacing:.04em;padding:6px 12px;border-radius:var(--r-pill);cursor:pointer;transition:background var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease)}
+  .cat-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  .prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:20px}
+  .prod-card{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:12px;cursor:pointer;transition:transform var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease)}
+  .prod-card:active{transform:scale(.96)}
+  .prod-card.sin-stock{opacity:.45}
+  .prod-name{font-size:12.5px;color:var(--ink-dark);line-height:1.3}
+  .prod-unidad{font-size:9.5px;color:var(--ink-dark-2);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+  .prod-price{font-family:var(--font-serif);font-size:17px;color:var(--madera);margin-top:5px}
+  .prod-stock-low{font-size:9px;color:#fbbf24;margin-top:3px}
+
+  .pago-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .pago-chip{flex:1;min-width:90px;background:var(--dark-2);border:1px solid var(--line-dark);color:var(--ink-dark-2);font-size:12px;font-weight:500;padding:13px 8px;border-radius:var(--r-pill);cursor:pointer;text-align:center;transition:background var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease)}
+  .pago-chip.active{background:var(--accent-grad);border-color:var(--accent);color:#fff}
+  .cobrar-panel{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:16px;margin-bottom:20px;display:none}
+  .cobrar-panel.open{display:block}
+
+  /* Toast */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark-2);border:1px solid var(--line-dark);color:var(--ink-dark);padding:10px 20px;border-radius:var(--r-surface);font-size:13px;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.success{border-color:rgba(100,200,100,.3);color:#90ee90}
+  .toast.error{border-color:rgba(200,80,80,.3);color:#f87171}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">125cc</div>
+    <div class="login-sub">Piso · POS</div>
+    <input type="text" id="staffInput" placeholder="¿Quién atiende?" maxlength="40">
+    <input type="password" id="passInput" placeholder="••••••" maxlength="40"
+      onkeydown="if(event.key==='Enter') tryLogin()">
+    <button class="login-btn" onclick="tryLogin()">Entrar</button>
+    <div class="login-error" id="loginError">Contraseña incorrecta.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="top-bar">
+    <div>
+      <div class="top-logo">125cc</div>
+      <div class="top-label" id="topLabel">Mesas</div>
+    </div>
+    <div class="top-right">
+      <div class="top-staff" id="topStaff"></div>
+      <button class="logout-btn" onclick="logout()">Salir</button>
+    </div>
+  </div>
+
+  <!-- VISTA MESAS -->
+  <div class="view active" id="view-mesas">
+    <div class="row-btns">
+      <button class="btn-primary" onclick="startTakeaway()">+ Comanda takeaway</button>
+      <button class="btn-outline" onclick="toggleMesaForm()">+ Nueva mesa</button>
+    </div>
+    <div class="quick-form" id="mesaForm">
+      <div class="form-row">
+        <input type="text" id="mesaNombre" placeholder="Nombre (ej: Mesa 3)" maxlength="60">
+        <input type="number" id="mesaCap" placeholder="Capacidad" min="0" max="200">
+      </div>
+      <div class="quick-form-actions">
+        <button class="btn-primary" onclick="submitMesaForm()">Guardar</button>
+        <button class="btn-outline" onclick="toggleMesaForm()">Cancelar</button>
+      </div>
+    </div>
+    <div class="section-title">Salón</div>
+    <div class="mesas-grid" id="mesasGrid"><div class="items-empty">Cargando...</div></div>
+  </div>
+
+  <!-- VISTA COMANDA -->
+  <div class="view" id="view-comanda">
+    <div class="comanda-header">
+      <button class="back-btn" onclick="backToMesas()">←</button>
+      <div style="flex:1">
+        <div class="comanda-title" id="comandaTitle">—</div>
+        <div class="comanda-sub" id="comandaSub"></div>
+      </div>
+    </div>
+
+    <div class="items-box" id="itemsBox"></div>
+
+    <div class="total-bar">
+      <div class="total-label">Total</div>
+      <div class="total-val" id="totalVal">$0</div>
+    </div>
+
+    <div class="row-btns">
+      <button class="btn-primary" onclick="toggleCobrarPanel()">Cobrar</button>
+      <button class="btn-outline" onclick="toggleProductoForm()">+ Nuevo producto</button>
+    </div>
+
+    <div class="cobrar-panel" id="cobrarPanel">
+      <div class="section-title">Medio de pago</div>
+      <div class="pago-row" id="pagoRow">
+        <div class="pago-chip" data-medio="efectivo" onclick="selectMedio(this)">Efectivo</div>
+        <div class="pago-chip" data-medio="tarjeta" onclick="selectMedio(this)">Tarjeta</div>
+        <div class="pago-chip" data-medio="transferencia" onclick="selectMedio(this)">Transferencia</div>
+        <div class="pago-chip" data-medio="mixto" onclick="selectMedio(this)">Mixto</div>
+      </div>
+      <button class="btn-primary" style="width:100%" onclick="confirmCobrar()">Confirmar cobro</button>
+    </div>
+
+    <div class="quick-form" id="productoForm">
+      <div class="form-row">
+        <input type="text" id="prodNombre" placeholder="Nombre" maxlength="120">
+        <input type="text" id="prodCategoria" placeholder="Categoría (ej: vino_tinto)" maxlength="40">
+      </div>
+      <div class="form-row">
+        <input type="number" id="prodPrecio" placeholder="Precio" min="0" step="0.01">
+        <select id="prodUnidad">
+          <option value="copa">Copa</option>
+          <option value="botella">Botella</option>
+          <option value="unidad">Unidad</option>
+        </select>
+      </div>
+      <div class="quick-form-actions">
+        <button class="btn-primary" onclick="submitProductoForm()">Guardar</button>
+        <button class="btn-outline" onclick="toggleProductoForm()">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="section-title">Agregar producto</div>
+    <div class="cat-chips" id="catChips"></div>
+    <div class="prod-grid" id="prodGrid"><div class="items-empty">Cargando...</div></div>
+  </div>
+</div>
+
+<script>
+const SESSION_KEY = "125cc_pos_auth";
+const STAFF_KEY = "125cc_pos_staff";
+
+let mesas = [];
+let productos = [];
+let currentComanda = null;   // {id, mesa_id, mesa_nombre, estado, total}
+let currentItems = [];
+let catFiltro = 'todas';
+let medioSeleccionado = null;
+
+// ── AUTH ──────────────────────────────────────────────────────────
+function authHeader(){
+  return { 'Authorization': 'Bearer ' + (sessionStorage.getItem(SESSION_KEY) || '') };
+}
+
+async function api(path, opts){
+  opts = opts || {};
+  const headers = Object.assign({}, authHeader(), opts.body ? {'Content-Type':'application/json'} : {}, opts.headers || {});
+  const res = await fetch(path, { method: opts.method || 'GET', headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
+  if (res.status === 401){ logout(); throw new Error('No autorizado'); }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ('Error ' + res.status));
+  return data;
+}
+
+async function tryLogin(){
+  const pass = document.getElementById('passInput').value;
+  const staff = document.getElementById('staffInput').value.trim();
+  document.getElementById('loginError').style.display = 'none';
+  try {
+    const res = await fetch('/api/pos-auth', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error();
+    sessionStorage.setItem(SESSION_KEY, pass);
+    sessionStorage.setItem(STAFF_KEY, staff || '');
+    enterApp();
+  } catch(e){
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+
+function logout(){
+  sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(STAFF_KEY);
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function enterApp(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('topStaff').textContent = sessionStorage.getItem(STAFF_KEY) || '';
+  loadMesas();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────
+function toast(msg, type){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  setTimeout(() => { t.className = 'toast'; }, 2600);
+}
+
+// ── VISTAS ────────────────────────────────────────────────────────
+function showView(id){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function backToMesas(){
+  currentComanda = null;
+  document.getElementById('topLabel').textContent = 'Mesas';
+  showView('view-mesas');
+  loadMesas();
+}
+
+// ── MESAS ─────────────────────────────────────────────────────────
+async function loadMesas(){
+  try {
+    const data = await api('/api/pos-mesas');
+    mesas = data.mesas;
+    renderMesas();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function renderMesas(){
+  const grid = document.getElementById('mesasGrid');
+  if (!mesas.length){ grid.innerHTML = '<div class="items-empty">Todavía no hay mesas cargadas. Usá "+ Nueva mesa".</div>'; return; }
+  grid.innerHTML = mesas.map(m => `
+    <div class="mesa-card ${m.estado}" onclick="openMesa(${m.id})">
+      <div class="mesa-nombre">${escapeHtml(m.nombre)}</div>
+      <div class="mesa-estado">${m.estado.replace('_',' ')}</div>
+      ${m.capacidad ? `<div class="mesa-cap">${m.capacidad} pers.</div>` : ''}
+    </div>`).join('');
+}
+
+function toggleMesaForm(){
+  document.getElementById('mesaForm').classList.toggle('open');
+}
+
+async function submitMesaForm(){
+  const nombre = document.getElementById('mesaNombre').value.trim();
+  const capacidad = document.getElementById('mesaCap').value;
+  if (!nombre) return toast('Falta el nombre de la mesa', 'error');
+  try {
+    await api('/api/pos-mesas', { method: 'POST', body: { nombre, capacidad: capacidad || null } });
+    document.getElementById('mesaNombre').value = '';
+    document.getElementById('mesaCap').value = '';
+    toggleMesaForm();
+    toast('Mesa creada', 'success');
+    loadMesas();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function openMesa(mesaId){
+  const mesa = mesas.find(m => m.id === mesaId);
+  if (!mesa) return;
+  if (mesa.comanda_id){
+    openComanda(mesa.comanda_id);
+    return;
+  }
+  try {
+    const staff = sessionStorage.getItem(STAFF_KEY);
+    const data = await api('/api/pos-comandas', { method: 'POST', body: { mesa_id: mesaId, atendido_por: staff } });
+    openComanda(data.comanda.id);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function startTakeaway(){
+  try {
+    const staff = sessionStorage.getItem(STAFF_KEY);
+    const data = await api('/api/pos-comandas', { method: 'POST', body: { atendido_por: staff } });
+    openComanda(data.comanda.id);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// ── COMANDA ───────────────────────────────────────────────────────
+async function openComanda(id){
+  try {
+    const data = await api('/api/pos-comanda?id=' + id);
+    currentComanda = data.comanda;
+    currentItems = data.items;
+    document.getElementById('topLabel').textContent = 'Comanda';
+    document.getElementById('comandaTitle').textContent = currentComanda.mesa_nombre || 'Takeaway';
+    document.getElementById('comandaSub').textContent = currentComanda.atendido_por ? ('Atiende: ' + currentComanda.atendido_por) : '';
+    document.getElementById('cobrarPanel').classList.remove('open');
+    document.getElementById('productoForm').classList.remove('open');
+    medioSeleccionado = null;
+    renderItems();
+    showView('view-comanda');
+    if (!productos.length) await loadProductos();
+    renderCatChips();
+    renderProductos();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function renderItems(){
+  const box = document.getElementById('itemsBox');
+  if (!currentItems.length){ box.innerHTML = '<div class="items-empty">Todavía no se agregó nada.</div>'; }
+  else {
+    box.innerHTML = currentItems.map(it => `
+      <div class="item-row ${it.estado === 'anulado' ? 'anulado' : ''}">
+        <div>
+          <div class="item-name">${it.cantidad} × ${escapeHtml(it.nombre_snapshot)}</div>
+          <div class="item-sub">${it.estado === 'anulado' ? 'Anulado' : fmtMoney(it.precio_unitario) + ' c/u'}</div>
+        </div>
+        <div class="item-right">
+          <div class="item-price">${fmtMoney(it.precio_unitario * it.cantidad)}</div>
+          ${it.estado === 'activo' ? `<button class="item-void" onclick="anularItem(${it.id})">Anular</button>` : ''}
+        </div>
+      </div>`).join('');
+  }
+  const total = currentItems.filter(i => i.estado === 'activo').reduce((s,i) => s + Number(i.precio_unitario) * i.cantidad, 0);
+  document.getElementById('totalVal').textContent = fmtMoney(total);
+}
+
+async function refreshComanda(){
+  const data = await api('/api/pos-comanda?id=' + currentComanda.id);
+  currentComanda = data.comanda;
+  currentItems = data.items;
+  renderItems();
+}
+
+async function addItem(productoId){
+  try {
+    await api('/api/pos-comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, producto_id: productoId, cantidad: 1 } });
+    await refreshComanda();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function anularItem(itemId){
+  try {
+    await api('/api/pos-comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'anular', item_id: itemId } });
+    await refreshComanda();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function toggleCobrarPanel(){
+  if (!currentItems.some(i => i.estado === 'activo')) return toast('No hay ítems activos para cobrar', 'error');
+  document.getElementById('cobrarPanel').classList.toggle('open');
+}
+
+function selectMedio(el){
+  document.querySelectorAll('.pago-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  medioSeleccionado = el.dataset.medio;
+}
+
+async function confirmCobrar(){
+  if (!medioSeleccionado) return toast('Elegí un medio de pago', 'error');
+  try {
+    await api('/api/pos-comanda-cerrar', { method: 'POST', body: { comanda_id: currentComanda.id, medio_pago: medioSeleccionado } });
+    toast('Comanda cobrada', 'success');
+    backToMesas();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// ── PRODUCTOS ─────────────────────────────────────────────────────
+async function loadProductos(){
+  try {
+    const data = await api('/api/pos-productos');
+    productos = data.productos;
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function renderCatChips(){
+  const cats = ['todas', ...new Set(productos.map(p => p.categoria))];
+  document.getElementById('catChips').innerHTML = cats.map(c => `
+    <div class="cat-chip ${c === catFiltro ? 'active' : ''}" onclick="setCatFiltro('${escapeHtml(c)}')">${escapeHtml(c)}</div>`).join('');
+}
+
+function setCatFiltro(c){
+  catFiltro = c;
+  renderCatChips();
+  renderProductos();
+}
+
+function renderProductos(){
+  const grid = document.getElementById('prodGrid');
+  const list = catFiltro === 'todas' ? productos : productos.filter(p => p.categoria === catFiltro);
+  if (!list.length){ grid.innerHTML = '<div class="items-empty">Sin productos. Usá "+ Nuevo producto".</div>'; return; }
+  grid.innerHTML = list.map(p => {
+    const sinStock = p.stock_actual != null && p.stock_actual <= 0;
+    const stockBajo = p.stock_actual != null && p.stock_minimo != null && p.stock_actual > 0 && p.stock_actual <= p.stock_minimo;
+    return `
+    <div class="prod-card ${sinStock ? 'sin-stock' : ''}" onclick="addItem(${p.id})">
+      <div class="prod-name">${escapeHtml(p.nombre)}</div>
+      <div class="prod-unidad">${p.unidad_venta}</div>
+      <div class="prod-price">${fmtMoney(p.precio)}</div>
+      ${sinStock ? '<div class="prod-stock-low">Sin stock</div>' : (stockBajo ? '<div class="prod-stock-low">Stock bajo: ' + p.stock_actual + '</div>' : '')}
+    </div>`;
+  }).join('');
+}
+
+function toggleProductoForm(){
+  document.getElementById('productoForm').classList.toggle('open');
+}
+
+async function submitProductoForm(){
+  const nombre = document.getElementById('prodNombre').value.trim();
+  const categoria = document.getElementById('prodCategoria').value.trim();
+  const precio = document.getElementById('prodPrecio').value;
+  const unidad_venta = document.getElementById('prodUnidad').value;
+  if (!nombre || !precio) return toast('Falta nombre o precio', 'error');
+  try {
+    await api('/api/pos-productos', { method: 'POST', body: { nombre, categoria, precio, unidad_venta } });
+    document.getElementById('prodNombre').value = '';
+    document.getElementById('prodCategoria').value = '';
+    document.getElementById('prodPrecio').value = '';
+    toggleProductoForm();
+    toast('Producto creado', 'success');
+    await loadProductos();
+    renderCatChips();
+    renderProductos();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function fmtMoney(n){
+  return '$' + Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+if (sessionStorage.getItem(SESSION_KEY)) enterApp();
+</script>
+</body>
+</html>

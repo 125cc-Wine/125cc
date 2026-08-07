@@ -1,0 +1,7 @@
+{
+  "name": "125cc",
+  "private": true,
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0"
+  }
+}
