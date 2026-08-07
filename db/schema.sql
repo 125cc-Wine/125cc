@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS productos (
   categoria       text NOT NULL DEFAULT 'otros',  -- vino_tinto/blanco/rosado/naranja/otros
   unidad_venta    text NOT NULL DEFAULT 'copa' CHECK (unidad_venta IN ('copa','botella','unidad')),
   precio          numeric(10,2) NOT NULL CHECK (precio >= 0),
+  costo           numeric(10,2),                  -- NULL = costo no cargado todavía (sin esto no hay margen real)
   stock_actual    int,                            -- NULL = stock no trackeado
   stock_minimo    int,                            -- umbral de aviso, no bloquea
   activo          boolean NOT NULL DEFAULT true,  -- disponible en el ciclo de carta actual
@@ -36,6 +37,8 @@ CREATE TABLE IF NOT EXISTS productos (
   updated_at      timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_productos_activo ON productos(activo);
+-- Si la tabla ya existía sin esta columna:
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS costo numeric(10,2);
 
 -- Nota de diseño: un vino vendido "por copa" y "por botella" son dos filas
 -- separadas (stock_actual y precio propios), no una fila + factor de
