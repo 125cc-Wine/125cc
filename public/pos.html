@@ -184,6 +184,7 @@
     </div>
     <div class="top-right">
       <div class="top-staff" id="topStaff"></div>
+      <button class="logout-btn" onclick="toggleReportesPanel()">Reportes</button>
       <button class="logout-btn" onclick="toggleCajaPanel()">Caja</button>
       <button class="logout-btn" onclick="toggleStockPanel()">Stock</button>
       <button class="logout-btn" onclick="logout()">Salir</button>
@@ -191,6 +192,19 @@
   </div>
 
   <div class="view">
+    <div class="stock-panel" id="reportesPanel" style="display:none">
+      <div class="stock-panel-header">
+        <div class="section-title" style="margin-bottom:0">Reportes</div>
+        <button class="close-btn" onclick="toggleReportesPanel()" title="Cerrar">✕</button>
+      </div>
+      <div class="row-btns" style="margin-bottom:14px">
+        <button class="cat-chip active" id="repRange7" onclick="setReportesRango(7,this)">7 días</button>
+        <button class="cat-chip" id="repRange30" onclick="setReportesRango(30,this)">30 días</button>
+        <button class="cat-chip" id="repRange365" onclick="setReportesRango(365,this)">Todo</button>
+      </div>
+      <div id="reportesContent"><div class="items-empty">Cargando...</div></div>
+    </div>
+
     <div class="stock-panel" id="cajaPanel" style="display:none">
       <div class="stock-panel-header">
         <div class="section-title" style="margin-bottom:0">Caja</div>
@@ -727,6 +741,74 @@ async function importarVinos(){
     btn.disabled = false;
     btn.textContent = '↻ Importar vinos del menú';
   }
+}
+
+// ── REPORTES ──────────────────────────────────────────────────────
+let reportesPanelOpen = false;
+let reportesDias = 7;
+
+async function toggleReportesPanel(){
+  reportesPanelOpen = !reportesPanelOpen;
+  document.getElementById('reportesPanel').style.display = reportesPanelOpen ? 'block' : 'none';
+  if (reportesPanelOpen) await loadReportes();
+}
+
+function setReportesRango(dias, btn){
+  reportesDias = dias;
+  document.querySelectorAll('#repRange7,#repRange30,#repRange365').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadReportes();
+}
+
+const MEDIO_LABEL = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', mixto: 'Mixto' };
+
+async function loadReportes(){
+  const box = document.getElementById('reportesContent');
+  box.innerHTML = '<div class="items-empty">Cargando...</div>';
+  try {
+    const data = await api('/api/pos?r=reportes&dias=' + reportesDias);
+    renderReportes(data);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function renderReportes(data){
+  const box = document.getElementById('reportesContent');
+  const porMedio = data.totalesPorMedio.map(m => `
+    <div class="stock-row"><div class="stock-row-name">${MEDIO_LABEL[m.medio_pago] || m.medio_pago || '—'}</div><div>${fmtMoney(m.total)} <span class="stock-row-name-sub">(${m.cantidad})</span></div></div>
+  `).join('') || '<div class="items-empty">Sin ventas en el período.</div>';
+
+  const top = data.topProductos.map((p, i) => `
+    <div class="stock-row"><div class="stock-row-name">${i+1}. ${escapeHtml(p.nombre_snapshot)}</div><div>${p.unidades} · ${fmtMoney(p.total)}</div></div>
+  `).join('') || '<div class="items-empty">Sin ventas en el período.</div>';
+
+  const cajas = data.cajas.map(c => {
+    const dif = Number(c.diferencia);
+    const color = dif === 0 ? 'var(--green)' : (dif < 0 ? 'var(--red)' : 'var(--blue)');
+    const fecha = new Date(c.cerrada_at).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    return `<div class="stock-row">
+      <div class="stock-row-name">${fecha} · ${escapeHtml(c.cerrada_por || '—')}</div>
+      <div style="color:${color};font-weight:700">${fmtMoney(dif)}</div>
+    </div>`;
+  }).join('') || '<div class="items-empty">Sin cierres en el período.</div>';
+
+  const anulados = data.anulados.map(a => `
+    <div class="stock-row"><div class="stock-row-name">${a.cantidad} × ${escapeHtml(a.nombre_snapshot)} <span class="stock-row-name-sub">comanda #${a.comanda_id}</span></div><div>${fmtMoney(a.precio_unitario * a.cantidad)}</div></div>
+  `).join('') || '<div class="items-empty">Sin anulaciones.</div>';
+
+  box.innerHTML = `
+    <div class="total-bar" style="border-radius:var(--r-md);margin-bottom:16px">
+      <div class="total-label">Total período</div>
+      <div class="total-val">${fmtMoney(data.totalGeneral.total)} <span style="font-size:12px;font-weight:400">(${data.totalGeneral.cantidad})</span></div>
+    </div>
+    <div class="section-title">Por medio de pago</div>
+    ${porMedio}
+    <div class="section-title" style="margin-top:16px">Productos más vendidos</div>
+    ${top}
+    <div class="section-title" style="margin-top:16px">Cierres de caja (diferencia)</div>
+    ${cajas}
+    <div class="section-title" style="margin-top:16px">Anulaciones recientes</div>
+    ${anulados}
+  `;
 }
 
 // ── CAJA ──────────────────────────────────────────────────────────
