@@ -20,13 +20,15 @@
        cambian los valores. Mapeo: --navbar/--navbar-2 = --dark/--dark-2
        reales (superficie oscura del sitio, no un marrón madera), --green
        = --blanco (tipo de vino, libre), --red = --tinto/--accent
-       (ocupada/error), --blue = --naranja (cuenta_pedida — nombre de
-       variable heredado, ya no es literalmente azul), --amber = --madera
-       (roble, selección), --black = --ink (nunca #000 puro). */
+       (ocupada), --blue = azul real para "cuenta pedida" (pedido
+       explícito: verde=libre, rojo=ocupada, azul=pidieron la cuenta,
+       vuelve a verde al cobrar — no hay un azul en la paleta de marca,
+       se usa uno neutro que no compite con los cálidos), --amber =
+       --madera (roble, selección), --black = --ink (nunca #000 puro). */
     --bg:#FAF5EE; --surface:#FFFFFF; --ink:#151A1E; --ink-2:#384551; --ink-3:#60758A;
     --line:rgba(69,84,99,.15);
     --navbar:#2A333C; --navbar-2:#323D48;
-    --green:#5A8A2A; --red:#7A1428; --blue:#C46020; --amber:#CFAC59;
+    --green:#5A8A2A; --red:#7A1428; --blue:#3D6FA6; --amber:#CFAC59;
     --accent:#7A1428; --accent-2:#9B2035; --accent-dk:#5E0F1F;
     --accent-grad:linear-gradient(135deg,#7A1428,#9B2035);
     --black:#151A1E;
@@ -228,6 +230,25 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .toast.success{background:#1F7A45}
   .toast.error{background:var(--red)}
+
+  /* ── PRECUENTA IMPRIMIBLE ──────────────────────────────────────────
+     Funciona en cualquier dispositivo (iPhone/Android/notebook) porque
+     usa el diálogo de impresión nativo del navegador — no depende de
+     qué impresora térmica tengan ni de su tecnología de conexión
+     (USB/red/bluetooth), eso se define en el sistema operativo, no acá.
+     Al imprimir se oculta todo menos #printArea. */
+  #printArea{display:none}
+  @media print{
+    body *{visibility:hidden}
+    #printArea,#printArea *{visibility:visible}
+    #printArea{display:block;position:absolute;left:0;top:0;width:100%;padding:12px;font-family:'DM Sans',sans-serif;color:#000}
+    #printArea h2{font-family:'Cormorant Garamond',serif;font-size:22px;margin-bottom:2px}
+    #printArea .pr-sub{font-size:11px;color:#444;margin-bottom:12px}
+    #printArea table{width:100%;border-collapse:collapse;font-size:12px}
+    #printArea td{padding:3px 0}
+    #printArea .pr-right{text-align:right}
+    #printArea .pr-total{border-top:1px solid #000;font-weight:700;font-size:14px}
+  }
 </style>
 </head>
 <body>
@@ -346,6 +367,7 @@
             <button class="btn-outline" onclick="toggleProductoForm()">+ Producto</button>
           </div>
           <div class="row-btns">
+            <button class="btn-outline" id="btnPedirCuenta" onclick="pedirCuenta()">🖶 Pedir cuenta</button>
             <button class="btn-outline" onclick="toggleTrasladarForm()">⇄ Trasladar mesa</button>
             <button class="btn-outline" onclick="toggleDescuentoForm()">% Descuento</button>
           </div>
@@ -899,6 +921,44 @@ async function trasladarComandaAction(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
+// ── PEDIR CUENTA / PRECUENTA ──────────────────────────────────────
+// Marca la mesa en azul (estado cuenta_pedida) — vuelve a verde sola al
+// cobrar, porque comanda-cerrar.js ya libera la mesa a 'libre'. Después
+// imprime la precuenta vía el diálogo nativo del navegador: funciona en
+// cualquier dispositivo/impresora sin depender de qué hardware tengan.
+async function pedirCuenta(){
+  try {
+    if (currentComanda.mesa_id){
+      await api('/api/pos?r=mesa-estado', { method: 'POST', body: { id: currentComanda.mesa_id, estado: 'cuenta_pedida' } });
+      await loadMesas();
+    }
+    imprimirPrecuenta();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function imprimirPrecuenta(){
+  const activos = currentItems.filter(i => i.estado === 'activo');
+  const subtotal = activos.reduce((s,i) => s + Number(i.precio_unitario) * i.cantidad, 0);
+  const total = aplicarDescuentoClient(subtotal, currentComanda.descuento_tipo, currentComanda.descuento_valor);
+
+  const filas = activos.map(it => `
+    <tr><td>${it.cantidad} × ${escapeHtml(it.nombre_snapshot)}</td><td class="pr-right">${fmtMoney(it.precio_unitario * it.cantidad)}</td></tr>`).join('');
+
+  const descuentoFilas = currentComanda.descuento_tipo ? `
+    <tr><td>Subtotal</td><td class="pr-right">${fmtMoney(subtotal)}</td></tr>
+    <tr><td>Descuento</td><td class="pr-right">−${currentComanda.descuento_tipo === 'porcentaje' ? currentComanda.descuento_valor + '%' : fmtMoney(currentComanda.descuento_valor)}</td></tr>` : '';
+
+  document.getElementById('printArea').innerHTML = `
+    <h2>125cc</h2>
+    <div class="pr-sub">${escapeHtml(currentComanda.mesa_nombre || 'Takeaway')} · ${new Date().toLocaleString('es-AR')}</div>
+    <table>
+      ${filas}
+      ${descuentoFilas}
+      <tr class="pr-total"><td>Total</td><td class="pr-right">${fmtMoney(total)}</td></tr>
+    </table>`;
+  window.print();
+}
+
 // ── DESCUENTO ─────────────────────────────────────────────────────
 function toggleDescuentoForm(){
   document.getElementById('descuentoForm').classList.toggle('open');
@@ -1272,5 +1332,7 @@ function escapeHtml(s){
 // ── INIT ──────────────────────────────────────────────────────────
 if (sessionStorage.getItem(SESSION_KEY)) enterApp();
 </script>
+
+<div id="printArea"></div>
 </body>
 </html>
