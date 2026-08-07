@@ -562,18 +562,22 @@ async function loadMesas(){
 }
 
 // En desktop/tablet (mesas y comanda lado a lado), el plano iguala su
-// alto al del recuadro de la comanda ABIERTA — así "llega" hasta ahí en
-// vez de quedar chico con un hueco vacío al lado. Sin ninguna mesa
-// seleccionada (estado inicial, "Elegí una mesa...") el plano es lo
-// principal de la pantalla, así que usa su tamaño natural (el
-// aspect-ratio de la CSS, más generoso) en vez de encogerse para igualar
-// ese cartelito chico. En celu (columnas apiladas) tampoco aplica.
+// alto al del recuadro de la comanda ABIERTA — así "llega" hasta ahí
+// cuando la comanda tiene varios ítems. Pero nunca por debajo de su
+// tamaño NATURAL (el que le da el aspect-ratio de la CSS a este ancho):
+// una comanda recién abierta (sin ítems) tiene un recuadro chico, y sin
+// este piso el mapa "saltaba" a ese tamaño chico apenas se abría una
+// mesa — solo puede crecer, nunca achicarse por debajo de su reposo.
 function sincronizarAlturaMapa(){
   const stage = document.getElementById('salonStage');
   const contenidoVisible = document.getElementById('panelContent').style.display !== 'none';
   if (window.innerWidth < 680 || !contenidoVisible){ stage.style.height = ''; return; }
+
+  stage.style.height = ''; // recalcular el alto natural (aspect-ratio) a este ancho
+  const natural = stage.getBoundingClientRect().height;
   const referencia = document.querySelector('.comanda-card');
-  if (referencia) stage.style.height = Math.max(referencia.getBoundingClientRect().height, 220) + 'px';
+  const alturaComanda = referencia ? referencia.getBoundingClientRect().height : 0;
+  stage.style.height = Math.max(natural, alturaComanda, 220) + 'px';
 }
 window.addEventListener('resize', sincronizarAlturaMapa);
 
