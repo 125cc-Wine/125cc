@@ -13,12 +13,22 @@
      de los tokens oscuros de handoff/tokens.css (esos son para el menú
      de clientes; este es un panel de trabajo de piso). */
   :root{
-    --bg:#F2F3F5; --surface:#FFFFFF; --ink:#1C1E21; --ink-2:#6B7280; --ink-3:#868FA0;
-    --line:#E4E6EA;
-    --navbar:#32373E; --navbar-2:#3D434B;
-    --green:#33C46E; --red:#EF4A40; --blue:#3D82F4; --amber:#FFB300;
-    --accent:#F4511E; --accent-dk:#D8430F;
-    --black:#1A1A1A;
+    /* Paleta 125cc (madera/piedra/cuero/tinto) — misma familia de la marca
+       en vez del naranja tipo Fudo que había antes. Se mantienen los
+       NOMBRES de variable existentes (--green/--red/--blue/--amber/etc.)
+       para no tener que tocar cada punto donde se usan; solo cambian los
+       valores. Mapeo: --ink=text, --ink-3=muted, --navbar=madera-dk,
+       --navbar-2=madera-mid, --green=vino blanco (libre), --red=tinto
+       (ocupada/error), --blue=piedra (cuenta_pedida — el nombre quedó
+       heredado, ya no es literalmente azul), --amber=madera roble claro
+       (selección), --black=madera-dk (nunca #000 puro). */
+    --bg:#FAF5EE; --surface:#FFFFFF; --ink:#2A1A08; --ink-2:#5A4534; --ink-3:#8A7060;
+    --line:#E4D8C8;
+    --navbar:#4A3020; --navbar-2:#8B6A3A;
+    --green:#5A8A2A; --red:#7A1428; --blue:#C4785A; --amber:#C8A46A;
+    --accent:#7A1428; --accent-2:#9B2035; --accent-dk:#5E0F1F;
+    --accent-grad:linear-gradient(135deg,#7A1428,#9B2035);
+    --black:#4A3020;
     --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
     --shadow:0 1px 3px rgba(20,20,25,.08), 0 1px 2px rgba(20,20,25,.06);
     --shadow-md:0 4px 14px rgba(20,20,25,.10);
@@ -48,9 +58,9 @@
   .login-sub{font-size:var(--fs-xs);letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase;margin-bottom:var(--sp-6)}
   .login-box input{width:100%;min-height:48px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);padding:0 var(--sp-4);color:var(--ink);font-size:var(--fs-md);outline:none;text-align:center;margin-bottom:var(--sp-3);transition:border-color var(--t) var(--ease)}
   .login-box input:focus{border-color:var(--accent)}
-  .login-btn{width:100%;min-height:48px;background:var(--accent);border:none;border-radius:var(--r-md);color:#fff;font-size:var(--fs-sm);font-weight:700;letter-spacing:.04em;cursor:pointer;transition:transform var(--t) var(--ease),background var(--t) var(--ease)}
+  .login-btn{width:100%;min-height:48px;background:var(--accent-grad);border:none;border-radius:var(--r-md);color:#fff;font-size:var(--fs-sm);font-weight:700;letter-spacing:.04em;cursor:pointer;transition:transform var(--t) var(--ease),filter var(--t) var(--ease)}
   .login-btn:active{transform:scale(.98)}
-  .login-btn:hover{background:var(--accent-dk)}
+  .login-btn:hover{filter:brightness(.92)}
   .login-error{font-size:var(--fs-sm);color:var(--red);margin-top:var(--sp-2);display:none}
 
   /* ── SHELL ── */
@@ -110,9 +120,9 @@
   }
   .btn-outline{background:var(--surface);border:1px solid var(--line);color:var(--ink-2);font-weight:500;transition:border-color var(--t) var(--ease),color var(--t) var(--ease)}
   .btn-outline:hover{border-color:var(--ink-3);color:var(--ink)}
-  .btn-primary{background:var(--accent);color:#fff;transition:transform var(--t) var(--ease),background var(--t) var(--ease)}
+  .btn-primary{background:var(--accent-grad);color:#fff;transition:transform var(--t) var(--ease),filter var(--t) var(--ease)}
   .btn-primary:active{transform:scale(.97)}
-  .btn-primary:hover{background:var(--accent-dk)}
+  .btn-primary:hover{filter:brightness(.92)}
   .btn-black{background:var(--black);color:#fff;letter-spacing:.04em;text-transform:uppercase;transition:opacity var(--t) var(--ease)}
   .btn-black:hover{opacity:.85}
 
@@ -384,6 +394,7 @@
 
           <div class="section-title">Adicionar</div>
           <input type="text" id="prodSearch" class="prod-search" placeholder="Buscar producto..." oninput="renderProductos()">
+          <div class="cat-chips" id="tipoChips"></div>
           <div class="cat-chips" id="catChips"></div>
           <div class="row-btns" style="margin-bottom:8px">
             <button class="btn-outline" onclick="importarVinos()" id="btnImportarVinos">↻ Importar vinos del menú</button>
@@ -405,6 +416,7 @@ let productos = [];
 let currentComanda = null;   // {id, mesa_id, mesa_nombre, estado, total}
 let currentItems = [];
 let catFiltro = 'todas';
+let tipoFiltro = 'todos'; // 'todos' | 'vino' | 'menu'
 let pagosState = [];         // [{medio_pago, monto}] — pagos del cobro actual (uno o varios)
 let editingSalon = false;
 let pendingPositions = {};   // {mesaId: {pos_x, pos_y}} — se llena al arrastrar
@@ -660,6 +672,7 @@ async function openComanda(id){
     document.getElementById('descuentoForm').classList.remove('open');
     renderItems();
     if (!productos.length) await loadProductos();
+    renderTipoChips();
     renderCatChips();
     renderProductos();
   } catch(e){ toast(e.message, 'error'); }
@@ -905,8 +918,36 @@ async function loadProductos(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
+// Un producto es "Vino" si viene del import del menú (vino_ref) o su
+// categoría es alguno de los tipos de vino; el resto cae en "Menú"
+// (tapeo, bebidas sin alcohol, lo que se cargue a mano fuera del vino).
+const CATEGORIAS_VINO = ['tinto', 'blanco', 'rosado', 'naranjo', 'vino'];
+function esVino(p){
+  return p.vino_ref != null || CATEGORIAS_VINO.includes((p.categoria || '').toLowerCase());
+}
+function productosPorTipo(){
+  if (tipoFiltro === 'vino') return productos.filter(esVino);
+  if (tipoFiltro === 'menu') return productos.filter(p => !esVino(p));
+  return productos;
+}
+
+function renderTipoChips(){
+  const opciones = [['todos', 'Todos'], ['vino', 'Vino'], ['menu', 'Menú']];
+  document.getElementById('tipoChips').innerHTML = opciones.map(([v, l]) => `
+    <div class="cat-chip ${v === tipoFiltro ? 'active' : ''}" onclick="setTipoFiltro('${v}')">${l}</div>`).join('');
+}
+
+function setTipoFiltro(v){
+  tipoFiltro = v;
+  catFiltro = 'todas'; // al cambiar de tipo, reiniciar la subcategoría
+  renderTipoChips();
+  renderCatChips();
+  renderProductos();
+}
+
 function renderCatChips(){
-  const cats = ['todas', ...new Set(productos.map(p => p.categoria))];
+  const base = productosPorTipo();
+  const cats = ['todas', ...new Set(base.map(p => p.categoria))];
   document.getElementById('catChips').innerHTML = cats.map(c => `
     <div class="cat-chip ${c === catFiltro ? 'active' : ''}" onclick="setCatFiltro('${escapeHtml(c)}')">${escapeHtml(c)}</div>`).join('');
 }
@@ -920,7 +961,8 @@ function setCatFiltro(c){
 function renderProductos(){
   const grid = document.getElementById('prodGrid');
   const q = (document.getElementById('prodSearch').value || '').trim().toLowerCase();
-  let list = catFiltro === 'todas' ? productos : productos.filter(p => p.categoria === catFiltro);
+  let list = productosPorTipo();
+  if (catFiltro !== 'todas') list = list.filter(p => p.categoria === catFiltro);
   if (q) list = list.filter(p => p.nombre.toLowerCase().includes(q));
   if (!list.length){ grid.innerHTML = '<div class="items-empty">Sin productos. Usá "+ Producto" o importá los vinos del menú.</div>'; return; }
   grid.innerHTML = list.map(p => {
@@ -944,6 +986,7 @@ async function importarVinos(){
     const data = await api('/api/pos?r=productos-import', { method: 'POST' });
     toast(`Importados: ${data.creados} nuevos, ${data.actualizados} actualizados`, 'success');
     await loadProductos();
+    renderTipoChips();
     renderCatChips();
     renderProductos();
   } catch(e){ toast(e.message, 'error'); }
@@ -1198,6 +1241,7 @@ async function submitProductoForm(){
     toggleProductoForm();
     toast('Producto creado', 'success');
     await loadProductos();
+    renderTipoChips();
     renderCatChips();
     renderProductos();
   } catch(e){ toast(e.message, 'error'); }
