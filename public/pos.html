@@ -169,8 +169,28 @@
   .cobrar-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow);padding:var(--sp-4);margin-bottom:var(--sp-5);display:none}
   .cobrar-panel.open{display:block}
 
+  /* ── MODAL (Stock/Caja/Reportes) ──────────────────────────────────
+     Antes estos paneles se abrían empujando el resto de la página hacia
+     abajo, podían quedar varios abiertos a la vez, y no había forma clara
+     de saber cuál estaba activo. Ahora son modales superpuestos: fondo
+     oscurecido, uno solo a la vez, cierre explícito (✕ o tocar afuera). */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(20,20,25,.5);z-index:90;opacity:0;pointer-events:none;transition:opacity var(--t) var(--ease)}
+  .modal-backdrop.open{opacity:1;pointer-events:auto}
+  .modal-panel{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.97);
+    width:min(92vw,480px);max-height:85vh;overflow-y:auto;z-index:95;
+    opacity:0;pointer-events:none;transition:opacity var(--t) var(--ease),transform var(--t) var(--ease);
+  }
+  .modal-panel.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  @media(max-width:520px){
+    .modal-panel{width:100vw;max-width:100vw;height:100%;max-height:100%;top:0;left:0;transform:none;border-radius:0}
+    .modal-panel.open{transform:none}
+  }
+  .nav-active{color:#fff !important;position:relative}
+  .nav-active::after{content:'';position:absolute;left:var(--sp-1);right:var(--sp-1);bottom:2px;height:2px;background:var(--accent);border-radius:2px}
+
   /* ── STOCK / CAJA / REPORTES (paneles genéricos de fila+valor) ── */
-  .stock-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:var(--sp-4);margin-bottom:var(--sp-4)}
+  .stock-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-md);padding:var(--sp-4);margin-bottom:var(--sp-4)}
   .stock-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-3)}
   .stock-row{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-3) 0;border-bottom:1px solid var(--line);min-height:36px}
   .stock-row:last-child{border-bottom:none}
@@ -212,18 +232,20 @@
     </div>
     <div class="top-right">
       <div class="top-staff" id="topStaff"></div>
-      <button class="logout-btn" onclick="toggleReportesPanel()">Reportes</button>
-      <button class="logout-btn" onclick="toggleCajaPanel()">Caja</button>
-      <button class="logout-btn" onclick="toggleStockPanel()">Stock</button>
+      <button class="logout-btn" id="navReportes" onclick="togglePanel('reportes')">Reportes</button>
+      <button class="logout-btn" id="navCaja" onclick="togglePanel('caja')">Caja</button>
+      <button class="logout-btn" id="navStock" onclick="togglePanel('stock')">Stock</button>
       <button class="logout-btn" onclick="logout()">Salir</button>
     </div>
   </div>
 
+  <div class="modal-backdrop" id="modalBackdrop" onclick="closeAllPanels()"></div>
+
   <div class="view">
-    <div class="stock-panel" id="reportesPanel" style="display:none">
+    <div class="stock-panel modal-panel" id="reportesPanel">
       <div class="stock-panel-header">
         <div class="section-title" style="margin-bottom:0">Reportes</div>
-        <button class="close-btn" onclick="toggleReportesPanel()" title="Cerrar">✕</button>
+        <button class="close-btn" onclick="closeAllPanels()" title="Cerrar">✕</button>
       </div>
       <div class="row-btns" style="margin-bottom:14px">
         <button class="cat-chip active" id="repRange7" onclick="setReportesRango(7,this)">7 días</button>
@@ -233,18 +255,18 @@
       <div id="reportesContent"><div class="items-empty">Cargando...</div></div>
     </div>
 
-    <div class="stock-panel" id="cajaPanel" style="display:none">
+    <div class="stock-panel modal-panel" id="cajaPanel">
       <div class="stock-panel-header">
         <div class="section-title" style="margin-bottom:0">Caja</div>
-        <button class="close-btn" onclick="toggleCajaPanel()" title="Cerrar">✕</button>
+        <button class="close-btn" onclick="closeAllPanels()" title="Cerrar">✕</button>
       </div>
       <div id="cajaContent"><div class="items-empty">Cargando...</div></div>
     </div>
 
-    <div class="stock-panel" id="stockPanel" style="display:none">
+    <div class="stock-panel modal-panel" id="stockPanel">
       <div class="stock-panel-header">
         <div class="section-title" style="margin-bottom:0">Stock por producto</div>
-        <button class="close-btn" onclick="toggleStockPanel()" title="Cerrar">✕</button>
+        <button class="close-btn" onclick="closeAllPanels()" title="Cerrar">✕</button>
       </div>
       <div id="stockList"><div class="items-empty">Cargando...</div></div>
     </div>
@@ -931,15 +953,43 @@ async function importarVinos(){
   }
 }
 
-// ── REPORTES ──────────────────────────────────────────────────────
-let reportesPanelOpen = false;
-let reportesDias = 7;
+// ── MODALES (Reportes/Caja/Stock) ────────────────────────────────
+// Los tres viven en modales superpuestos: uno solo abierto a la vez, con
+// fondo oscurecido y cierre explícito (✕ o tocar afuera) — antes cada uno
+// empujaba el resto de la página hacia abajo y podían quedar varios
+// abiertos juntos, sin forma clara de saber cuál estaba activo.
+let panelAbierto = null; // 'reportes' | 'caja' | 'stock' | null
+const PANEL_NAV_ID = { reportes: 'navReportes', caja: 'navCaja', stock: 'navStock' };
 
-async function toggleReportesPanel(){
-  reportesPanelOpen = !reportesPanelOpen;
-  document.getElementById('reportesPanel').style.display = reportesPanelOpen ? 'block' : 'none';
-  if (reportesPanelOpen) await loadReportes();
+function closeAllPanels(){
+  for (const name of Object.keys(PANEL_NAV_ID)){
+    document.getElementById(name + 'Panel').classList.remove('open');
+    document.getElementById(PANEL_NAV_ID[name]).classList.remove('nav-active');
+  }
+  document.getElementById('modalBackdrop').classList.remove('open');
+  panelAbierto = null;
 }
+
+async function togglePanel(name){
+  const yaEstabaAbierto = panelAbierto === name;
+  closeAllPanels();
+  if (yaEstabaAbierto) return;
+
+  document.getElementById(name + 'Panel').classList.add('open');
+  document.getElementById(PANEL_NAV_ID[name]).classList.add('nav-active');
+  document.getElementById('modalBackdrop').classList.add('open');
+  panelAbierto = name;
+
+  if (name === 'reportes') await loadReportes();
+  else if (name === 'caja') await loadCaja();
+  else if (name === 'stock'){
+    if (!productos.length) await loadProductos();
+    renderStockList();
+  }
+}
+
+// ── REPORTES ──────────────────────────────────────────────────────
+let reportesDias = 7;
 
 function setReportesRango(dias, btn){
   reportesDias = dias;
@@ -1000,13 +1050,6 @@ function renderReportes(data){
 }
 
 // ── CAJA ──────────────────────────────────────────────────────────
-let cajaPanelOpen = false;
-
-async function toggleCajaPanel(){
-  cajaPanelOpen = !cajaPanelOpen;
-  document.getElementById('cajaPanel').style.display = cajaPanelOpen ? 'block' : 'none';
-  if (cajaPanelOpen) await loadCaja();
-}
 
 async function loadCaja(){
   try {
@@ -1102,16 +1145,6 @@ async function cerrarCajaAction(){
 }
 
 // ── STOCK ─────────────────────────────────────────────────────────
-let stockPanelOpen = false;
-
-async function toggleStockPanel(){
-  stockPanelOpen = !stockPanelOpen;
-  document.getElementById('stockPanel').style.display = stockPanelOpen ? 'block' : 'none';
-  if (stockPanelOpen){
-    if (!productos.length) await loadProductos();
-    renderStockList();
-  }
-}
 
 function renderStockList(){
   const box = document.getElementById('stockList');
