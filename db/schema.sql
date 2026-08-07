@@ -203,3 +203,32 @@ ALTER TABLE productos ADD COLUMN IF NOT EXISTS costo_calculado boolean NOT NULL 
 ALTER TABLE proveedor_productos ADD COLUMN IF NOT EXISTS insumo_id int REFERENCES insumos(id);
 ALTER TABLE proveedor_productos ALTER COLUMN producto_id DROP NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_proveedor_insumo ON proveedor_productos(proveedor_id, insumo_id) WHERE insumo_id IS NOT NULL;
+
+-- ── Fase 5: finanzas. costos_fijos es un presupuesto versionado (sube
+-- el alquiler → se agrega una fila nueva con vigente_desde, no se pierde
+-- el histórico). gastos es lo que realmente se gastó, con un campo tipo
+-- en vez de tablas separadas para fijo/variable — la diferencia es solo
+-- una etiqueta de reporte una vez que el gasto ya es un registro real. ──
+CREATE TABLE IF NOT EXISTS costos_fijos (
+  id              serial PRIMARY KEY,
+  categoria       text NOT NULL,
+  monto_mensual   numeric(10,2) NOT NULL,
+  vigente_desde   date NOT NULL DEFAULT CURRENT_DATE,
+  activo          boolean NOT NULL DEFAULT true,
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_costos_fijos_categoria ON costos_fijos(categoria, vigente_desde);
+
+CREATE TABLE IF NOT EXISTS gastos (
+  id             serial PRIMARY KEY,
+  categoria      text NOT NULL,
+  tipo           text NOT NULL CHECK (tipo IN ('fijo','variable')),
+  proveedor_id   int REFERENCES proveedores(id),
+  monto          numeric(10,2) NOT NULL,
+  descripcion    text,
+  fecha          date NOT NULL DEFAULT CURRENT_DATE,
+  estado         text NOT NULL DEFAULT 'activo',  -- 'activo'|'eliminado' (baja lógica, no se borra histórico)
+  registrado_por text,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_gastos_fecha ON gastos(fecha);

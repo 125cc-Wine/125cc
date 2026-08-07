@@ -320,6 +320,7 @@
           <button id="navCaja" onclick="togglePanel('caja')">Caja</button>
           <button id="navStock" onclick="togglePanel('stock')">Stock</button>
           <button id="navProveedores" onclick="togglePanel('proveedores')">Proveedores</button>
+          <button id="navFinanzas" onclick="togglePanel('finanzas')">Finanzas</button>
         </div>
       </div>
       <button class="logout-btn" onclick="logout()">Salir</button>
@@ -412,6 +413,76 @@
       </div>
       <div id="proveedoresList"><div class="items-empty">Cargando...</div></div>
       <div id="proveedorDetalle"></div>
+    </div>
+
+    <div class="stock-panel modal-panel" id="finanzasPanel">
+      <div class="stock-panel-header">
+        <div class="section-title" style="margin-bottom:0">Finanzas</div>
+        <button class="close-btn" onclick="closeAllPanels()" title="Cerrar">✕</button>
+      </div>
+      <div class="row-btns" style="margin-bottom:8px">
+        <button class="cat-chip active" id="finTabResumen" onclick="setFinTab('resumen')">Resumen</button>
+        <button class="cat-chip" id="finTabGastos" onclick="setFinTab('gastos')">Gastos</button>
+        <button class="cat-chip" id="finTabCostosFijos" onclick="setFinTab('costosfijos')">Costos fijos</button>
+      </div>
+      <div class="form-row" style="margin-bottom:12px">
+        <input type="month" id="finMesInput" class="stock-input" style="width:100%" onchange="cambiarFinMes()">
+      </div>
+
+      <div id="finResumen"><div class="items-empty">Cargando...</div></div>
+
+      <div id="finGastos" style="display:none">
+        <div class="row-btns" style="margin-bottom:8px">
+          <button class="btn-outline" onclick="toggleGastoForm()">+ Gasto</button>
+        </div>
+        <div class="quick-form" id="gastoForm">
+          <div class="section-title">Nuevo gasto</div>
+          <div class="form-row">
+            <input type="text" id="gastoCategoria" placeholder="Categoría" list="gastoCategoriasList" maxlength="60">
+            <select id="gastoTipo" class="stock-input" style="width:100%">
+              <option value="variable">Variable</option>
+              <option value="fijo">Fijo</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <input type="number" id="gastoMonto" placeholder="Monto" min="0" step="0.01">
+            <input type="date" id="gastoFecha" class="stock-input" style="width:100%">
+          </div>
+          <div class="form-row">
+            <input type="text" id="gastoDescripcion" placeholder="Descripción (opcional)" maxlength="200">
+          </div>
+          <datalist id="gastoCategoriasList">
+            <option value="Alquiler"><option value="Sueldos"><option value="Servicios"><option value="Marketing"><option value="Insumos"><option value="Otro">
+          </datalist>
+          <div class="quick-form-actions">
+            <button class="btn-primary" onclick="submitGastoForm()">Guardar</button>
+            <button class="btn-outline" onclick="toggleGastoForm()">Cancelar</button>
+          </div>
+        </div>
+        <div id="gastosList"><div class="items-empty">Cargando...</div></div>
+      </div>
+
+      <div id="finCostosFijos" style="display:none">
+        <div class="row-btns" style="margin-bottom:8px">
+          <button class="btn-outline" onclick="toggleCostoFijoForm()">+ Costo fijo</button>
+        </div>
+        <div class="quick-form" id="costoFijoForm">
+          <div class="section-title">Nuevo costo fijo</div>
+          <p class="stock-row-name-sub" style="margin:-4px 0 8px">Versionado: si un monto cambió (subió el alquiler), cargá uno nuevo con la fecha desde la que rige — no pisa el histórico.</p>
+          <div class="form-row">
+            <input type="text" id="costoFijoCategoria" placeholder="Categoría" list="gastoCategoriasList" maxlength="60">
+            <input type="number" id="costoFijoMonto" placeholder="Monto mensual" min="0" step="0.01">
+          </div>
+          <div class="form-row">
+            <input type="date" id="costoFijoVigencia" class="stock-input" style="width:100%">
+          </div>
+          <div class="quick-form-actions">
+            <button class="btn-primary" onclick="submitCostoFijoForm()">Guardar</button>
+            <button class="btn-outline" onclick="toggleCostoFijoForm()">Cancelar</button>
+          </div>
+        </div>
+        <div id="costosFijosList"><div class="items-empty">Cargando...</div></div>
+      </div>
     </div>
 
     <div class="salon-split">
@@ -1269,6 +1340,251 @@ async function vincularProducto(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
+// ── FINANZAS ──────────────────────────────────────────────────────
+// Costos fijos (presupuesto versionado) + gastos reales → estado de
+// resultados de un mes. No reimplementa la fórmula de equilibrio.html
+// (copas necesarias, IVA, comisión, tapeo) — eso queda como link a la
+// calculadora existente para no duplicar esa lógica en dos lugares.
+let finMes = new Date().toISOString().slice(0, 7);
+let costosFijos = [];
+let ultimoEstadoResultados = null;
+
+async function loadFinanzas(){
+  document.getElementById('finMesInput').value = finMes;
+  await Promise.all([loadEstadoResultados(), loadCostosFijos(), loadGastos()]);
+}
+
+function setFinTab(tab){
+  document.getElementById('finTabResumen').classList.toggle('active', tab === 'resumen');
+  document.getElementById('finTabGastos').classList.toggle('active', tab === 'gastos');
+  document.getElementById('finTabCostosFijos').classList.toggle('active', tab === 'costosfijos');
+  document.getElementById('finResumen').style.display = tab === 'resumen' ? 'block' : 'none';
+  document.getElementById('finGastos').style.display = tab === 'gastos' ? 'block' : 'none';
+  document.getElementById('finCostosFijos').style.display = tab === 'costosfijos' ? 'block' : 'none';
+}
+
+async function cambiarFinMes(){
+  finMes = document.getElementById('finMesInput').value || finMes;
+  await Promise.all([loadEstadoResultados(), loadGastos()]);
+}
+
+async function loadEstadoResultados(){
+  const box = document.getElementById('finResumen');
+  box.innerHTML = '<div class="items-empty">Cargando...</div>';
+  try {
+    const data = await api('/api/pos?r=estado-resultados&mes=' + finMes);
+    renderEstadoResultados(data);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function renderEstadoResultados(data){
+  ultimoEstadoResultados = data;
+  const box = document.getElementById('finResumen');
+  const colorResultado = data.resultadoNeto >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const comparativo = data.comparativoFijos.map(c => {
+    const color = c.diferencia === 0 ? 'var(--ink-3)' : (c.diferencia > 0 ? 'var(--red)' : 'var(--green)');
+    return `<div class="stock-row">
+      <div class="stock-row-name">${escapeHtml(c.categoria)}</div>
+      <div class="stock-row-name-sub">presupuestado ${fmtMoney(c.presupuestado)}</div>
+      <div style="color:${color};font-weight:700">${fmtMoney(c.real)}</div>
+    </div>`;
+  }).join('') || '<div class="items-empty">Sin costos fijos ni gastos fijos cargados este mes.</div>';
+
+  const gastosVariables = data.gastosPorCategoria.filter(g => g.tipo === 'variable');
+  const variables = gastosVariables.map(g => `
+    <div class="stock-row"><div class="stock-row-name">${escapeHtml(g.categoria)}</div><div>${fmtMoney(g.monto)}</div></div>
+  `).join('') || '<div class="items-empty">Sin gastos variables este mes.</div>';
+
+  box.innerHTML = `
+    <div class="total-bar" style="border-radius:var(--r-md);margin-bottom:8px">
+      <div class="total-label">Ingresos</div>
+      <div class="total-val">${fmtMoney(data.ingresos)} <span style="font-size:var(--fs-sm);font-weight:400">(${data.comandas})</span></div>
+    </div>
+    <div class="total-bar" style="border-radius:var(--r-md);margin-bottom:8px;background:var(--surface);border:1px solid var(--line)">
+      <div class="total-label" style="color:var(--ink-3)">Costo variable + Gastos</div>
+      <div class="total-val" style="color:var(--red)">${fmtMoney(Number(data.costoVariable) + Number(data.gastosTotal))}</div>
+    </div>
+    <div class="total-bar" style="border-radius:var(--r-md);margin-bottom:16px;background:var(--surface);border:1px solid var(--line)">
+      <div class="total-label" style="color:var(--ink-3)">Resultado neto</div>
+      <div class="total-val" style="color:${colorResultado}">${fmtMoney(data.resultadoNeto)}</div>
+    </div>
+    ${data.unidadesSinCosto > 0 ? `<div class="stock-row-name-sub" style="margin-bottom:16px">${data.unidadesSinCosto} unidades vendidas sin costo cargado — el costo variable real es mayor a lo que se ve acá.</div>` : ''}
+    <div class="section-title">Costos fijos: presupuestado vs. real</div>
+    ${comparativo}
+    <div class="section-title" style="margin-top:16px">Gastos variables por categoría</div>
+    ${variables}
+    <div class="row-btns" style="margin-top:16px">
+      <button class="btn-outline" style="flex:1" onclick="exportarFinanzasCSV()">⇩ CSV</button>
+      <button class="btn-outline" style="flex:1" onclick="imprimirFinanzas()">🖶 Imprimir</button>
+    </div>
+    <a href="/interno/equilibrio.html" target="_blank" class="btn-outline" style="display:block;text-align:center;margin-top:8px;text-decoration:none">Abrir calculadora de equilibrio →</a>
+  `;
+}
+
+function exportarFinanzasCSV(){
+  if (!ultimoEstadoResultados) return;
+  const d = ultimoEstadoResultados;
+  const filas = [];
+  filas.push(['125cc — Estado de resultados', d.mes]);
+  filas.push([]);
+  filas.push(['Ingresos', d.ingresos, `${d.comandas} comandas`]);
+  filas.push(['Costo variable', d.costoVariable]);
+  filas.push(['Gastos', d.gastosTotal]);
+  filas.push(['Resultado neto', d.resultadoNeto]);
+  filas.push([]);
+  filas.push(['Costos fijos — presupuestado vs. real']);
+  filas.push(['Categoría', 'Presupuestado', 'Real', 'Diferencia']);
+  d.comparativoFijos.forEach(c => filas.push([c.categoria, c.presupuestado, c.real, c.diferencia]));
+  filas.push([]);
+  filas.push(['Gastos por categoría']);
+  filas.push(['Categoría', 'Tipo', 'Monto']);
+  d.gastosPorCategoria.forEach(g => filas.push([g.categoria, g.tipo, g.monto]));
+
+  const csv = filas.map(fila => fila.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `125cc-finanzas-${d.mes}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function imprimirFinanzas(){
+  if (!ultimoEstadoResultados) return;
+  const d = ultimoEstadoResultados;
+  const filasComp = d.comparativoFijos.map(c => `
+    <tr><td>${escapeHtml(c.categoria)}</td><td class="pr-right">${fmtMoney(c.presupuestado)}</td><td class="pr-right">${fmtMoney(c.real)}</td></tr>`).join('');
+  document.getElementById('printArea').innerHTML = `
+    <h2>125cc — Estado de resultados</h2>
+    <div class="pr-sub">${d.mes}</div>
+    <table>
+      <tr><td>Ingresos</td><td class="pr-right">${fmtMoney(d.ingresos)}</td></tr>
+      <tr><td>Costo variable</td><td class="pr-right">${fmtMoney(d.costoVariable)}</td></tr>
+      <tr><td>Gastos</td><td class="pr-right">${fmtMoney(d.gastosTotal)}</td></tr>
+      <tr class="pr-total"><td>Resultado neto</td><td class="pr-right">${fmtMoney(d.resultadoNeto)}</td></tr>
+    </table>
+    <div class="pr-sub" style="margin-top:12px">Costos fijos — presupuestado vs. real</div>
+    <table>${filasComp}</table>`;
+  window.print();
+}
+
+// ── Gastos ──
+async function loadGastos(){
+  const box = document.getElementById('gastosList');
+  box.innerHTML = '<div class="items-empty">Cargando...</div>';
+  try {
+    const data = await api('/api/pos?r=gastos&mes=' + finMes);
+    renderGastos(data.gastos);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function renderGastos(gastos){
+  const box = document.getElementById('gastosList');
+  if (!gastos.length){ box.innerHTML = '<div class="items-empty">Sin gastos cargados este mes.</div>'; return; }
+  box.innerHTML = gastos.map(g => `
+    <div class="stock-row">
+      <div>
+        <div class="stock-row-name">${escapeHtml(g.categoria)} <span class="stock-row-name-sub">(${g.tipo})</span></div>
+        <div class="stock-row-name-sub">${new Date(g.fecha).toLocaleDateString('es-AR', { timeZone: 'UTC' })}${g.descripcion ? ' · ' + escapeHtml(g.descripcion) : ''}${g.proveedor_nombre ? ' · ' + escapeHtml(g.proveedor_nombre) : ''}</div>
+      </div>
+      <div>${fmtMoney(g.monto)}</div>
+      <button class="btn-outline" style="font-size:10.5px;padding:6px 10px;min-height:auto" onclick="eliminarGasto(${g.id})">✕</button>
+    </div>`).join('');
+}
+
+function toggleGastoForm(){
+  const form = document.getElementById('gastoForm');
+  form.classList.toggle('open');
+  if (form.classList.contains('open')) document.getElementById('gastoFecha').value = new Date().toISOString().slice(0, 10);
+}
+
+async function submitGastoForm(){
+  const categoria = document.getElementById('gastoCategoria').value.trim();
+  const tipo = document.getElementById('gastoTipo').value;
+  const monto = document.getElementById('gastoMonto').value;
+  const fecha = document.getElementById('gastoFecha').value;
+  const descripcion = document.getElementById('gastoDescripcion').value.trim();
+  if (!categoria || !monto) return toast('Falta categoría o monto', 'error');
+  const staff = sessionStorage.getItem(STAFF_KEY);
+  try {
+    await api('/api/pos?r=gastos', { method: 'POST', body: { categoria, tipo, monto, fecha, descripcion, registrado_por: staff } });
+    document.getElementById('gastoCategoria').value = '';
+    document.getElementById('gastoMonto').value = '';
+    document.getElementById('gastoDescripcion').value = '';
+    toggleGastoForm();
+    toast('Gasto cargado', 'success');
+    await Promise.all([loadGastos(), loadEstadoResultados()]);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function eliminarGasto(id){
+  const ok = await confirmDialog('¿Eliminar este gasto?');
+  if (!ok) return;
+  try {
+    await api('/api/pos?r=gastos', { method: 'POST', body: { id, accion: 'eliminar' } });
+    toast('Gasto eliminado', 'success');
+    await Promise.all([loadGastos(), loadEstadoResultados()]);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// ── Costos fijos ──
+async function loadCostosFijos(){
+  const box = document.getElementById('costosFijosList');
+  box.innerHTML = '<div class="items-empty">Cargando...</div>';
+  try {
+    const data = await api('/api/pos?r=costos-fijos');
+    costosFijos = data.costosFijos;
+    renderCostosFijos();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function renderCostosFijos(){
+  const box = document.getElementById('costosFijosList');
+  if (!costosFijos.length){ box.innerHTML = '<div class="items-empty">Sin costos fijos cargados.</div>'; return; }
+  // Vigente = la fila de vigente_desde más reciente que no supere hoy,
+  // por categoría — el resto se muestra como historial (mismo criterio
+  // que usa estado-resultados.js para elegir el presupuesto de un mes).
+  const hoy = new Date().toISOString().slice(0, 10);
+  const vigentesIds = new Set();
+  const porCategoria = {};
+  costosFijos.forEach(c => { (porCategoria[c.categoria] = porCategoria[c.categoria] || []).push(c); });
+  Object.values(porCategoria).forEach(lista => {
+    const vigente = lista.filter(c => c.vigente_desde.slice(0, 10) <= hoy)[0];
+    if (vigente) vigentesIds.add(vigente.id);
+  });
+  box.innerHTML = costosFijos.map(c => `
+    <div class="stock-row">
+      <div class="stock-row-name">${escapeHtml(c.categoria)}${vigentesIds.has(c.id) ? '' : ' <span class="stock-row-name-sub">(histórico)</span>'}</div>
+      <div class="stock-row-name-sub">desde ${new Date(c.vigente_desde).toLocaleDateString('es-AR', { timeZone: 'UTC' })}</div>
+      <div style="font-weight:${vigentesIds.has(c.id) ? '700' : '400'};color:${vigentesIds.has(c.id) ? 'var(--ink)' : 'var(--ink-3)'}">${fmtMoney(c.monto_mensual)}</div>
+    </div>`).join('');
+}
+
+function toggleCostoFijoForm(){
+  const form = document.getElementById('costoFijoForm');
+  form.classList.toggle('open');
+  if (form.classList.contains('open')) document.getElementById('costoFijoVigencia').value = new Date().toISOString().slice(0, 10);
+}
+
+async function submitCostoFijoForm(){
+  const categoria = document.getElementById('costoFijoCategoria').value.trim();
+  const monto_mensual = document.getElementById('costoFijoMonto').value;
+  const vigente_desde = document.getElementById('costoFijoVigencia').value;
+  if (!categoria || !monto_mensual) return toast('Falta categoría o monto', 'error');
+  try {
+    await api('/api/pos?r=costos-fijos', { method: 'POST', body: { categoria, monto_mensual, vigente_desde } });
+    document.getElementById('costoFijoCategoria').value = '';
+    document.getElementById('costoFijoMonto').value = '';
+    toggleCostoFijoForm();
+    toast('Costo fijo guardado', 'success');
+    await Promise.all([loadCostosFijos(), loadEstadoResultados()]);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
 // ── PRODUCTOS ─────────────────────────────────────────────────────
 async function loadProductos(){
   try {
@@ -1367,7 +1683,7 @@ async function importarVinos(){
 // empujaba el resto de la página hacia abajo y podían quedar varios
 // abiertos juntos, sin forma clara de saber cuál estaba activo.
 let panelAbierto = null; // 'reportes' | 'caja' | 'stock' | 'proveedores' | null
-const PANEL_NAV_ID = { reportes: 'navReportes', caja: 'navCaja', stock: 'navStock', proveedores: 'navProveedores' };
+const PANEL_NAV_ID = { reportes: 'navReportes', caja: 'navCaja', stock: 'navStock', proveedores: 'navProveedores', finanzas: 'navFinanzas' };
 
 function closeAllPanels(){
   for (const name of Object.keys(PANEL_NAV_ID)){
@@ -1408,6 +1724,7 @@ async function togglePanel(name){
     renderStockList();
   }
   else if (name === 'proveedores') await loadProveedores();
+  else if (name === 'finanzas') await loadFinanzas();
 }
 
 // ── ALERTAS DE MARGEN ────────────────────────────────────────────

@@ -33,6 +33,9 @@ const { listProveedorProductos, upsertProveedorProducto, aplicarCosto } = requir
 const { registrarMerma, registrarConteo, listMovimientos } = require('./_lib/pos/stock-movimiento');
 const { listInsumos, upsertInsumo } = require('./_lib/pos/insumos');
 const { getReceta, upsertRecetaItem, recalcularCostoReceta } = require('./_lib/pos/receta');
+const { listCostosFijos, upsertCostoFijo } = require('./_lib/pos/costos-fijos');
+const { listGastos, upsertGasto } = require('./_lib/pos/gastos');
+const { getEstadoResultados } = require('./_lib/pos/estado-resultados');
 
 const ROUTES = {
   'mesas:GET': listMesas,
@@ -71,6 +74,11 @@ const ROUTES = {
   'receta:GET': getReceta,
   'receta-item:POST': upsertRecetaItem,
   'receta-recalcular-costo:POST': recalcularCostoReceta,
+  'costos-fijos:GET': listCostosFijos,
+  'costos-fijos:POST': upsertCostoFijo,
+  'gastos:GET': listGastos,
+  'gastos:POST': upsertGasto,
+  'estado-resultados:GET': getEstadoResultados,
 };
 
 module.exports = async function handler(req, res) {
