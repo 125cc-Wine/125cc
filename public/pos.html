@@ -67,29 +67,38 @@
   .section-title{font-size:var(--fs-xs);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin-bottom:var(--sp-3);font-weight:700}
 
   /* ── LAYOUT DIVIDIDO: salón + comanda ── */
-  .salon-split{display:flex;flex-direction:column;gap:16px}
+  .salon-split{display:flex;flex-direction:column;gap:var(--sp-5)}
   @media(min-width:680px){
+    /* ~65/35 mesas-comanda, como en la referencia (no un panel angosto
+       fijo de comanda estirándose a lo ancho en pantallas grandes). */
     .salon-split{flex-direction:row;align-items:flex-start}
-    .salon-left{flex:0 0 300px}
-    .salon-right{flex:1;min-width:0}
+    .salon-left{flex:0 0 62%}
+    .salon-right{flex:1;min-width:0;max-width:38%}
   }
 
   .salon-toolbar{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-4);flex-wrap:wrap}
 
-  .salon-stage{position:relative;background:var(--surface);border-radius:var(--r-lg);height:220px;border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden;touch-action:none}
-  .salon-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:var(--fs-sm);line-height:1.6;text-align:center;padding:var(--sp-4);pointer-events:none}
-  .salon-pin{position:absolute;transform:translate(-50%,-50%);width:52px;text-align:center;user-select:none;-webkit-user-select:none;z-index:5;cursor:pointer}
+  /* Sin card: los círculos flotan directo sobre el fondo de la página,
+     como en la referencia — no hay una caja de tamaño fijo conteniéndolos.
+     Las posiciones de los pines son porcentuales (position:absolute no
+     hace crecer al padre solo), así que en vez de una altura fija se usa
+     aspect-ratio: escala con el ancho real del panel — más chico en el
+     celu, más grande en tablet donde el panel de mesas ahora es ~62% del
+     ancho — sin quedar vacío ni apretado en ningún tamaño de pantalla. */
+  .salon-stage{position:relative;aspect-ratio:16/10;min-height:170px;max-height:320px;padding:var(--sp-4) 0;touch-action:none}
+  .salon-hint{padding:var(--sp-6) var(--sp-4);color:var(--ink-3);font-size:var(--fs-sm);line-height:1.6;text-align:center;pointer-events:none}
+  .salon-pin{position:absolute;transform:translate(-50%,-50%);width:64px;text-align:center;user-select:none;-webkit-user-select:none;z-index:5;cursor:pointer}
   .salon-pin.dragging{z-index:30}
   .salon-editing .salon-pin{cursor:grab}
   .salon-editing .salon-pin:active{cursor:grabbing}
-  .salon-pin-dotwrap{position:relative;width:42px;margin:0 auto}
-  .salon-pin-dot{width:42px;height:42px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-sm);box-shadow:0 2px 6px rgba(20,20,25,.18);border:2px solid rgba(255,255,255,.7);transition:outline .12s,transform var(--t) var(--ease)}
+  .salon-pin-dotwrap{position:relative;width:54px;margin:0 auto}
+  .salon-pin-dot{width:54px;height:54px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-md);box-shadow:0 2px 8px rgba(20,20,25,.2);border:2px solid rgba(255,255,255,.8);transition:outline .12s,transform var(--t) var(--ease)}
   .salon-pin:not(.dragging):active .salon-pin-dot{transform:scale(.92)}
   .salon-pin.ocupada .salon-pin-dot{background:var(--red)}
   .salon-pin.cuenta_pedida .salon-pin-dot{background:var(--blue)}
-  .salon-pin.selected .salon-pin-dot{outline:3px solid var(--amber);outline-offset:2px}
-  .salon-pin-badge{position:absolute;bottom:-2px;right:-2px;background:var(--surface);color:var(--ink);font-size:var(--fs-2xs);font-weight:700;border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
-  .salon-pin-label{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56px;margin-left:auto;margin-right:auto}
+  .salon-pin.selected .salon-pin-dot{outline:4px solid var(--amber);outline-offset:3px}
+  .salon-pin-badge{position:absolute;bottom:-2px;right:-2px;background:var(--surface);color:var(--ink);font-size:var(--fs-2xs);font-weight:700;border-radius:50%;width:19px;height:19px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
+  .salon-pin-label{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px;margin-left:auto;margin-right:auto}
 
   .row-btns{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-5);flex-wrap:wrap}
   /* Los tres botones comparten el mismo padding vertical y min-height, así
