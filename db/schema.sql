@@ -12,9 +12,14 @@ CREATE TABLE IF NOT EXISTS mesas (
   capacidad       int,
   estado          text NOT NULL DEFAULT 'libre'
                     CHECK (estado IN ('libre','ocupada','cuenta_pedida')),
+  pos_x           numeric,                       -- posición en el plano del salón, 0-100 (%)
+  pos_y           numeric,                       -- NULL = todavía no ubicada a mano en el plano
   created_at      timestamptz NOT NULL DEFAULT now(),
   updated_at      timestamptz NOT NULL DEFAULT now()
 );
+-- Si la tabla ya existía sin estas columnas (deploy previo a Fase 1.1):
+ALTER TABLE mesas ADD COLUMN IF NOT EXISTS pos_x numeric;
+ALTER TABLE mesas ADD COLUMN IF NOT EXISTS pos_y numeric;
 
 -- ── productos (catálogo de venta del POS — independiente del Sheet de Vinos) ──
 CREATE TABLE IF NOT EXISTS productos (

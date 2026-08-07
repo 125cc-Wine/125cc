@@ -40,6 +40,24 @@
   .section-title{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--ink-dark-2);margin-bottom:12px}
 
   /* ── MESAS ── */
+  .view-toggle{display:flex;gap:6px;margin-bottom:14px}
+  .view-toggle-btn{background:none;border:1px solid var(--line-dark);color:var(--ink-dark-2);font-size:11px;font-weight:500;letter-spacing:.04em;padding:8px 14px;border-radius:var(--r-pill);cursor:pointer;transition:background var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease)}
+  .view-toggle-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  .salon-toolbar{display:flex;gap:8px;margin-bottom:14px}
+
+  .salon-stage{position:relative;background:linear-gradient(145deg,#333f4a,#2c353f);border-radius:var(--r-card);aspect-ratio:4/3;border:1px solid var(--line-dark);box-shadow:var(--shadow-dark);overflow:hidden;touch-action:none;margin-bottom:20px}
+  .salon-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink-dark-2);font-size:12px;text-align:center;padding:20px;pointer-events:none}
+  .salon-pin{position:absolute;transform:translate(-50%,-50%);width:60px;text-align:center;user-select:none;-webkit-user-select:none;z-index:5}
+  .salon-pin.dragging{z-index:30}
+  .salon-editing .salon-pin{cursor:grab}
+  .salon-editing .salon-pin:active{cursor:grabbing}
+  .salon-pin-dot{width:46px;height:46px;border-radius:12px;margin:0 auto;background:var(--dark-2);border:2px solid var(--line-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font-serif);font-size:13px;font-weight:600;color:var(--ink-dark);box-shadow:var(--shadow-dark);transition:box-shadow .15s}
+  .salon-pin.libre .salon-pin-dot{border-color:#5A8A2A}
+  .salon-pin.ocupada .salon-pin-dot{border-color:var(--accent);background:rgba(122,20,40,.22)}
+  .salon-pin.cuenta_pedida .salon-pin-dot{border-color:var(--madera);background:rgba(207,172,89,.2)}
+  .salon-pin-label{font-size:9px;color:var(--ink-dark-2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px;margin-left:auto;margin-right:auto}
+
   .mesas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:20px}
   .mesa-card{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:16px 10px;text-align:center;cursor:pointer;box-shadow:var(--shadow-dark);transition:transform var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease);border-left:3px solid var(--line-dark)}
   .mesa-card:active{transform:scale(.96)}
@@ -159,6 +177,19 @@
         <button class="btn-outline" onclick="toggleMesaForm()">Cancelar</button>
       </div>
     </div>
+    <div class="view-toggle">
+      <div class="view-toggle-btn" id="btnVistaPlano" onclick="setVistaMesas('plano')">Plano</div>
+      <div class="view-toggle-btn" id="btnVistaLista" onclick="setVistaMesas('lista')">Lista</div>
+    </div>
+
+    <div class="salon-toolbar" id="salonToolbar">
+      <button class="btn-outline" id="btnEditarSalon" onclick="toggleEditSalon()">Editar plano</button>
+      <button class="btn-primary" id="btnGuardarSalon" style="display:none" onclick="guardarSalonPlano()">Guardar plano</button>
+      <button class="btn-outline" id="btnCancelarSalon" style="display:none" onclick="cancelarEditSalon()">Cancelar</button>
+    </div>
+
+    <div class="salon-stage" id="salonStage"></div>
+
     <div class="section-title">Salón</div>
     <div class="mesas-grid" id="mesasGrid"><div class="items-empty">Cargando...</div></div>
   </div>
@@ -231,6 +262,9 @@ let currentComanda = null;   // {id, mesa_id, mesa_nombre, estado, total}
 let currentItems = [];
 let catFiltro = 'todas';
 let medioSeleccionado = null;
+let vistaMesas = 'plano';    // 'plano' | 'lista'
+let editingSalon = false;
+let pendingPositions = {};   // {mesaId: {pos_x, pos_y}} — se llena al arrastrar
 
 // ── AUTH ──────────────────────────────────────────────────────────
 function authHeader(){
@@ -310,6 +344,23 @@ async function loadMesas(){
 }
 
 function renderMesas(){
+  document.getElementById('btnVistaPlano').classList.toggle('active', vistaMesas === 'plano');
+  document.getElementById('btnVistaLista').classList.toggle('active', vistaMesas === 'lista');
+  document.getElementById('salonStage').style.display = vistaMesas === 'plano' ? 'block' : 'none';
+  document.getElementById('salonToolbar').style.display = vistaMesas === 'plano' ? 'flex' : 'none';
+  document.getElementById('mesasGrid').style.display = vistaMesas === 'lista' ? 'grid' : 'none';
+
+  renderMesasLista();
+  renderSalonPlano();
+}
+
+function setVistaMesas(v){
+  if (editingSalon) cancelarEditSalon();
+  vistaMesas = v;
+  renderMesas();
+}
+
+function renderMesasLista(){
   const grid = document.getElementById('mesasGrid');
   if (!mesas.length){ grid.innerHTML = '<div class="items-empty">Todavía no hay mesas cargadas. Usá "+ Nueva mesa".</div>'; return; }
   grid.innerHTML = mesas.map(m => `
@@ -318,6 +369,109 @@ function renderMesas(){
       <div class="mesa-estado">${m.estado.replace('_',' ')}</div>
       ${m.capacidad ? `<div class="mesa-cap">${m.capacidad} pers.</div>` : ''}
     </div>`).join('');
+}
+
+// ── PLANO DEL SALÓN ───────────────────────────────────────────────
+// Posición por defecto para mesas que todavía no se ubicaron a mano
+// (grilla simple dentro del plano), para que sean visibles/tocables
+// desde el primer momento y no haga falta arrastrar todo antes de usar.
+function posicionPorDefecto(idx){
+  const cols = 4;
+  const x = 14 + (idx % cols) * 24;
+  const y = 18 + Math.floor(idx / cols) * 28;
+  return { x: Math.min(x, 92), y: Math.min(y, 88) };
+}
+
+function renderSalonPlano(){
+  const stage = document.getElementById('salonStage');
+  stage.classList.toggle('salon-editing', editingSalon);
+  if (!mesas.length){
+    stage.innerHTML = '<div class="salon-hint">Todavía no hay mesas. Usá "+ Nueva mesa" y después "Editar plano" para acomodarlas.</div>';
+    return;
+  }
+  stage.innerHTML = '';
+  mesas.forEach((m, idx) => {
+    const hasPos = m.pos_x != null && m.pos_y != null;
+    const pos = hasPos ? { x: Number(m.pos_x), y: Number(m.pos_y) } : posicionPorDefecto(idx);
+    const pin = document.createElement('div');
+    pin.className = `salon-pin ${m.estado}`;
+    pin.style.left = pos.x + '%';
+    pin.style.top = pos.y + '%';
+    pin.dataset.mesaId = m.id;
+    pin.innerHTML = `<div class="salon-pin-dot">${escapeHtml(m.nombre).slice(0,4)}</div><div class="salon-pin-label">${escapeHtml(m.nombre)}</div>`;
+    pin.addEventListener('click', () => { if (!editingSalon) openMesa(m.id); });
+    if (editingSalon) makeDraggable(pin, m.id);
+    stage.appendChild(pin);
+  });
+}
+
+function makeDraggable(pin, mesaId){
+  let dragging = false, startX = 0, startY = 0, origLeft = 0, origTop = 0;
+  const stage = document.getElementById('salonStage');
+
+  pin.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    pin.classList.add('dragging');
+    pin.setPointerCapture(e.pointerId);
+    startX = e.clientX; startY = e.clientY;
+    origLeft = parseFloat(pin.style.left);
+    origTop = parseFloat(pin.style.top);
+  });
+  pin.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const rect = stage.getBoundingClientRect();
+    const dxPct = ((e.clientX - startX) / rect.width) * 100;
+    const dyPct = ((e.clientY - startY) / rect.height) * 100;
+    const newLeft = Math.max(3, Math.min(97, origLeft + dxPct));
+    const newTop = Math.max(3, Math.min(97, origTop + dyPct));
+    pin.style.left = newLeft + '%';
+    pin.style.top = newTop + '%';
+    pendingPositions[mesaId] = { pos_x: newLeft, pos_y: newTop };
+  });
+  function endDrag(e){
+    if (!dragging) return;
+    dragging = false;
+    pin.classList.remove('dragging');
+  }
+  pin.addEventListener('pointerup', endDrag);
+  pin.addEventListener('pointercancel', endDrag);
+}
+
+function toggleEditSalon(){
+  editingSalon = true;
+  pendingPositions = {};
+  document.getElementById('btnEditarSalon').style.display = 'none';
+  document.getElementById('btnGuardarSalon').style.display = 'inline-block';
+  document.getElementById('btnCancelarSalon').style.display = 'inline-block';
+  renderSalonPlano();
+  toast('Arrastrá las mesas a su lugar y guardá', 'success');
+}
+
+function cancelarEditSalon(){
+  editingSalon = false;
+  pendingPositions = {};
+  document.getElementById('btnEditarSalon').style.display = 'inline-block';
+  document.getElementById('btnGuardarSalon').style.display = 'none';
+  document.getElementById('btnCancelarSalon').style.display = 'none';
+  renderSalonPlano();
+}
+
+async function guardarSalonPlano(){
+  // Se guardan TODAS las posiciones visibles (no solo las movidas), así
+  // la primera vez que se guarda también queda persistida la grilla por
+  // defecto de las mesas que no se llegaron a arrastrar.
+  const pins = document.querySelectorAll('#salonStage .salon-pin');
+  const cambios = Array.from(pins).map(pin => ({
+    id: Number(pin.dataset.mesaId),
+    pos_x: pendingPositions[pin.dataset.mesaId]?.pos_x ?? parseFloat(pin.style.left),
+    pos_y: pendingPositions[pin.dataset.mesaId]?.pos_y ?? parseFloat(pin.style.top),
+  }));
+  try {
+    await api('/api/pos?r=mesas-pos', { method: 'POST', body: { cambios } });
+    toast('Plano guardado', 'success');
+    cancelarEditSalon();
+    loadMesas();
+  } catch(e){ toast(e.message, 'error'); }
 }
 
 function toggleMesaForm(){

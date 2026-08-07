@@ -12,7 +12,7 @@
 const { timingSafeStringEqual } = require('./_lib/timing-safe');
 const { requirePos } = require('./_lib/require-pos');
 
-const { listMesas, upsertMesa } = require('./_lib/pos/mesas');
+const { listMesas, upsertMesa, saveMesasPos } = require('./_lib/pos/mesas');
 const { setMesaEstado } = require('./_lib/pos/mesa-estado');
 const { listProductos, upsertProducto } = require('./_lib/pos/productos');
 const { listComandas, abrirComanda } = require('./_lib/pos/comandas');
@@ -23,6 +23,7 @@ const { cerrarComanda } = require('./_lib/pos/comanda-cerrar');
 const ROUTES = {
   'mesas:GET': listMesas,
   'mesas:POST': upsertMesa,
+  'mesas-pos:POST': saveMesasPos,
   'mesa-estado:POST': setMesaEstado,
   'productos:GET': listProductos,
   'productos:POST': upsertProducto,
