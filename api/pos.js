@@ -20,6 +20,8 @@ const { listComandas, abrirComanda } = require('./_lib/pos/comandas');
 const { getComanda } = require('./_lib/pos/comanda');
 const { comandaItem } = require('./_lib/pos/comanda-item');
 const { cerrarComanda } = require('./_lib/pos/comanda-cerrar');
+const { trasladarComanda } = require('./_lib/pos/comanda-trasladar');
+const { setDescuento } = require('./_lib/pos/comanda-descuento');
 const { getCaja, abrirCaja } = require('./_lib/pos/caja');
 const { registrarMovimiento } = require('./_lib/pos/caja-movimiento');
 const { cerrarCaja } = require('./_lib/pos/caja-cerrar');
@@ -38,6 +40,8 @@ const ROUTES = {
   'comanda:GET': getComanda,
   'comanda-item:POST': comandaItem,
   'comanda-cerrar:POST': cerrarComanda,
+  'comanda-trasladar:POST': trasladarComanda,
+  'comanda-descuento:POST': setDescuento,
   'caja:GET': getCaja,
   'caja:POST': abrirCaja,
   'caja-movimiento:POST': registrarMovimiento,

@@ -50,7 +50,9 @@ CREATE TABLE IF NOT EXISTS comandas (
                     CHECK (estado IN ('abierta','cerrada','anulada')),
   atendido_por    text,                            -- nombre libre, sin tabla de usuarios
   medio_pago      text CHECK (medio_pago IN ('efectivo','tarjeta','transferencia','mixto')),
-  total           numeric(10,2) NOT NULL DEFAULT 0,  -- snapshot calculado server-side al cerrar
+  total           numeric(10,2) NOT NULL DEFAULT 0,  -- snapshot calculado server-side al cerrar (después del descuento)
+  descuento_tipo  text CHECK (descuento_tipo IN ('porcentaje','monto')),
+  descuento_valor numeric,                           -- NULL = sin descuento
   notas           text,
   abierta_at      timestamptz NOT NULL DEFAULT now(),
   cerrada_at      timestamptz
@@ -60,6 +62,9 @@ CREATE INDEX IF NOT EXISTS idx_comandas_mesa ON comandas(mesa_id);
 -- Evita que dos mozos abran dos comandas a la vez en la misma mesa.
 CREATE UNIQUE INDEX IF NOT EXISTS one_open_comanda_per_mesa
   ON comandas(mesa_id) WHERE estado = 'abierta' AND mesa_id IS NOT NULL;
+-- Si la tabla ya existía sin estas columnas (deploy previo a Fase 4.1):
+ALTER TABLE comandas ADD COLUMN IF NOT EXISTS descuento_tipo text CHECK (descuento_tipo IN ('porcentaje','monto'));
+ALTER TABLE comandas ADD COLUMN IF NOT EXISTS descuento_valor numeric;
 
 -- ── comanda_items (líneas de pedido) ──────────────────────────────
 CREATE TABLE IF NOT EXISTS comanda_items (

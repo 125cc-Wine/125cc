@@ -88,7 +88,7 @@
 
   .quick-form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:16px;margin-bottom:14px;display:none;box-shadow:var(--shadow)}
   .quick-form.open{display:block}
-  .quick-form .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
   .quick-form input,.quick-form select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 11px;color:var(--ink);font-size:13px;outline:none}
   .quick-form input:focus,.quick-form select:focus{border-color:var(--accent)}
   .quick-form-actions{display:flex;gap:8px;margin-top:4px}
@@ -135,9 +135,6 @@
   .prod-price{font-size:15px;font-weight:700;color:var(--accent);margin-top:5px}
   .prod-stock-low{font-size:9px;color:#B45309;margin-top:3px;font-weight:500}
 
-  .pago-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
-  .pago-chip{flex:1;min-width:90px;background:var(--surface);border:1px solid var(--line);color:var(--ink-2);font-size:12px;font-weight:500;padding:13px 8px;border-radius:var(--r-sm);cursor:pointer;text-align:center;transition:background var(--t) var(--ease),color var(--t) var(--ease)}
-  .pago-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
   .cobrar-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--shadow);padding:16px;margin-bottom:20px;display:none}
   .cobrar-panel.open{display:block}
 
@@ -261,7 +258,7 @@
               <button class="close-btn" onclick="cerrarPanel()" title="Cerrar">✕</button>
             </div>
             <div class="items-box" id="itemsBox"></div>
-            <div class="total-bar">
+            <div class="total-bar" id="totalBar">
               <div class="total-label">Total</div>
               <div class="total-val" id="totalVal">$0</div>
             </div>
@@ -271,15 +268,45 @@
             <button class="btn-black" style="flex:1" onclick="toggleCobrarPanel()">Cobrar</button>
             <button class="btn-outline" onclick="toggleProductoForm()">+ Producto</button>
           </div>
+          <div class="row-btns">
+            <button class="btn-outline" onclick="toggleTrasladarForm()">⇄ Trasladar mesa</button>
+            <button class="btn-outline" onclick="toggleDescuentoForm()">% Descuento</button>
+          </div>
+
+          <div class="quick-form" id="trasladarForm">
+            <div class="form-row">
+              <select id="trasladarMesaSelect" class="stock-input" style="width:100%"></select>
+            </div>
+            <div class="quick-form-actions">
+              <button class="btn-primary" onclick="trasladarComandaAction()">Mover</button>
+              <button class="btn-outline" onclick="toggleTrasladarForm()">Cancelar</button>
+            </div>
+          </div>
+
+          <div class="quick-form" id="descuentoForm">
+            <div class="form-row">
+              <select id="descTipo" class="stock-input" style="width:100%">
+                <option value="porcentaje">% Porcentaje</option>
+                <option value="monto">Monto fijo</option>
+              </select>
+              <input type="number" id="descValor" class="stock-input" style="width:100%" placeholder="Valor" min="0" step="1">
+            </div>
+            <div class="quick-form-actions">
+              <button class="btn-primary" onclick="aplicarDescuentoAction()">Aplicar</button>
+              <button class="btn-outline" onclick="quitarDescuentoAction()">Quitar</button>
+              <button class="btn-outline" onclick="toggleDescuentoForm()">Cerrar</button>
+            </div>
+          </div>
 
           <div class="cobrar-panel" id="cobrarPanel">
-            <div class="section-title">Medio de pago</div>
-            <div class="pago-row" id="pagoRow">
-              <div class="pago-chip" data-medio="efectivo" onclick="selectMedio(this)">Efectivo</div>
-              <div class="pago-chip" data-medio="tarjeta" onclick="selectMedio(this)">Tarjeta</div>
-              <div class="pago-chip" data-medio="transferencia" onclick="selectMedio(this)">Transferencia</div>
-              <div class="pago-chip" data-medio="mixto" onclick="selectMedio(this)">Mixto</div>
+            <div class="section-title">Cobrar</div>
+            <div id="cobrarResumen"></div>
+            <div class="form-row" style="margin-top:10px">
+              <input type="number" id="dividirN" class="stock-input" style="width:100%" value="1" min="1" max="6" placeholder="Partes">
+              <button class="btn-outline" onclick="dividirPagos()">Dividir en partes iguales</button>
             </div>
+            <div id="pagosRows"></div>
+            <button class="btn-outline" style="width:100%;margin-bottom:10px" onclick="agregarPagoRow()">+ Agregar pago</button>
             <button class="btn-primary" style="width:100%" onclick="confirmCobrar()">Confirmar cobro</button>
           </div>
 
@@ -325,7 +352,7 @@ let productos = [];
 let currentComanda = null;   // {id, mesa_id, mesa_nombre, estado, total}
 let currentItems = [];
 let catFiltro = 'todas';
-let medioSeleccionado = null;
+let pagosState = [];         // [{medio_pago, monto}] — pagos del cobro actual (uno o varios)
 let editingSalon = false;
 let pendingPositions = {};   // {mesaId: {pos_x, pos_y}} — se llena al arrastrar
 
@@ -576,7 +603,8 @@ async function openComanda(id){
     document.getElementById('comandaSub').textContent = currentComanda.atendido_por ? ('Atiende: ' + currentComanda.atendido_por) : '';
     document.getElementById('cobrarPanel').classList.remove('open');
     document.getElementById('productoForm').classList.remove('open');
-    medioSeleccionado = null;
+    document.getElementById('trasladarForm').classList.remove('open');
+    document.getElementById('descuentoForm').classList.remove('open');
     renderItems();
     if (!productos.length) await loadProductos();
     renderCatChips();
@@ -591,6 +619,23 @@ function cerrarPanel(){
   document.getElementById('panelEmpty').style.display = 'block';
   clearPinSelection();
   loadMesas();
+}
+
+// Espejo del aplicarDescuento() de api/_lib/pos/comanda-cerrar.js — solo
+// para mostrar el total correcto en pantalla antes de cobrar. El cálculo
+// que realmente vale es el que hace el backend al cerrar.
+function aplicarDescuentoClient(subtotal, tipo, valor){
+  if (!tipo || valor == null) return subtotal;
+  const v = Number(valor);
+  if (!Number.isFinite(v) || v <= 0) return subtotal;
+  const total = tipo === 'porcentaje' ? subtotal * (1 - v / 100) : subtotal - v;
+  return Math.max(0, Math.round(total));
+}
+
+function totalConDescuento(){
+  const activos = currentItems.filter(i => i.estado === 'activo');
+  const subtotal = activos.reduce((s,i) => s + Number(i.precio_unitario) * i.cantidad, 0);
+  return aplicarDescuentoClient(subtotal, currentComanda.descuento_tipo, currentComanda.descuento_valor);
 }
 
 // Solo se muestran los ítems activos (los anulados no quedan en la lista,
@@ -612,8 +657,20 @@ function renderItems(){
         <button class="item-remove" onclick="anularItem(${it.id})" title="Quitar">✕</button>
       </div>`).join('');
   }
-  const total = activos.reduce((s,i) => s + Number(i.precio_unitario) * i.cantidad, 0);
-  document.getElementById('totalVal').textContent = fmtMoney(total);
+  const subtotal = activos.reduce((s,i) => s + Number(i.precio_unitario) * i.cantidad, 0);
+  const total = aplicarDescuentoClient(subtotal, currentComanda.descuento_tipo, currentComanda.descuento_valor);
+  const totalBar = document.getElementById('totalBar');
+  if (currentComanda.descuento_tipo){
+    const etiqueta = currentComanda.descuento_tipo === 'porcentaje' ? `${currentComanda.descuento_valor}%` : fmtMoney(currentComanda.descuento_valor);
+    totalBar.innerHTML = `
+      <div>
+        <div class="total-label">Total</div>
+        <div style="font-size:10.5px;color:rgba(255,255,255,.55);margin-top:2px">Subtotal ${fmtMoney(subtotal)} · desc. −${etiqueta}</div>
+      </div>
+      <div class="total-val">${fmtMoney(total)}</div>`;
+  } else {
+    totalBar.innerHTML = `<div class="total-label">Total</div><div class="total-val">${fmtMoney(total)}</div>`;
+  }
 }
 
 async function refreshComanda(){
@@ -669,21 +726,121 @@ async function refreshStockBadges(){
 
 function toggleCobrarPanel(){
   if (!currentItems.some(i => i.estado === 'activo')) return toast('No hay ítems activos para cobrar', 'error');
-  document.getElementById('cobrarPanel').classList.toggle('open');
+  const panel = document.getElementById('cobrarPanel');
+  const abrir = !panel.classList.contains('open');
+  panel.classList.toggle('open');
+  if (abrir){
+    pagosState = [{ medio_pago: 'efectivo', monto: totalConDescuento() }];
+    renderPagosRows();
+  }
 }
 
-function selectMedio(el){
-  document.querySelectorAll('.pago-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  medioSeleccionado = el.dataset.medio;
+function renderPagosRows(){
+  const total = totalConDescuento();
+  const suma = pagosState.reduce((s,p) => s + (Number(p.monto) || 0), 0);
+  const ok = Math.abs(suma - total) <= 1;
+  document.getElementById('cobrarResumen').innerHTML = `
+    <div class="stock-row"><div class="stock-row-name">Total a cobrar</div><div style="font-weight:700">${fmtMoney(total)}</div></div>
+    <div class="stock-row"><div class="stock-row-name">Suma de pagos</div><div style="font-weight:700;color:${ok ? 'var(--green)' : 'var(--red)'}">${fmtMoney(suma)}</div></div>`;
+
+  const rows = document.getElementById('pagosRows');
+  rows.innerHTML = pagosState.map((p, i) => `
+    <div class="form-row" style="margin-bottom:8px;grid-template-columns:1fr 1fr auto">
+      <select class="stock-input" style="width:100%" onchange="pagosState[${i}].medio_pago=this.value">
+        <option value="efectivo" ${p.medio_pago==='efectivo'?'selected':''}>Efectivo</option>
+        <option value="tarjeta" ${p.medio_pago==='tarjeta'?'selected':''}>Tarjeta</option>
+        <option value="transferencia" ${p.medio_pago==='transferencia'?'selected':''}>Transferencia</option>
+      </select>
+      <input type="number" class="stock-input" style="width:100%" value="${p.monto}" min="0" step="50"
+        oninput="pagosState[${i}].monto=Number(this.value)||0; renderPagosRows()">
+      ${pagosState.length > 1 ? `<button class="item-remove" onclick="quitarPagoRow(${i})">✕</button>` : '<span></span>'}
+    </div>`).join('');
+}
+
+function agregarPagoRow(){
+  pagosState.push({ medio_pago: 'efectivo', monto: 0 });
+  renderPagosRows();
+}
+function quitarPagoRow(i){
+  pagosState.splice(i, 1);
+  renderPagosRows();
+}
+
+// Reparte el total en N partes iguales (redondeadas a $50, el resto va a
+// la última) — cada parte sigue siendo editable a mano después.
+function dividirPagos(){
+  const n = Math.max(1, Math.min(6, Number(document.getElementById('dividirN').value) || 1));
+  const total = totalConDescuento();
+  const base = Math.floor(total / n / 50) * 50;
+  const rows = [];
+  let acumulado = 0;
+  for (let i = 0; i < n; i++){
+    const monto = i === n - 1 ? total - acumulado : base;
+    acumulado += monto;
+    rows.push({ medio_pago: 'efectivo', monto });
+  }
+  pagosState = rows;
+  renderPagosRows();
 }
 
 async function confirmCobrar(){
-  if (!medioSeleccionado) return toast('Elegí un medio de pago', 'error');
+  const total = totalConDescuento();
+  const suma = pagosState.reduce((s,p) => s + (Number(p.monto) || 0), 0);
+  if (Math.abs(suma - total) > 1) return toast('La suma de los pagos no coincide con el total', 'error');
   try {
-    await api('/api/pos?r=comanda-cerrar', { method: 'POST', body: { comanda_id: currentComanda.id, medio_pago: medioSeleccionado } });
+    await api('/api/pos?r=comanda-cerrar', { method: 'POST', body: { comanda_id: currentComanda.id, pagos: pagosState } });
     toast('Comanda cobrada', 'success');
     cerrarPanel();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// ── TRASLADO DE MESA ──────────────────────────────────────────────
+function toggleTrasladarForm(){
+  const form = document.getElementById('trasladarForm');
+  const abrir = !form.classList.contains('open');
+  form.classList.toggle('open');
+  if (abrir){
+    const opciones = mesas.filter(m => m.estado === 'libre');
+    document.getElementById('trasladarMesaSelect').innerHTML = opciones.length
+      ? opciones.map(m => `<option value="${m.id}">${escapeHtml(m.nombre)}</option>`).join('')
+      : '<option value="">No hay mesas libres</option>';
+  }
+}
+
+async function trasladarComandaAction(){
+  const mesaId = Number(document.getElementById('trasladarMesaSelect').value);
+  if (!mesaId) return toast('No hay mesa destino disponible', 'error');
+  try {
+    await api('/api/pos?r=comanda-trasladar', { method: 'POST', body: { comanda_id: currentComanda.id, mesa_id: mesaId } });
+    toast('Comanda trasladada', 'success');
+    document.getElementById('trasladarForm').classList.remove('open');
+    await openComanda(currentComanda.id);
+    await loadMesas();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// ── DESCUENTO ─────────────────────────────────────────────────────
+function toggleDescuentoForm(){
+  document.getElementById('descuentoForm').classList.toggle('open');
+}
+
+async function aplicarDescuentoAction(){
+  const descuento_tipo = document.getElementById('descTipo').value;
+  const descuento_valor = document.getElementById('descValor').value;
+  if (!descuento_valor) return toast('Falta el valor del descuento', 'error');
+  try {
+    await api('/api/pos?r=comanda-descuento', { method: 'POST', body: { comanda_id: currentComanda.id, descuento_tipo, descuento_valor } });
+    toast('Descuento aplicado', 'success');
+    document.getElementById('descuentoForm').classList.remove('open');
+    await refreshComanda();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function quitarDescuentoAction(){
+  try {
+    await api('/api/pos?r=comanda-descuento', { method: 'POST', body: { comanda_id: currentComanda.id } });
+    toast('Descuento quitado', 'success');
+    await refreshComanda();
   } catch(e){ toast(e.message, 'error'); }
 }
 
