@@ -31,6 +31,8 @@ const { getAlertasMargen, getConfig, setConfig } = require('./_lib/pos/productos
 const { listProveedores, upsertProveedor } = require('./_lib/pos/proveedores');
 const { listProveedorProductos, upsertProveedorProducto, aplicarCosto } = require('./_lib/pos/proveedor-producto');
 const { registrarMerma, registrarConteo, listMovimientos } = require('./_lib/pos/stock-movimiento');
+const { listInsumos, upsertInsumo } = require('./_lib/pos/insumos');
+const { getReceta, upsertRecetaItem, recalcularCostoReceta } = require('./_lib/pos/receta');
 
 const ROUTES = {
   'mesas:GET': listMesas,
@@ -64,6 +66,11 @@ const ROUTES = {
   'stock-merma:POST': registrarMerma,
   'stock-conteo:POST': registrarConteo,
   'stock-movimientos:GET': listMovimientos,
+  'insumos:GET': listInsumos,
+  'insumos:POST': upsertInsumo,
+  'receta:GET': getReceta,
+  'receta-item:POST': upsertRecetaItem,
+  'receta-recalcular-costo:POST': recalcularCostoReceta,
 };
 
 module.exports = async function handler(req, res) {

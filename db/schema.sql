@@ -169,3 +169,37 @@ CREATE TABLE IF NOT EXISTS stock_movimientos (
 );
 CREATE INDEX IF NOT EXISTS idx_stock_movimientos_producto ON stock_movimientos(producto_id);
 CREATE INDEX IF NOT EXISTS idx_stock_movimientos_fecha ON stock_movimientos(created_at);
+
+-- ── insumos + recetas (solo backend por ahora — no hay menú de comida
+-- real todavía, se deja la estructura lista sin construir UI/contenido
+-- inventado). Un vino sigue con productos.costo cargado a mano; un
+-- futuro producto compuesto (costo_calculado=true) deriva su costo de
+-- SUM(receta_items.cantidad * insumos.costo_unitario). ──
+CREATE TABLE IF NOT EXISTS insumos (
+  id              serial PRIMARY KEY,
+  nombre          text NOT NULL,
+  unidad          text NOT NULL,       -- 'g'/'ml'/'unidad', texto libre como productos.categoria
+  costo_unitario  numeric(10,2),       -- NULL = no cargado todavía
+  stock_actual    numeric,             -- NULL = no trackeado, mismo patrón que productos
+  activo          boolean NOT NULL DEFAULT true,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  updated_at      timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS receta_items (
+  id           serial PRIMARY KEY,
+  producto_id  int NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+  insumo_id    int NOT NULL REFERENCES insumos(id),
+  cantidad     numeric NOT NULL CHECK (cantidad > 0),  -- cantidad de insumo por unidad vendida del producto
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_receta_items_producto ON receta_items(producto_id);
+
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS costo_calculado boolean NOT NULL DEFAULT false;
+
+-- proveedor_productos ahora puede vincular un insumo en vez de un
+-- producto (recién existe la tabla insumos) — sin UI todavía, mismo
+-- criterio que el resto de esta fase.
+ALTER TABLE proveedor_productos ADD COLUMN IF NOT EXISTS insumo_id int REFERENCES insumos(id);
+ALTER TABLE proveedor_productos ALTER COLUMN producto_id DROP NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_proveedor_insumo ON proveedor_productos(proveedor_id, insumo_id) WHERE insumo_id IS NOT NULL;
