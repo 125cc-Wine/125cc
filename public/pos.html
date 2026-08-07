@@ -34,61 +34,54 @@
   .top-staff{font-size:11px;color:var(--ink-dark-2)}
   .logout-btn{font-size:12px;color:var(--ink-dark-2);cursor:pointer;background:none;border:none}
   .logout-btn:hover{color:var(--ink-dark)}
-  .view{display:none;padding:16px 16px 90px}
-  .view.active{display:block}
+  .view{padding:16px 16px 40px}
 
   .section-title{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--ink-dark-2);margin-bottom:12px}
 
-  /* ── MESAS ── */
-  .view-toggle{display:flex;gap:6px;margin-bottom:14px}
-  .view-toggle-btn{background:none;border:1px solid var(--line-dark);color:var(--ink-dark-2);font-size:11px;font-weight:500;letter-spacing:.04em;padding:8px 14px;border-radius:var(--r-pill);cursor:pointer;transition:background var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease)}
-  .view-toggle-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  /* ── LAYOUT DIVIDIDO: salón + comanda ── */
+  .salon-split{display:flex;flex-direction:column;gap:16px}
+  @media(min-width:680px){
+    .salon-split{flex-direction:row;align-items:flex-start}
+    .salon-left{flex:0 0 300px}
+    .salon-right{flex:1;min-width:0}
+  }
 
-  .salon-toolbar{display:flex;gap:8px;margin-bottom:14px}
+  .salon-toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
 
-  .salon-stage{position:relative;background:linear-gradient(145deg,#333f4a,#2c353f);border-radius:var(--r-card);height:180px;max-width:360px;border:1px solid var(--line-dark);box-shadow:var(--shadow-dark);overflow:hidden;touch-action:none;margin:0 auto 20px}
+  .salon-stage{position:relative;background:linear-gradient(145deg,#333f4a,#2c353f);border-radius:var(--r-card);height:220px;border:1px solid var(--line-dark);box-shadow:var(--shadow-dark);overflow:hidden;touch-action:none}
   .salon-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--ink-dark-2);font-size:11px;text-align:center;padding:16px;pointer-events:none}
-  .salon-pin{position:absolute;transform:translate(-50%,-50%);width:44px;text-align:center;user-select:none;-webkit-user-select:none;z-index:5}
+  .salon-pin{position:absolute;transform:translate(-50%,-50%);width:48px;text-align:center;user-select:none;-webkit-user-select:none;z-index:5;cursor:pointer}
   .salon-pin.dragging{z-index:30}
   .salon-editing .salon-pin{cursor:grab}
   .salon-editing .salon-pin:active{cursor:grabbing}
-  .salon-pin-dot{width:34px;height:34px;border-radius:9px;margin:0 auto;background:var(--dark-2);border:2px solid var(--line-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font-serif);font-size:11px;font-weight:600;color:var(--ink-dark);box-shadow:var(--shadow-dark);transition:box-shadow .15s}
-  .salon-pin.libre .salon-pin-dot{border-color:#5A8A2A}
-  .salon-pin.ocupada .salon-pin-dot{border-color:var(--accent);background:rgba(122,20,40,.22)}
-  .salon-pin.cuenta_pedida .salon-pin-dot{border-color:var(--madera);background:rgba(207,172,89,.2)}
-  .salon-pin-label{font-size:8px;color:var(--ink-dark-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:44px;margin-left:auto;margin-right:auto}
-
-  .mesas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:20px}
-  .mesa-card{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:16px 10px;text-align:center;cursor:pointer;box-shadow:var(--shadow-dark);transition:transform var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease);border-left:3px solid var(--line-dark)}
-  .mesa-card:active{transform:scale(.96)}
-  .mesa-card.libre{border-left-color:#5A8A2A}
-  .mesa-card.ocupada{border-left-color:var(--accent)}
-  .mesa-card.cuenta_pedida{border-left-color:var(--madera)}
-  .mesa-nombre{font-family:var(--font-serif);font-size:19px;color:var(--ink-dark);font-weight:600}
-  .mesa-estado{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dark-2);margin-top:4px}
-  .mesa-cap{font-size:10px;color:var(--ink-dark-2);opacity:.7;margin-top:2px}
+  .salon-pin-dotwrap{position:relative;width:40px;margin:0 auto}
+  .salon-pin-dot{width:40px;height:40px;border-radius:50%;background:#5A8A2A;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;box-shadow:var(--shadow-dark);border:2px solid rgba(255,255,255,.18);transition:outline .1s}
+  .salon-pin.ocupada .salon-pin-dot{background:var(--accent)}
+  .salon-pin.cuenta_pedida .salon-pin-dot{background:#3B72C4}
+  .salon-pin.selected .salon-pin-dot{outline:3px solid var(--madera);outline-offset:2px}
+  .salon-pin-badge{position:absolute;bottom:-3px;right:-3px;background:var(--dark);color:var(--ink-dark);font-size:8px;font-weight:700;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line-dark)}
+  .salon-pin-label{font-size:8.5px;color:var(--ink-dark-2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px;margin-left:auto;margin-right:auto}
 
   .row-btns{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
   .btn-outline{background:none;border:1px solid var(--line-dark-strong);color:var(--ink-dark-2);font-size:11px;font-weight:500;letter-spacing:.06em;padding:11px 16px;border-radius:var(--r-pill);cursor:pointer;transition:border-color var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
   .btn-outline:hover{border-color:var(--ink-dark-2);color:var(--ink-dark)}
   .btn-primary{background:var(--accent-grad);border:none;color:#fff;font-size:12px;font-weight:500;letter-spacing:.08em;padding:12px 18px;border-radius:var(--r-pill);cursor:pointer;box-shadow:0 4px 20px rgba(155,32,53,.3);transition:transform var(--t-feedback) var(--ease)}
   .btn-primary:active{transform:scale(.97)}
-  .btn-madera{background:var(--madera-dk);border:none;color:var(--ink-dark);font-size:11px;font-weight:500;letter-spacing:.06em;padding:11px 16px;border-radius:var(--r-pill);cursor:pointer;transition:opacity var(--t-feedback) var(--ease)}
-  .btn-madera:hover{opacity:.85}
 
-  .quick-form{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:16px;margin-bottom:20px;display:none}
+  .quick-form{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:16px;margin-bottom:14px;display:none}
   .quick-form.open{display:block}
   .quick-form .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
   .quick-form input,.quick-form select{width:100%;background:var(--dark-3,#3F4D5A);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:10px 11px;color:var(--ink-dark);font-size:13px;outline:none}
   .quick-form input:focus,.quick-form select:focus{border-color:var(--accent)}
   .quick-form-actions{display:flex;gap:8px;margin-top:4px}
 
-  /* ── COMANDA ── */
-  .comanda-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px}
+  /* ── PANEL DE COMANDA ── */
+  .panel-empty{padding:44px 20px;text-align:center;color:var(--ink-dark-2);font-size:12.5px;line-height:1.6;background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card)}
+  .comanda-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:10px}
   .comanda-title{font-family:var(--font-serif);font-size:24px;color:var(--ink-dark)}
   .comanda-sub{font-size:11px;color:var(--ink-dark-2);margin-top:2px}
-  .back-btn{background:none;border:none;color:var(--ink-dark-2);font-size:20px;cursor:pointer;padding:4px 8px}
-  .back-btn:hover{color:var(--ink-dark)}
+  .close-btn{background:none;border:1px solid var(--line-dark);color:var(--ink-dark-2);font-size:14px;cursor:pointer;width:30px;height:30px;border-radius:50%;flex-shrink:0}
+  .close-btn:hover{color:var(--ink-dark);border-color:var(--ink-dark-2)}
 
   .items-box{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);margin-bottom:18px;overflow:hidden}
   .item-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line-dark)}
@@ -105,11 +98,13 @@
   .total-label{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--madera)}
   .total-val{font-family:var(--font-serif);font-size:30px;color:var(--ink-dark);font-weight:700}
 
+  .prod-search{width:100%;background:var(--dark-3,#3F4D5A);border:1px solid var(--line-dark);border-radius:var(--r-pill);padding:10px 14px;color:var(--ink-dark);font-size:13px;outline:none;margin-bottom:12px}
+  .prod-search:focus{border-color:var(--accent)}
   .cat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
   .cat-chip{background:none;border:1px solid var(--line-dark);color:var(--ink-dark-2);font-size:10.5px;font-weight:500;letter-spacing:.04em;padding:6px 12px;border-radius:var(--r-pill);cursor:pointer;transition:background var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease)}
   .cat-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
-  .prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:20px}
+  .prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:20px}
   .prod-card{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:12px;cursor:pointer;transition:transform var(--t-feedback) var(--ease),border-color var(--t-feedback) var(--ease)}
   .prod-card:active{transform:scale(.96)}
   .prod-card.sin-stock{opacity:.45}
@@ -153,7 +148,7 @@
   <div class="top-bar">
     <div>
       <div class="top-logo">125cc</div>
-      <div class="top-label" id="topLabel">Mesas</div>
+      <div class="top-label">Salón</div>
     </div>
     <div class="top-right">
       <div class="top-staff" id="topStaff"></div>
@@ -161,94 +156,96 @@
     </div>
   </div>
 
-  <!-- VISTA MESAS -->
-  <div class="view active" id="view-mesas">
-    <div class="row-btns">
-      <button class="btn-primary" onclick="startTakeaway()">+ Comanda takeaway</button>
-      <button class="btn-outline" onclick="toggleMesaForm()">+ Nueva mesa</button>
-    </div>
-    <div class="quick-form" id="mesaForm">
-      <div class="form-row">
-        <input type="text" id="mesaNombre" placeholder="Nombre (ej: Mesa 3)" maxlength="60">
-        <input type="number" id="mesaCap" placeholder="Capacidad" min="0" max="200">
+  <div class="view">
+    <div class="salon-split">
+
+      <!-- IZQUIERDA: plano del salón -->
+      <div class="salon-left">
+        <div class="salon-toolbar">
+          <button class="btn-primary" onclick="startTakeaway()">+ Takeaway</button>
+          <button class="btn-outline" onclick="toggleMesaForm()">+ Mesa</button>
+        </div>
+        <div class="salon-toolbar" id="editToolbar">
+          <button class="btn-outline" id="btnEditarSalon" onclick="toggleEditSalon()">Editar plano</button>
+          <button class="btn-primary" id="btnGuardarSalon" style="display:none" onclick="guardarSalonPlano()">Guardar</button>
+          <button class="btn-outline" id="btnCancelarSalon" style="display:none" onclick="cancelarEditSalon()">Cancelar</button>
+        </div>
+        <div class="quick-form" id="mesaForm">
+          <div class="form-row">
+            <input type="text" id="mesaNombre" placeholder="Nombre (ej: Mesa 3)" maxlength="60">
+            <input type="number" id="mesaCap" placeholder="Capacidad" min="0" max="200">
+          </div>
+          <div class="quick-form-actions">
+            <button class="btn-primary" onclick="submitMesaForm()">Guardar</button>
+            <button class="btn-outline" onclick="toggleMesaForm()">Cancelar</button>
+          </div>
+        </div>
+        <div class="salon-stage" id="salonStage"></div>
       </div>
-      <div class="quick-form-actions">
-        <button class="btn-primary" onclick="submitMesaForm()">Guardar</button>
-        <button class="btn-outline" onclick="toggleMesaForm()">Cancelar</button>
+
+      <!-- DERECHA: comanda de la mesa seleccionada -->
+      <div class="salon-right">
+        <div class="panel-empty" id="panelEmpty">Elegí una mesa del plano, o iniciá una comanda takeaway.</div>
+
+        <div id="panelContent" style="display:none">
+          <div class="comanda-header">
+            <div style="flex:1">
+              <div class="comanda-title" id="comandaTitle">—</div>
+              <div class="comanda-sub" id="comandaSub"></div>
+            </div>
+            <button class="close-btn" onclick="cerrarPanel()" title="Cerrar">✕</button>
+          </div>
+
+          <div class="items-box" id="itemsBox"></div>
+
+          <div class="total-bar">
+            <div class="total-label">Total</div>
+            <div class="total-val" id="totalVal">$0</div>
+          </div>
+
+          <div class="row-btns">
+            <button class="btn-primary" onclick="toggleCobrarPanel()">Cobrar</button>
+            <button class="btn-outline" onclick="toggleProductoForm()">+ Nuevo producto</button>
+          </div>
+
+          <div class="cobrar-panel" id="cobrarPanel">
+            <div class="section-title">Medio de pago</div>
+            <div class="pago-row" id="pagoRow">
+              <div class="pago-chip" data-medio="efectivo" onclick="selectMedio(this)">Efectivo</div>
+              <div class="pago-chip" data-medio="tarjeta" onclick="selectMedio(this)">Tarjeta</div>
+              <div class="pago-chip" data-medio="transferencia" onclick="selectMedio(this)">Transferencia</div>
+              <div class="pago-chip" data-medio="mixto" onclick="selectMedio(this)">Mixto</div>
+            </div>
+            <button class="btn-primary" style="width:100%" onclick="confirmCobrar()">Confirmar cobro</button>
+          </div>
+
+          <div class="quick-form" id="productoForm">
+            <div class="form-row">
+              <input type="text" id="prodNombre" placeholder="Nombre" maxlength="120">
+              <input type="text" id="prodCategoria" placeholder="Categoría (ej: vino_tinto)" maxlength="40">
+            </div>
+            <div class="form-row">
+              <input type="number" id="prodPrecio" placeholder="Precio" min="0" step="0.01">
+              <select id="prodUnidad">
+                <option value="copa">Copa</option>
+                <option value="botella">Botella</option>
+                <option value="unidad">Unidad</option>
+              </select>
+            </div>
+            <div class="quick-form-actions">
+              <button class="btn-primary" onclick="submitProductoForm()">Guardar</button>
+              <button class="btn-outline" onclick="toggleProductoForm()">Cancelar</button>
+            </div>
+          </div>
+
+          <div class="section-title">Agregar producto</div>
+          <input type="text" id="prodSearch" class="prod-search" placeholder="Buscar producto..." oninput="renderProductos()">
+          <div class="cat-chips" id="catChips"></div>
+          <div class="prod-grid" id="prodGrid"><div class="items-empty">Cargando...</div></div>
+        </div>
       </div>
+
     </div>
-    <div class="view-toggle">
-      <div class="view-toggle-btn" id="btnVistaPlano" onclick="setVistaMesas('plano')">Plano</div>
-      <div class="view-toggle-btn" id="btnVistaLista" onclick="setVistaMesas('lista')">Lista</div>
-    </div>
-
-    <div class="salon-toolbar" id="salonToolbar">
-      <button class="btn-outline" id="btnEditarSalon" onclick="toggleEditSalon()">Editar plano</button>
-      <button class="btn-primary" id="btnGuardarSalon" style="display:none" onclick="guardarSalonPlano()">Guardar plano</button>
-      <button class="btn-outline" id="btnCancelarSalon" style="display:none" onclick="cancelarEditSalon()">Cancelar</button>
-    </div>
-
-    <div class="salon-stage" id="salonStage"></div>
-
-    <div class="section-title" id="listaTitle">Salón</div>
-    <div class="mesas-grid" id="mesasGrid"><div class="items-empty">Cargando...</div></div>
-  </div>
-
-  <!-- VISTA COMANDA -->
-  <div class="view" id="view-comanda">
-    <div class="comanda-header">
-      <button class="back-btn" onclick="backToMesas()">←</button>
-      <div style="flex:1">
-        <div class="comanda-title" id="comandaTitle">—</div>
-        <div class="comanda-sub" id="comandaSub"></div>
-      </div>
-    </div>
-
-    <div class="items-box" id="itemsBox"></div>
-
-    <div class="total-bar">
-      <div class="total-label">Total</div>
-      <div class="total-val" id="totalVal">$0</div>
-    </div>
-
-    <div class="row-btns">
-      <button class="btn-primary" onclick="toggleCobrarPanel()">Cobrar</button>
-      <button class="btn-outline" onclick="toggleProductoForm()">+ Nuevo producto</button>
-    </div>
-
-    <div class="cobrar-panel" id="cobrarPanel">
-      <div class="section-title">Medio de pago</div>
-      <div class="pago-row" id="pagoRow">
-        <div class="pago-chip" data-medio="efectivo" onclick="selectMedio(this)">Efectivo</div>
-        <div class="pago-chip" data-medio="tarjeta" onclick="selectMedio(this)">Tarjeta</div>
-        <div class="pago-chip" data-medio="transferencia" onclick="selectMedio(this)">Transferencia</div>
-        <div class="pago-chip" data-medio="mixto" onclick="selectMedio(this)">Mixto</div>
-      </div>
-      <button class="btn-primary" style="width:100%" onclick="confirmCobrar()">Confirmar cobro</button>
-    </div>
-
-    <div class="quick-form" id="productoForm">
-      <div class="form-row">
-        <input type="text" id="prodNombre" placeholder="Nombre" maxlength="120">
-        <input type="text" id="prodCategoria" placeholder="Categoría (ej: vino_tinto)" maxlength="40">
-      </div>
-      <div class="form-row">
-        <input type="number" id="prodPrecio" placeholder="Precio" min="0" step="0.01">
-        <select id="prodUnidad">
-          <option value="copa">Copa</option>
-          <option value="botella">Botella</option>
-          <option value="unidad">Unidad</option>
-        </select>
-      </div>
-      <div class="quick-form-actions">
-        <button class="btn-primary" onclick="submitProductoForm()">Guardar</button>
-        <button class="btn-outline" onclick="toggleProductoForm()">Cancelar</button>
-      </div>
-    </div>
-
-    <div class="section-title">Agregar producto</div>
-    <div class="cat-chips" id="catChips"></div>
-    <div class="prod-grid" id="prodGrid"><div class="items-empty">Cargando...</div></div>
   </div>
 </div>
 
@@ -262,7 +259,6 @@ let currentComanda = null;   // {id, mesa_id, mesa_nombre, estado, total}
 let currentItems = [];
 let catFiltro = 'todas';
 let medioSeleccionado = null;
-let vistaMesas = 'plano';    // 'plano' | 'lista'
 let editingSalon = false;
 let pendingPositions = {};   // {mesaId: {pos_x, pos_y}} — se llena al arrastrar
 
@@ -321,89 +317,65 @@ function toast(msg, type){
   setTimeout(() => { t.className = 'toast'; }, 2600);
 }
 
-// ── VISTAS ────────────────────────────────────────────────────────
-function showView(id){
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-function backToMesas(){
-  currentComanda = null;
-  document.getElementById('topLabel').textContent = 'Mesas';
-  showView('view-mesas');
-  loadMesas();
-}
-
-// ── MESAS ─────────────────────────────────────────────────────────
+// ── MESAS / PLANO DEL SALÓN ─────────────────────────────────────────
 async function loadMesas(){
   try {
     const data = await api('/api/pos?r=mesas');
     mesas = data.mesas;
-    renderMesas();
+    renderSalonPlano();
   } catch(e){ toast(e.message, 'error'); }
 }
 
-function renderMesas(){
-  document.getElementById('btnVistaPlano').classList.toggle('active', vistaMesas === 'plano');
-  document.getElementById('btnVistaLista').classList.toggle('active', vistaMesas === 'lista');
-  document.getElementById('salonStage').style.display = vistaMesas === 'plano' ? 'block' : 'none';
-  document.getElementById('salonToolbar').style.display = vistaMesas === 'plano' ? 'flex' : 'none';
-  document.getElementById('mesasGrid').style.display = vistaMesas === 'lista' ? 'grid' : 'none';
-  document.getElementById('listaTitle').style.display = vistaMesas === 'lista' ? 'block' : 'none';
-
-  renderMesasLista();
-  renderSalonPlano();
-}
-
-function setVistaMesas(v){
-  if (editingSalon) cancelarEditSalon();
-  vistaMesas = v;
-  renderMesas();
-}
-
-function renderMesasLista(){
-  const grid = document.getElementById('mesasGrid');
-  if (!mesas.length){ grid.innerHTML = '<div class="items-empty">Todavía no hay mesas cargadas. Usá "+ Nueva mesa".</div>'; return; }
-  grid.innerHTML = mesas.map(m => `
-    <div class="mesa-card ${m.estado}" onclick="openMesa(${m.id})">
-      <div class="mesa-nombre">${escapeHtml(m.nombre)}</div>
-      <div class="mesa-estado">${m.estado.replace('_',' ')}</div>
-      ${m.capacidad ? `<div class="mesa-cap">${m.capacidad} pers.</div>` : ''}
-    </div>`).join('');
-}
-
-// ── PLANO DEL SALÓN ───────────────────────────────────────────────
 // Posición por defecto para mesas que todavía no se ubicaron a mano
 // (grilla simple dentro del plano), para que sean visibles/tocables
 // desde el primer momento y no haga falta arrastrar todo antes de usar.
 function posicionPorDefecto(idx){
   const cols = 4;
   const x = 14 + (idx % cols) * 24;
-  const y = 18 + Math.floor(idx / cols) * 28;
-  return { x: Math.min(x, 92), y: Math.min(y, 88) };
+  const y = 20 + Math.floor(idx / cols) * 30;
+  return { x: Math.min(x, 92), y: Math.min(y, 85) };
+}
+
+// "Mesa 12" → "12" · "Barra 3" → "Bar" — abreviación corta para el pin.
+function mesaAbbrev(nombre){
+  const cleaned = nombre.replace(/^mesa\s*/i, '').trim();
+  return escapeHtml(cleaned || nombre).slice(0, 3);
 }
 
 function renderSalonPlano(){
   const stage = document.getElementById('salonStage');
   stage.classList.toggle('salon-editing', editingSalon);
   if (!mesas.length){
-    stage.innerHTML = '<div class="salon-hint">Todavía no hay mesas. Usá "+ Nueva mesa" y después "Editar plano" para acomodarlas.</div>';
+    stage.innerHTML = '<div class="salon-hint">Todavía no hay mesas. Usá "+ Mesa" para cargar la primera.</div>';
     return;
   }
+  const selectedId = currentComanda ? currentComanda.mesa_id : null;
   stage.innerHTML = '';
   mesas.forEach((m, idx) => {
     const hasPos = m.pos_x != null && m.pos_y != null;
     const pos = hasPos ? { x: Number(m.pos_x), y: Number(m.pos_y) } : posicionPorDefecto(idx);
     const pin = document.createElement('div');
-    pin.className = `salon-pin ${m.estado}`;
+    pin.className = `salon-pin ${m.estado}${selectedId === m.id ? ' selected' : ''}`;
     pin.style.left = pos.x + '%';
     pin.style.top = pos.y + '%';
     pin.dataset.mesaId = m.id;
-    pin.innerHTML = `<div class="salon-pin-dot">${escapeHtml(m.nombre).slice(0,4)}</div><div class="salon-pin-label">${escapeHtml(m.nombre)}</div>`;
+    pin.innerHTML = `
+      <div class="salon-pin-dotwrap">
+        <div class="salon-pin-dot">${mesaAbbrev(m.nombre)}</div>
+        ${m.capacidad ? `<div class="salon-pin-badge">${m.capacidad}</div>` : ''}
+      </div>
+      <div class="salon-pin-label">${escapeHtml(m.nombre)}</div>`;
     pin.addEventListener('click', () => { if (!editingSalon) openMesa(m.id); });
     if (editingSalon) makeDraggable(pin, m.id);
     stage.appendChild(pin);
   });
+}
+
+function highlightPin(mesaId){
+  document.querySelectorAll('.salon-pin').forEach(p => p.classList.toggle('selected', Number(p.dataset.mesaId) === mesaId));
+}
+function clearPinSelection(){
+  document.querySelectorAll('.salon-pin').forEach(p => p.classList.remove('selected'));
 }
 
 function makeDraggable(pin, mesaId){
@@ -429,7 +401,7 @@ function makeDraggable(pin, mesaId){
     pin.style.top = newTop + '%';
     pendingPositions[mesaId] = { pos_x: newLeft, pos_y: newTop };
   });
-  function endDrag(e){
+  function endDrag(){
     if (!dragging) return;
     dragging = false;
     pin.classList.remove('dragging');
@@ -460,7 +432,8 @@ function cancelarEditSalon(){
 async function guardarSalonPlano(){
   // Se guardan TODAS las posiciones visibles (no solo las movidas), así
   // la primera vez que se guarda también queda persistida la grilla por
-  // defecto de las mesas que no se llegaron a arrastrar.
+  // defecto de las mesas que no se llegaron a arrastrar. Una vez guardado
+  // el plano queda fijo — no hace falta reacomodar cada vez que se usa.
   const pins = document.querySelectorAll('#salonStage .salon-pin');
   const cambios = Array.from(pins).map(pin => ({
     id: Number(pin.dataset.mesaId),
@@ -494,8 +467,10 @@ async function submitMesaForm(){
 }
 
 async function openMesa(mesaId){
+  if (editingSalon) return;
   const mesa = mesas.find(m => m.id === mesaId);
   if (!mesa) return;
+  highlightPin(mesaId);
   if (mesa.comanda_id){
     openComanda(mesa.comanda_id);
     return;
@@ -508,6 +483,7 @@ async function openMesa(mesaId){
 }
 
 async function startTakeaway(){
+  clearPinSelection();
   try {
     const staff = sessionStorage.getItem(STAFF_KEY);
     const data = await api('/api/pos?r=comandas', { method: 'POST', body: { atendido_por: staff } });
@@ -515,24 +491,33 @@ async function startTakeaway(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
-// ── COMANDA ───────────────────────────────────────────────────────
+// ── PANEL DE COMANDA ─────────────────────────────────────────────
 async function openComanda(id){
   try {
     const data = await api('/api/pos?r=comanda&id=' + id);
     currentComanda = data.comanda;
     currentItems = data.items;
-    document.getElementById('topLabel').textContent = 'Comanda';
+    document.getElementById('panelEmpty').style.display = 'none';
+    document.getElementById('panelContent').style.display = 'block';
     document.getElementById('comandaTitle').textContent = currentComanda.mesa_nombre || 'Takeaway';
     document.getElementById('comandaSub').textContent = currentComanda.atendido_por ? ('Atiende: ' + currentComanda.atendido_por) : '';
     document.getElementById('cobrarPanel').classList.remove('open');
     document.getElementById('productoForm').classList.remove('open');
     medioSeleccionado = null;
     renderItems();
-    showView('view-comanda');
     if (!productos.length) await loadProductos();
     renderCatChips();
     renderProductos();
   } catch(e){ toast(e.message, 'error'); }
+}
+
+function cerrarPanel(){
+  currentComanda = null;
+  currentItems = [];
+  document.getElementById('panelContent').style.display = 'none';
+  document.getElementById('panelEmpty').style.display = 'block';
+  clearPinSelection();
+  loadMesas();
 }
 
 function renderItems(){
@@ -592,7 +577,7 @@ async function confirmCobrar(){
   try {
     await api('/api/pos?r=comanda-cerrar', { method: 'POST', body: { comanda_id: currentComanda.id, medio_pago: medioSeleccionado } });
     toast('Comanda cobrada', 'success');
-    backToMesas();
+    cerrarPanel();
   } catch(e){ toast(e.message, 'error'); }
 }
 
@@ -618,7 +603,9 @@ function setCatFiltro(c){
 
 function renderProductos(){
   const grid = document.getElementById('prodGrid');
-  const list = catFiltro === 'todas' ? productos : productos.filter(p => p.categoria === catFiltro);
+  const q = (document.getElementById('prodSearch').value || '').trim().toLowerCase();
+  let list = catFiltro === 'todas' ? productos : productos.filter(p => p.categoria === catFiltro);
+  if (q) list = list.filter(p => p.nombre.toLowerCase().includes(q));
   if (!list.length){ grid.innerHTML = '<div class="items-empty">Sin productos. Usá "+ Nuevo producto".</div>'; return; }
   grid.innerHTML = list.map(p => {
     const sinStock = p.stock_actual != null && p.stock_actual <= 0;
