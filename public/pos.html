@@ -111,7 +111,10 @@
      aspect-ratio: escala con el ancho real del panel — más chico en el
      celu, más grande en tablet donde el panel de mesas ahora es ~62% del
      ancho — sin quedar vacío ni apretado en ningún tamaño de pantalla. */
-  .salon-stage{position:relative;aspect-ratio:16/10;min-height:170px;max-height:320px;padding:var(--sp-4) 0;touch-action:none}
+  /* Alto de respaldo (celu, o antes de que corra el JS de sincronización).
+     En desktop/tablet, JS mide el alto real del panel de comanda y lo
+     iguala acá — "que llegue hasta el recuadro de comanda". */
+  .salon-stage{position:relative;aspect-ratio:4/3;min-height:220px;max-height:420px;padding:var(--sp-4) 0;touch-action:none}
   .salon-hint{padding:var(--sp-6) var(--sp-4);color:var(--ink-3);font-size:var(--fs-sm);line-height:1.6;text-align:center;pointer-events:none}
   .salon-pin{position:absolute;transform:translate(-50%,-50%);width:64px;text-align:center;user-select:none;-webkit-user-select:none;z-index:5;cursor:pointer}
   .salon-pin.dragging{z-index:30}
@@ -526,8 +529,24 @@ async function loadMesas(){
     const data = await api('/api/pos?r=mesas');
     mesas = data.mesas;
     renderSalonPlano();
+    sincronizarAlturaMapa();
   } catch(e){ toast(e.message, 'error'); }
 }
+
+// En desktop/tablet (mesas y comanda lado a lado), el plano iguala su
+// alto al del panel de comanda actual — así "llega" hasta el recuadro
+// en vez de quedar chico con un hueco vacío al lado. En celu (columnas
+// apiladas) no aplica, se deja el aspect-ratio de la CSS.
+function sincronizarAlturaMapa(){
+  const stage = document.getElementById('salonStage');
+  if (window.innerWidth < 680){ stage.style.height = ''; return; }
+  const contenidoVisible = document.getElementById('panelContent').style.display !== 'none';
+  const referencia = contenidoVisible
+    ? document.querySelector('.comanda-card')
+    : document.getElementById('panelEmpty');
+  if (referencia) stage.style.height = Math.max(referencia.getBoundingClientRect().height, 220) + 'px';
+}
+window.addEventListener('resize', sincronizarAlturaMapa);
 
 // Posición por defecto para mesas que todavía no se ubicaron a mano
 // (grilla simple dentro del plano), para que sean visibles/tocables
@@ -714,6 +733,7 @@ async function openComanda(id){
     renderTipoChips();
     renderCatChips();
     renderProductos();
+    sincronizarAlturaMapa();
   } catch(e){ toast(e.message, 'error'); }
 }
 
@@ -783,6 +803,7 @@ async function refreshComanda(){
   currentComanda = data.comanda;
   currentItems = data.items;
   renderItems();
+  sincronizarAlturaMapa();
 }
 
 // Agregar/sumar una unidad de un producto — el backend consolida en la
@@ -1009,12 +1030,12 @@ async function loadProductos(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
-// Un producto es "Vino" si viene del import del menú (vino_ref) o su
-// categoría es alguno de los tipos de vino; el resto cae en "Menú"
-// (tapeo, bebidas sin alcohol, lo que se cargue a mano fuera del vino).
-const CATEGORIAS_VINO = ['tinto', 'blanco', 'rosado', 'naranjo', 'vino'];
+// "Vino" es EXACTAMENTE lo que vino del import del menú (vino_ref
+// seteado) — los 14 vinos reales, sin importar qué categoría tengan.
+// Nada más entra ahí (ej. "Vino N1°" cargado a mano cae en "Menú"),
+// y no se subdivide por tipo (tinto/blanco/rosado) dentro del filtro.
 function esVino(p){
-  return p.vino_ref != null || CATEGORIAS_VINO.includes((p.categoria || '').toLowerCase());
+  return p.vino_ref != null;
 }
 function productosPorTipo(){
   if (tipoFiltro === 'vino') return productos.filter(esVino);
@@ -1037,6 +1058,12 @@ function setTipoFiltro(v){
 }
 
 function renderCatChips(){
+  // Dentro de "Vino" no se subdivide por tipo (tinto/blanco/rosado/etc.) —
+  // son los 14 del menú, se muestran todos juntos.
+  if (tipoFiltro === 'vino'){
+    document.getElementById('catChips').innerHTML = '';
+    return;
+  }
   const base = productosPorTipo();
   const cats = ['todas', ...new Set(base.map(p => p.categoria))];
   document.getElementById('catChips').innerHTML = cats.map(c => `
