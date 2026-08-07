@@ -371,6 +371,9 @@
             <button class="btn-outline" onclick="toggleTrasladarForm()">⇄ Trasladar mesa</button>
             <button class="btn-outline" onclick="toggleDescuentoForm()">% Descuento</button>
           </div>
+          <div class="row-btns">
+            <button class="btn-outline" style="color:var(--red);border-color:var(--red)" onclick="cerrarMesaSinCobrar()">Cerrar mesa sin cobrar</button>
+          </div>
 
           <div class="quick-form" id="trasladarForm">
             <div class="form-row">
@@ -918,6 +921,20 @@ async function trasladarComandaAction(){
     document.getElementById('trasladarForm').classList.remove('open');
     await openComanda(currentComanda.id);
     await loadMesas();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// Cierra la mesa/comanda SIN cobrar (se abrió por error, el cliente se
+// fue sin pedir, etc.). Distinto del ✕ del header, que solo oculta el
+// panel — la comanda seguía "abierta" en la base y la mesa "ocupada"
+// para siempre si no se cobraba. Esto sí la cancela de verdad y libera
+// la mesa a libre.
+async function cerrarMesaSinCobrar(){
+  if (!confirm('¿Cerrar esta mesa sin cobrar? Se cancelan todos los ítems cargados.')) return;
+  try {
+    await api('/api/pos?r=comanda-anular', { method: 'POST', body: { comanda_id: currentComanda.id } });
+    toast('Mesa cerrada sin cobrar', 'success');
+    cerrarPanel();
   } catch(e){ toast(e.message, 'error'); }
 }
 
