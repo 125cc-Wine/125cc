@@ -30,6 +30,7 @@ const { getReportes } = require('./_lib/pos/reportes');
 const { getAlertasMargen, getConfig, setConfig } = require('./_lib/pos/productos-alertas');
 const { listProveedores, upsertProveedor } = require('./_lib/pos/proveedores');
 const { listProveedorProductos, upsertProveedorProducto, aplicarCosto } = require('./_lib/pos/proveedor-producto');
+const { registrarMerma, registrarConteo, listMovimientos } = require('./_lib/pos/stock-movimiento');
 
 const ROUTES = {
   'mesas:GET': listMesas,
@@ -60,6 +61,9 @@ const ROUTES = {
   'proveedor-producto:GET': listProveedorProductos,
   'proveedor-producto:POST': upsertProveedorProducto,
   'proveedor-aplicar-costo:POST': aplicarCosto,
+  'stock-merma:POST': registrarMerma,
+  'stock-conteo:POST': registrarConteo,
+  'stock-movimientos:GET': listMovimientos,
 };
 
 module.exports = async function handler(req, res) {

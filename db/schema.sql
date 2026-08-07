@@ -150,3 +150,22 @@ CREATE TABLE IF NOT EXISTS proveedor_productos (
   actualizado_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_proveedor_producto ON proveedor_productos(proveedor_id, producto_id);
+
+-- ── stock_movimientos (mermas + conteo físico) ────────────────────
+-- Ledger único para "un ajuste de stock que no vino de una venta" —
+-- justo el hueco que comanda-item.js ya señala (stock_actual solo se
+-- mueve por venta). Mermas y conteo son conceptualmente lo mismo, así
+-- que comparten tabla en vez de una por separado.
+CREATE TABLE IF NOT EXISTS stock_movimientos (
+  id             serial PRIMARY KEY,
+  producto_id    int NOT NULL REFERENCES productos(id),
+  tipo           text NOT NULL CHECK (tipo IN ('merma','ajuste_conteo')),
+  cantidad       numeric NOT NULL,   -- negativo = salida (merma, o ajuste hacia abajo)
+  motivo         text,               -- 'rotura'|'vencimiento'|'robo'|'otro' para mermas; libre para conteo
+  stock_antes    numeric,
+  stock_despues  numeric,
+  registrado_por text,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_stock_movimientos_producto ON stock_movimientos(producto_id);
+CREATE INDEX IF NOT EXISTS idx_stock_movimientos_fecha ON stock_movimientos(created_at);

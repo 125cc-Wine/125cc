@@ -355,7 +355,41 @@
         <div class="section-title" style="margin-bottom:0">Stock por producto</div>
         <button class="close-btn" onclick="closeAllPanels()" title="Cerrar">✕</button>
       </div>
+      <div class="row-btns" style="margin-bottom:8px">
+        <button class="cat-chip active" id="stockTabProductos" onclick="setStockTab('productos')">Productos</button>
+        <button class="cat-chip" id="stockTabMovimientos" onclick="setStockTab('movimientos')">Movimientos</button>
+      </div>
+
+      <div class="quick-form" id="mermaForm">
+        <div class="section-title" id="mermaFormTitle">Registrar merma</div>
+        <div class="form-row">
+          <input type="number" id="mermaCantidad" placeholder="Cantidad" min="0" step="1">
+          <select id="mermaMotivo" class="stock-input" style="width:100%;min-height:var(--tap-min)">
+            <option value="rotura">Rotura</option>
+            <option value="vencimiento">Vencimiento</option>
+            <option value="robo">Robo</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="quick-form-actions">
+          <button class="btn-primary" onclick="confirmarMerma()">Registrar</button>
+          <button class="btn-outline" onclick="cerrarFormsStock()">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="quick-form" id="conteoForm">
+        <div class="section-title" id="conteoFormTitle">Conteo físico</div>
+        <div class="form-row">
+          <input type="number" id="conteoCantidad" placeholder="Cantidad contada" min="0">
+        </div>
+        <div class="quick-form-actions">
+          <button class="btn-primary" onclick="confirmarConteo()">Registrar</button>
+          <button class="btn-outline" onclick="cerrarFormsStock()">Cancelar</button>
+        </div>
+      </div>
+
       <div id="stockList"><div class="items-empty">Cargando...</div></div>
+      <div id="stockMovimientosList" style="display:none"></div>
     </div>
 
     <div class="stock-panel modal-panel" id="proveedoresPanel">
@@ -1616,7 +1650,102 @@ function renderStockList(){
       <input type="number" class="stock-input" id="stockMin_${p.id}" value="${p.stock_minimo ?? ''}" placeholder="Mín" min="0">
       <input type="number" class="stock-input" id="stockCosto_${p.id}" value="${p.costo ?? ''}" placeholder="Costo" min="0" step="0.01">
       <button class="btn-outline" onclick="guardarStock(${p.id})">Guardar</button>
+      <button class="btn-outline" style="font-size:10.5px;padding:6px 10px;min-height:auto" onclick="abrirMermaForm(${p.id})">Merma</button>
+      <button class="btn-outline" style="font-size:10.5px;padding:6px 10px;min-height:auto" onclick="abrirConteoForm(${p.id})">Contar</button>
     </div>`).join('');
+}
+
+function setStockTab(tab){
+  document.getElementById('stockTabProductos').classList.toggle('active', tab === 'productos');
+  document.getElementById('stockTabMovimientos').classList.toggle('active', tab === 'movimientos');
+  document.getElementById('stockList').style.display = tab === 'productos' ? 'block' : 'none';
+  document.getElementById('stockMovimientosList').style.display = tab === 'movimientos' ? 'block' : 'none';
+  cerrarFormsStock();
+  if (tab === 'movimientos') loadStockMovimientos();
+}
+
+async function loadStockMovimientos(){
+  const box = document.getElementById('stockMovimientosList');
+  box.innerHTML = '<div class="items-empty">Cargando...</div>';
+  try {
+    const data = await api('/api/pos?r=stock-movimientos');
+    if (!data.movimientos.length){ box.innerHTML = '<div class="items-empty">Sin movimientos todavía.</div>'; return; }
+    box.innerHTML = data.movimientos.map(m => {
+      const fecha = new Date(m.created_at).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+      const signo = Number(m.cantidad) > 0 ? '+' : '';
+      const color = Number(m.cantidad) < 0 ? 'var(--red)' : 'var(--green)';
+      const etiqueta = m.tipo === 'merma' ? `Merma (${m.motivo})` : 'Conteo físico';
+      return `<div class="stock-row">
+        <div>
+          <div class="stock-row-name">${escapeHtml(m.producto_nombre)}</div>
+          <div class="stock-row-name-sub">${etiqueta} · ${fecha}${m.registrado_por ? ' · ' + escapeHtml(m.registrado_por) : ''}</div>
+        </div>
+        <div style="color:${color};font-weight:700">${signo}${m.cantidad}</div>
+      </div>`;
+    }).join('');
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// ── MERMA / CONTEO ────────────────────────────────────────────────
+let stockAjusteProductoId = null;
+
+function cerrarFormsStock(){
+  document.getElementById('mermaForm').classList.remove('open');
+  document.getElementById('conteoForm').classList.remove('open');
+  stockAjusteProductoId = null;
+}
+
+function abrirMermaForm(productoId){
+  cerrarFormsStock();
+  const p = productos.find(x => x.id === productoId);
+  if (!p) return;
+  stockAjusteProductoId = productoId;
+  document.getElementById('mermaFormTitle').textContent = `Merma — ${p.nombre}${p.stock_actual != null ? ` (stock actual: ${p.stock_actual})` : ''}`;
+  document.getElementById('mermaCantidad').value = '';
+  document.getElementById('mermaForm').classList.add('open');
+}
+
+async function confirmarMerma(){
+  const cantidad = document.getElementById('mermaCantidad').value;
+  const motivo = document.getElementById('mermaMotivo').value;
+  if (!cantidad) return toast('Falta la cantidad', 'error');
+  const staff = sessionStorage.getItem(STAFF_KEY);
+  try {
+    await api('/api/pos?r=stock-merma', { method: 'POST', body: { producto_id: stockAjusteProductoId, cantidad, motivo, registrado_por: staff } });
+    toast('Merma registrada', 'success');
+    cerrarFormsStock();
+    await loadProductos();
+    renderStockList();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function abrirConteoForm(productoId){
+  cerrarFormsStock();
+  const p = productos.find(x => x.id === productoId);
+  if (!p) return;
+  stockAjusteProductoId = productoId;
+  document.getElementById('conteoFormTitle').textContent = `Conteo físico — ${p.nombre}${p.stock_actual != null ? ` (sistema dice: ${p.stock_actual})` : ' (sin trackear todavía)'}`;
+  document.getElementById('conteoCantidad').value = p.stock_actual ?? '';
+  document.getElementById('conteoForm').classList.add('open');
+}
+
+async function confirmarConteo(){
+  const cantidad = document.getElementById('conteoCantidad').value;
+  if (cantidad === '') return toast('Falta la cantidad contada', 'error');
+  const p = productos.find(x => x.id === stockAjusteProductoId);
+  const delta = p && p.stock_actual != null ? Number(cantidad) - Number(p.stock_actual) : null;
+  if (delta != null && Math.abs(delta) > 0 && p.stock_actual > 0 && Math.abs(delta) / p.stock_actual > 0.2) {
+    const ok = await confirmDialog(`El ajuste es de ${delta > 0 ? '+' : ''}${delta} unidades respecto al sistema — más del 20%. ¿Confirmar igual?`);
+    if (!ok) return;
+  }
+  const staff = sessionStorage.getItem(STAFF_KEY);
+  try {
+    await api('/api/pos?r=stock-conteo', { method: 'POST', body: { producto_id: stockAjusteProductoId, cantidad_contada: cantidad, registrado_por: staff } });
+    toast('Conteo registrado', 'success');
+    cerrarFormsStock();
+    await loadProductos();
+    renderStockList();
+  } catch(e){ toast(e.message, 'error'); }
 }
 
 async function guardarStock(productoId){
