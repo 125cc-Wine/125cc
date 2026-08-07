@@ -190,7 +190,7 @@
   .prod-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--sp-3);min-height:var(--tap-min);cursor:pointer;box-shadow:var(--shadow);transition:transform var(--t) var(--ease),border-color var(--t) var(--ease)}
   .prod-card:active{transform:scale(.96)}
   .prod-card.sin-stock{opacity:.45}
-  .prod-name{font-size:var(--fs-sm);color:var(--ink);line-height:1.35;font-weight:500}
+  .prod-name{font-size:var(--fs-sm);color:var(--ink);line-height:1.35;font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .prod-unidad{font-size:var(--fs-2xs);color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
   .prod-price{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--accent);margin-top:5px}
   .prod-stock-low{font-size:var(--fs-2xs);color:#B45309;margin-top:3px;font-weight:500}
@@ -216,6 +216,17 @@
     .modal-panel.open{transform:none}
   }
   .nav-active{color:#fff !important;position:relative}
+
+  /* ── CONFIRMACIÓN PROPIA ────────────────────────────────────────────
+     Reemplaza confirm() nativo del navegador (se ve fuera de lugar, corta
+     el flujo visual) por un diálogo con el mismo lenguaje que el resto de
+     la app. Siempre chico y centrado, nunca full-screen — es un sí/no,
+     no un panel de contenido. */
+  .confirm-backdrop{position:fixed;inset:0;background:rgba(20,20,25,.55);z-index:150;opacity:0;pointer-events:none;transition:opacity var(--t) var(--ease)}
+  .confirm-backdrop.open{opacity:1;pointer-events:auto}
+  .confirm-dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.95);width:min(88vw,340px);background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow-md);padding:var(--sp-5);z-index:155;opacity:0;pointer-events:none;transition:opacity var(--t) var(--ease),transform var(--t) var(--ease)}
+  .confirm-dialog.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  .confirm-msg{font-size:var(--fs-base);color:var(--ink);line-height:1.5;margin-bottom:var(--sp-4)}
   .nav-active::after{content:'';position:absolute;left:var(--sp-1);right:var(--sp-1);bottom:2px;height:2px;background:var(--accent);border-radius:2px}
 
   /* ── STOCK / CAJA / REPORTES (paneles genéricos de fila+valor) ── */
@@ -263,7 +274,7 @@
   <div class="login-box">
     <div class="login-logo">125cc</div>
     <div class="login-sub">Piso · POS</div>
-    <input type="text" id="staffInput" placeholder="¿Quién atiende?" maxlength="40">
+    <input type="text" id="staffInput" placeholder="¿Quién atiende?" maxlength="40" autofocus>
     <input type="password" id="passInput" placeholder="••••••" maxlength="40"
       onkeydown="if(event.key==='Enter') tryLogin()">
     <button class="login-btn" onclick="tryLogin()">Entrar</button>
@@ -523,6 +534,20 @@ function toast(msg, type){
   setTimeout(() => { t.className = 'toast'; }, 2600);
 }
 
+// Reemplaza confirm() nativo — devuelve una promesa, se usa con await.
+let confirmResolver = null;
+function confirmDialog(mensaje){
+  document.getElementById('confirmMsg').textContent = mensaje;
+  document.getElementById('confirmBackdrop').classList.add('open');
+  document.getElementById('confirmDialogEl').classList.add('open');
+  return new Promise(resolve => { confirmResolver = resolve; });
+}
+function resolveConfirm(valor){
+  document.getElementById('confirmBackdrop').classList.remove('open');
+  document.getElementById('confirmDialogEl').classList.remove('open');
+  if (confirmResolver) { confirmResolver(valor); confirmResolver = null; }
+}
+
 // ── MESAS / PLANO DEL SALÓN ─────────────────────────────────────────
 async function loadMesas(){
   try {
@@ -777,7 +802,7 @@ function renderItems(){
           <div class="qty-val">${it.cantidad}</div>
           <button class="qty-btn" onclick="agregarProducto(${it.producto_id})">+</button>
         </div>
-        <div class="item-name">${escapeHtml(it.nombre_snapshot)}</div>
+        <div class="item-name" title="${escapeHtml(it.nombre_snapshot)}">${escapeHtml(it.nombre_snapshot)}</div>
         <div class="item-price">${fmtMoney(it.precio_unitario * it.cantidad)}</div>
         <button class="item-remove" onclick="anularItem(${it.id})" title="Quitar">✕</button>
       </div>`).join('');
@@ -814,11 +839,13 @@ async function refreshComanda(){
 async function agregarProducto(productoId, forzar){
   try {
     await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, producto_id: productoId, forzar: !!forzar } });
-    await refreshComanda();
-    await refreshStockBadges();
+    // Comanda y badges de stock no dependen entre sí — en paralelo en vez
+    // de en cadena, para que un toque no se sienta lento (era 1+2 round-
+    // trips seguidos antes; ahora el más lento de los dos, no la suma).
+    await Promise.all([refreshComanda(), refreshStockBadges()]);
   } catch(e){
     if (e.status === 409 && e.data && 'disponible' in e.data) {
-      if (confirm('Sin stock cargado para este producto. ¿Agregar igual?')) return agregarProducto(productoId, true);
+      if (await confirmDialog('Sin stock cargado para este producto. ¿Agregar igual?')) return agregarProducto(productoId, true);
       return;
     }
     toast(e.message, 'error');
@@ -830,8 +857,7 @@ async function agregarProducto(productoId, forzar){
 async function restarItem(itemId){
   try {
     await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'restar', item_id: itemId } });
-    await refreshComanda();
-    await refreshStockBadges();
+    await Promise.all([refreshComanda(), refreshStockBadges()]);
   } catch(e){ toast(e.message, 'error'); }
 }
 
@@ -840,8 +866,7 @@ async function restarItem(itemId){
 async function anularItem(itemId){
   try {
     await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'anular', item_id: itemId } });
-    await refreshComanda();
-    await refreshStockBadges();
+    await Promise.all([refreshComanda(), refreshStockBadges()]);
   } catch(e){ toast(e.message, 'error'); }
 }
 
@@ -951,7 +976,7 @@ async function trasladarComandaAction(){
 // para siempre si no se cobraba. Esto sí la cancela de verdad y libera
 // la mesa a libre.
 async function cerrarMesaSinCobrar(){
-  if (!confirm('¿Cerrar esta mesa sin cobrar? Se cancelan todos los ítems cargados.')) return;
+  if (!(await confirmDialog('¿Cerrar esta mesa sin cobrar? Se cancelan todos los ítems cargados.'))) return;
   try {
     await api('/api/pos?r=comanda-anular', { method: 'POST', body: { comanda_id: currentComanda.id } });
     toast('Mesa cerrada sin cobrar', 'success');
@@ -999,7 +1024,16 @@ function imprimirPrecuenta(){
 
 // ── DESCUENTO ─────────────────────────────────────────────────────
 function toggleDescuentoForm(){
-  document.getElementById('descuentoForm').classList.toggle('open');
+  const form = document.getElementById('descuentoForm');
+  const abrir = !form.classList.contains('open');
+  form.classList.toggle('open');
+  // Si ya hay un descuento aplicado, mostrarlo precargado al reabrir —
+  // antes el form siempre arrancaba vacío y solo se veía lo aplicado
+  // leyendo la letra chica del total.
+  if (abrir && currentComanda.descuento_tipo){
+    document.getElementById('descTipo').value = currentComanda.descuento_tipo;
+    document.getElementById('descValor').value = currentComanda.descuento_valor;
+  }
 }
 
 async function aplicarDescuentoAction(){
@@ -1088,7 +1122,7 @@ function renderProductos(){
     const stockBajo = p.stock_actual != null && p.stock_minimo != null && p.stock_actual > 0 && p.stock_actual <= p.stock_minimo;
     return `
     <div class="prod-card ${sinStock ? 'sin-stock' : ''}" onclick="agregarProducto(${p.id})">
-      <div class="prod-name">${escapeHtml(p.nombre)}</div>
+      <div class="prod-name" title="${escapeHtml(p.nombre)}">${escapeHtml(p.nombre)}</div>
       <div class="prod-unidad">${p.unidad_venta}</div>
       <div class="prod-price">${fmtMoney(p.precio)}</div>
       ${sinStock ? '<div class="prod-stock-low">Sin stock</div>' : (stockBajo ? '<div class="prod-stock-low">Stock bajo: ' + p.stock_actual + '</div>' : '')}
@@ -1294,7 +1328,7 @@ async function registrarMovimientoCaja(){
 async function cerrarCajaAction(){
   const contado = document.getElementById('cajaMontoContado').value;
   if (!contado) return toast('Falta el monto contado', 'error');
-  if (!confirm('¿Cerrar la caja? No se puede deshacer.')) return;
+  if (!(await confirmDialog('¿Cerrar la caja? No se puede deshacer.'))) return;
   try {
     const staff = sessionStorage.getItem(STAFF_KEY);
     const data = await api('/api/pos?r=caja-cerrar', { method: 'POST', body: { monto_final_contado: contado, cerrada_por: staff } });
@@ -1378,5 +1412,14 @@ if (sessionStorage.getItem(SESSION_KEY)) enterApp();
 </script>
 
 <div id="printArea"></div>
+
+<div class="confirm-backdrop" id="confirmBackdrop" onclick="resolveConfirm(false)"></div>
+<div class="confirm-dialog" id="confirmDialogEl">
+  <div class="confirm-msg" id="confirmMsg"></div>
+  <div class="quick-form-actions">
+    <button class="btn-outline" style="flex:1" onclick="resolveConfirm(false)">Cancelar</button>
+    <button class="btn-primary" style="flex:1" onclick="resolveConfirm(true)">Confirmar</button>
+  </div>
+</div>
 </body>
 </html>
