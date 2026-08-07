@@ -1,11 +1,10 @@
-// api/pos-comanda-item.js — agregar un ítem a una comanda abierta, o anularlo.
+// api/_lib/pos/comanda-item.js — agregar un ítem a una comanda abierta, o anularlo.
 // Fase 1: inserta con precio/nombre "congelados" al momento de la venta,
 // sin tocar stock todavía (eso se cablea en Fase 2, en una transacción
 // que combine el UPDATE de productos.stock_actual con este INSERT).
-const { sql } = require('./_lib/db');
-const { posHandler } = require('./_lib/pos-handler');
+const { sql } = require('../db');
 
-module.exports = posHandler(['POST'], async (req, res) => {
+async function comandaItem(req, res) {
   const { comanda_id, accion } = req.body || {};
   if (!comanda_id) return res.status(400).json({ error: "Falta comanda_id." });
 
@@ -42,4 +41,6 @@ module.exports = posHandler(['POST'], async (req, res) => {
     VALUES (${comanda_id}, ${producto_id}, ${producto.nombre}, ${producto.precio}, ${cant})
     RETURNING id, producto_id, nombre_snapshot, precio_unitario, cantidad, estado`;
   return res.status(201).json({ item: rows[0] });
-});
+}
+
+module.exports = { comandaItem };

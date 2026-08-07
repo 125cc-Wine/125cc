@@ -1,18 +1,19 @@
-// api/pos-mesas.js — listar mesas (con su comanda abierta, si tiene) / crear-editar mesa.
-const { sql } = require('./_lib/db');
-const { posHandler } = require('./_lib/pos-handler');
+// api/_lib/pos/mesas.js — listar mesas (con su comanda abierta, si tiene) / crear-editar mesa.
+// Módulo de lógica pura: lo llama el router en api/pos.js, no es un
+// endpoint de Vercel en sí mismo (vive bajo _lib, fuera del límite de
+// funciones serverless).
+const { sql } = require('../db');
 
-module.exports = posHandler(['GET', 'POST'], async (req, res) => {
-  if (req.method === 'GET') {
-    const { rows } = await sql`
-      SELECT m.id, m.nombre, m.capacidad, m.estado, c.id AS comanda_id
-      FROM mesas m
-      LEFT JOIN comandas c ON c.mesa_id = m.id AND c.estado = 'abierta'
-      ORDER BY m.id`;
-    return res.status(200).json({ mesas: rows });
-  }
+async function listMesas(req, res) {
+  const { rows } = await sql`
+    SELECT m.id, m.nombre, m.capacidad, m.estado, c.id AS comanda_id
+    FROM mesas m
+    LEFT JOIN comandas c ON c.mesa_id = m.id AND c.estado = 'abierta'
+    ORDER BY m.id`;
+  return res.status(200).json({ mesas: rows });
+}
 
-  // POST: crear o editar mesa
+async function upsertMesa(req, res) {
   const { id, nombre, capacidad } = req.body || {};
   if (!nombre || typeof nombre !== 'string' || nombre.length > 60) {
     return res.status(400).json({ error: "Falta nombre válido." });
@@ -33,4 +34,6 @@ module.exports = posHandler(['GET', 'POST'], async (req, res) => {
     INSERT INTO mesas (nombre, capacidad) VALUES (${nombre}, ${cap})
     RETURNING id, nombre, capacidad, estado`;
   return res.status(201).json({ mesa: rows[0] });
-});
+}
+
+module.exports = { listMesas, upsertMesa };

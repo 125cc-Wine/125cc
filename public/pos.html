@@ -252,7 +252,7 @@ async function tryLogin(){
   const staff = document.getElementById('staffInput').value.trim();
   document.getElementById('loginError').style.display = 'none';
   try {
-    const res = await fetch('/api/pos-auth', {
+    const res = await fetch('/api/pos?r=auth', {
       method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ password: pass })
     });
     const data = await res.json();
@@ -303,7 +303,7 @@ function backToMesas(){
 // ── MESAS ─────────────────────────────────────────────────────────
 async function loadMesas(){
   try {
-    const data = await api('/api/pos-mesas');
+    const data = await api('/api/pos?r=mesas');
     mesas = data.mesas;
     renderMesas();
   } catch(e){ toast(e.message, 'error'); }
@@ -329,7 +329,7 @@ async function submitMesaForm(){
   const capacidad = document.getElementById('mesaCap').value;
   if (!nombre) return toast('Falta el nombre de la mesa', 'error');
   try {
-    await api('/api/pos-mesas', { method: 'POST', body: { nombre, capacidad: capacidad || null } });
+    await api('/api/pos?r=mesas', { method: 'POST', body: { nombre, capacidad: capacidad || null } });
     document.getElementById('mesaNombre').value = '';
     document.getElementById('mesaCap').value = '';
     toggleMesaForm();
@@ -347,7 +347,7 @@ async function openMesa(mesaId){
   }
   try {
     const staff = sessionStorage.getItem(STAFF_KEY);
-    const data = await api('/api/pos-comandas', { method: 'POST', body: { mesa_id: mesaId, atendido_por: staff } });
+    const data = await api('/api/pos?r=comandas', { method: 'POST', body: { mesa_id: mesaId, atendido_por: staff } });
     openComanda(data.comanda.id);
   } catch(e){ toast(e.message, 'error'); }
 }
@@ -355,7 +355,7 @@ async function openMesa(mesaId){
 async function startTakeaway(){
   try {
     const staff = sessionStorage.getItem(STAFF_KEY);
-    const data = await api('/api/pos-comandas', { method: 'POST', body: { atendido_por: staff } });
+    const data = await api('/api/pos?r=comandas', { method: 'POST', body: { atendido_por: staff } });
     openComanda(data.comanda.id);
   } catch(e){ toast(e.message, 'error'); }
 }
@@ -363,7 +363,7 @@ async function startTakeaway(){
 // ── COMANDA ───────────────────────────────────────────────────────
 async function openComanda(id){
   try {
-    const data = await api('/api/pos-comanda?id=' + id);
+    const data = await api('/api/pos?r=comanda&id=' + id);
     currentComanda = data.comanda;
     currentItems = data.items;
     document.getElementById('topLabel').textContent = 'Comanda';
@@ -401,7 +401,7 @@ function renderItems(){
 }
 
 async function refreshComanda(){
-  const data = await api('/api/pos-comanda?id=' + currentComanda.id);
+  const data = await api('/api/pos?r=comanda&id=' + currentComanda.id);
   currentComanda = data.comanda;
   currentItems = data.items;
   renderItems();
@@ -409,14 +409,14 @@ async function refreshComanda(){
 
 async function addItem(productoId){
   try {
-    await api('/api/pos-comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, producto_id: productoId, cantidad: 1 } });
+    await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, producto_id: productoId, cantidad: 1 } });
     await refreshComanda();
   } catch(e){ toast(e.message, 'error'); }
 }
 
 async function anularItem(itemId){
   try {
-    await api('/api/pos-comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'anular', item_id: itemId } });
+    await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'anular', item_id: itemId } });
     await refreshComanda();
   } catch(e){ toast(e.message, 'error'); }
 }
@@ -435,7 +435,7 @@ function selectMedio(el){
 async function confirmCobrar(){
   if (!medioSeleccionado) return toast('Elegí un medio de pago', 'error');
   try {
-    await api('/api/pos-comanda-cerrar', { method: 'POST', body: { comanda_id: currentComanda.id, medio_pago: medioSeleccionado } });
+    await api('/api/pos?r=comanda-cerrar', { method: 'POST', body: { comanda_id: currentComanda.id, medio_pago: medioSeleccionado } });
     toast('Comanda cobrada', 'success');
     backToMesas();
   } catch(e){ toast(e.message, 'error'); }
@@ -444,7 +444,7 @@ async function confirmCobrar(){
 // ── PRODUCTOS ─────────────────────────────────────────────────────
 async function loadProductos(){
   try {
-    const data = await api('/api/pos-productos');
+    const data = await api('/api/pos?r=productos');
     productos = data.productos;
   } catch(e){ toast(e.message, 'error'); }
 }
@@ -489,7 +489,7 @@ async function submitProductoForm(){
   const unidad_venta = document.getElementById('prodUnidad').value;
   if (!nombre || !precio) return toast('Falta nombre o precio', 'error');
   try {
-    await api('/api/pos-productos', { method: 'POST', body: { nombre, categoria, precio, unidad_venta } });
+    await api('/api/pos?r=productos', { method: 'POST', body: { nombre, categoria, precio, unidad_venta } });
     document.getElementById('prodNombre').value = '';
     document.getElementById('prodCategoria').value = '';
     document.getElementById('prodPrecio').value = '';

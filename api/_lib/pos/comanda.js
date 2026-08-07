@@ -1,8 +1,7 @@
-// api/pos-comanda.js — detalle de una comanda: cabecera + ítems (activos y anulados).
-const { sql } = require('./_lib/db');
-const { posHandler } = require('./_lib/pos-handler');
+// api/_lib/pos/comanda.js — detalle de una comanda: cabecera + ítems (activos y anulados).
+const { sql } = require('../db');
 
-module.exports = posHandler(['GET'], async (req, res) => {
+async function getComanda(req, res) {
   const id = req.query.id;
   if (!id) return res.status(400).json({ error: "Falta id." });
 
@@ -18,4 +17,6 @@ module.exports = posHandler(['GET'], async (req, res) => {
     FROM comanda_items WHERE comanda_id = ${id} ORDER BY created_at`;
 
   return res.status(200).json({ comanda: comandaRows[0], items });
-});
+}
+
+module.exports = { getComanda };

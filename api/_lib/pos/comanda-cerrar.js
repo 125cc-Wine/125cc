@@ -1,14 +1,13 @@
-// api/pos-comanda-cerrar.js — cobrar y cerrar una comanda: el total se
+// api/_lib/pos/comanda-cerrar.js — cobrar y cerrar una comanda: el total se
 // calcula server-side desde los ítems activos (nunca se confía en un total
 // mandado por el cliente), y la mesa vuelve a 'libre'. Desde la Fase 3
 // esto también exige una caja abierta y escribe el movimiento correspondiente
 // en la misma transacción.
-const { withTransaction } = require('./_lib/db');
-const { posHandler } = require('./_lib/pos-handler');
+const { withTransaction } = require('../db');
 
 const MEDIOS = ['efectivo', 'tarjeta', 'transferencia', 'mixto'];
 
-module.exports = posHandler(['POST'], async (req, res) => {
+async function cerrarComanda(req, res) {
   const { comanda_id, medio_pago } = req.body || {};
   if (!comanda_id || !MEDIOS.includes(medio_pago)) {
     return res.status(400).json({ error: "Falta comanda_id o medio_pago inválido." });
@@ -44,4 +43,6 @@ module.exports = posHandler(['POST'], async (req, res) => {
     if (err.code === 'not_open') return res.status(409).json({ error: "La comanda ya está cerrada o anulada." });
     throw err;
   }
-});
+}
+
+module.exports = { cerrarComanda };

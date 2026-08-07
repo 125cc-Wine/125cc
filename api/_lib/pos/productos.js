@@ -1,24 +1,22 @@
-// api/pos-productos.js — catálogo de venta del POS (independiente del Sheet
-// de Vinos): listar para el picker de la comanda / crear-editar producto.
-const { sql } = require('./_lib/db');
-const { posHandler } = require('./_lib/pos-handler');
+// api/_lib/pos/productos.js — catálogo de venta del POS (independiente del
+// Sheet de Vinos): listar para el picker de la comanda / crear-editar producto.
+const { sql } = require('../db');
 
 const UNIDADES = ['copa', 'botella', 'unidad'];
 
-module.exports = posHandler(['GET', 'POST'], async (req, res) => {
-  if (req.method === 'GET') {
-    const soloActivos = req.query.activo !== 'all';
-    const { rows } = soloActivos
-      ? await sql`
-          SELECT id, nombre, categoria, unidad_venta, precio, stock_actual, stock_minimo, activo, vino_ref
-          FROM productos WHERE activo = true ORDER BY categoria, nombre`
-      : await sql`
-          SELECT id, nombre, categoria, unidad_venta, precio, stock_actual, stock_minimo, activo, vino_ref
-          FROM productos ORDER BY categoria, nombre`;
-    return res.status(200).json({ productos: rows });
-  }
+async function listProductos(req, res) {
+  const soloActivos = req.query.activo !== 'all';
+  const { rows } = soloActivos
+    ? await sql`
+        SELECT id, nombre, categoria, unidad_venta, precio, stock_actual, stock_minimo, activo, vino_ref
+        FROM productos WHERE activo = true ORDER BY categoria, nombre`
+    : await sql`
+        SELECT id, nombre, categoria, unidad_venta, precio, stock_actual, stock_minimo, activo, vino_ref
+        FROM productos ORDER BY categoria, nombre`;
+  return res.status(200).json({ productos: rows });
+}
 
-  // POST: crear o editar producto
+async function upsertProducto(req, res) {
   const { id, nombre, categoria, unidad_venta, precio, stock_actual, stock_minimo, activo, vino_ref } = req.body || {};
   if (!nombre || typeof nombre !== 'string' || nombre.length > 120) {
     return res.status(400).json({ error: "Falta nombre válido." });
@@ -51,4 +49,6 @@ module.exports = posHandler(['GET', 'POST'], async (req, res) => {
     VALUES (${nombre}, ${cat}, ${unidad}, ${precioNum}, ${stockAct}, ${stockMin}, ${act}, ${ref})
     RETURNING id, nombre, categoria, unidad_venta, precio, stock_actual, stock_minimo, activo, vino_ref`;
   return res.status(201).json({ producto: rows[0] });
-});
+}
+
+module.exports = { listProductos, upsertProducto };
