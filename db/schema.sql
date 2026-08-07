@@ -124,3 +124,29 @@ CREATE TABLE IF NOT EXISTS pos_config (
 );
 INSERT INTO pos_config (clave, valor) VALUES ('margen_alerta_pct', '30')
   ON CONFLICT (clave) DO NOTHING;
+
+-- ── proveedores ────────────────────────────────────────────────────
+-- Deliberadamente chico: quién vende qué y a qué precio. Nada de
+-- órdenes de compra ni cuenta corriente — eso sería construir de más
+-- sin necesidad confirmada.
+CREATE TABLE IF NOT EXISTS proveedores (
+  id          serial PRIMARY KEY,
+  nombre      text NOT NULL,
+  contacto    text,                 -- teléfono/email libre, sin validación
+  notas       text,
+  activo      boolean NOT NULL DEFAULT true,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+-- Precio de compra de un producto a un proveedor puntual. producto_id
+-- por ahora (no hay insumo_id todavía — eso llega en la fase de
+-- recetas, se agrega con un ALTER TABLE cuando exista la tabla insumos).
+CREATE TABLE IF NOT EXISTS proveedor_productos (
+  id             serial PRIMARY KEY,
+  proveedor_id   int NOT NULL REFERENCES proveedores(id) ON DELETE CASCADE,
+  producto_id    int NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+  precio_compra  numeric(10,2) NOT NULL CHECK (precio_compra >= 0),
+  actualizado_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_proveedor_producto ON proveedor_productos(proveedor_id, producto_id);

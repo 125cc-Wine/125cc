@@ -28,6 +28,8 @@ const { registrarMovimiento } = require('./_lib/pos/caja-movimiento');
 const { cerrarCaja } = require('./_lib/pos/caja-cerrar');
 const { getReportes } = require('./_lib/pos/reportes');
 const { getAlertasMargen, getConfig, setConfig } = require('./_lib/pos/productos-alertas');
+const { listProveedores, upsertProveedor } = require('./_lib/pos/proveedores');
+const { listProveedorProductos, upsertProveedorProducto, aplicarCosto } = require('./_lib/pos/proveedor-producto');
 
 const ROUTES = {
   'mesas:GET': listMesas,
@@ -53,6 +55,11 @@ const ROUTES = {
   'productos-alertas:GET': getAlertasMargen,
   'pos-config:GET': getConfig,
   'pos-config:POST': setConfig,
+  'proveedores:GET': listProveedores,
+  'proveedores:POST': upsertProveedor,
+  'proveedor-producto:GET': listProveedorProductos,
+  'proveedor-producto:POST': upsertProveedorProducto,
+  'proveedor-aplicar-costo:POST': aplicarCosto,
 };
 
 module.exports = async function handler(req, res) {

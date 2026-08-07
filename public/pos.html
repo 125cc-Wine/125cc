@@ -90,6 +90,28 @@
   .logout-btn:hover{color:#fff}
   .view{padding:var(--sp-4) var(--sp-4) 40px}
 
+  /* Menú "Más": los paneles de back-office (Reportes/Caja/Stock/
+     Proveedores/...) van creciendo de a uno por fase — meterlos todos
+     como botones sueltos en el top bar es exactamente lo que causó el
+     bug de overflow horizontal antes. Un solo botón que despliega una
+     lista escala sin repetir ese problema cada vez que se suma un panel. */
+  .mas-wrap{position:relative}
+  .mas-menu{
+    position:absolute; right:0; top:calc(100% + var(--sp-2)); z-index:60;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md);
+    box-shadow:var(--shadow-md); min-width:170px; overflow:hidden; display:none;
+  }
+  .mas-menu.open{display:block}
+  .mas-menu button{
+    display:block; width:100%; text-align:left; background:none; border:none;
+    padding:var(--sp-3) var(--sp-4); font-size:var(--fs-sm); color:var(--ink-2);
+    cursor:pointer; min-height:var(--tap-min); border-bottom:1px solid var(--line);
+  }
+  .mas-menu button:last-child{border-bottom:none}
+  .mas-menu button:hover{background:var(--bg2)}
+  .mas-menu button.nav-active{color:var(--accent) !important; font-weight:700; background:var(--bg2)}
+  .mas-menu button.nav-active::after{content:none}
+
   .section-title{font-size:var(--fs-xs);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin-bottom:var(--sp-3);font-weight:700}
 
   /* ── LAYOUT DIVIDIDO: salón + comanda ── */
@@ -291,9 +313,15 @@
     </div>
     <div class="top-right">
       <div class="top-staff" id="topStaff"></div>
-      <button class="logout-btn" id="navReportes" onclick="togglePanel('reportes')">Reportes</button>
-      <button class="logout-btn" id="navCaja" onclick="togglePanel('caja')">Caja</button>
-      <button class="logout-btn" id="navStock" onclick="togglePanel('stock')">Stock</button>
+      <div class="mas-wrap">
+        <button class="logout-btn" onclick="toggleMasMenu()">☰ Más</button>
+        <div class="mas-menu" id="masMenu">
+          <button id="navReportes" onclick="togglePanel('reportes')">Reportes</button>
+          <button id="navCaja" onclick="togglePanel('caja')">Caja</button>
+          <button id="navStock" onclick="togglePanel('stock')">Stock</button>
+          <button id="navProveedores" onclick="togglePanel('proveedores')">Proveedores</button>
+        </div>
+      </div>
       <button class="logout-btn" onclick="logout()">Salir</button>
     </div>
   </div>
@@ -328,6 +356,28 @@
         <button class="close-btn" onclick="closeAllPanels()" title="Cerrar">✕</button>
       </div>
       <div id="stockList"><div class="items-empty">Cargando...</div></div>
+    </div>
+
+    <div class="stock-panel modal-panel" id="proveedoresPanel">
+      <div class="stock-panel-header">
+        <div class="section-title" style="margin-bottom:0">Proveedores</div>
+        <button class="close-btn" onclick="closeAllPanels()" title="Cerrar">✕</button>
+      </div>
+      <div class="quick-form" id="proveedorForm">
+        <div class="form-row">
+          <input type="text" id="provNombre" placeholder="Nombre" maxlength="120">
+          <input type="text" id="provContacto" placeholder="Contacto (tel/email)" maxlength="200">
+        </div>
+        <div class="quick-form-actions">
+          <button class="btn-primary" onclick="submitProveedorForm()">Guardar</button>
+          <button class="btn-outline" onclick="toggleProveedorForm()">Cancelar</button>
+        </div>
+      </div>
+      <div class="row-btns" style="margin-bottom:8px">
+        <button class="btn-outline" onclick="toggleProveedorForm()">+ Proveedor</button>
+      </div>
+      <div id="proveedoresList"><div class="items-empty">Cargando...</div></div>
+      <div id="proveedorDetalle"></div>
     </div>
 
     <div class="salon-split">
@@ -1064,6 +1114,127 @@ async function quitarDescuentoAction(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
+// ── PROVEEDORES ───────────────────────────────────────────────────
+let proveedores = [];
+let proveedorSeleccionado = null;
+
+async function loadProveedores(){
+  try {
+    const data = await api('/api/pos?r=proveedores');
+    proveedores = data.proveedores;
+    renderProveedores();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function renderProveedores(){
+  const box = document.getElementById('proveedoresList');
+  if (!proveedores.length){ box.innerHTML = '<div class="items-empty">Todavía no hay proveedores cargados.</div>'; document.getElementById('proveedorDetalle').innerHTML = ''; return; }
+  box.innerHTML = proveedores.map(p => `
+    <div class="stock-row" style="cursor:pointer" onclick="seleccionarProveedor(${p.id})">
+      <div class="stock-row-name">${proveedorSeleccionado === p.id ? '▾ ' : ''}${escapeHtml(p.nombre)}</div>
+      <div class="stock-row-name-sub">${escapeHtml(p.contacto || '')}</div>
+    </div>`).join('');
+  if (proveedorSeleccionado) renderProveedorDetalle();
+  else document.getElementById('proveedorDetalle').innerHTML = '';
+}
+
+function toggleProveedorForm(){
+  document.getElementById('proveedorForm').classList.toggle('open');
+}
+
+async function submitProveedorForm(){
+  const nombre = document.getElementById('provNombre').value.trim();
+  const contacto = document.getElementById('provContacto').value.trim();
+  if (!nombre) return toast('Falta el nombre', 'error');
+  try {
+    await api('/api/pos?r=proveedores', { method: 'POST', body: { nombre, contacto } });
+    document.getElementById('provNombre').value = '';
+    document.getElementById('provContacto').value = '';
+    toggleProveedorForm();
+    toast('Proveedor creado', 'success');
+    await loadProveedores();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function seleccionarProveedor(id){
+  proveedorSeleccionado = (proveedorSeleccionado === id) ? null : id;
+  renderProveedores();
+}
+
+async function renderProveedorDetalle(){
+  const box = document.getElementById('proveedorDetalle');
+  box.innerHTML = '<div class="items-empty">Cargando...</div>';
+  try {
+    const data = await api('/api/pos?r=proveedor-producto&proveedor_id=' + proveedorSeleccionado);
+    if (!productos.length) await loadProductos();
+    const vinculados = new Set(data.items.map(i => i.producto_id));
+    const disponibles = productos.filter(p => !vinculados.has(p.id));
+    box.innerHTML = `
+      <div class="section-title" style="margin-top:12px">Precios de compra</div>
+      ${data.items.map(i => `
+        <div class="stock-row" style="flex-wrap:wrap">
+          <div style="flex-basis:100%">
+            <div class="stock-row-name">${escapeHtml(i.producto_nombre)}</div>
+            <div class="stock-row-name-sub">costo actual del producto: ${i.costo_actual != null ? fmtMoney(i.costo_actual) : 'sin cargar'}</div>
+          </div>
+          <input type="number" class="stock-input" id="pcompra_${i.producto_id}" value="${i.precio_compra}" min="0" step="0.01">
+          <button class="btn-outline" onclick="guardarPrecioCompra(${i.producto_id})">Guardar</button>
+          <button class="btn-primary" onclick="aplicarComoCosto(${i.producto_id})">Aplicar como costo</button>
+        </div>`).join('') || '<div class="items-empty">Sin productos vinculados todavía.</div>'}
+      <div class="section-title" style="margin-top:12px">Vincular producto</div>
+      <div class="form-row">
+        <select id="provProductoSelect" class="stock-input" style="width:100%">
+          ${disponibles.length ? disponibles.map(p => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`).join('') : '<option value="">Sin productos disponibles</option>'}
+        </select>
+        <input type="number" id="provPrecioNuevo" class="stock-input" style="width:100%" placeholder="Precio de compra" min="0" step="0.01">
+      </div>
+      <button class="btn-outline" style="width:100%" onclick="vincularProducto()">Vincular</button>
+    `;
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function guardarPrecioCompra(productoId){
+  const precio = document.getElementById('pcompra_' + productoId).value;
+  try {
+    await api('/api/pos?r=proveedor-producto', { method: 'POST', body: { proveedor_id: proveedorSeleccionado, producto_id: productoId, precio_compra: precio } });
+    toast('Precio guardado', 'success');
+    renderProveedorDetalle();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// Confirma ANTES de aplicar si el nuevo costo deja el producto con
+// margen bajo — mismo criterio que las alertas de Fase 1, calculado acá
+// mismo con lo que ya está en pantalla, sin depender de otro request.
+async function aplicarComoCosto(productoId){
+  const precioCompra = Number(document.getElementById('pcompra_' + productoId).value);
+  const producto = productos.find(p => p.id === productoId);
+  if (producto && Number(producto.precio) > 0){
+    const margenPct = Math.round(((Number(producto.precio) - precioCompra) / Number(producto.precio)) * 1000) / 10;
+    if (margenPct < 30){
+      const ok = await confirmDialog(`Con este costo el margen queda en ${margenPct}%. ¿Aplicar igual?`);
+      if (!ok) return;
+    }
+  }
+  try {
+    await api('/api/pos?r=proveedor-aplicar-costo', { method: 'POST', body: { proveedor_id: proveedorSeleccionado, producto_id: productoId } });
+    toast('Costo aplicado', 'success');
+    await loadProductos();
+    renderProveedorDetalle();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function vincularProducto(){
+  const productoId = document.getElementById('provProductoSelect').value;
+  const precio = document.getElementById('provPrecioNuevo').value;
+  if (!productoId || !precio) return toast('Elegí un producto y un precio', 'error');
+  try {
+    await api('/api/pos?r=proveedor-producto', { method: 'POST', body: { proveedor_id: proveedorSeleccionado, producto_id: productoId, precio_compra: precio } });
+    toast('Producto vinculado', 'success');
+    document.getElementById('provPrecioNuevo').value = '';
+    renderProveedorDetalle();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
 // ── PRODUCTOS ─────────────────────────────────────────────────────
 async function loadProductos(){
   try {
@@ -1161,8 +1332,8 @@ async function importarVinos(){
 // fondo oscurecido y cierre explícito (✕ o tocar afuera) — antes cada uno
 // empujaba el resto de la página hacia abajo y podían quedar varios
 // abiertos juntos, sin forma clara de saber cuál estaba activo.
-let panelAbierto = null; // 'reportes' | 'caja' | 'stock' | null
-const PANEL_NAV_ID = { reportes: 'navReportes', caja: 'navCaja', stock: 'navStock' };
+let panelAbierto = null; // 'reportes' | 'caja' | 'stock' | 'proveedores' | null
+const PANEL_NAV_ID = { reportes: 'navReportes', caja: 'navCaja', stock: 'navStock', proveedores: 'navProveedores' };
 
 function closeAllPanels(){
   for (const name of Object.keys(PANEL_NAV_ID)){
@@ -1173,7 +1344,19 @@ function closeAllPanels(){
   panelAbierto = null;
 }
 
+// Menú "Más" del top bar — junta los paneles de back-office en un solo
+// desplegable en vez de sumar un botón suelto por cada uno (eso fue lo
+// que causó el bug real de overflow horizontal en celu angosto antes).
+function toggleMasMenu(){
+  document.getElementById('masMenu').classList.toggle('open');
+}
+document.addEventListener('click', (e) => {
+  const wrap = document.querySelector('.mas-wrap');
+  if (wrap && !wrap.contains(e.target)) document.getElementById('masMenu').classList.remove('open');
+});
+
 async function togglePanel(name){
+  document.getElementById('masMenu').classList.remove('open');
   const yaEstabaAbierto = panelAbierto === name;
   closeAllPanels();
   if (yaEstabaAbierto) return;
@@ -1190,6 +1373,7 @@ async function togglePanel(name){
     await cargarAlertasMargen();
     renderStockList();
   }
+  else if (name === 'proveedores') await loadProveedores();
 }
 
 // ── ALERTAS DE MARGEN ────────────────────────────────────────────
