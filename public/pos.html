@@ -2002,7 +2002,7 @@ function renderProductos(){
       <div class="prod-name" title="${escapeHtml(p.nombre)}">${escapeHtml(p.nombre)}</div>
       <div class="prod-unidad">${p.unidad_venta}</div>
       <div class="prod-price">${fmtMoney(p.precio)}</div>
-      ${sinStock ? '<div class="prod-stock-low">Sin stock</div>' : (stockBajo ? '<div class="prod-stock-low">Stock bajo: ' + p.stock_actual + '</div>' : '')}
+      ${sinStock ? '<div class="prod-stock-low">Sin stock</div>' : (stockBajo ? '<div class="prod-stock-low">Stock bajo: ' + fmtStock(p.stock_actual) + '</div>' : '')}
     </div>`;
   }).join('');
 }
@@ -2312,8 +2312,8 @@ function renderStockList(){
         <div class="stock-row-name">${escapeHtml(p.nombre)}${idsAlerta.has(p.id) ? ' <span style="color:var(--red);font-weight:700">· margen bajo</span>' : ''}</div>
         <div class="stock-row-name-sub">${escapeHtml(p.categoria)} · ${p.unidad_venta} · vende ${fmtMoney(p.precio)}</div>
       </div>
-      <input type="number" class="stock-input" id="stockAct_${p.id}" value="${p.stock_actual ?? ''}" placeholder="Actual" min="0">
-      <input type="number" class="stock-input" id="stockMin_${p.id}" value="${p.stock_minimo ?? ''}" placeholder="Mín" min="0">
+      <input type="number" class="stock-input" id="stockAct_${p.id}" value="${fmtStock(p.stock_actual)}" placeholder="${p.unidad_venta === 'copa' ? 'Botellas' : 'Actual'}" min="0" step="0.01">
+      <input type="number" class="stock-input" id="stockMin_${p.id}" value="${fmtStock(p.stock_minimo)}" placeholder="${p.unidad_venta === 'copa' ? 'Mín (botellas)' : 'Mín'}" min="0" step="0.01">
       <input type="number" class="stock-input" id="stockCosto_${p.id}" value="${p.costo ?? ''}" placeholder="Costo" min="0" step="0.01">
       <button class="btn-outline" onclick="guardarStock(${p.id})">Guardar</button>
       <button class="btn-outline" style="font-size:10.5px;padding:6px 10px;min-height:auto" onclick="abrirMermaForm(${p.id})">Merma</button>
@@ -2366,7 +2366,7 @@ function abrirMermaForm(productoId){
   const p = productos.find(x => x.id === productoId);
   if (!p) return;
   stockAjusteProductoId = productoId;
-  document.getElementById('mermaFormTitle').textContent = `Merma — ${p.nombre}${p.stock_actual != null ? ` (stock actual: ${p.stock_actual})` : ''}`;
+  document.getElementById('mermaFormTitle').textContent = `Merma — ${p.nombre}${p.stock_actual != null ? ` (stock actual: ${fmtStock(p.stock_actual)})` : ''}`;
   document.getElementById('mermaCantidad').value = '';
   document.getElementById('mermaForm').classList.add('open');
 }
@@ -2390,8 +2390,8 @@ function abrirConteoForm(productoId){
   const p = productos.find(x => x.id === productoId);
   if (!p) return;
   stockAjusteProductoId = productoId;
-  document.getElementById('conteoFormTitle').textContent = `Conteo físico — ${p.nombre}${p.stock_actual != null ? ` (sistema dice: ${p.stock_actual})` : ' (sin trackear todavía)'}`;
-  document.getElementById('conteoCantidad').value = p.stock_actual ?? '';
+  document.getElementById('conteoFormTitle').textContent = `Conteo físico — ${p.nombre}${p.stock_actual != null ? ` (sistema dice: ${fmtStock(p.stock_actual)})` : ' (sin trackear todavía)'}`;
+  document.getElementById('conteoCantidad').value = fmtStock(p.stock_actual);
   document.getElementById('conteoForm').classList.add('open');
 }
 
@@ -2426,6 +2426,7 @@ async function guardarStock(productoId){
       costo: costoVal === '' ? null : costoVal,
       stock_actual: stockActVal === '' ? null : stockActVal,
       stock_minimo: stockMinVal === '' ? null : stockMinVal,
+      copas_por_botella: p.copas_por_botella,
       activo: p.activo,
     }});
     toast('Stock actualizado', 'success');
@@ -2464,6 +2465,14 @@ async function submitProductoForm(){
 // ── HELPERS ───────────────────────────────────────────────────────
 function fmtMoney(n){
   return '$' + Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 });
+}
+// Stock en botellas se guarda con 6 decimales en la DB (para que el
+// redondeo de 1/6 por copa vendida no se acumule y bloquee la última
+// copa legítima de una botella) — para mostrarlo/editarlo alcanza y
+// sobra con 2, si no se ve un número feo tipo "1.833333".
+function fmtStock(n){
+  if (n == null || n === '') return '';
+  return Math.round(Number(n) * 100) / 100;
 }
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

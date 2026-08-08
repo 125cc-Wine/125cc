@@ -251,3 +251,23 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_clientes_telefono ON clientes(telefono) WH
 
 ALTER TABLE comandas ADD COLUMN IF NOT EXISTS cliente_id int REFERENCES clientes(id);
 CREATE INDEX IF NOT EXISTS idx_comandas_cliente ON comandas(cliente_id);
+
+-- ── Stock por botella, venta por copa. El stock físico se cuenta en
+-- botellas (750cc); cada copa vendida (125cc, uniforme en todo el
+-- catálogo hoy) descuenta 1/copas_por_botella de una botella, no 1
+-- unidad entera — antes stock_actual se descontaba -1 por copa, sin
+-- relación con el tamaño real de la botella. Columna (no una constante
+-- hardcodeada) por si algún vino puntual usara otra medida de copa el
+-- día de mañana, aunque hoy es uniforme y no hay UI para editarla.
+-- stock_actual/stock_minimo eran `int` — un producto por copa ahora
+-- descuenta fracciones de botella (1/6 por copa), así que pasan a
+-- numeric(12,6) — precisión fija (no ilimitada, para que Postgres
+-- redondee en cada escritura y 1/6 no arrastre basura de punto
+-- flotante tipo 8e-17) pero con margen suficiente (6 decimales) para
+-- que el redondeo acumulado de cientos de copas servidas no desvíe el
+-- umbral de "sin stock" antes de tiempo — con solo 4 decimales el
+-- error de redondeo de 1/6 por copa alcanza a bloquear la última copa
+-- legítima de una botella tras ~12 ventas. ──
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS copas_por_botella numeric NOT NULL DEFAULT 6;
+ALTER TABLE productos ALTER COLUMN stock_actual TYPE numeric(12,6);
+ALTER TABLE productos ALTER COLUMN stock_minimo TYPE numeric(12,6);

@@ -11,7 +11,27 @@
 // stock disponible devuelve 409 (advisory, no bloqueo duro — el body
 // {forzar:true} permite cargar igual, por si se abrió una botella nueva
 // que todavía no se registró).
+//
+// Stock por botella, venta por copa: el stock físico se cuenta en
+// botellas, no en copas — un producto unidad_venta='copa' descuenta
+// 1/copas_por_botella de una botella por cada copa vendida (125cc de
+// copa / 750cc de botella = 1/6, hoy uniforme en todo el catálogo).
+// 'botella' y 'unidad' siguen consumiendo 1 unidad entera de stock por
+// venta, sin cambios — ahí el stock ya coincidía con lo que se vendía.
 const { sql, withTransaction } = require('../db');
+
+function consumoStock(producto) {
+  return producto.unidad_venta === 'copa'
+    ? 1 / Number(producto.copas_por_botella || 6)
+    : 1;
+}
+
+// Tolerancia para el chequeo de "hay stock": 1/6 no es representable
+// exacto en decimal, así que restar esa fracción muchas veces (una
+// botella entera son 6 copas) acumula un residuo de redondeo minúsculo
+// (~0.000001 por copa). Sin margen, ese residuo termina bloqueando la
+// última copa legítima de una botella con "sin stock" siendo falso.
+const EPSILON_STOCK = 0.001;
 
 async function comandaItem(req, res) {
   const { comanda_id, accion } = req.body || {};
@@ -29,14 +49,17 @@ async function comandaItem(req, res) {
     if (!item_id) return res.status(400).json({ error: "Falta item_id." });
     try {
       await withTransaction(async (client) => {
-        const { rows } = await client.sql`
-          UPDATE comanda_items SET estado='anulado'
-          WHERE id=${item_id} AND comanda_id=${comanda_id} AND estado='activo'
-          RETURNING id, producto_id, cantidad`;
-        if (!rows.length) throw Object.assign(new Error('no_item'), { code: 'no_item' });
+        const { rows: itemRows } = await client.sql`
+          SELECT ci.id, ci.producto_id, ci.cantidad, p.unidad_venta, p.copas_por_botella
+          FROM comanda_items ci JOIN productos p ON p.id = ci.producto_id
+          WHERE ci.id=${item_id} AND ci.comanda_id=${comanda_id} AND ci.estado='activo'
+          FOR UPDATE`;
+        if (!itemRows.length) throw Object.assign(new Error('no_item'), { code: 'no_item' });
+        await client.sql`UPDATE comanda_items SET estado='anulado' WHERE id=${item_id}`;
+        const restituir = itemRows[0].cantidad * consumoStock(itemRows[0]);
         await client.sql`
-          UPDATE productos SET stock_actual = stock_actual + ${rows[0].cantidad}
-          WHERE id=${rows[0].producto_id} AND stock_actual IS NOT NULL`;
+          UPDATE productos SET stock_actual = stock_actual + ${restituir}
+          WHERE id=${itemRows[0].producto_id} AND stock_actual IS NOT NULL`;
       });
       return res.status(200).json({ ok: true });
     } catch (err) {
@@ -53,8 +76,9 @@ async function comandaItem(req, res) {
     try {
       await withTransaction(async (client) => {
         const { rows: itemRows } = await client.sql`
-          SELECT cantidad, producto_id FROM comanda_items
-          WHERE id=${item_id} AND comanda_id=${comanda_id} AND estado='activo' FOR UPDATE`;
+          SELECT ci.cantidad, ci.producto_id, p.unidad_venta, p.copas_por_botella
+          FROM comanda_items ci JOIN productos p ON p.id = ci.producto_id
+          WHERE ci.id=${item_id} AND ci.comanda_id=${comanda_id} AND ci.estado='activo' FOR UPDATE`;
         if (!itemRows.length) throw Object.assign(new Error('no_item'), { code: 'no_item' });
         const nuevaCant = itemRows[0].cantidad - 1;
         if (nuevaCant <= 0) {
@@ -62,8 +86,9 @@ async function comandaItem(req, res) {
         } else {
           await client.sql`UPDATE comanda_items SET cantidad=${nuevaCant} WHERE id=${item_id}`;
         }
+        const restituir = consumoStock(itemRows[0]);
         await client.sql`
-          UPDATE productos SET stock_actual = stock_actual + 1
+          UPDATE productos SET stock_actual = stock_actual + ${restituir}
           WHERE id=${itemRows[0].producto_id} AND stock_actual IS NOT NULL`;
       });
       return res.status(200).json({ ok: true });
@@ -82,15 +107,17 @@ async function comandaItem(req, res) {
   try {
     const item = await withTransaction(async (client) => {
       const { rows: prodRows } = await client.sql`
-        SELECT nombre, precio, stock_actual FROM productos WHERE id=${producto_id} FOR UPDATE`;
+        SELECT nombre, precio, stock_actual, unidad_venta, copas_por_botella
+        FROM productos WHERE id=${producto_id} FOR UPDATE`;
       if (!prodRows.length) throw Object.assign(new Error('no_producto'), { code: 'no_producto' });
       const producto = prodRows[0];
 
       if (producto.stock_actual != null) {
-        if (producto.stock_actual < 1 && !forzar) {
+        const consumo = consumoStock(producto);
+        if (producto.stock_actual < consumo - EPSILON_STOCK && !forzar) {
           throw Object.assign(new Error('sin_stock'), { code: 'sin_stock', disponible: producto.stock_actual });
         }
-        await client.sql`UPDATE productos SET stock_actual = stock_actual - 1 WHERE id=${producto_id}`;
+        await client.sql`UPDATE productos SET stock_actual = stock_actual - ${consumo} WHERE id=${producto_id}`;
       }
 
       const { rows: existentes } = await client.sql`
