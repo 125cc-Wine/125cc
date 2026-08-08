@@ -271,3 +271,84 @@ CREATE INDEX IF NOT EXISTS idx_comandas_cliente ON comandas(cliente_id);
 ALTER TABLE productos ADD COLUMN IF NOT EXISTS copas_por_botella numeric NOT NULL DEFAULT 6;
 ALTER TABLE productos ALTER COLUMN stock_actual TYPE numeric(12,6);
 ALTER TABLE productos ALTER COLUMN stock_minimo TYPE numeric(12,6);
+
+-- ── Fase 7: facturación electrónica AFIP (WSFEv1). ──────────────────
+-- afip_tickets: cachea el Ticket de Acceso (WSAA) entre invocaciones
+-- serverless — Vercel no mantiene estado en memoria entre cold starts,
+-- y AFIP limita cuán seguido se puede pedir un ticket nuevo para el
+-- mismo servicio (2-10 min entre pedidos). Se reusa mientras no esté
+-- por vencer (margen de seguridad de 10 min, ver afip-wsaa.js).
+CREATE TABLE IF NOT EXISTS afip_tickets (
+  servicio    text NOT NULL,                              -- 'wsfe'
+  ambiente    text NOT NULL CHECK (ambiente IN ('homologacion','produccion')),
+  token       text NOT NULL,
+  sign        text NOT NULL,
+  generado_at timestamptz NOT NULL,
+  expira_at   timestamptz NOT NULL,
+  PRIMARY KEY (servicio, ambiente)
+);
+
+-- afip_contadores: fila de lock para serializar la obtención del
+-- próximo número de comprobante por (punto_venta, cbte_tipo) — se
+-- lockea con SELECT...FOR UPDATE dentro de la misma transacción que
+-- llama a FECompUltimoAutorizado + FECAESolicitar, mismo patrón que
+-- comanda-cerrar.js usa para la caja. AFIP mismo sigue siendo la
+-- fuente de verdad real (se revalida siempre contra
+-- FECompUltimoAutorizado antes de pedir el CAE); esta fila es solo el
+-- mecanismo de exclusión mutua local.
+CREATE TABLE IF NOT EXISTS afip_contadores (
+  punto_venta int NOT NULL,
+  cbte_tipo   int NOT NULL,
+  ultimo_nro  int NOT NULL DEFAULT 0,
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (punto_venta, cbte_tipo)
+);
+
+-- comprobantes: un comprobante fiscal por comanda cobrada (a lo sumo
+-- uno con estado='aprobado' por comanda, forzado por el índice único
+-- parcial de abajo — nunca doble emisión de la misma venta).
+-- request_json/response_json guardan el detalle exacto mandado/recibido
+-- de AFIP para auditoría (esto emite documentos fiscales reales).
+CREATE TABLE IF NOT EXISTS comprobantes (
+  id                        serial PRIMARY KEY,
+  comanda_id                int NOT NULL REFERENCES comandas(id),
+  cliente_id                int REFERENCES clientes(id),
+  ambiente                  text NOT NULL CHECK (ambiente IN ('homologacion','produccion')),
+  punto_venta               int NOT NULL,
+  cbte_tipo                 int NOT NULL,                 -- 1=Factura A, 6=Factura B
+  numero                    int,                          -- NULL hasta que AFIP lo autoriza
+  doc_tipo                  int NOT NULL,                 -- 80=CUIT, 96=DNI, 99=Consumidor Final
+  doc_nro                   text NOT NULL,
+  condicion_iva_receptor_id int NOT NULL,                 -- 1=Resp. Inscripto, 5=Consumidor Final
+  concepto                  int NOT NULL DEFAULT 1,        -- 1=Productos
+  imp_neto                  numeric(10,2) NOT NULL,
+  imp_iva                   numeric(10,2) NOT NULL,
+  imp_total                 numeric(10,2) NOT NULL,
+  alicuota_iva_id           int NOT NULL DEFAULT 5,        -- 5=21%
+  cae                       text,
+  cae_vencimiento           date,
+  estado                    text NOT NULL DEFAULT 'pendiente'
+                              CHECK (estado IN ('pendiente','aprobado','rechazado','error')),
+  observaciones             jsonb,                         -- advertencias de AFIP aun si aprobado
+  motivo_error              text,
+  request_json              jsonb,
+  response_json             jsonb,
+  intentos                  int NOT NULL DEFAULT 0,
+  creado_por                text,
+  created_at                timestamptz NOT NULL DEFAULT now(),
+  updated_at                timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_comprobantes_comanda ON comprobantes(comanda_id);
+CREATE INDEX IF NOT EXISTS idx_comprobantes_estado ON comprobantes(estado);
+CREATE INDEX IF NOT EXISTS idx_comprobantes_fecha ON comprobantes(created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS one_aprobado_por_comanda
+  ON comprobantes(comanda_id) WHERE estado = 'aprobado';
+
+-- clientes: datos fiscales para poder emitir Factura A (Responsable
+-- Inscripto, con CUIT) — sin esto un cliente siempre factura como
+-- Consumidor Final (Factura B).
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS cuit text;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS razon_social text;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS condicion_iva text
+  NOT NULL DEFAULT 'consumidor_final'
+  CHECK (condicion_iva IN ('responsable_inscripto','monotributista','exento','consumidor_final'));

@@ -53,7 +53,8 @@ async function getCliente(req, res) {
   if (!id) return res.status(400).json({ error: "Falta id." });
 
   const { rows: clienteRows } = await sql`
-    SELECT id, nombre, telefono, email, notas, created_at FROM clientes WHERE id=${id}`;
+    SELECT id, nombre, telefono, email, notas, cuit, razon_social, condicion_iva, created_at
+    FROM clientes WHERE id=${id}`;
   if (!clienteRows.length) return res.status(404).json({ error: "Cliente no encontrado." });
   const cliente = clienteRows[0];
 

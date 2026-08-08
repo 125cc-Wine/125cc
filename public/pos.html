@@ -190,6 +190,12 @@
   .cliente-row-action{color:var(--accent);font-weight:600;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.03em}
   .cliente-frecuente-badge{background:rgba(207,172,89,.16);color:#8A6D1E;padding:10px var(--sp-5);font-size:var(--fs-xs);font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2)}
   .cliente-frecuente-badge button{background:var(--amber);color:#fff;border:none;border-radius:var(--r-sm);padding:6px 10px;font-size:var(--fs-xs);font-weight:700;cursor:pointer}
+  /* Ambiente AFIP — nunca un detalle chico: si dice HOMOLOGACIÓN, los
+     comprobantes que se emiten NO valen fiscalmente, tiene que ser
+     imposible no darse cuenta en qué ambiente se está parado. */
+  .afip-ambiente-badge{border-radius:var(--r-md);padding:12px 16px;margin-bottom:14px;font-weight:700;font-size:var(--fs-sm);text-align:center}
+  .afip-ambiente-badge.homologacion{background:#B45309;color:#fff}
+  .afip-ambiente-badge.produccion{background:var(--green);color:#fff}
 
   .items-box{border-top:1px solid var(--line)}
   .item-row{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-2) var(--sp-4);border-bottom:1px solid var(--line);min-height:56px}
@@ -329,6 +335,7 @@
           <button id="navProveedores" onclick="togglePanel('proveedores')">Proveedores</button>
           <button id="navFinanzas" onclick="togglePanel('finanzas')">Finanzas</button>
           <button id="navClientes" onclick="togglePanel('clientes')">Clientes</button>
+          <button id="navFacturacion" onclick="togglePanel('facturacion')">Facturación</button>
         </div>
       </div>
       <button class="logout-btn" onclick="logout()">Salir</button>
@@ -515,7 +522,18 @@
           </div>
           <div class="form-row">
             <input type="email" id="clAltaEmail" placeholder="Email (opcional)" maxlength="200">
+            <select id="clAltaCondicionIva" class="stock-input" style="width:100%" onchange="toggleClAltaFiscal()">
+              <option value="consumidor_final">Consumidor Final</option>
+              <option value="responsable_inscripto">Responsable Inscripto</option>
+              <option value="monotributista">Monotributista</option>
+              <option value="exento">Exento</option>
+            </select>
           </div>
+          <div class="form-row" id="clAltaFiscalRow" style="display:none">
+            <input type="text" id="clAltaCuit" placeholder="CUIT" maxlength="13">
+            <input type="text" id="clAltaRazonSocial" placeholder="Razón social" maxlength="120">
+          </div>
+          <p class="stock-row-name-sub" style="margin:-2px 0 8px">Responsable Inscripto con CUIT factura Factura A automáticamente. El resto factura como Consumidor Final (Factura B).</p>
           <div class="quick-form-actions">
             <button class="btn-primary" onclick="submitClienteAltaForm()">Guardar</button>
             <button class="btn-outline" onclick="toggleClienteAltaForm()">Cancelar</button>
@@ -534,6 +552,27 @@
         </div>
         <div id="clFrecuentesLista"><div class="items-empty">Cargando...</div></div>
       </div>
+    </div>
+
+    <div class="stock-panel modal-panel" id="facturacionPanel">
+      <div class="stock-panel-header">
+        <div class="section-title" style="margin-bottom:0">Facturación</div>
+        <button class="close-btn" onclick="closeAllPanels()" title="Cerrar">✕</button>
+      </div>
+      <div id="facturacionAmbiente"></div>
+      <div class="row-btns" style="margin-bottom:8px">
+        <input type="month" id="facMesInput" class="stock-input" style="width:100%" onchange="loadFacturacion()">
+        <select id="facEstadoInput" class="stock-input" style="width:100%" onchange="loadFacturacion()">
+          <option value="">Todos los estados</option>
+          <option value="aprobado">Aprobados</option>
+          <option value="rechazado">Rechazados</option>
+          <option value="error">Con error</option>
+        </select>
+      </div>
+      <div class="row-btns" style="margin-bottom:8px">
+        <button class="btn-outline" style="width:100%" onclick="exportarComprobantesCSV()">⇩ Exportar CSV (libro IVA)</button>
+      </div>
+      <div id="facturacionLista"><div class="items-empty">Cargando...</div></div>
     </div>
 
     <div class="salon-split">
@@ -1283,11 +1322,28 @@ async function confirmCobrar(){
   const total = totalConDescuento();
   const suma = pagosState.reduce((s,p) => s + (Number(p.monto) || 0), 0);
   if (Math.abs(suma - total) > 1) return toast('La suma de los pagos no coincide con el total', 'error');
+  const comandaId = currentComanda.id;
   try {
-    await api('/api/pos?r=comanda-cerrar', { method: 'POST', body: { comanda_id: currentComanda.id, pagos: pagosState } });
+    await api('/api/pos?r=comanda-cerrar', { method: 'POST', body: { comanda_id: comandaId, pagos: pagosState } });
     toast('Comanda cobrada', 'success');
     cerrarPanel();
+    // La factura se emite DESPUÉS de cerrar, sin esperar su resultado —
+    // la comanda ya quedó cobrada pase lo que pase con AFIP. Si falla,
+    // queda reintentable desde el panel Facturación.
+    emitirFacturaBestEffort(comandaId);
   } catch(e){ toast(e.message, 'error'); }
+}
+
+async function emitirFacturaBestEffort(comandaId){
+  const staff = sessionStorage.getItem(STAFF_KEY);
+  try {
+    const data = await api('/api/pos?r=comprobante-emitir', { method: 'POST', body: { comanda_id: comandaId, creado_por: staff } });
+    if (data.comprobante.estado === 'aprobado') toast(`Factura emitida — CAE ${data.comprobante.cae}`, 'success');
+    else if (!data.comprobante.no_configurado) toast('Comanda cobrada, pero la factura quedó pendiente (ver panel Facturación)', 'error');
+  } catch(e){
+    // Silencioso a propósito — la comanda ya se cobró y se cerró antes
+    // de esto, un error acá nunca debe interrumpir al mozo.
+  }
 }
 
 // ── TRASLADO DE MESA ──────────────────────────────────────────────
@@ -1858,9 +1914,21 @@ function editarClientePanel(id){
     document.getElementById('clAltaNombre').value = data.cliente.nombre || '';
     document.getElementById('clAltaTelefono').value = data.cliente.telefono || '';
     document.getElementById('clAltaEmail').value = data.cliente.email || '';
+    document.getElementById('clAltaCondicionIva').value = data.cliente.condicion_iva || 'consumidor_final';
+    document.getElementById('clAltaCuit').value = data.cliente.cuit || '';
+    document.getElementById('clAltaRazonSocial').value = data.cliente.razon_social || '';
+    toggleClAltaFiscal();
     document.getElementById('clienteAltaForm').classList.add('open');
     document.getElementById('clAltaNombre').focus();
   }).catch(e => toast(e.message, 'error'));
+}
+
+// El CUIT/razón social solo importan para Responsable Inscripto (es lo
+// que decide Factura A vs B al facturar) — se ocultan para el resto
+// para no pedir de más.
+function toggleClAltaFiscal(){
+  const esRI = document.getElementById('clAltaCondicionIva').value === 'responsable_inscripto';
+  document.getElementById('clAltaFiscalRow').style.display = esRI ? 'flex' : 'none';
 }
 
 function toggleClienteAltaForm(){
@@ -1872,6 +1940,10 @@ function toggleClienteAltaForm(){
     document.getElementById('clAltaNombre').value = '';
     document.getElementById('clAltaTelefono').value = '';
     document.getElementById('clAltaEmail').value = '';
+    document.getElementById('clAltaCondicionIva').value = 'consumidor_final';
+    document.getElementById('clAltaCuit').value = '';
+    document.getElementById('clAltaRazonSocial').value = '';
+    toggleClAltaFiscal();
   }
   if (!abrir) clienteEnEdicion = null;
 }
@@ -1880,11 +1952,15 @@ async function submitClienteAltaForm(){
   const nombre = document.getElementById('clAltaNombre').value.trim();
   const telefono = document.getElementById('clAltaTelefono').value.trim();
   const email = document.getElementById('clAltaEmail').value.trim();
+  const condicion_iva = document.getElementById('clAltaCondicionIva').value;
+  const cuit = document.getElementById('clAltaCuit').value.trim();
+  const razon_social = document.getElementById('clAltaRazonSocial').value.trim();
   if (!nombre) return toast('Falta el nombre', 'error');
+  if (condicion_iva === 'responsable_inscripto' && !cuit) return toast('Falta el CUIT para Responsable Inscripto', 'error');
   const staff = sessionStorage.getItem(STAFF_KEY);
   const editandoId = clienteEnEdicion;
   try {
-    const body = { nombre, telefono, email, creado_por: staff };
+    const body = { nombre, telefono, email, condicion_iva, cuit, razon_social, creado_por: staff };
     if (editandoId) body.id = editandoId;
     await api('/api/pos?r=clientes', { method: 'POST', body });
     toast(editandoId ? 'Cliente actualizado' : 'Cliente creado', 'success');
@@ -1931,6 +2007,89 @@ function exportarClientesCSV(){
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }).catch(e => toast(e.message, 'error'));
+}
+
+// ── FACTURACIÓN AFIP ─────────────────────────────────────────────
+const CBTE_TIPO_LABEL = { 1: 'Factura A', 6: 'Factura B' };
+const COMPROBANTE_ESTADO_LABEL = { aprobado: 'Aprobado', rechazado: 'Rechazado', error: 'Error', pendiente: 'Pendiente' };
+
+let ultimosComprobantes = null;
+
+async function loadFacturacion(){
+  const box = document.getElementById('facturacionLista');
+  box.innerHTML = '<div class="items-empty">Cargando...</div>';
+  const mes = document.getElementById('facMesInput').value;
+  const estado = document.getElementById('facEstadoInput').value;
+  const params = [];
+  if (mes) params.push('mes=' + mes);
+  if (estado) params.push('estado=' + estado);
+  try {
+    const data = await api('/api/pos?r=comprobantes' + (params.length ? '&' + params.join('&') : ''));
+    ultimosComprobantes = data.comprobantes;
+    renderFacturacionAmbiente(data.ambiente);
+    renderFacturacion(data.comprobantes);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function renderFacturacionAmbiente(ambiente){
+  const box = document.getElementById('facturacionAmbiente');
+  if (ambiente === 'produccion'){
+    box.innerHTML = `<div class="afip-ambiente-badge produccion">PRODUCCIÓN — los comprobantes emitidos son fiscalmente válidos</div>`;
+  } else {
+    box.innerHTML = `<div class="afip-ambiente-badge homologacion">⚠ AMBIENTE DE HOMOLOGACIÓN — los comprobantes NO son válidos fiscalmente</div>`;
+  }
+}
+
+function renderFacturacion(comprobantes){
+  const box = document.getElementById('facturacionLista');
+  if (!comprobantes.length){ box.innerHTML = '<div class="items-empty">Sin comprobantes en este filtro.</div>'; return; }
+  box.innerHTML = comprobantes.map(c => {
+    const fecha = new Date(c.created_at).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    const color = c.estado === 'aprobado' ? 'var(--green)' : (c.estado === 'rechazado' ? 'var(--red)' : 'var(--amber)');
+    const numero = c.numero ? `Nº ${String(c.punto_venta).padStart(5,'0')}-${String(c.numero).padStart(8,'0')}` : 'sin número';
+    const detalle = c.estado === 'aprobado'
+      ? `CAE ${c.cae}`
+      : (c.motivo_error || 'Sin detalle');
+    return `<div class="stock-row" style="flex-wrap:wrap">
+      <div style="flex-basis:100%">
+        <div class="stock-row-name">${CBTE_TIPO_LABEL[c.cbte_tipo] || 'Comprobante'} ${numero} ${c.cliente_nombre ? '· ' + escapeHtml(c.cliente_nombre) : ''}</div>
+        <div class="stock-row-name-sub">${fecha} · ${fmtMoney(c.imp_total)} · <span style="color:${color};font-weight:700">${COMPROBANTE_ESTADO_LABEL[c.estado] || c.estado}</span></div>
+        <div class="stock-row-name-sub">${escapeHtml(detalle)}</div>
+      </div>
+      ${c.estado === 'rechazado' || c.estado === 'error' ? `<button class="btn-outline" onclick="reintentarComprobanteAction(${c.id})">Reintentar</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function reintentarComprobanteAction(comprobanteId){
+  try {
+    const data = await api('/api/pos?r=comprobante-reintentar', { method: 'POST', body: { comprobante_id: comprobanteId } });
+    if (data.comprobante.estado === 'aprobado') toast(`Factura emitida — CAE ${data.comprobante.cae}`, 'success');
+    else toast(data.comprobante.motivo_error || 'Sigue sin poder emitirse', 'error');
+    loadFacturacion();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function exportarComprobantesCSV(){
+  if (!ultimosComprobantes) return;
+  const filas = [['Fecha', 'Tipo', 'Punto de venta', 'Número', 'Cliente', 'Doc. tipo', 'Doc. número', 'Neto', 'IVA', 'Total', 'CAE', 'Estado']];
+  ultimosComprobantes.forEach(c => filas.push([
+    new Date(c.created_at).toLocaleDateString('es-AR'),
+    CBTE_TIPO_LABEL[c.cbte_tipo] || c.cbte_tipo,
+    c.punto_venta, c.numero || '', c.cliente_nombre || '',
+    c.doc_tipo, c.doc_nro, c.imp_neto, c.imp_iva, c.imp_total,
+    c.cae || '', COMPROBANTE_ESTADO_LABEL[c.estado] || c.estado,
+  ]));
+  const csv = filas.map(fila => fila.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `125cc-comprobantes-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ── PRODUCTOS ─────────────────────────────────────────────────────
@@ -2031,7 +2190,7 @@ async function importarVinos(){
 // empujaba el resto de la página hacia abajo y podían quedar varios
 // abiertos juntos, sin forma clara de saber cuál estaba activo.
 let panelAbierto = null; // 'reportes' | 'caja' | 'stock' | 'proveedores' | null
-const PANEL_NAV_ID = { reportes: 'navReportes', caja: 'navCaja', stock: 'navStock', proveedores: 'navProveedores', finanzas: 'navFinanzas', clientes: 'navClientes' };
+const PANEL_NAV_ID = { reportes: 'navReportes', caja: 'navCaja', stock: 'navStock', proveedores: 'navProveedores', finanzas: 'navFinanzas', clientes: 'navClientes', facturacion: 'navFacturacion' };
 
 function closeAllPanels(){
   for (const name of Object.keys(PANEL_NAV_ID)){
@@ -2074,6 +2233,7 @@ async function togglePanel(name){
   else if (name === 'proveedores') await loadProveedores();
   else if (name === 'finanzas') await loadFinanzas();
   else if (name === 'clientes') await loadClientesPanel();
+  else if (name === 'facturacion') await loadFacturacion();
 }
 
 // ── ALERTAS DE MARGEN ────────────────────────────────────────────

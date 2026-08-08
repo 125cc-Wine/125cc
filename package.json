@@ -2,6 +2,8 @@
   "name": "125cc",
   "private": true,
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0"
+    "@neondatabase/serverless": "^1.1.0",
+    "node-forge": "^1.4.0",
+    "fast-xml-parser": "^5.10.1"
   }
 }
