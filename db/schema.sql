@@ -232,3 +232,22 @@ CREATE TABLE IF NOT EXISTS gastos (
   created_at     timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_gastos_fecha ON gastos(fecha);
+
+-- ── Fase 6: clientes. Tabla propia en Postgres (no "Mis Catas"/Sheets
+-- — esa hoja tiene email opcional sin unicidad y no captura teléfono,
+-- el dato más útil acá). El cruce con Mis Catas se hace en vivo por
+-- email, best-effort, en cliente.js — nunca se sincroniza a esta tabla. ──
+CREATE TABLE IF NOT EXISTS clientes (
+  id          serial PRIMARY KEY,
+  nombre      text NOT NULL,
+  telefono    text,
+  email       text,          -- sin unicidad forzada, mismo criterio que Mis Catas
+  notas       text,
+  creado_por  text,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_clientes_telefono ON clientes(telefono) WHERE telefono IS NOT NULL;
+
+ALTER TABLE comandas ADD COLUMN IF NOT EXISTS cliente_id int REFERENCES clientes(id);
+CREATE INDEX IF NOT EXISTS idx_comandas_cliente ON comandas(cliente_id);

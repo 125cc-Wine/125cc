@@ -183,6 +183,13 @@
   .comanda-sub{font-size:var(--fs-xs);color:rgba(255,255,255,.8);margin-top:2px}
   .close-btn{background:rgba(255,255,255,.18);border:none;color:#fff;font-size:14px;cursor:pointer;width:32px;height:32px;border-radius:50%;flex-shrink:0;transition:background var(--t) var(--ease)}
   .close-btn:hover{background:rgba(255,255,255,.3)}
+  /* Fila de cliente en la comanda — visible apenas se abre la mesa
+     (feedback real: "cargar el cliente al abrir mesa sería ideal"),
+     nunca bloquea nada, solo un atajo siempre a la vista. */
+  .cliente-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);padding:10px var(--sp-5);border-bottom:1px solid var(--line);cursor:pointer;font-size:var(--fs-sm);color:var(--ink-2)}
+  .cliente-row-action{color:var(--accent);font-weight:600;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.03em}
+  .cliente-frecuente-badge{background:rgba(207,172,89,.16);color:#8A6D1E;padding:10px var(--sp-5);font-size:var(--fs-xs);font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2)}
+  .cliente-frecuente-badge button{background:var(--amber);color:#fff;border:none;border-radius:var(--r-sm);padding:6px 10px;font-size:var(--fs-xs);font-weight:700;cursor:pointer}
 
   .items-box{border-top:1px solid var(--line)}
   .item-row{display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-2) var(--sp-4);border-bottom:1px solid var(--line);min-height:56px}
@@ -321,6 +328,7 @@
           <button id="navStock" onclick="togglePanel('stock')">Stock</button>
           <button id="navProveedores" onclick="togglePanel('proveedores')">Proveedores</button>
           <button id="navFinanzas" onclick="togglePanel('finanzas')">Finanzas</button>
+          <button id="navClientes" onclick="togglePanel('clientes')">Clientes</button>
         </div>
       </div>
       <button class="logout-btn" onclick="logout()">Salir</button>
@@ -485,6 +493,49 @@
       </div>
     </div>
 
+    <div class="stock-panel modal-panel" id="clientesPanel">
+      <div class="stock-panel-header">
+        <div class="section-title" style="margin-bottom:0">Clientes</div>
+        <button class="close-btn" onclick="closeAllPanels()" title="Cerrar">✕</button>
+      </div>
+      <div class="row-btns" style="margin-bottom:8px">
+        <button class="cat-chip active" id="clTabBuscar" onclick="setClientesTab('buscar')">Buscar</button>
+        <button class="cat-chip" id="clTabFrecuentes" onclick="setClientesTab('frecuentes')">Frecuentes</button>
+      </div>
+
+      <div id="clBuscar">
+        <div class="row-btns" style="margin-bottom:8px">
+          <button class="btn-outline" style="width:100%" onclick="toggleClienteAltaForm()">+ Cliente</button>
+        </div>
+        <div class="quick-form" id="clienteAltaForm">
+          <div class="section-title" id="clienteAltaTitle">Nuevo cliente</div>
+          <div class="form-row">
+            <input type="text" id="clAltaNombre" placeholder="Nombre" maxlength="120">
+            <input type="text" id="clAltaTelefono" placeholder="Teléfono (opcional)" maxlength="30">
+          </div>
+          <div class="form-row">
+            <input type="email" id="clAltaEmail" placeholder="Email (opcional)" maxlength="200">
+          </div>
+          <div class="quick-form-actions">
+            <button class="btn-primary" onclick="submitClienteAltaForm()">Guardar</button>
+            <button class="btn-outline" onclick="toggleClienteAltaForm()">Cancelar</button>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:8px">
+          <input type="text" id="clBuscarPanelInput" placeholder="Buscar por nombre, teléfono o email" oninput="buscarClientesPanel()">
+        </div>
+        <div id="clBuscarLista"><div class="items-empty">Buscá o mirá la lista completa.</div></div>
+        <div id="clDetalle"></div>
+      </div>
+
+      <div id="clFrecuentes" style="display:none">
+        <div class="row-btns" style="margin-bottom:8px">
+          <button class="btn-outline" style="width:100%" onclick="exportarClientesCSV()">⇩ Exportar segmento CSV</button>
+        </div>
+        <div id="clFrecuentesLista"><div class="items-empty">Cargando...</div></div>
+      </div>
+    </div>
+
     <div class="salon-split">
 
       <!-- IZQUIERDA: plano del salón -->
@@ -524,6 +575,29 @@
               </div>
               <button class="close-btn" onclick="cerrarPanel()" title="Cerrar">✕</button>
             </div>
+            <div class="cliente-row" id="clienteRow" onclick="toggleClienteForm()">
+              <span id="clienteRowLabel">Cliente: sin asignar</span>
+              <span>
+                <span class="cliente-row-action" id="clienteRowQuitar" style="display:none;margin-right:10px" onclick="event.stopPropagation();quitarClienteComanda()">Quitar</span>
+                <span class="cliente-row-action" id="clienteRowAction">+ Agregar</span>
+              </span>
+            </div>
+            <div class="quick-form" id="clienteForm" style="margin:0;border-radius:0;border-left:none;border-right:none;box-shadow:none" onclick="event.stopPropagation()">
+              <div class="form-row">
+                <input type="text" id="clienteBuscarInput" placeholder="Buscar por nombre o teléfono" oninput="buscarClienteComanda()">
+              </div>
+              <div id="clienteResultados"></div>
+              <div class="section-title" style="margin-top:8px">O cargar nuevo</div>
+              <div class="form-row">
+                <input type="text" id="clienteNuevoNombre" placeholder="Nombre" maxlength="120">
+                <input type="text" id="clienteNuevoTelefono" placeholder="Teléfono (opcional)" maxlength="30">
+              </div>
+              <div class="quick-form-actions">
+                <button class="btn-primary" onclick="crearYAsignarCliente()">Crear y asignar</button>
+                <button class="btn-outline" onclick="toggleClienteForm()">Cerrar</button>
+              </div>
+            </div>
+            <div id="clienteFrecuenteBadge"></div>
             <div class="items-box" id="itemsBox"></div>
             <div class="total-bar" id="totalBar">
               <div class="total-label">Total</div>
@@ -916,6 +990,8 @@ async function openComanda(id){
     document.getElementById('productoForm').classList.remove('open');
     document.getElementById('trasladarForm').classList.remove('open');
     document.getElementById('descuentoForm').classList.remove('open');
+    document.getElementById('clienteForm').classList.remove('open');
+    renderClienteRow();
     renderItems();
     if (!productos.length) await loadProductos();
     renderTipoChips();
@@ -990,8 +1066,114 @@ async function refreshComanda(){
   const data = await api('/api/pos?r=comanda&id=' + currentComanda.id);
   currentComanda = data.comanda;
   currentItems = data.items;
+  renderClienteRow();
   renderItems();
   sincronizarAlturaMapa();
+}
+
+// ── CLIENTE DE LA COMANDA ────────────────────────────────────────
+// Se muestra siempre, apenas se abre la mesa — feedback real del
+// dueño: "cargar el cliente al abrir mesa sería ideal". Es un atajo,
+// nunca bloquea: cobrar sin cliente asociado sigue andando igual.
+let clientesFrecuentesCache = null;
+
+async function cargarClientesFrecuentesCache(){
+  if (clientesFrecuentesCache) return clientesFrecuentesCache;
+  try {
+    const data = await api('/api/pos?r=clientes-frecuentes');
+    clientesFrecuentesCache = data;
+  } catch(e){ clientesFrecuentesCache = { clientes: [], descuentoPct: 10 }; }
+  return clientesFrecuentesCache;
+}
+
+async function renderClienteRow(){
+  const label = document.getElementById('clienteRowLabel');
+  const action = document.getElementById('clienteRowAction');
+  const quitar = document.getElementById('clienteRowQuitar');
+  const badge = document.getElementById('clienteFrecuenteBadge');
+  if (currentComanda.cliente_id){
+    label.textContent = 'Cliente: ' + currentComanda.cliente_nombre;
+    action.textContent = 'Cambiar';
+    quitar.style.display = 'inline';
+  } else {
+    label.textContent = 'Cliente: sin asignar';
+    action.textContent = '+ Agregar';
+    quitar.style.display = 'none';
+  }
+  badge.innerHTML = '';
+  if (currentComanda.cliente_id){
+    const frec = await cargarClientesFrecuentesCache();
+    const esFrecuente = frec.clientes.some(c => c.id === currentComanda.cliente_id);
+    if (esFrecuente){
+      badge.innerHTML = `
+        <span>★ Cliente frecuente — sugerir ${frec.descuentoPct}% de descuento</span>
+        <button onclick="sugerirDescuentoFrecuente(${frec.descuentoPct})">Aplicar</button>`;
+    }
+  }
+}
+
+function sugerirDescuentoFrecuente(pct){
+  toggleDescuentoForm();
+  document.getElementById('descTipo').value = 'porcentaje';
+  document.getElementById('descValor').value = pct;
+}
+
+function toggleClienteForm(){
+  const form = document.getElementById('clienteForm');
+  form.classList.toggle('open');
+  if (form.classList.contains('open')){
+    document.getElementById('clienteBuscarInput').value = '';
+    document.getElementById('clienteNuevoNombre').value = '';
+    document.getElementById('clienteNuevoTelefono').value = '';
+    document.getElementById('clienteResultados').innerHTML = '';
+    document.getElementById('clienteBuscarInput').focus();
+  }
+}
+
+let clienteBuscarTimeout = null;
+function buscarClienteComanda(){
+  clearTimeout(clienteBuscarTimeout);
+  clienteBuscarTimeout = setTimeout(async () => {
+    const q = document.getElementById('clienteBuscarInput').value.trim();
+    const box = document.getElementById('clienteResultados');
+    if (!q){ box.innerHTML = ''; return; }
+    try {
+      const data = await api('/api/pos?r=clientes&q=' + encodeURIComponent(q));
+      box.innerHTML = data.clientes.map(c => `
+        <div class="stock-row" style="cursor:pointer" onclick="asignarClienteComanda(${c.id})">
+          <div class="stock-row-name">${escapeHtml(c.nombre)}</div>
+          <div class="stock-row-name-sub">${escapeHtml(c.telefono || c.email || '')}</div>
+        </div>`).join('') || '<div class="items-empty">Sin resultados.</div>';
+    } catch(e){ /* silencioso, no bloquea */ }
+  }, 250);
+}
+
+async function asignarClienteComanda(clienteId){
+  try {
+    await api('/api/pos?r=comanda-cliente', { method: 'POST', body: { comanda_id: currentComanda.id, cliente_id: clienteId } });
+    toggleClienteForm();
+    toast('Cliente asignado', 'success');
+    await refreshComanda();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function quitarClienteComanda(){
+  try {
+    await api('/api/pos?r=comanda-cliente', { method: 'POST', body: { comanda_id: currentComanda.id, cliente_id: null } });
+    toast('Cliente quitado', 'success');
+    await refreshComanda();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function crearYAsignarCliente(){
+  const nombre = document.getElementById('clienteNuevoNombre').value.trim();
+  const telefono = document.getElementById('clienteNuevoTelefono').value.trim();
+  if (!nombre) return toast('Falta el nombre', 'error');
+  const staff = sessionStorage.getItem(STAFF_KEY);
+  try {
+    const data = await api('/api/pos?r=clientes', { method: 'POST', body: { nombre, telefono, creado_por: staff } });
+    await asignarClienteComanda(data.cliente.id);
+  } catch(e){ toast(e.message, 'error'); }
 }
 
 // Agregar/sumar una unidad de un producto — el backend consolida en la
@@ -1585,6 +1767,172 @@ async function submitCostoFijoForm(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
+// ── PANEL CLIENTES ────────────────────────────────────────────────
+let clienteSeleccionadoPanel = null;
+let clienteEnEdicion = null;
+
+async function loadClientesPanel(){
+  clienteSeleccionadoPanel = null;
+  clienteEnEdicion = null;
+  document.getElementById('clDetalle').innerHTML = '';
+  document.getElementById('clBuscarPanelInput').value = '';
+  document.getElementById('clBuscarLista').innerHTML = '<div class="items-empty">Buscá o mirá la lista completa.</div>';
+  await loadClientesFrecuentesPanel();
+}
+
+function setClientesTab(tab){
+  document.getElementById('clTabBuscar').classList.toggle('active', tab === 'buscar');
+  document.getElementById('clTabFrecuentes').classList.toggle('active', tab === 'frecuentes');
+  document.getElementById('clBuscar').style.display = tab === 'buscar' ? 'block' : 'none';
+  document.getElementById('clFrecuentes').style.display = tab === 'frecuentes' ? 'block' : 'none';
+}
+
+let clBuscarPanelTimeout = null;
+function buscarClientesPanel(){
+  clearTimeout(clBuscarPanelTimeout);
+  clBuscarPanelTimeout = setTimeout(async () => {
+    const q = document.getElementById('clBuscarPanelInput').value.trim();
+    const box = document.getElementById('clBuscarLista');
+    box.innerHTML = '<div class="items-empty">Buscando...</div>';
+    try {
+      const data = await api('/api/pos?r=clientes' + (q ? '&q=' + encodeURIComponent(q) : ''));
+      renderClientesPanelLista(data.clientes);
+    } catch(e){ toast(e.message, 'error'); }
+  }, 250);
+}
+
+function renderClientesPanelLista(clientes){
+  const box = document.getElementById('clBuscarLista');
+  if (!clientes.length){ box.innerHTML = '<div class="items-empty">Sin resultados.</div>'; return; }
+  box.innerHTML = clientes.map(c => `
+    <div class="stock-row" style="cursor:pointer" onclick="seleccionarClientePanel(${c.id})">
+      <div class="stock-row-name">${clienteSeleccionadoPanel === c.id ? '▾ ' : ''}${escapeHtml(c.nombre)}</div>
+      <div class="stock-row-name-sub">${escapeHtml(c.telefono || c.email || '')}</div>
+    </div>`).join('');
+}
+
+async function seleccionarClientePanel(id){
+  clienteSeleccionadoPanel = (clienteSeleccionadoPanel === id) ? null : id;
+  if (!clienteSeleccionadoPanel){ document.getElementById('clDetalle').innerHTML = ''; return; }
+  const box = document.getElementById('clDetalle');
+  box.innerHTML = '<div class="items-empty">Cargando...</div>';
+  try {
+    const data = await api('/api/pos?r=cliente&id=' + clienteSeleccionadoPanel);
+    renderClienteDetallePanel(data);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function renderClienteDetallePanel(data){
+  const box = document.getElementById('clDetalle');
+  const c = data.cliente;
+  const historial = data.historial.map(h => `
+    <div class="stock-row">
+      <div class="stock-row-name">${new Date(h.cerrada_at).toLocaleDateString('es-AR')}</div>
+      <div>${fmtMoney(h.total)}</div>
+    </div>`).join('') || '<div class="items-empty">Sin compras registradas todavía.</div>';
+
+  const catas = data.misCatas
+    ? (data.misCatas.cantidad > 0
+        ? `<div class="stock-row-name-sub">${data.misCatas.cantidad} cata${data.misCatas.cantidad === 1 ? '' : 's'} en Mis Catas: ${data.misCatas.catas.map(x => escapeHtml(x.vino || '—')).join(', ')}</div>`
+        : '<div class="stock-row-name-sub">Sin catas en Mis Catas con este email.</div>')
+    : (c.email ? '<div class="stock-row-name-sub">No se pudo consultar Mis Catas.</div>' : '');
+
+  box.innerHTML = `
+    <div class="section-title" style="margin-top:12px">${escapeHtml(c.nombre)}</div>
+    <div class="stock-row-name-sub">${[c.telefono, c.email].filter(Boolean).map(escapeHtml).join(' · ') || 'Sin teléfono ni email cargado'}</div>
+    ${c.notas ? `<div class="stock-row-name-sub" style="margin-top:4px">${escapeHtml(c.notas)}</div>` : ''}
+    ${catas}
+    <div class="row-btns" style="margin-top:8px">
+      <button class="btn-outline" style="flex:1" onclick="editarClientePanel(${c.id})">Editar</button>
+    </div>
+    <div class="section-title" style="margin-top:12px">Historial de compras</div>
+    ${historial}
+  `;
+}
+
+// Reusa el mismo form de alta, precargado — evita duplicar markup.
+function editarClientePanel(id){
+  clienteEnEdicion = id;
+  document.getElementById('clienteAltaTitle').textContent = 'Editar cliente';
+  api('/api/pos?r=cliente&id=' + id).then(data => {
+    document.getElementById('clAltaNombre').value = data.cliente.nombre || '';
+    document.getElementById('clAltaTelefono').value = data.cliente.telefono || '';
+    document.getElementById('clAltaEmail').value = data.cliente.email || '';
+    document.getElementById('clienteAltaForm').classList.add('open');
+    document.getElementById('clAltaNombre').focus();
+  }).catch(e => toast(e.message, 'error'));
+}
+
+function toggleClienteAltaForm(){
+  const form = document.getElementById('clienteAltaForm');
+  const abrir = !form.classList.contains('open');
+  form.classList.toggle('open');
+  if (abrir && clienteEnEdicion === null){
+    document.getElementById('clienteAltaTitle').textContent = 'Nuevo cliente';
+    document.getElementById('clAltaNombre').value = '';
+    document.getElementById('clAltaTelefono').value = '';
+    document.getElementById('clAltaEmail').value = '';
+  }
+  if (!abrir) clienteEnEdicion = null;
+}
+
+async function submitClienteAltaForm(){
+  const nombre = document.getElementById('clAltaNombre').value.trim();
+  const telefono = document.getElementById('clAltaTelefono').value.trim();
+  const email = document.getElementById('clAltaEmail').value.trim();
+  if (!nombre) return toast('Falta el nombre', 'error');
+  const staff = sessionStorage.getItem(STAFF_KEY);
+  const editandoId = clienteEnEdicion;
+  try {
+    const body = { nombre, telefono, email, creado_por: staff };
+    if (editandoId) body.id = editandoId;
+    await api('/api/pos?r=clientes', { method: 'POST', body });
+    toast(editandoId ? 'Cliente actualizado' : 'Cliente creado', 'success');
+    toggleClienteAltaForm();
+    buscarClientesPanel();
+    if (editandoId){ clienteSeleccionadoPanel = null; seleccionarClientePanel(editandoId); }
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function loadClientesFrecuentesPanel(){
+  const box = document.getElementById('clFrecuentesLista');
+  box.innerHTML = '<div class="items-empty">Cargando...</div>';
+  try {
+    const data = await api('/api/pos?r=clientes-frecuentes');
+    if (!data.clientes.length){
+      box.innerHTML = `<div class="items-empty">Todavía nadie llegó a ${data.minVisitas} visitas en los últimos ${data.dias} días.</div>`;
+      return;
+    }
+    box.innerHTML = `<div class="stock-row-name-sub" style="margin-bottom:8px">${data.minVisitas}+ visitas en ${data.dias} días · descuento sugerido ${data.descuentoPct}%</div>` +
+      data.clientes.map(c => `
+        <div class="stock-row">
+          <div class="stock-row-name">${escapeHtml(c.nombre)}</div>
+          <div class="stock-row-name-sub">${c.visitas} visitas · última ${new Date(c.ultima_visita).toLocaleDateString('es-AR')}</div>
+          <div>${fmtMoney(c.total_gastado)}</div>
+        </div>`).join('');
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function exportarClientesCSV(){
+  api('/api/pos?r=clientes-segmento').then(data => {
+    const filas = [['Nombre', 'Teléfono', 'Email', 'Visitas', 'Total gastado', 'Última visita']];
+    data.clientes.forEach(c => filas.push([
+      c.nombre, c.telefono || '', c.email || '', c.visitas, c.total_gastado,
+      c.ultima_visita ? new Date(c.ultima_visita).toLocaleDateString('es-AR') : '',
+    ]));
+    const csv = filas.map(fila => fila.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `125cc-clientes-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }).catch(e => toast(e.message, 'error'));
+}
+
 // ── PRODUCTOS ─────────────────────────────────────────────────────
 async function loadProductos(){
   try {
@@ -1683,7 +2031,7 @@ async function importarVinos(){
 // empujaba el resto de la página hacia abajo y podían quedar varios
 // abiertos juntos, sin forma clara de saber cuál estaba activo.
 let panelAbierto = null; // 'reportes' | 'caja' | 'stock' | 'proveedores' | null
-const PANEL_NAV_ID = { reportes: 'navReportes', caja: 'navCaja', stock: 'navStock', proveedores: 'navProveedores', finanzas: 'navFinanzas' };
+const PANEL_NAV_ID = { reportes: 'navReportes', caja: 'navCaja', stock: 'navStock', proveedores: 'navProveedores', finanzas: 'navFinanzas', clientes: 'navClientes' };
 
 function closeAllPanels(){
   for (const name of Object.keys(PANEL_NAV_ID)){
@@ -1725,6 +2073,7 @@ async function togglePanel(name){
   }
   else if (name === 'proveedores') await loadProveedores();
   else if (name === 'finanzas') await loadFinanzas();
+  else if (name === 'clientes') await loadClientesPanel();
 }
 
 // ── ALERTAS DE MARGEN ────────────────────────────────────────────

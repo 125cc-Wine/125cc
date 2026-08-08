@@ -36,6 +36,11 @@ const { getReceta, upsertRecetaItem, recalcularCostoReceta } = require('./_lib/p
 const { listCostosFijos, upsertCostoFijo } = require('./_lib/pos/costos-fijos');
 const { listGastos, upsertGasto } = require('./_lib/pos/gastos');
 const { getEstadoResultados } = require('./_lib/pos/estado-resultados');
+const { listClientes, upsertCliente } = require('./_lib/pos/clientes');
+const { getCliente } = require('./_lib/pos/cliente');
+const { setComandaCliente } = require('./_lib/pos/comanda-cliente');
+const { getClientesFrecuentes } = require('./_lib/pos/clientes-frecuentes');
+const { getClientesSegmento } = require('./_lib/pos/clientes-segmento');
 
 const ROUTES = {
   'mesas:GET': listMesas,
@@ -79,6 +84,12 @@ const ROUTES = {
   'gastos:GET': listGastos,
   'gastos:POST': upsertGasto,
   'estado-resultados:GET': getEstadoResultados,
+  'clientes:GET': listClientes,
+  'clientes:POST': upsertCliente,
+  'cliente:GET': getCliente,
+  'comanda-cliente:POST': setComandaCliente,
+  'clientes-frecuentes:GET': getClientesFrecuentes,
+  'clientes-segmento:GET': getClientesSegmento,
 };
 
 module.exports = async function handler(req, res) {
