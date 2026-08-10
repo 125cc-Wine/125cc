@@ -408,6 +408,7 @@
           <button id="navReportes" onclick="togglePanel('reportes')"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg> Reportes</button>
           <button id="navCaja" onclick="togglePanel('caja')"><svg class="icon" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg> Caja</button>
           <button id="navStock" onclick="togglePanel('stock')"><svg class="icon" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5"/><line x1="12" y1="22" x2="12" y2="12"/></svg> Stock</button>
+          <button id="navMenu" onclick="togglePanel('menu')"><svg class="icon" viewBox="0 0 24 24"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg> Menú</button>
           <button id="navProveedores" onclick="togglePanel('proveedores')"><svg class="icon" viewBox="0 0 24 24"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Proveedores</button>
           <button id="navFinanzas" onclick="togglePanel('finanzas')"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Finanzas</button>
           <button id="navClientes" onclick="togglePanel('clientes')"><svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Clientes</button>
@@ -488,6 +489,72 @@
 
         <div id="stockList"><div class="items-empty">Cargando...</div></div>
         <div id="stockMovimientosList" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="stock-panel modal-panel" id="menuPanel">
+      <div class="stock-panel-header">
+        <div class="section-title" style="margin-bottom:0">Menú</div>
+        <button class="close-btn" onclick="closeAllPanels()" title="Cerrar"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="panel-body">
+        <div class="row-btns" style="margin-bottom:8px">
+          <button class="cat-chip active" id="menuTabPlatos" onclick="setMenuTab('platos')">Platos</button>
+          <button class="cat-chip" id="menuTabInsumos" onclick="setMenuTab('insumos')">Insumos</button>
+        </div>
+
+        <div id="menuPlatos">
+          <div class="row-btns" style="margin-bottom:8px">
+            <button class="btn-outline" onclick="togglePlatoForm()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Plato</button>
+          </div>
+          <div class="quick-form" id="platoForm">
+            <div class="section-title" id="platoFormTitle">Nuevo plato</div>
+            <div class="form-row">
+              <input type="text" id="platoNombre" placeholder="Nombre" maxlength="120">
+              <input type="text" id="platoCategoria" placeholder="Categoría (ej: Tapeos)" maxlength="40" list="platoCategoriasList">
+            </div>
+            <div class="form-row">
+              <input type="number" id="platoPrecio" placeholder="Precio de venta" min="0" step="0.01">
+              <select id="platoUnidad" class="stock-input" style="width:100%">
+                <option value="unidad">Unidad</option>
+                <option value="copa">Copa</option>
+                <option value="botella">Botella</option>
+              </select>
+            </div>
+            <datalist id="platoCategoriasList">
+              <option value="Tapeos"><option value="Entradas"><option value="Principales"><option value="Postres"><option value="Otros">
+            </datalist>
+            <div class="quick-form-actions">
+              <button class="btn-primary" onclick="submitPlatoForm()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
+              <button class="btn-outline" onclick="togglePlatoForm()">Cancelar</button>
+            </div>
+          </div>
+          <div id="platosList"><div class="items-empty">Cargando...</div></div>
+          <div id="platoDetalle"></div>
+        </div>
+
+        <div id="menuInsumos" style="display:none">
+          <p class="stock-row-name-sub" style="margin:-2px 0 10px">Insumos: la materia prima que compone un plato (ej. "queso de cabra", "aceite de oliva") — se cargan una vez y se reutilizan en varias recetas.</p>
+          <div class="row-btns" style="margin-bottom:8px">
+            <button class="btn-outline" onclick="toggleInsumoForm()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Insumo</button>
+          </div>
+          <div class="quick-form" id="insumoForm">
+            <div class="section-title">Nuevo insumo</div>
+            <div class="form-row">
+              <input type="text" id="insumoNombre" placeholder="Nombre" maxlength="120">
+              <input type="text" id="insumoUnidad" placeholder="Unidad (g, ml, unidad, kg)" maxlength="20">
+            </div>
+            <div class="form-row">
+              <input type="number" id="insumoCosto" placeholder="Costo por unidad" min="0" step="0.01">
+              <input type="number" id="insumoStock" placeholder="Stock actual (opcional)" min="0" step="0.01">
+            </div>
+            <div class="quick-form-actions">
+              <button class="btn-primary" onclick="submitInsumoForm()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
+              <button class="btn-outline" onclick="toggleInsumoForm()">Cancelar</button>
+            </div>
+          </div>
+          <div id="insumosList"><div class="items-empty">Cargando...</div></div>
+        </div>
       </div>
     </div>
 
@@ -1655,6 +1722,277 @@ async function quitarDescuentoAction(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
+// ── MENÚ (platos + insumos + costeo por receta) ──────────────────
+// "Plato" no es una tabla nueva: es cualquier producto sin vino_ref
+// (misma definición que ya usa el filtro "Menú" del picker de la
+// comanda, ver esVino()/productosPorTipo() más abajo). El costeo por
+// receta (insumos + receta_items + costo_calculado) ya existía en el
+// backend desde Fase 4 — acá se le construye la UI encima.
+let menuTab = 'platos';
+let platoSeleccionado = null;
+let platoEditandoId = null;
+let insumos = [];
+
+function setMenuTab(tab){
+  menuTab = tab;
+  document.getElementById('menuTabPlatos').classList.toggle('active', tab === 'platos');
+  document.getElementById('menuTabInsumos').classList.toggle('active', tab === 'insumos');
+  document.getElementById('menuPlatos').style.display = tab === 'platos' ? '' : 'none';
+  document.getElementById('menuInsumos').style.display = tab === 'insumos' ? '' : 'none';
+  if (tab === 'platos') renderPlatos();
+  else renderInsumos();
+}
+
+function platosFiltrados(){
+  return productos.filter(p => !esVino(p));
+}
+
+function renderPlatos(){
+  const box = document.getElementById('platosList');
+  const list = platosFiltrados();
+  if (!list.length){
+    box.innerHTML = '<div class="items-empty">Todavía no hay platos cargados. Usá "+ Plato".</div>';
+    document.getElementById('platoDetalle').innerHTML = '';
+    return;
+  }
+  box.innerHTML = list.map(p => `
+    <div class="stock-row" style="cursor:pointer" onclick="seleccionarPlato(${p.id})">
+      <div style="flex:1">
+        <div class="stock-row-name">${platoSeleccionado === p.id ? '▾ ' : ''}${escapeHtml(p.nombre)}${p.activo ? '' : ' <span style="color:var(--ink-3)">(inactivo)</span>'}</div>
+        <div class="stock-row-name-sub">${escapeHtml(p.categoria)} · ${fmtMoney(p.precio)} · ${p.costo != null ? 'costo ' + fmtMoney(p.costo) + (p.costo_calculado ? ' (receta)' : ' (manual)') : 'sin costo cargado'}</div>
+      </div>
+    </div>`).join('');
+  if (platoSeleccionado) renderPlatoDetalle();
+  else document.getElementById('platoDetalle').innerHTML = '';
+}
+
+function seleccionarPlato(id){
+  platoSeleccionado = (platoSeleccionado === id) ? null : id;
+  renderPlatos();
+}
+
+function togglePlatoForm(){
+  platoEditandoId = null;
+  document.getElementById('platoFormTitle').textContent = 'Nuevo plato';
+  document.getElementById('platoNombre').value = '';
+  document.getElementById('platoCategoria').value = '';
+  document.getElementById('platoPrecio').value = '';
+  document.getElementById('platoUnidad').value = 'unidad';
+  document.getElementById('platoForm').classList.toggle('open');
+}
+
+function editarPlato(id){
+  const p = productos.find(x => x.id === id);
+  if (!p) return;
+  platoEditandoId = id;
+  document.getElementById('platoFormTitle').textContent = 'Editar plato';
+  document.getElementById('platoNombre').value = p.nombre;
+  document.getElementById('platoCategoria').value = p.categoria;
+  document.getElementById('platoPrecio').value = p.precio;
+  document.getElementById('platoUnidad').value = p.unidad_venta;
+  document.getElementById('platoForm').classList.add('open');
+}
+
+// Al editar se preservan costo/stock/activo/copas_por_botella del
+// producto existente (no vienen en este form chico) — mismo criterio
+// que guardarStock() más abajo, para no pisarlos con null sin querer.
+async function submitPlatoForm(){
+  const nombre = document.getElementById('platoNombre').value.trim();
+  const categoria = document.getElementById('platoCategoria').value.trim() || 'otros';
+  const precio = document.getElementById('platoPrecio').value;
+  const unidad_venta = document.getElementById('platoUnidad').value;
+  if (!nombre || !precio) return toast('Falta nombre o precio', 'error');
+  const existente = platoEditandoId ? productos.find(p => p.id === platoEditandoId) : null;
+  const body = {
+    nombre, categoria, precio, unidad_venta,
+    costo: existente ? existente.costo : null,
+    stock_actual: existente ? existente.stock_actual : null,
+    stock_minimo: existente ? existente.stock_minimo : null,
+    copas_por_botella: existente ? existente.copas_por_botella : 1,
+    activo: existente ? existente.activo : true,
+  };
+  if (platoEditandoId) body.id = platoEditandoId;
+  try {
+    await api('/api/pos?r=productos', { method: 'POST', body });
+    togglePlatoForm();
+    toast(platoEditandoId ? 'Plato actualizado' : 'Plato creado', 'success');
+    await loadProductos();
+    renderPlatos();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function toggleActivoPlato(id){
+  const p = productos.find(x => x.id === id);
+  if (!p) return;
+  try {
+    await api('/api/pos?r=productos', { method: 'POST', body: {
+      id, nombre: p.nombre, categoria: p.categoria, unidad_venta: p.unidad_venta, precio: p.precio,
+      costo: p.costo, stock_actual: p.stock_actual, stock_minimo: p.stock_minimo,
+      copas_por_botella: p.copas_por_botella, activo: !p.activo,
+    }});
+    toast(p.activo ? 'Plato desactivado' : 'Plato activado', 'success');
+    await loadProductos();
+    renderPlatos();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function renderPlatoDetalle(){
+  const box = document.getElementById('platoDetalle');
+  const p = productos.find(x => x.id === platoSeleccionado);
+  if (!p) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="items-empty">Cargando receta...</div>';
+  try {
+    const data = await api('/api/pos?r=receta&producto_id=' + platoSeleccionado);
+    if (!insumos.length) await loadInsumosData();
+    const vinculados = new Set(data.items.map(i => i.insumo_id));
+    const disponibles = insumos.filter(i => i.activo && !vinculados.has(i.id));
+    const costoReceta = data.items.reduce((acc, i) => acc + Number(i.cantidad) * Number(i.costo_unitario || 0), 0);
+    const margenPct = Number(p.precio) > 0 && p.costo != null ? Math.round(((Number(p.precio) - Number(p.costo)) / Number(p.precio)) * 1000) / 10 : null;
+    const desactualizado = data.items.length > 0 && (p.costo == null || Math.abs(costoReceta - Number(p.costo)) > 0.01);
+
+    box.innerHTML = `
+      <div class="row-btns" style="margin-top:12px">
+        <button class="btn-outline" onclick="editarPlato(${p.id})">${icon('edit')} Editar datos</button>
+        <button class="btn-outline" onclick="toggleActivoPlato(${p.id})">${p.activo ? icon('ban') + ' Desactivar' : icon('check') + ' Activar'}</button>
+      </div>
+
+      <div class="section-title" style="margin-top:12px">Costo</div>
+      <div class="stock-row-name-sub" style="margin-bottom:8px">
+        Precio de venta: ${fmtMoney(p.precio)} · Costo cargado: ${p.costo != null ? fmtMoney(p.costo) + (p.costo_calculado ? ' (de receta)' : ' (manual)') : 'sin cargar'}${margenPct != null ? ' · margen ' + margenPct + '%' : ''}
+      </div>
+      ${data.items.length ? `
+        <div class="stock-row-name-sub" style="margin-bottom:8px">
+          Costo según receta actual: ${fmtMoney(costoReceta)}${desactualizado ? ' — no coincide con el costo cargado' : ''}
+        </div>
+        <button class="btn-primary" style="width:100%;margin-bottom:12px" onclick="recalcularCostoPlato(${p.id})">${icon('dollar-sign')} Recalcular costo desde receta</button>
+      ` : ''}
+
+      <div class="section-title">Receta</div>
+      ${data.items.map(i => `
+        <div class="stock-row">
+          <div style="flex:1">
+            <div class="stock-row-name">${escapeHtml(i.insumo_nombre)}</div>
+            <div class="stock-row-name-sub">${fmtStock(i.cantidad)} ${escapeHtml(i.unidad)} × ${i.costo_unitario != null ? fmtMoney(i.costo_unitario) : 'sin costo'}${i.costo_unitario != null ? ' = ' + fmtMoney(i.cantidad * i.costo_unitario) : ''}</div>
+          </div>
+          <button class="btn-outline" onclick="eliminarRecetaItem(${i.id})">${icon('trash')}</button>
+        </div>`).join('') || '<div class="items-empty">Sin ingredientes cargados todavía.</div>'}
+
+      <div class="form-row" style="margin-top:10px">
+        <select id="recetaInsumoSelect" class="stock-input" style="width:100%">
+          ${disponibles.length ? disponibles.map(i => `<option value="${i.id}">${escapeHtml(i.nombre)} (${escapeHtml(i.unidad)})</option>`).join('') : '<option value="">Sin insumos disponibles — cargalos en la pestaña Insumos</option>'}
+        </select>
+        <input type="number" id="recetaCantidad" class="stock-input" style="width:100%" placeholder="Cantidad" min="0" step="0.01">
+      </div>
+      <button class="btn-outline" style="width:100%" onclick="agregarRecetaItem()">${icon('plus')} Agregar ingrediente</button>
+    `;
+  } catch(e){ toast(e.message, 'error'); box.innerHTML = ''; }
+}
+
+async function agregarRecetaItem(){
+  const insumo_id = document.getElementById('recetaInsumoSelect').value;
+  const cantidad = document.getElementById('recetaCantidad').value;
+  if (!insumo_id || !cantidad) return toast('Elegí un insumo y una cantidad', 'error');
+  try {
+    await api('/api/pos?r=receta-item', { method: 'POST', body: { producto_id: platoSeleccionado, insumo_id, cantidad } });
+    toast('Ingrediente agregado', 'success');
+    renderPlatoDetalle();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function eliminarRecetaItem(id){
+  const ok = await confirmDialog('¿Quitar este ingrediente de la receta?');
+  if (!ok) return;
+  try {
+    await api('/api/pos?r=receta-item', { method: 'POST', body: { id, accion: 'eliminar' } });
+    toast('Ingrediente quitado', 'success');
+    renderPlatoDetalle();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function recalcularCostoPlato(id){
+  try {
+    await api('/api/pos?r=receta-recalcular-costo', { method: 'POST', body: { producto_id: id } });
+    toast('Costo recalculado', 'success');
+    await loadProductos();
+    renderPlatoDetalle();
+    renderPlatos();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// ── INSUMOS ───────────────────────────────────────────────────────
+async function loadInsumosData(){
+  try {
+    const data = await api('/api/pos?r=insumos&activo=all');
+    insumos = data.insumos;
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function loadInsumos(){
+  await loadInsumosData();
+  renderInsumos();
+}
+
+function renderInsumos(){
+  const box = document.getElementById('insumosList');
+  if (!insumos.length){ box.innerHTML = '<div class="items-empty">Todavía no hay insumos cargados. Usá "+ Insumo".</div>'; return; }
+  box.innerHTML = insumos.map(i => `
+    <div class="stock-row" style="flex-wrap:wrap">
+      <div style="flex-basis:100%">
+        <div class="stock-row-name">${escapeHtml(i.nombre)}${i.activo ? '' : ' <span style="color:var(--ink-3)">(inactivo)</span>'}</div>
+        <div class="stock-row-name-sub">unidad: ${escapeHtml(i.unidad)}${i.stock_actual != null ? ' · stock: ' + fmtStock(i.stock_actual) : ''}</div>
+      </div>
+      <input type="number" class="stock-input" id="insCosto_${i.id}" value="${i.costo_unitario != null ? i.costo_unitario : ''}" placeholder="Costo/unidad" min="0" step="0.01">
+      <input type="number" class="stock-input" id="insStock_${i.id}" value="${i.stock_actual != null ? i.stock_actual : ''}" placeholder="Stock" min="0" step="0.01">
+      <button class="btn-outline" onclick="guardarInsumo(${i.id})">${icon('check')} Guardar</button>
+      <button class="btn-outline" onclick="toggleActivoInsumo(${i.id})">${i.activo ? icon('ban') : icon('check')}</button>
+    </div>`).join('');
+}
+
+function toggleInsumoForm(){
+  document.getElementById('insumoForm').classList.toggle('open');
+}
+
+async function submitInsumoForm(){
+  const nombre = document.getElementById('insumoNombre').value.trim();
+  const unidad = document.getElementById('insumoUnidad').value.trim();
+  const costo_unitario = document.getElementById('insumoCosto').value;
+  const stock_actual = document.getElementById('insumoStock').value;
+  if (!nombre || !unidad) return toast('Falta nombre o unidad', 'error');
+  try {
+    await api('/api/pos?r=insumos', { method: 'POST', body: { nombre, unidad, costo_unitario: costo_unitario || null, stock_actual: stock_actual || null } });
+    document.getElementById('insumoNombre').value = '';
+    document.getElementById('insumoUnidad').value = '';
+    document.getElementById('insumoCosto').value = '';
+    document.getElementById('insumoStock').value = '';
+    toggleInsumoForm();
+    toast('Insumo creado', 'success');
+    await loadInsumos();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function guardarInsumo(id){
+  const i = insumos.find(x => x.id === id);
+  if (!i) return;
+  const costo = document.getElementById('insCosto_' + id).value;
+  const stock = document.getElementById('insStock_' + id).value;
+  try {
+    await api('/api/pos?r=insumos', { method: 'POST', body: { id, nombre: i.nombre, unidad: i.unidad, costo_unitario: costo || null, stock_actual: stock || null, activo: i.activo } });
+    toast('Insumo actualizado', 'success');
+    await loadInsumos();
+    if (platoSeleccionado) renderPlatoDetalle();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function toggleActivoInsumo(id){
+  const i = insumos.find(x => x.id === id);
+  if (!i) return;
+  try {
+    await api('/api/pos?r=insumos', { method: 'POST', body: { id, nombre: i.nombre, unidad: i.unidad, costo_unitario: i.costo_unitario, stock_actual: i.stock_actual, activo: !i.activo } });
+    toast(i.activo ? 'Insumo desactivado' : 'Insumo activado', 'success');
+    await loadInsumos();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
 // ── PROVEEDORES ───────────────────────────────────────────────────
 let proveedores = [];
 let proveedorSeleccionado = null;
@@ -2549,7 +2887,7 @@ async function importarVinos(){
 // empujaba el resto de la página hacia abajo y podían quedar varios
 // abiertos juntos, sin forma clara de saber cuál estaba activo.
 let panelAbierto = null; // 'reportes' | 'caja' | 'stock' | 'proveedores' | null
-const PANEL_NAV_ID = { reportes: 'navReportes', caja: 'navCaja', stock: 'navStock', proveedores: 'navProveedores', finanzas: 'navFinanzas', clientes: 'navClientes', facturacion: 'navFacturacion' };
+const PANEL_NAV_ID = { reportes: 'navReportes', caja: 'navCaja', stock: 'navStock', menu: 'navMenu', proveedores: 'navProveedores', finanzas: 'navFinanzas', clientes: 'navClientes', facturacion: 'navFacturacion' };
 
 function closeAllPanels(){
   for (const name of Object.keys(PANEL_NAV_ID)){
@@ -2589,6 +2927,11 @@ async function togglePanel(name){
     await cargarAlertasMargen();
     renderStockList();
     loadResumenStock();
+  }
+  else if (name === 'menu'){
+    if (!productos.length) await loadProductos();
+    await loadInsumos();
+    setMenuTab('platos');
   }
   else if (name === 'proveedores') await loadProveedores();
   else if (name === 'finanzas') await loadFinanzas();
