@@ -388,3 +388,10 @@ ALTER TABLE comandas ADD CONSTRAINT comandas_medio_pago_check
 ALTER TABLE caja_movimientos DROP CONSTRAINT IF EXISTS caja_movimientos_tipo_check;
 ALTER TABLE caja_movimientos ADD CONSTRAINT caja_movimientos_tipo_check
   CHECK (tipo IN ('venta','retiro','ingreso','propina','cobro_cuenta_corriente'));
+
+-- ── Eliminar mesas. Baja lógica (activo=false), nunca DELETE físico —
+-- mismo criterio que productos/proveedores: una mesa vieja puede tener
+-- años de comandas históricas apuntándole (comandas.mesa_id no tiene
+-- ON DELETE CASCADE a propósito, para no perder ventas pasadas), así
+-- que "eliminar" la oculta del plano en vez de borrarla. ──
+ALTER TABLE mesas ADD COLUMN IF NOT EXISTS activo boolean NOT NULL DEFAULT true;

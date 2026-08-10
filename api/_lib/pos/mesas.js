@@ -9,6 +9,7 @@ async function listMesas(req, res) {
     SELECT m.id, m.nombre, m.capacidad, m.estado, m.pos_x, m.pos_y, c.id AS comanda_id
     FROM mesas m
     LEFT JOIN comandas c ON c.mesa_id = m.id AND c.estado = 'abierta'
+    WHERE m.activo = true
     ORDER BY m.id`;
   return res.status(200).json({ mesas: rows });
 }
@@ -63,4 +64,24 @@ async function saveMesasPos(req, res) {
   return res.status(200).json({ ok: true, updated: cambios.length });
 }
 
-module.exports = { listMesas, upsertMesa, saveMesasPos };
+// Baja lógica (activo=false), nunca DELETE físico — una mesa vieja
+// puede tener años de comandas históricas apuntándole. Se niega si
+// tiene una comanda abierta (no se puede borrar una mesa en servicio).
+async function eliminarMesa(req, res) {
+  const { id } = req.body || {};
+  if (!id) return res.status(400).json({ error: "Falta id." });
+
+  const { rows: abiertas } = await sql`
+    SELECT id FROM comandas WHERE mesa_id=${id} AND estado='abierta'`;
+  if (abiertas.length) {
+    return res.status(409).json({ error: "Esta mesa tiene una comanda abierta — cerrala antes de eliminarla." });
+  }
+
+  const { rows } = await sql`
+    UPDATE mesas SET activo=false, updated_at=now() WHERE id=${id} AND activo=true
+    RETURNING id`;
+  if (!rows.length) return res.status(404).json({ error: "Mesa no encontrada." });
+  return res.status(200).json({ ok: true });
+}
+
+module.exports = { listMesas, upsertMesa, saveMesasPos, eliminarMesa };

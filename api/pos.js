@@ -12,7 +12,7 @@
 const { timingSafeStringEqual } = require('./_lib/timing-safe');
 const { requirePos } = require('./_lib/require-pos');
 
-const { listMesas, upsertMesa, saveMesasPos } = require('./_lib/pos/mesas');
+const { listMesas, upsertMesa, saveMesasPos, eliminarMesa } = require('./_lib/pos/mesas');
 const { setMesaEstado } = require('./_lib/pos/mesa-estado');
 const { listProductos, upsertProducto } = require('./_lib/pos/productos');
 const { importVinos } = require('./_lib/pos/productos-import');
@@ -48,6 +48,7 @@ const ROUTES = {
   'mesas:GET': listMesas,
   'mesas:POST': upsertMesa,
   'mesas-pos:POST': saveMesasPos,
+  'mesa-eliminar:POST': eliminarMesa,
   'mesa-estado:POST': setMesaEstado,
   'productos:GET': listProductos,
   'productos:POST': upsertProducto,

@@ -157,6 +157,9 @@
   .salon-pin.cuenta_pedida .salon-pin-dot{background:var(--blue)}
   .salon-pin.selected .salon-pin-dot{outline:4px solid var(--amber);outline-offset:3px}
   .salon-pin-badge{position:absolute;bottom:-2px;right:-2px;background:var(--surface);color:var(--ink);font-size:var(--fs-2xs);font-weight:700;border-radius:50%;width:19px;height:19px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
+  .salon-pin-delete{position:absolute;top:-4px;left:-4px;background:var(--red);color:#fff;border:2px solid var(--surface);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform var(--t) var(--ease)}
+  .salon-pin-delete:active{transform:scale(.9)}
+  .salon-pin-delete .icon{width:12px;height:12px;stroke-width:2.5}
   .salon-pin-label{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px;margin-left:auto;margin-right:auto}
 
   .row-btns{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-5);flex-wrap:wrap}
@@ -903,10 +906,16 @@ function renderSalonPlano(){
       <div class="salon-pin-dotwrap">
         <div class="salon-pin-dot">${mesaAbbrev(m.nombre)}</div>
         ${m.capacidad ? `<div class="salon-pin-badge">${m.capacidad}</div>` : ''}
+        ${editingSalon ? `<div class="salon-pin-delete" title="Eliminar mesa">${icon('x')}</div>` : ''}
       </div>
       <div class="salon-pin-label">${escapeHtml(m.nombre)}</div>`;
     pin.addEventListener('click', () => { if (!editingSalon) openMesa(m.id); });
-    if (editingSalon) makeDraggable(pin, m.id);
+    if (editingSalon) {
+      makeDraggable(pin, m.id);
+      const delBtn = pin.querySelector('.salon-pin-delete');
+      delBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+      delBtn.addEventListener('click', (e) => { e.stopPropagation(); eliminarMesaAction(m.id, m.nombre); });
+    }
     stage.appendChild(pin);
   });
 }
@@ -967,6 +976,19 @@ function cancelarEditSalon(){
   document.getElementById('btnGuardarSalon').style.display = 'none';
   document.getElementById('btnCancelarSalon').style.display = 'none';
   renderSalonPlano();
+}
+
+// Baja lógica — la mesa no se borra (queda su historial de comandas
+// intacto), solo desaparece del plano. Se niega si tiene una comanda
+// abierta, mismo chequeo que hace el backend.
+async function eliminarMesaAction(mesaId, nombre){
+  const ok = await confirmDialog(`¿Eliminar "${escapeHtml(nombre)}"? No se puede deshacer, pero el historial de ventas de esa mesa se conserva.`);
+  if (!ok) return;
+  try {
+    await api('/api/pos?r=mesa-eliminar', { method: 'POST', body: { id: mesaId } });
+    toast('Mesa eliminada', 'success');
+    await loadMesas();
+  } catch(e){ toast(e.message, 'error'); }
 }
 
 async function guardarSalonPlano(){
