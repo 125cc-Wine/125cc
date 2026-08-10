@@ -134,17 +134,20 @@
 
   .salon-toolbar{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-4);flex-wrap:wrap}
 
-  /* Sin card: los círculos flotan directo sobre el fondo de la página,
-     como en la referencia — no hay una caja de tamaño fijo conteniéndolos.
-     Las posiciones de los pines son porcentuales (position:absolute no
-     hace crecer al padre solo), así que en vez de una altura fija se usa
-     aspect-ratio: escala con el ancho real del panel — más chico en el
-     celu, más grande en tablet donde el panel de mesas ahora es ~62% del
-     ancho — sin quedar vacío ni apretado en ningún tamaño de pantalla. */
+  /* Recuadro delimitado (borde + fondo propio), a diferencia del diseño
+     anterior donde los círculos flotaban directo sobre el fondo de la
+     página. Las posiciones de los pines son porcentuales (position:
+     absolute no hace crecer al padre solo), así que en vez de una
+     altura fija se usa aspect-ratio: escala con el ancho real del panel
+     — más chico en el celu, más grande en tablet donde el panel de
+     mesas ahora es ~62% del ancho — sin quedar vacío ni apretado en
+     ningún tamaño de pantalla. */
   /* Alto de respaldo (celu, o antes de que corra el JS de sincronización).
      En desktop/tablet, JS mide el alto real del panel de comanda y lo
-     iguala acá — "que llegue hasta el recuadro de comanda". */
-  .salon-stage{position:relative;aspect-ratio:4/3;min-height:220px;max-height:700px;padding:var(--sp-4) 0;touch-action:none}
+     iguala acá — "que llegue hasta el recuadro de comanda" — con un
+     tope al alto visible de pantalla para que el mapa nunca obligue a
+     scrollear para verse completo (sincronizarAlturaMapa). */
+  .salon-stage{position:relative;aspect-ratio:4/3;min-height:220px;max-height:700px;padding:var(--sp-5) var(--sp-4);touch-action:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow)}
   .salon-hint{padding:var(--sp-6) var(--sp-4);color:var(--ink-3);font-size:var(--fs-sm);line-height:1.6;text-align:center;pointer-events:none}
   .salon-pin{position:absolute;transform:translate(-50%,-50%);width:64px;text-align:center;user-select:none;-webkit-user-select:none;z-index:5;cursor:pointer}
   .salon-pin.dragging{z-index:30}
@@ -856,16 +859,27 @@ async function loadMesas(){
 // una comanda recién abierta (sin ítems) tiene un recuadro chico, y sin
 // este piso el mapa "saltaba" a ese tamaño chico apenas se abría una
 // mesa — solo puede crecer, nunca achicarse por debajo de su reposo.
+//
+// Tope de pantalla: además, nunca crece más allá de lo que entra en el
+// alto visible desde donde arranca el mapa hasta el borde de abajo de
+// la ventana — así el plano completo se ve sin tener que scrollear
+// (pedido explícito). Si hace falta más alto que eso (comanda con
+// muchos ítems), gana el tope: el mapa deja de crecer ahí y el resto
+// de la página sigue scrolleable como siempre, pero el mapa en sí
+// nunca obliga a scrollear para verse entero.
 function sincronizarAlturaMapa(){
   const stage = document.getElementById('salonStage');
-  const contenidoVisible = document.getElementById('panelContent').style.display !== 'none';
-  if (window.innerWidth < 680 || !contenidoVisible){ stage.style.height = ''; return; }
-
   stage.style.height = ''; // recalcular el alto natural (aspect-ratio) a este ancho
   const natural = stage.getBoundingClientRect().height;
-  const referencia = document.querySelector('.comanda-card');
+
+  const contenidoVisible = document.getElementById('panelContent').style.display !== 'none';
+  const referencia = (window.innerWidth >= 680 && contenidoVisible) ? document.querySelector('.comanda-card') : null;
   const alturaComanda = referencia ? referencia.getBoundingClientRect().height : 0;
-  stage.style.height = Math.max(natural, alturaComanda, 220) + 'px';
+
+  const margenInferior = 16;
+  const capPantalla = Math.max(220, window.innerHeight - stage.getBoundingClientRect().top - margenInferior);
+
+  stage.style.height = Math.min(Math.max(natural, alturaComanda, 220), capPantalla) + 'px';
 }
 window.addEventListener('resize', sincronizarAlturaMapa);
 
