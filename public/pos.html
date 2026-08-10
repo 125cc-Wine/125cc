@@ -200,6 +200,14 @@
   .comanda-sub{font-size:var(--fs-xs);color:rgba(255,255,255,.8);margin-top:2px}
   .close-btn{background:rgba(255,255,255,.18);border:none;color:#fff;font-size:14px;cursor:pointer;width:32px;height:32px;border-radius:50%;flex-shrink:0;transition:background var(--t) var(--ease)}
   .close-btn:hover{background:rgba(255,255,255,.3)}
+  /* Variante clara: el ícono blanco de arriba está pensado para un
+     fondo oscuro/de color (comanda-header). Ahora que el header de los
+     7 paneles de back-office es un app-bar claro (var(--bg)), el mismo
+     botón blanco-sobre-blanco quedaba invisible — y ahí es el ÚNICO
+     modo de cerrar el panel (pantalla completa, no hay "afuera" del
+     backdrop para tocar). */
+  .stock-panel-header .close-btn{background:var(--line);color:var(--ink-2)}
+  .stock-panel-header .close-btn:hover{background:rgba(69,84,99,.28);color:var(--ink)}
   /* Fila de cliente en la comanda — visible apenas se abre la mesa
      (feedback real: "cargar el cliente al abrir mesa sería ideal"),
      nunca bloquea nada, solo un atajo siempre a la vista. */
@@ -258,16 +266,29 @@
      oscurecido, uno solo a la vez, cierre explícito (✕ o tocar afuera). */
   .modal-backdrop{position:fixed;inset:0;background:rgba(20,20,25,.5);z-index:90;opacity:0;pointer-events:none;transition:opacity var(--t) var(--ease)}
   .modal-backdrop.open{opacity:1;pointer-events:auto}
+  /* Pantalla completa propia (no una tarjeta flotante) — Reportes/Caja/
+     Stock/Proveedores/Finanzas/Clientes/Facturación se sienten como
+     secciones reales de la app, no diálogos. Antes solo pasaban a
+     pantalla completa por debajo de los 520px; ahora siempre, en
+     cualquier tamaño — en desktop/tablet una tarjeta angosta de 480px
+     centrada desperdiciaba todo el resto del ancho. */
   .modal-panel{
-    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.97);
-    width:min(92vw,480px);max-height:85vh;overflow-y:auto;z-index:95;
-    opacity:0;pointer-events:none;transition:opacity var(--t) var(--ease),transform var(--t) var(--ease);
+    position:fixed;inset:0;width:100%;height:100%;overflow-y:auto;z-index:95;
+    opacity:0;pointer-events:none;transform:translateY(14px);
+    transition:opacity var(--t) var(--ease),transform var(--t) var(--ease);
   }
-  .modal-panel.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
-  @media(max-width:520px){
-    .modal-panel{width:100vw;max-width:100vw;height:100%;max-height:100%;top:0;left:0;transform:none;border-radius:0}
-    .modal-panel.open{transform:none}
+  .modal-panel.open{opacity:1;pointer-events:auto;transform:translateY(0)}
+  /* .stock-panel de por sí es una tarjeta (borde/radio/sombra/padding
+     chico) — combinada con .modal-panel pasa a ser el lienzo de una
+     página real: sin marco de tarjeta, fondo de la página entera. */
+  .stock-panel.modal-panel{border:none;border-radius:0;box-shadow:none;background:var(--bg);min-height:100%;padding:0;margin:0}
+  .stock-panel.modal-panel .stock-panel-header{
+    position:sticky;top:0;z-index:2;background:var(--bg);
+    border-bottom:1px solid var(--line);padding:var(--sp-4) var(--sp-5);margin-bottom:0;
   }
+  /* Contenido centrado con ancho de lectura razonable — en un monitor
+     grande no queremos que las filas se estiren de punta a punta. */
+  .panel-body{max-width:1100px;margin:0 auto;padding:var(--sp-5)}
   .nav-active{color:#fff !important;position:relative}
 
   /* ── CONFIRMACIÓN PROPIA ────────────────────────────────────────────
@@ -285,6 +306,18 @@
   /* ── STOCK / CAJA / REPORTES (paneles genéricos de fila+valor) ── */
   .stock-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-md);padding:var(--sp-5);margin-bottom:var(--sp-4)}
   .stock-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-4)}
+
+  /* Grilla de tarjetas — antes todo el contenido de Reportes quedaba
+     apilado en una sola columna angosta; ahora que el panel es pantalla
+     completa hay ancho de sobra para mostrar varias secciones a la vez. */
+  .report-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--sp-4);align-items:start}
+  .report-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:var(--sp-5)}
+  .report-card.wide{grid-column:1/-1}
+  .report-delta{font-size:var(--fs-xs);font-weight:700;margin-left:8px;white-space:nowrap}
+  .report-delta.up{color:var(--green)}
+  .report-delta.down{color:var(--red)}
+  .report-chart-wrap{position:relative;height:160px;width:100%}
+  .report-chart-wrap canvas{width:100%;height:100%;display:block}
   .stock-row{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-4) var(--sp-2);border-bottom:1px solid var(--line);min-height:36px;border-radius:var(--r-sm);transition:background var(--t) var(--ease)}
   .stock-row:hover{background:var(--bg)}
   .stock-row:last-child{border-bottom:none}
@@ -369,12 +402,14 @@
         <div class="section-title" style="margin-bottom:0">Reportes</div>
         <button class="close-btn" onclick="closeAllPanels()" title="Cerrar"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
-      <div class="row-btns" style="margin-bottom:14px">
-        <button class="cat-chip active" id="repRange7" onclick="setReportesRango(7,this)">7 días</button>
-        <button class="cat-chip" id="repRange30" onclick="setReportesRango(30,this)">30 días</button>
-        <button class="cat-chip" id="repRange365" onclick="setReportesRango(365,this)">Todo</button>
+      <div class="panel-body">
+        <div class="row-btns" style="margin-bottom:14px">
+          <button class="cat-chip active" id="repRange7" onclick="setReportesRango(7,this)">7 días</button>
+          <button class="cat-chip" id="repRange30" onclick="setReportesRango(30,this)">30 días</button>
+          <button class="cat-chip" id="repRange365" onclick="setReportesRango(365,this)">Todo</button>
+        </div>
+        <div id="reportesContent"><div class="items-empty">Cargando...</div></div>
       </div>
-      <div id="reportesContent"><div class="items-empty">Cargando...</div></div>
     </div>
 
     <div class="stock-panel modal-panel" id="cajaPanel">
@@ -382,7 +417,9 @@
         <div class="section-title" style="margin-bottom:0">Caja</div>
         <button class="close-btn" onclick="closeAllPanels()" title="Cerrar"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
-      <div id="cajaContent"><div class="items-empty">Cargando...</div></div>
+      <div class="panel-body">
+        <div id="cajaContent"><div class="items-empty">Cargando...</div></div>
+      </div>
     </div>
 
     <div class="stock-panel modal-panel" id="stockPanel">
@@ -390,41 +427,43 @@
         <div class="section-title" style="margin-bottom:0">Stock por producto</div>
         <button class="close-btn" onclick="closeAllPanels()" title="Cerrar"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
-      <div class="row-btns" style="margin-bottom:8px">
-        <button class="cat-chip active" id="stockTabProductos" onclick="setStockTab('productos')">Productos</button>
-        <button class="cat-chip" id="stockTabMovimientos" onclick="setStockTab('movimientos')">Movimientos</button>
-      </div>
+      <div class="panel-body">
+        <div class="row-btns" style="margin-bottom:8px">
+          <button class="cat-chip active" id="stockTabProductos" onclick="setStockTab('productos')">Productos</button>
+          <button class="cat-chip" id="stockTabMovimientos" onclick="setStockTab('movimientos')">Movimientos</button>
+        </div>
 
-      <div class="quick-form" id="mermaForm">
-        <div class="section-title" id="mermaFormTitle">Registrar merma</div>
-        <div class="form-row">
-          <input type="number" id="mermaCantidad" placeholder="Cantidad" min="0" step="1">
-          <select id="mermaMotivo" class="stock-input" style="width:100%;min-height:var(--tap-min)">
-            <option value="rotura">Rotura</option>
-            <option value="vencimiento">Vencimiento</option>
-            <option value="robo">Robo</option>
-            <option value="otro">Otro</option>
-          </select>
+        <div class="quick-form" id="mermaForm">
+          <div class="section-title" id="mermaFormTitle">Registrar merma</div>
+          <div class="form-row">
+            <input type="number" id="mermaCantidad" placeholder="Cantidad" min="0" step="1">
+            <select id="mermaMotivo" class="stock-input" style="width:100%;min-height:var(--tap-min)">
+              <option value="rotura">Rotura</option>
+              <option value="vencimiento">Vencimiento</option>
+              <option value="robo">Robo</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="quick-form-actions">
+            <button class="btn-primary" onclick="confirmarMerma()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Registrar</button>
+            <button class="btn-outline" onclick="cerrarFormsStock()">Cancelar</button>
+          </div>
         </div>
-        <div class="quick-form-actions">
-          <button class="btn-primary" onclick="confirmarMerma()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Registrar</button>
-          <button class="btn-outline" onclick="cerrarFormsStock()">Cancelar</button>
-        </div>
-      </div>
 
-      <div class="quick-form" id="conteoForm">
-        <div class="section-title" id="conteoFormTitle">Conteo físico</div>
-        <div class="form-row">
-          <input type="number" id="conteoCantidad" placeholder="Cantidad contada" min="0">
+        <div class="quick-form" id="conteoForm">
+          <div class="section-title" id="conteoFormTitle">Conteo físico</div>
+          <div class="form-row">
+            <input type="number" id="conteoCantidad" placeholder="Cantidad contada" min="0">
+          </div>
+          <div class="quick-form-actions">
+            <button class="btn-primary" onclick="confirmarConteo()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Registrar</button>
+            <button class="btn-outline" onclick="cerrarFormsStock()">Cancelar</button>
+          </div>
         </div>
-        <div class="quick-form-actions">
-          <button class="btn-primary" onclick="confirmarConteo()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Registrar</button>
-          <button class="btn-outline" onclick="cerrarFormsStock()">Cancelar</button>
-        </div>
-      </div>
 
-      <div id="stockList"><div class="items-empty">Cargando...</div></div>
-      <div id="stockMovimientosList" style="display:none"></div>
+        <div id="stockList"><div class="items-empty">Cargando...</div></div>
+        <div id="stockMovimientosList" style="display:none"></div>
+      </div>
     </div>
 
     <div class="stock-panel modal-panel" id="proveedoresPanel">
@@ -432,21 +471,23 @@
         <div class="section-title" style="margin-bottom:0">Proveedores</div>
         <button class="close-btn" onclick="closeAllPanels()" title="Cerrar"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
-      <div class="quick-form" id="proveedorForm">
-        <div class="form-row">
-          <input type="text" id="provNombre" placeholder="Nombre" maxlength="120">
-          <input type="text" id="provContacto" placeholder="Contacto (tel/email)" maxlength="200">
+      <div class="panel-body">
+        <div class="quick-form" id="proveedorForm">
+          <div class="form-row">
+            <input type="text" id="provNombre" placeholder="Nombre" maxlength="120">
+            <input type="text" id="provContacto" placeholder="Contacto (tel/email)" maxlength="200">
+          </div>
+          <div class="quick-form-actions">
+            <button class="btn-primary" onclick="submitProveedorForm()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
+            <button class="btn-outline" onclick="toggleProveedorForm()">Cancelar</button>
+          </div>
         </div>
-        <div class="quick-form-actions">
-          <button class="btn-primary" onclick="submitProveedorForm()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
-          <button class="btn-outline" onclick="toggleProveedorForm()">Cancelar</button>
+        <div class="row-btns" style="margin-bottom:8px">
+          <button class="btn-outline" onclick="toggleProveedorForm()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Proveedor</button>
         </div>
+        <div id="proveedoresList"><div class="items-empty">Cargando...</div></div>
+        <div id="proveedorDetalle"></div>
       </div>
-      <div class="row-btns" style="margin-bottom:8px">
-        <button class="btn-outline" onclick="toggleProveedorForm()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Proveedor</button>
-      </div>
-      <div id="proveedoresList"><div class="items-empty">Cargando...</div></div>
-      <div id="proveedorDetalle"></div>
     </div>
 
     <div class="stock-panel modal-panel" id="finanzasPanel">
@@ -454,68 +495,70 @@
         <div class="section-title" style="margin-bottom:0">Finanzas</div>
         <button class="close-btn" onclick="closeAllPanels()" title="Cerrar"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
-      <div class="row-btns" style="margin-bottom:8px">
-        <button class="cat-chip active" id="finTabResumen" onclick="setFinTab('resumen')">Resumen</button>
-        <button class="cat-chip" id="finTabGastos" onclick="setFinTab('gastos')">Gastos</button>
-        <button class="cat-chip" id="finTabCostosFijos" onclick="setFinTab('costosfijos')">Costos fijos</button>
-      </div>
-      <div class="form-row" style="margin-bottom:12px">
-        <input type="month" id="finMesInput" class="stock-input" style="width:100%" onchange="cambiarFinMes()">
-      </div>
-
-      <div id="finResumen"><div class="items-empty">Cargando...</div></div>
-
-      <div id="finGastos" style="display:none">
+      <div class="panel-body">
         <div class="row-btns" style="margin-bottom:8px">
-          <button class="btn-outline" onclick="toggleGastoForm()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Gasto</button>
+          <button class="cat-chip active" id="finTabResumen" onclick="setFinTab('resumen')">Resumen</button>
+          <button class="cat-chip" id="finTabGastos" onclick="setFinTab('gastos')">Gastos</button>
+          <button class="cat-chip" id="finTabCostosFijos" onclick="setFinTab('costosfijos')">Costos fijos</button>
         </div>
-        <div class="quick-form" id="gastoForm">
-          <div class="section-title">Nuevo gasto</div>
-          <div class="form-row">
-            <input type="text" id="gastoCategoria" placeholder="Categoría" list="gastoCategoriasList" maxlength="60">
-            <select id="gastoTipo" class="stock-input" style="width:100%">
-              <option value="variable">Variable</option>
-              <option value="fijo">Fijo</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <input type="number" id="gastoMonto" placeholder="Monto" min="0" step="0.01">
-            <input type="date" id="gastoFecha" class="stock-input" style="width:100%">
-          </div>
-          <div class="form-row">
-            <input type="text" id="gastoDescripcion" placeholder="Descripción (opcional)" maxlength="200">
-          </div>
-          <datalist id="gastoCategoriasList">
-            <option value="Alquiler"><option value="Sueldos"><option value="Servicios"><option value="Marketing"><option value="Insumos"><option value="Otro">
-          </datalist>
-          <div class="quick-form-actions">
-            <button class="btn-primary" onclick="submitGastoForm()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
-            <button class="btn-outline" onclick="toggleGastoForm()">Cancelar</button>
-          </div>
+        <div class="form-row" style="margin-bottom:12px">
+          <input type="month" id="finMesInput" class="stock-input" style="width:100%" onchange="cambiarFinMes()">
         </div>
-        <div id="gastosList"><div class="items-empty">Cargando...</div></div>
-      </div>
 
-      <div id="finCostosFijos" style="display:none">
-        <div class="row-btns" style="margin-bottom:8px">
-          <button class="btn-outline" onclick="toggleCostoFijoForm()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Costo fijo</button>
+        <div id="finResumen"><div class="items-empty">Cargando...</div></div>
+
+        <div id="finGastos" style="display:none">
+          <div class="row-btns" style="margin-bottom:8px">
+            <button class="btn-outline" onclick="toggleGastoForm()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Gasto</button>
+          </div>
+          <div class="quick-form" id="gastoForm">
+            <div class="section-title">Nuevo gasto</div>
+            <div class="form-row">
+              <input type="text" id="gastoCategoria" placeholder="Categoría" list="gastoCategoriasList" maxlength="60">
+              <select id="gastoTipo" class="stock-input" style="width:100%">
+                <option value="variable">Variable</option>
+                <option value="fijo">Fijo</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <input type="number" id="gastoMonto" placeholder="Monto" min="0" step="0.01">
+              <input type="date" id="gastoFecha" class="stock-input" style="width:100%">
+            </div>
+            <div class="form-row">
+              <input type="text" id="gastoDescripcion" placeholder="Descripción (opcional)" maxlength="200">
+            </div>
+            <datalist id="gastoCategoriasList">
+              <option value="Alquiler"><option value="Sueldos"><option value="Servicios"><option value="Marketing"><option value="Insumos"><option value="Otro">
+            </datalist>
+            <div class="quick-form-actions">
+              <button class="btn-primary" onclick="submitGastoForm()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
+              <button class="btn-outline" onclick="toggleGastoForm()">Cancelar</button>
+            </div>
+          </div>
+          <div id="gastosList"><div class="items-empty">Cargando...</div></div>
         </div>
-        <div class="quick-form" id="costoFijoForm">
-          <div class="section-title">Nuevo costo fijo</div>
-          <p class="stock-row-name-sub" style="margin:-4px 0 8px">Versionado: si un monto cambió (subió el alquiler), cargá uno nuevo con la fecha desde la que rige — no pisa el histórico.</p>
-          <div class="form-row">
-            <input type="text" id="costoFijoCategoria" placeholder="Categoría" list="gastoCategoriasList" maxlength="60">
-            <input type="number" id="costoFijoMonto" placeholder="Monto mensual" min="0" step="0.01">
+
+        <div id="finCostosFijos" style="display:none">
+          <div class="row-btns" style="margin-bottom:8px">
+            <button class="btn-outline" onclick="toggleCostoFijoForm()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Costo fijo</button>
           </div>
-          <div class="form-row">
-            <input type="date" id="costoFijoVigencia" class="stock-input" style="width:100%">
+          <div class="quick-form" id="costoFijoForm">
+            <div class="section-title">Nuevo costo fijo</div>
+            <p class="stock-row-name-sub" style="margin:-4px 0 8px">Versionado: si un monto cambió (subió el alquiler), cargá uno nuevo con la fecha desde la que rige — no pisa el histórico.</p>
+            <div class="form-row">
+              <input type="text" id="costoFijoCategoria" placeholder="Categoría" list="gastoCategoriasList" maxlength="60">
+              <input type="number" id="costoFijoMonto" placeholder="Monto mensual" min="0" step="0.01">
+            </div>
+            <div class="form-row">
+              <input type="date" id="costoFijoVigencia" class="stock-input" style="width:100%">
+            </div>
+            <div class="quick-form-actions">
+              <button class="btn-primary" onclick="submitCostoFijoForm()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
+              <button class="btn-outline" onclick="toggleCostoFijoForm()">Cancelar</button>
+            </div>
           </div>
-          <div class="quick-form-actions">
-            <button class="btn-primary" onclick="submitCostoFijoForm()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
-            <button class="btn-outline" onclick="toggleCostoFijoForm()">Cancelar</button>
-          </div>
+          <div id="costosFijosList"><div class="items-empty">Cargando...</div></div>
         </div>
-        <div id="costosFijosList"><div class="items-empty">Cargando...</div></div>
       </div>
     </div>
 
@@ -524,56 +567,58 @@
         <div class="section-title" style="margin-bottom:0">Clientes</div>
         <button class="close-btn" onclick="closeAllPanels()" title="Cerrar"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
-      <div class="row-btns" style="margin-bottom:8px">
-        <button class="cat-chip active" id="clTabBuscar" onclick="setClientesTab('buscar')">Buscar</button>
-        <button class="cat-chip" id="clTabFrecuentes" onclick="setClientesTab('frecuentes')">Frecuentes</button>
-      </div>
-
-      <div id="clBuscar">
+      <div class="panel-body">
         <div class="row-btns" style="margin-bottom:8px">
-          <button class="btn-outline" style="width:100%" onclick="toggleClienteAltaForm()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Cliente</button>
+          <button class="cat-chip active" id="clTabBuscar" onclick="setClientesTab('buscar')">Buscar</button>
+          <button class="cat-chip" id="clTabFrecuentes" onclick="setClientesTab('frecuentes')">Frecuentes</button>
         </div>
-        <div class="quick-form" id="clienteAltaForm">
-          <div class="section-title" id="clienteAltaTitle">Nuevo cliente</div>
-          <div class="form-row">
-            <input type="text" id="clAltaNombre" placeholder="Nombre" maxlength="120">
-            <input type="text" id="clAltaTelefono" placeholder="Teléfono (opcional)" maxlength="30">
-          </div>
-          <div class="form-row">
-            <input type="email" id="clAltaEmail" placeholder="Email (opcional)" maxlength="200">
-            <select id="clAltaCondicionIva" class="stock-input" style="width:100%" onchange="toggleClAltaFiscal()">
-              <option value="consumidor_final">Consumidor Final</option>
-              <option value="responsable_inscripto">Responsable Inscripto</option>
-              <option value="monotributista">Monotributista</option>
-              <option value="exento">Exento</option>
-            </select>
-          </div>
-          <div class="form-row" id="clAltaFiscalRow" style="display:none">
-            <input type="text" id="clAltaCuit" placeholder="CUIT" maxlength="13">
-            <input type="text" id="clAltaRazonSocial" placeholder="Razón social" maxlength="120">
-          </div>
-          <p class="stock-row-name-sub" style="margin:-2px 0 8px">Responsable Inscripto con CUIT factura Factura A automáticamente. El resto factura como Consumidor Final (Factura B).</p>
-          <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:var(--fs-sm);color:var(--ink-2);cursor:pointer">
-            <input type="checkbox" id="clAltaCuentaCorriente" style="width:18px;height:18px;accent-color:var(--accent)">
-            Habilitar cuenta corriente (fiar a este cliente)
-          </label>
-          <div class="quick-form-actions">
-            <button class="btn-primary" onclick="submitClienteAltaForm()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
-            <button class="btn-outline" onclick="toggleClienteAltaForm()">Cancelar</button>
-          </div>
-        </div>
-        <div class="form-row" style="margin-bottom:8px">
-          <input type="text" id="clBuscarPanelInput" placeholder="Buscar por nombre, teléfono o email" oninput="buscarClientesPanel()">
-        </div>
-        <div id="clBuscarLista"><div class="items-empty">Buscá o mirá la lista completa.</div></div>
-        <div id="clDetalle"></div>
-      </div>
 
-      <div id="clFrecuentes" style="display:none">
-        <div class="row-btns" style="margin-bottom:8px">
-          <button class="btn-outline" style="width:100%" onclick="exportarClientesCSV()"><svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar segmento CSV</button>
+        <div id="clBuscar">
+          <div class="row-btns" style="margin-bottom:8px">
+            <button class="btn-outline" style="width:100%" onclick="toggleClienteAltaForm()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Cliente</button>
+          </div>
+          <div class="quick-form" id="clienteAltaForm">
+            <div class="section-title" id="clienteAltaTitle">Nuevo cliente</div>
+            <div class="form-row">
+              <input type="text" id="clAltaNombre" placeholder="Nombre" maxlength="120">
+              <input type="text" id="clAltaTelefono" placeholder="Teléfono (opcional)" maxlength="30">
+            </div>
+            <div class="form-row">
+              <input type="email" id="clAltaEmail" placeholder="Email (opcional)" maxlength="200">
+              <select id="clAltaCondicionIva" class="stock-input" style="width:100%" onchange="toggleClAltaFiscal()">
+                <option value="consumidor_final">Consumidor Final</option>
+                <option value="responsable_inscripto">Responsable Inscripto</option>
+                <option value="monotributista">Monotributista</option>
+                <option value="exento">Exento</option>
+              </select>
+            </div>
+            <div class="form-row" id="clAltaFiscalRow" style="display:none">
+              <input type="text" id="clAltaCuit" placeholder="CUIT" maxlength="13">
+              <input type="text" id="clAltaRazonSocial" placeholder="Razón social" maxlength="120">
+            </div>
+            <p class="stock-row-name-sub" style="margin:-2px 0 8px">Responsable Inscripto con CUIT factura Factura A automáticamente. El resto factura como Consumidor Final (Factura B).</p>
+            <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:var(--fs-sm);color:var(--ink-2);cursor:pointer">
+              <input type="checkbox" id="clAltaCuentaCorriente" style="width:18px;height:18px;accent-color:var(--accent)">
+              Habilitar cuenta corriente (fiar a este cliente)
+            </label>
+            <div class="quick-form-actions">
+              <button class="btn-primary" onclick="submitClienteAltaForm()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
+              <button class="btn-outline" onclick="toggleClienteAltaForm()">Cancelar</button>
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:8px">
+            <input type="text" id="clBuscarPanelInput" placeholder="Buscar por nombre, teléfono o email" oninput="buscarClientesPanel()">
+          </div>
+          <div id="clBuscarLista"><div class="items-empty">Buscá o mirá la lista completa.</div></div>
+          <div id="clDetalle"></div>
         </div>
-        <div id="clFrecuentesLista"><div class="items-empty">Cargando...</div></div>
+
+        <div id="clFrecuentes" style="display:none">
+          <div class="row-btns" style="margin-bottom:8px">
+            <button class="btn-outline" style="width:100%" onclick="exportarClientesCSV()"><svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar segmento CSV</button>
+          </div>
+          <div id="clFrecuentesLista"><div class="items-empty">Cargando...</div></div>
+        </div>
       </div>
     </div>
 
@@ -582,20 +627,22 @@
         <div class="section-title" style="margin-bottom:0">Facturación</div>
         <button class="close-btn" onclick="closeAllPanels()" title="Cerrar"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
-      <div id="facturacionAmbiente"></div>
-      <div class="row-btns" style="margin-bottom:8px">
-        <input type="month" id="facMesInput" class="stock-input" style="width:100%" onchange="loadFacturacion()">
-        <select id="facEstadoInput" class="stock-input" style="width:100%" onchange="loadFacturacion()">
-          <option value="">Todos los estados</option>
-          <option value="aprobado">Aprobados</option>
-          <option value="rechazado">Rechazados</option>
-          <option value="error">Con error</option>
-        </select>
+      <div class="panel-body">
+        <div id="facturacionAmbiente"></div>
+        <div class="row-btns" style="margin-bottom:8px">
+          <input type="month" id="facMesInput" class="stock-input" style="width:100%" onchange="loadFacturacion()">
+          <select id="facEstadoInput" class="stock-input" style="width:100%" onchange="loadFacturacion()">
+            <option value="">Todos los estados</option>
+            <option value="aprobado">Aprobados</option>
+            <option value="rechazado">Rechazados</option>
+            <option value="error">Con error</option>
+          </select>
+        </div>
+        <div class="row-btns" style="margin-bottom:8px">
+          <button class="btn-outline" style="width:100%" onclick="exportarComprobantesCSV()"><svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar CSV (libro IVA)</button>
+        </div>
+        <div id="facturacionLista"><div class="items-empty">Cargando...</div></div>
       </div>
-      <div class="row-btns" style="margin-bottom:8px">
-        <button class="btn-outline" style="width:100%" onclick="exportarComprobantesCSV()"><svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar CSV (libro IVA)</button>
-      </div>
-      <div id="facturacionLista"><div class="items-empty">Cargando...</div></div>
     </div>
 
     <div class="salon-split">
@@ -2387,6 +2434,120 @@ async function loadReportes(){
 
 let ultimoReporte = null;
 
+// Delta % vs. el período anterior de igual longitud (ya viene calculado
+// el total, acá solo se compara) — badge chico junto al número grande,
+// nunca un cálculo aparte que se pueda desalinear del real.
+function deltaBadge(actual, anterior){
+  const a = Number(actual), b = Number(anterior);
+  if (b === 0) return a > 0 ? `<span class="report-delta up">nuevo</span>` : '';
+  const pct = Math.round(((a - b) / b) * 1000) / 10;
+  if (pct === 0) return '';
+  const clase = pct > 0 ? 'up' : 'down';
+  const signo = pct > 0 ? '+' : '';
+  return `<span class="report-delta ${clase}">${signo}${pct}% vs. anterior</span>`;
+}
+
+// Agrupa serieDiaria (una fila por día con ventas, el backend no rellena
+// huecos) en barras para el gráfico — por día si el rango es corto
+// (<=31, se completan los días sin ventas con 0 acá), por mes si es
+// largo (ej. "Todo"/365 días) para que las barras no queden ilegibles
+// de finas.
+function prepararSerieGrafico(serieDiaria, dias){
+  if (dias <= 31){
+    const porFecha = {};
+    serieDiaria.forEach(d => { porFecha[new Date(d.fecha).toISOString().slice(0,10)] = Number(d.total); });
+    const out = [];
+    for (let i = dias - 1; i >= 0; i--){
+      const fecha = new Date(Date.now() - i * 24*60*60*1000);
+      const key = fecha.toISOString().slice(0,10);
+      out.push({ label: fecha.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit' }), total: porFecha[key] || 0 });
+    }
+    return out;
+  }
+  const porMes = {};
+  serieDiaria.forEach(d => {
+    const key = new Date(d.fecha).toISOString().slice(0,7);
+    porMes[key] = (porMes[key] || 0) + Number(d.total);
+  });
+  return Object.keys(porMes).sort().map(key => {
+    const [y, m] = key.split('-');
+    const fecha = new Date(Number(y), Number(m)-1, 1);
+    return { label: fecha.toLocaleDateString('es-AR', { month:'short', year:'2-digit' }), total: porMes[key] };
+  });
+}
+
+// Gráfico de barras con Canvas 2D nativo — sin librería, mismo criterio
+// "sin dependencias/CDN" del resto del proyecto. devicePixelRatio para
+// que no se vea borroso en pantallas retina.
+function dibujarGraficoBarras(canvasEl, serie){
+  const rect = canvasEl.getBoundingClientRect();
+  if (!rect.width || !serie.length) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvasEl.width = rect.width * dpr;
+  canvasEl.height = rect.height * dpr;
+  const ctx = canvasEl.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const max = Math.max(...serie.map(d => d.total), 1);
+  const padBottom = 18, padTop = 6;
+  const usableH = h - padBottom - padTop;
+  const barGap = Math.max(2, Math.min(6, 300 / serie.length));
+  const barW = (w / serie.length) - barGap;
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#7A1428';
+
+  serie.forEach((d, i) => {
+    const barH = (d.total / max) * usableH;
+    const x = i * (barW + barGap) + barGap / 2;
+    const y = padTop + (usableH - barH);
+    ctx.fillStyle = accent;
+    ctx.globalAlpha = d.total > 0 ? 0.85 : 0.12;
+    const r = Math.min(3, barW / 2);
+    ctx.beginPath();
+    if (barH > 1){
+      ctx.moveTo(x, y + barH);
+      ctx.lineTo(x, y + r);
+      ctx.arcTo(x, y, x + r, y, r);
+      ctx.lineTo(x + barW - r, y);
+      ctx.arcTo(x + barW, y, x + barW, y + r, r);
+      ctx.lineTo(x + barW, y + barH);
+      ctx.closePath();
+    } else {
+      ctx.rect(x, padTop + usableH - 2, barW, 2);
+    }
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+
+  ctx.strokeStyle = 'rgba(69,84,99,.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, padTop + usableH + 0.5);
+  ctx.lineTo(w, padTop + usableH + 0.5);
+  ctx.stroke();
+
+  const cadaN = Math.max(1, Math.ceil(serie.length / 8));
+  ctx.fillStyle = 'rgba(69,84,99,.75)';
+  ctx.font = '10px DM Sans, sans-serif';
+  ctx.textAlign = 'center';
+  serie.forEach((d, i) => {
+    if (i % cadaN !== 0 && i !== serie.length - 1) return;
+    const x = i * (barW + barGap) + barGap / 2 + barW / 2;
+    ctx.fillText(d.label, x, h - 4);
+  });
+}
+
+// Redibuja el gráfico si el panel de Reportes está abierto — el canvas
+// no se auto-escala como el resto del layout al cambiar el ancho de
+// ventana (ej. girar una tablet), hace falta redibujarlo a mano.
+window.addEventListener('resize', () => {
+  if (panelAbierto === 'reportes' && ultimoReporte) {
+    const canvas = document.getElementById('reportesChart');
+    if (canvas) dibujarGraficoBarras(canvas, prepararSerieGrafico(ultimoReporte.serieDiaria, ultimoReporte.dias));
+  }
+});
+
 function renderReportes(data){
   ultimoReporte = data;
   const box = document.getElementById('reportesContent');
@@ -2408,6 +2569,7 @@ function renderReportes(data){
 
   const mg = data.margenGeneral;
   const margenPct = Number(mg.ingresos) > 0 ? Math.round((mg.margen / mg.ingresos) * 100) : 0;
+  const pa = data.periodoAnterior;
 
   const cajas = data.cajas.map(c => {
     const dif = Number(c.diferencia);
@@ -2425,27 +2587,52 @@ function renderReportes(data){
 
   box.innerHTML = `
     ${alerta}
-    <div class="total-bar" style="border-radius:var(--r-md);margin-bottom:8px">
-      <div class="total-label">Total período</div>
-      <div class="total-val">${fmtMoney(data.totalGeneral.total)} <span style="font-size:var(--fs-sm);font-weight:400">(${data.totalGeneral.cantidad})</span></div>
-    </div>
-    <div class="total-bar" style="border-radius:var(--r-md);margin-bottom:16px;background:var(--surface);border:1px solid var(--line)">
-      <div class="total-label" style="color:var(--ink-3)">Margen real</div>
-      <div class="total-val" style="color:var(--green)">${fmtMoney(mg.margen)} <span style="font-size:var(--fs-sm);font-weight:400;color:var(--ink-3)">(${margenPct}%)</span></div>
+    <div class="report-grid" style="margin-bottom:var(--sp-4)">
+      <div class="report-card">
+        <div class="stock-row-name-sub" style="margin-bottom:4px">Total período</div>
+        <div class="total-val" style="color:var(--ink)">${fmtMoney(data.totalGeneral.total)}</div>
+        <div class="stock-row-name-sub" style="margin-top:4px">${data.totalGeneral.cantidad} comandas ${deltaBadge(data.totalGeneral.total, pa.totalGeneral.total)}</div>
+      </div>
+      <div class="report-card">
+        <div class="stock-row-name-sub" style="margin-bottom:4px">Margen real</div>
+        <div class="total-val" style="color:var(--green)">${fmtMoney(mg.margen)}</div>
+        <div class="stock-row-name-sub" style="margin-top:4px">${margenPct}% ${deltaBadge(mg.margen, pa.margenGeneral.margen)}</div>
+      </div>
     </div>
     ${mg.unidades_sin_costo > 0 ? `<div class="stock-row-name-sub" style="margin-bottom:16px">${mg.unidades_sin_costo} unidades vendidas sin costo cargado — el margen real es mayor a lo que se ve acá.</div>` : ''}
-    <div class="section-title">Por medio de pago</div>
-    ${porMedio}
-    <div class="section-title" style="margin-top:16px">Productos más vendidos</div>
-    ${top}
-    <div class="section-title" style="margin-top:16px">Productos más rentables</div>
-    ${topMargen}
-    <div class="section-title" style="margin-top:16px">Cierres de caja (diferencia)</div>
-    ${cajas}
-    <div class="section-title" style="margin-top:16px">Anulaciones recientes</div>
-    ${anulados}
+
+    <div class="report-card wide" style="margin-bottom:var(--sp-4)">
+      <div class="section-title" style="margin-bottom:var(--sp-3)">Ventas por día</div>
+      <div class="report-chart-wrap"><canvas id="reportesChart"></canvas></div>
+    </div>
+
+    <div class="report-grid">
+      <div class="report-card">
+        <div class="section-title">Por medio de pago</div>
+        ${porMedio}
+      </div>
+      <div class="report-card">
+        <div class="section-title">Productos más vendidos</div>
+        ${top}
+      </div>
+      <div class="report-card">
+        <div class="section-title">Productos más rentables</div>
+        ${topMargen}
+      </div>
+      <div class="report-card">
+        <div class="section-title">Cierres de caja (diferencia)</div>
+        ${cajas}
+      </div>
+      <div class="report-card wide">
+        <div class="section-title">Anulaciones recientes</div>
+        ${anulados}
+      </div>
+    </div>
     <button class="btn-outline" style="width:100%;margin-top:16px" onclick="exportarReportesCSV()">${icon('download')} Exportar CSV</button>
   `;
+
+  const canvas = document.getElementById('reportesChart');
+  if (canvas) dibujarGraficoBarras(canvas, prepararSerieGrafico(data.serieDiaria, data.dias));
 }
 
 // Arma un CSV en el cliente a partir del reporte ya cargado — Excel lo
@@ -2458,6 +2645,7 @@ function exportarReportesCSV(){
   filas.push([]);
   filas.push(['Total período', fmtMoney(d.totalGeneral.total), `${d.totalGeneral.cantidad} comandas`]);
   filas.push(['Margen real', fmtMoney(d.margenGeneral.margen)]);
+  filas.push(['Total período anterior', fmtMoney(d.periodoAnterior.totalGeneral.total), `${d.periodoAnterior.totalGeneral.cantidad} comandas`]);
   filas.push([]);
   filas.push(['Por medio de pago']);
   filas.push(['Medio', 'Total', 'Cantidad']);
