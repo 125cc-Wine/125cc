@@ -395,3 +395,14 @@ ALTER TABLE caja_movimientos ADD CONSTRAINT caja_movimientos_tipo_check
 -- ON DELETE CASCADE a propósito, para no perder ventas pasadas), así
 -- que "eliminar" la oculta del plano en vez de borrarla. ──
 ALTER TABLE mesas ADD COLUMN IF NOT EXISTS activo boolean NOT NULL DEFAULT true;
+
+-- ── Trazabilidad de anulaciones (auditoría externa, hallazgo 1.4).
+-- Antes comanda_items.estado='anulado' no dejaba rastro de quién ni
+-- cuándo — anular ítems es la vía clásica de fuga en un bar. Se
+-- capturan anulado_at/anulado_por automáticamente (sin fricción nueva
+-- en el botón ✕, que sigue siendo un solo toque); motivo queda
+-- disponible pero sin UI para cargarlo todavía — no se pidió, se deja
+-- la columna lista igual que se hizo con recetas. ──
+ALTER TABLE comanda_items ADD COLUMN IF NOT EXISTS anulado_at timestamptz;
+ALTER TABLE comanda_items ADD COLUMN IF NOT EXISTS anulado_por text;
+ALTER TABLE comanda_items ADD COLUMN IF NOT EXISTS motivo_anulacion text;

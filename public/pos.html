@@ -1339,17 +1339,21 @@ async function agregarProducto(productoId, forzar){
 // Restar una unidad (stepper −); si llega a 0 la línea se anula sola.
 // Restaura 1 unidad de stock.
 async function restarItem(itemId){
+  const staff = sessionStorage.getItem(STAFF_KEY);
   try {
-    await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'restar', item_id: itemId } });
+    await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'restar', item_id: itemId, registrado_por: staff } });
     await Promise.all([refreshComanda(), refreshStockBadges()]);
   } catch(e){ toast(e.message, 'error'); }
 }
 
 // Quitar la línea entera de una, sin importar la cantidad (botón ✕).
-// Restaura todo el stock de esa línea.
+// Restaura todo el stock de esa línea. Queda quién y cuándo (anulado_at/
+// anulado_por) sin agregar fricción — el botón sigue siendo un solo
+// toque, sin diálogo de motivo (nadie lo pidió todavía).
 async function anularItem(itemId){
+  const staff = sessionStorage.getItem(STAFF_KEY);
   try {
-    await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'anular', item_id: itemId } });
+    await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'anular', item_id: itemId, registrado_por: staff } });
     await Promise.all([refreshComanda(), refreshStockBadges()]);
   } catch(e){ toast(e.message, 'error'); }
 }
@@ -2581,9 +2585,10 @@ function renderReportes(data){
     </div>`;
   }).join('') || '<div class="items-empty">Sin cierres en el período.</div>';
 
-  const anulados = data.anulados.map(a => `
-    <div class="stock-row"><div class="stock-row-name">${a.cantidad} × ${escapeHtml(a.nombre_snapshot)} <span class="stock-row-name-sub">comanda #${a.comanda_id}</span></div><div>${fmtMoney(a.precio_unitario * a.cantidad)}</div></div>
-  `).join('') || '<div class="items-empty">Sin anulaciones.</div>';
+  const anulados = data.anulados.map(a => {
+    const fecha = new Date(a.anulado_en).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    return `<div class="stock-row"><div class="stock-row-name">${a.cantidad} × ${escapeHtml(a.nombre_snapshot)} <span class="stock-row-name-sub">comanda #${a.comanda_id} · ${fecha}${a.anulado_por ? ' · ' + escapeHtml(a.anulado_por) : ''}</span></div><div>${fmtMoney(a.precio_unitario * a.cantidad)}</div></div>`;
+  }).join('') || '<div class="items-empty">Sin anulaciones.</div>';
 
   box.innerHTML = `
     ${alerta}

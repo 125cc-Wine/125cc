@@ -51,10 +51,14 @@ async function lockearComandaAbierta(client, comandaId) {
 }
 
 async function comandaItem(req, res) {
-  const { comanda_id, accion } = req.body || {};
+  const { comanda_id, accion, registrado_por, motivo } = req.body || {};
   if (!comanda_id) return res.status(400).json({ error: "Falta comanda_id." });
 
   // Anular: saca la línea entera y restaura todo el stock de esa línea.
+  // anulado_at/anulado_por se capturan siempre (sin fricción nueva, el
+  // botón ✕ del frontend sigue siendo un solo toque); motivo es
+  // opcional y hoy nadie lo manda desde la UI, queda listo para cuando
+  // haga falta pedirlo.
   if (accion === 'anular') {
     const { item_id } = req.body || {};
     if (!item_id) return res.status(400).json({ error: "Falta item_id." });
@@ -68,7 +72,9 @@ async function comandaItem(req, res) {
           WHERE ci.id=${item_id} AND ci.comanda_id=${comanda_id} AND ci.estado='activo'
           FOR UPDATE OF ci`;
         if (!itemRows.length) throw Object.assign(new Error('no_item'), { code: 'no_item' });
-        await client.sql`UPDATE comanda_items SET estado='anulado' WHERE id=${item_id}`;
+        await client.sql`
+          UPDATE comanda_items SET estado='anulado', anulado_at=now(), anulado_por=${registrado_por || null}, motivo_anulacion=${motivo || null}
+          WHERE id=${item_id}`;
         const restituir = itemRows[0].cantidad * consumoStock(itemRows[0]);
         await client.sql`
           UPDATE productos SET stock_actual = stock_actual + ${restituir}
@@ -99,7 +105,9 @@ async function comandaItem(req, res) {
         if (!itemRows.length) throw Object.assign(new Error('no_item'), { code: 'no_item' });
         const nuevaCant = itemRows[0].cantidad - 1;
         if (nuevaCant <= 0) {
-          await client.sql`UPDATE comanda_items SET estado='anulado' WHERE id=${item_id}`;
+          await client.sql`
+            UPDATE comanda_items SET estado='anulado', anulado_at=now(), anulado_por=${registrado_por || null}
+            WHERE id=${item_id}`;
         } else {
           await client.sql`UPDATE comanda_items SET cantidad=${nuevaCant} WHERE id=${item_id}`;
         }

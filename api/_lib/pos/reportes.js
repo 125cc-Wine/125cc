@@ -143,15 +143,18 @@ async function getReportes(req, res) {
     LIMIT 20`;
 
   // Antes sin filtro de fecha: el panel decía "7 días" pero mostraba
-  // los últimos 30 anulados de toda la historia. anulado_at todavía no
-  // existe en el schema (columna nueva pendiente aparte) — se sigue
-  // ordenando por created_at (creación de la línea, no del momento en
-  // que se anuló), pero ahora al menos respeta el rango del filtro.
+  // los últimos 30 anulados de toda la historia. Ahora filtra y ordena
+  // por COALESCE(anulado_at, created_at) — anulado_at es lo correcto
+  // (cuándo se anuló, no cuándo se creó la línea), created_at queda
+  // como respaldo para filas anuladas antes de que existiera la
+  // columna (van a quedar con anulado_at NULL para siempre, es
+  // historial viejo, no vale la pena migrar datos para esto).
   const { rows: anulados } = await sql`
-    SELECT id, comanda_id, nombre_snapshot, cantidad, precio_unitario, created_at
+    SELECT id, comanda_id, nombre_snapshot, cantidad, precio_unitario, anulado_por,
+           COALESCE(anulado_at, created_at) AS anulado_en
     FROM comanda_items
-    WHERE estado='anulado' AND created_at >= ${desde}
-    ORDER BY created_at DESC
+    WHERE estado='anulado' AND COALESCE(anulado_at, created_at) >= ${desde}
+    ORDER BY anulado_en DESC
     LIMIT 30`;
 
   return res.status(200).json({
