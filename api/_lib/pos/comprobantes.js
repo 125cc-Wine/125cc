@@ -286,4 +286,41 @@ async function reintentarComprobante(req, res) {
   return emitirComprobante(req, res);
 }
 
-module.exports = { emitirComprobante, listComprobantes, reintentarComprobante };
+// Franja de cifras del panel Facturación (auditoría, sección 02 —
+// "¿quedó todo emitido?"): el panel de hoy lista lo que se emitió, que
+// es lo que no da problemas. Lo que falta es lo que NO está — comandas
+// cerradas del mes sin comprobante aprobado asociado. Esa cifra tiene
+// que existir ANTES de encender producción, no después.
+async function getResumenFacturacion(req, res) {
+  const mes = req.query.mes || new Date().toISOString().slice(0, 7);
+  if (!/^\d{4}-\d{2}$/.test(mes)) return res.status(400).json({ error: "Formato de mes inválido (usar YYYY-MM)." });
+  const [y, m] = mes.split('-').map(Number);
+  const inicio = `${mes}-01`;
+  const finExclusivo = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
+
+  const { rows: facturadoRows } = await sql`
+    SELECT COALESCE(SUM(imp_total), 0) AS total, COUNT(*) AS cantidad
+    FROM comprobantes WHERE estado='aprobado' AND created_at >= ${inicio} AND created_at < ${finExclusivo}`;
+
+  const { rows: reintentablesRows } = await sql`
+    SELECT COUNT(*) AS cantidad FROM comprobantes WHERE estado IN ('rechazado','error')`;
+
+  const { rows: sinEmitirRows } = await sql`
+    SELECT COUNT(*) AS cantidad, COALESCE(SUM(c.total), 0) AS total
+    FROM comandas c
+    WHERE c.estado='cerrada' AND c.cerrada_at >= ${inicio} AND c.cerrada_at < ${finExclusivo}
+      AND NOT EXISTS (SELECT 1 FROM comprobantes cp WHERE cp.comanda_id = c.id AND cp.estado='aprobado')`;
+
+  let ambiente = 'homologacion';
+  try { ambiente = config().ambiente; } catch (_) {}
+
+  return res.status(200).json({
+    mes,
+    facturado: facturadoRows[0].total, facturadoCantidad: facturadoRows[0].cantidad,
+    reintentables: reintentablesRows[0].cantidad,
+    sinEmitir: sinEmitirRows[0].cantidad, sinEmitirTotal: sinEmitirRows[0].total,
+    ambiente,
+  });
+}
+
+module.exports = { emitirComprobante, listComprobantes, reintentarComprobante, getResumenFacturacion };

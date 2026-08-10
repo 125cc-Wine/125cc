@@ -336,6 +336,12 @@
   .report-delta.down{color:var(--red)}
   .report-chart-wrap{position:relative;height:160px;width:100%}
   .report-chart-wrap canvas{width:100%;height:100%;display:block}
+  /* Barras comparadas presupuestado-vs-real (Finanzas) — la de arriba
+     es siempre la referencia (presupuestado, gris), la de abajo es lo
+     que realmente se gastó, coloreada según si se pasó o no. */
+  .comp-bar-track{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+  .comp-bar-fill{height:100%;border-radius:4px;transition:width .3s var(--ease)}
+  .comp-bar-presupuestado{background:var(--ink-3);opacity:.35}
   .stock-row{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-4) var(--sp-2);border-bottom:1px solid var(--line);min-height:36px;border-radius:var(--r-sm);transition:background var(--t) var(--ease)}
   .stock-row:hover{background:var(--bg)}
   .stock-row:last-child{border-bottom:none}
@@ -446,6 +452,7 @@
         <button class="close-btn" onclick="closeAllPanels()" title="Cerrar"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div class="panel-body">
+        <div id="stockResumen"></div>
         <div class="row-btns" style="margin-bottom:8px">
           <button class="cat-chip active" id="stockTabProductos" onclick="setStockTab('productos')">Productos</button>
           <button class="cat-chip" id="stockTabMovimientos" onclick="setStockTab('movimientos')">Movimientos</button>
@@ -586,6 +593,7 @@
         <button class="close-btn" onclick="closeAllPanels()" title="Cerrar"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div class="panel-body">
+        <div id="clientesResumen"></div>
         <div class="row-btns" style="margin-bottom:8px">
           <button class="cat-chip active" id="clTabBuscar" onclick="setClientesTab('buscar')">Buscar</button>
           <button class="cat-chip" id="clTabFrecuentes" onclick="setClientesTab('frecuentes')">Frecuentes</button>
@@ -647,6 +655,7 @@
       </div>
       <div class="panel-body">
         <div id="facturacionAmbiente"></div>
+        <div id="facturacionResumen"></div>
         <div class="row-btns" style="margin-bottom:8px">
           <input type="month" id="facMesInput" class="stock-input" style="width:100%" onchange="loadFacturacion()">
           <select id="facEstadoInput" class="stock-input" style="width:100%" onchange="loadFacturacion()">
@@ -1701,18 +1710,33 @@ async function renderProveedorDetalle(){
     if (!productos.length) await loadProductos();
     const vinculados = new Set(data.items.map(i => i.producto_id));
     const disponibles = productos.filter(p => !vinculados.has(p.id));
+    // Delta contra el costo cargado (auditoría, sección 02 — "¿a quién
+    // le compro esto y cuándo me subió el precio?"): el endpoint de
+    // aplicar-como-costo ya existía, faltaba mostrar EN LA FILA cuándo
+    // conviene apretarlo — antes solo se veía el costo actual, sin
+    // comparar contra lo que este proveedor cobra hoy.
     box.innerHTML = `
       <div class="section-title" style="margin-top:12px">Precios de compra</div>
-      ${data.items.map(i => `
+      ${data.items.map(i => {
+        const actual = i.costo_actual != null ? Number(i.costo_actual) : null;
+        const compra = Number(i.precio_compra);
+        let delta = '';
+        if (actual != null && actual > 0) {
+          const pct = Math.round(((compra - actual) / actual) * 1000) / 10;
+          if (pct > 0) delta = `<span style="color:var(--red);font-weight:700"> · subió ${pct}%</span>`;
+          else if (pct < 0) delta = `<span style="color:var(--green);font-weight:700"> · bajó ${Math.abs(pct)}%</span>`;
+        }
+        return `
         <div class="stock-row" style="flex-wrap:wrap">
           <div style="flex-basis:100%">
             <div class="stock-row-name">${escapeHtml(i.producto_nombre)}</div>
-            <div class="stock-row-name-sub">costo actual del producto: ${i.costo_actual != null ? fmtMoney(i.costo_actual) : 'sin cargar'}</div>
+            <div class="stock-row-name-sub">costo actual: ${actual != null ? fmtMoney(actual) : 'sin cargar'}${delta}</div>
           </div>
           <input type="number" class="stock-input" id="pcompra_${i.producto_id}" value="${i.precio_compra}" min="0" step="0.01">
           <button class="btn-outline" onclick="guardarPrecioCompra(${i.producto_id})">${icon('check')} Guardar</button>
           <button class="btn-primary" onclick="aplicarComoCosto(${i.producto_id})">${icon('dollar-sign')} Aplicar como costo</button>
-        </div>`).join('') || '<div class="items-empty">Sin productos vinculados todavía.</div>'}
+        </div>`;
+      }).join('') || '<div class="items-empty">Sin productos vinculados todavía.</div>'}
       <div class="section-title" style="margin-top:12px">Vincular producto</div>
       <div class="form-row">
         <select id="provProductoSelect" class="stock-input" style="width:100%">
@@ -1809,12 +1833,24 @@ function renderEstadoResultados(data){
   const box = document.getElementById('finResumen');
   const colorResultado = data.resultadoNeto >= 0 ? 'var(--green)' : 'var(--red)';
 
+  // Barras comparadas (auditoría, sección 02 — "¿cerré el mes arriba o
+  // abajo, y por qué?"): antes esto era una lista de texto (categoría +
+  // "presupuestado $X" en letra chica + el real al lado) — ahora dos
+  // barras por categoría, la de arriba siempre la referencia
+  // (presupuestado), la de abajo lo real, coloreada según si se pasó.
+  const maxComparativo = Math.max(...data.comparativoFijos.flatMap(c => [Number(c.presupuestado), Number(c.real)]), 1);
   const comparativo = data.comparativoFijos.map(c => {
     const color = c.diferencia === 0 ? 'var(--ink-3)' : (c.diferencia > 0 ? 'var(--red)' : 'var(--green)');
-    return `<div class="stock-row">
-      <div class="stock-row-name">${escapeHtml(c.categoria)}</div>
-      <div class="stock-row-name-sub">presupuestado ${fmtMoney(c.presupuestado)}</div>
-      <div style="color:${color};font-weight:700">${fmtMoney(c.real)}</div>
+    const pctPresupuestado = Math.min(100, (Number(c.presupuestado) / maxComparativo) * 100);
+    const pctReal = Math.min(100, (Number(c.real) / maxComparativo) * 100);
+    return `<div class="stock-row" style="flex-direction:column;align-items:stretch;gap:5px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <div class="stock-row-name">${escapeHtml(c.categoria)}</div>
+        <div class="stock-row-name-sub">presup. ${fmtMoney(c.presupuestado)}</div>
+      </div>
+      <div class="comp-bar-track"><div class="comp-bar-fill comp-bar-presupuestado" style="width:${pctPresupuestado}%"></div></div>
+      <div class="comp-bar-track"><div class="comp-bar-fill" style="width:${pctReal}%;background:${color}"></div></div>
+      <div style="text-align:right;font-weight:700;color:${color}">${fmtMoney(c.real)}</div>
     </div>`;
   }).join('') || '<div class="items-empty">Sin costos fijos ni gastos fijos cargados este mes.</div>';
 
@@ -1824,19 +1860,28 @@ function renderEstadoResultados(data){
   `).join('') || '<div class="items-empty">Sin gastos variables este mes.</div>';
 
   box.innerHTML = `
-    <div class="total-bar" style="border-radius:var(--r-md);margin-bottom:8px">
-      <div class="total-label">Ingresos</div>
-      <div class="total-val">${fmtMoney(data.ingresos)} <span style="font-size:var(--fs-sm);font-weight:400">(${data.comandas})</span></div>
-    </div>
-    <div class="total-bar" style="border-radius:var(--r-md);margin-bottom:8px;background:var(--surface);border:1px solid var(--line)">
-      <div class="total-label" style="color:var(--ink-3)">Costo variable + Gastos</div>
-      <div class="total-val" style="color:var(--red)">${fmtMoney(Number(data.costoVariable) + Number(data.gastosTotal))}</div>
-    </div>
-    <div class="total-bar" style="border-radius:var(--r-md);margin-bottom:16px;background:var(--surface);border:1px solid var(--line)">
-      <div class="total-label" style="color:var(--ink-3)">Resultado neto</div>
-      <div class="total-val" style="color:${colorResultado}">${fmtMoney(data.resultadoNeto)}</div>
+    <div class="report-grid" style="margin-bottom:var(--sp-4)">
+      <div class="report-card">
+        <div class="stock-row-name-sub" style="margin-bottom:4px">Ingresos</div>
+        <div class="total-val" style="color:var(--ink)">${fmtMoney(data.ingresos)}</div>
+        <div class="stock-row-name-sub" style="margin-top:4px">${data.comandas} comandas</div>
+      </div>
+      <div class="report-card">
+        <div class="stock-row-name-sub" style="margin-bottom:4px">Costo variable + Gastos</div>
+        <div class="total-val" style="color:var(--red)">${fmtMoney(Number(data.costoVariable) + Number(data.gastosTotal))}</div>
+      </div>
+      <div class="report-card">
+        <div class="stock-row-name-sub" style="margin-bottom:4px">Resultado neto</div>
+        <div class="total-val" style="color:${colorResultado}">${fmtMoney(data.resultadoNeto)}</div>
+      </div>
     </div>
     ${data.unidadesSinCosto > 0 ? `<div class="stock-row-name-sub" style="margin-bottom:16px">${data.unidadesSinCosto} unidades vendidas sin costo cargado — el costo variable real es mayor a lo que se ve acá.</div>` : ''}
+
+    <div class="report-card wide" style="margin-bottom:var(--sp-4)">
+      <div class="section-title" style="margin-bottom:var(--sp-3)">Resultado neto — últimos 6 meses</div>
+      <div class="report-chart-wrap"><canvas id="finanzasChart"></canvas></div>
+    </div>
+
     <div class="section-title">Costos fijos: presupuestado vs. real</div>
     ${comparativo}
     <div class="section-title" style="margin-top:16px">Gastos variables por categoría</div>
@@ -1847,6 +1892,16 @@ function renderEstadoResultados(data){
     </div>
     <a href="/interno/equilibrio.html" target="_blank" class="btn-outline" style="display:block;text-align:center;margin-top:8px;text-decoration:none">Abrir calculadora de equilibrio →</a>
   `;
+
+  const canvas = document.getElementById('finanzasChart');
+  if (canvas && data.serieResultadoNeto) {
+    const serie = data.serieResultadoNeto.map(s => {
+      const [y, m] = s.mes.split('-');
+      const fecha = new Date(Number(y), Number(m) - 1, 1);
+      return { label: fecha.toLocaleDateString('es-AR', { month: 'short' }), valor: Number(s.resultadoNeto) };
+    });
+    dibujarGraficoBarrasCentradas(canvas, serie);
+  }
 }
 
 function exportarFinanzasCSV(){
@@ -2022,7 +2077,29 @@ async function loadClientesPanel(){
   document.getElementById('clDetalle').innerHTML = '';
   document.getElementById('clBuscarPanelInput').value = '';
   document.getElementById('clBuscarLista').innerHTML = '<div class="items-empty">Buscá o mirá la lista completa.</div>';
-  await loadClientesFrecuentesPanel();
+  await Promise.all([loadResumenClientes(), loadClientesFrecuentesPanel()]);
+}
+
+// Franja de cifras (auditoría, sección 02): "¿quién vuelve y quién me
+// debe?" — antes la deuda solo se veía entrando cliente por cliente,
+// sin ninguna cifra agregada a la vista al abrir el panel.
+async function loadResumenClientes(){
+  try {
+    const data = await api('/api/pos?r=clientes-resumen');
+    const box = document.getElementById('clientesResumen');
+    box.innerHTML = `
+      <div class="report-grid" style="margin-bottom:var(--sp-4)">
+        <div class="report-card">
+          <div class="stock-row-name-sub" style="margin-bottom:4px">Fiado abierto</div>
+          <div class="total-val" style="color:${Number(data.saldoTotal) > 0 ? 'var(--red)' : 'var(--ink)'}">${fmtMoney(data.saldoTotal)}</div>
+          <div class="stock-row-name-sub" style="margin-top:4px">${data.clientesConSaldo} cliente${data.clientesConSaldo==1?'':'s'} con saldo</div>
+        </div>
+        <div class="report-card">
+          <div class="stock-row-name-sub" style="margin-bottom:4px">Clientes cargados</div>
+          <div class="total-val" style="color:var(--ink)">${data.totalClientes}</div>
+        </div>
+      </div>`;
+  } catch(e){ /* silencioso — no bloquea el resto del panel */ }
 }
 
 function setClientesTab(tab){
@@ -2282,6 +2359,35 @@ async function loadFacturacion(){
     renderFacturacionAmbiente(data.ambiente);
     renderFacturacion(data.comprobantes);
   } catch(e){ toast(e.message, 'error'); }
+  loadResumenFacturacion(mes);
+}
+
+// Franja de cifras (auditoría, sección 02 — "¿quedó todo emitido?"):
+// el panel ya listaba lo emitido, que es lo que no da problemas; lo
+// que faltaba mostrar es lo que NO se emitió — comandas cerradas del
+// mes sin comprobante aprobado asociado.
+async function loadResumenFacturacion(mes){
+  try {
+    const data = await api('/api/pos?r=comprobantes-resumen' + (mes ? '&mes=' + mes : ''));
+    const box = document.getElementById('facturacionResumen');
+    box.innerHTML = `
+      <div class="report-grid" style="margin-bottom:var(--sp-4)">
+        <div class="report-card">
+          <div class="stock-row-name-sub" style="margin-bottom:4px">Facturado del mes</div>
+          <div class="total-val" style="color:var(--green)">${fmtMoney(data.facturado)}</div>
+          <div class="stock-row-name-sub" style="margin-top:4px">${data.facturadoCantidad} comprobante${data.facturadoCantidad==1?'':'s'}</div>
+        </div>
+        <div class="report-card">
+          <div class="stock-row-name-sub" style="margin-bottom:4px">Sin emitir</div>
+          <div class="total-val" style="color:${Number(data.sinEmitir) > 0 ? 'var(--red)' : 'var(--green)'}">${data.sinEmitir}</div>
+          <div class="stock-row-name-sub" style="margin-top:4px">${fmtMoney(data.sinEmitirTotal)}</div>
+        </div>
+        <div class="report-card">
+          <div class="stock-row-name-sub" style="margin-bottom:4px">Reintentables</div>
+          <div class="total-val" style="color:${Number(data.reintentables) > 0 ? 'var(--amber)' : 'var(--ink)'}">${data.reintentables}</div>
+        </div>
+      </div>`;
+  } catch(e){ /* silencioso — no bloquea el resto del panel */ }
 }
 
 function renderFacturacionAmbiente(ambiente){
@@ -2482,6 +2588,7 @@ async function togglePanel(name){
     if (!productos.length) await loadProductos();
     await cargarAlertasMargen();
     renderStockList();
+    loadResumenStock();
   }
   else if (name === 'proveedores') await loadProveedores();
   else if (name === 'finanzas') await loadFinanzas();
@@ -2621,6 +2728,56 @@ function dibujarGraficoBarras(canvasEl, serie){
   ctx.textAlign = 'center';
   serie.forEach((d, i) => {
     if (i % cadaN !== 0 && i !== serie.length - 1) return;
+    const x = i * (barW + barGap) + barGap / 2 + barW / 2;
+    ctx.fillText(d.label, x, h - 4);
+  });
+}
+
+// Variante con eje cero al medio — para series que pueden ser
+// negativas (resultado neto mensual en Finanzas), a diferencia de
+// dibujarGraficoBarras que asume todo positivo desde una base.
+function dibujarGraficoBarrasCentradas(canvasEl, serie){
+  const rect = canvasEl.getBoundingClientRect();
+  if (!rect.width || !serie.length) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvasEl.width = rect.width * dpr;
+  canvasEl.height = rect.height * dpr;
+  const ctx = canvasEl.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const maxAbs = Math.max(...serie.map(d => Math.abs(d.valor)), 1);
+  const padBottom = 18, padTop = 6;
+  const usableH = h - padBottom - padTop;
+  const mid = padTop + usableH / 2;
+  const barGap = Math.max(4, Math.min(10, 300 / serie.length));
+  const barW = (w / serie.length) - barGap;
+  const styles = getComputedStyle(document.documentElement);
+  const green = styles.getPropertyValue('--green').trim() || '#5A8A2A';
+  const red = styles.getPropertyValue('--red').trim() || '#7A1428';
+
+  serie.forEach((d, i) => {
+    const barH = (Math.abs(d.valor) / maxAbs) * (usableH / 2);
+    const x = i * (barW + barGap) + barGap / 2;
+    ctx.fillStyle = d.valor >= 0 ? green : red;
+    ctx.globalAlpha = d.valor === 0 ? 0.15 : 0.85;
+    if (d.valor >= 0) ctx.fillRect(x, mid - Math.max(barH, 2), barW, Math.max(barH, 2));
+    else ctx.fillRect(x, mid, barW, Math.max(barH, 2));
+    ctx.globalAlpha = 1;
+  });
+
+  ctx.strokeStyle = 'rgba(69,84,99,.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, mid + 0.5);
+  ctx.lineTo(w, mid + 0.5);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(69,84,99,.75)';
+  ctx.font = '10px DM Sans, sans-serif';
+  ctx.textAlign = 'center';
+  serie.forEach((d, i) => {
     const x = i * (barW + barGap) + barGap / 2 + barW / 2;
     ctx.fillText(d.label, x, h - 4);
   });
@@ -2871,15 +3028,59 @@ async function cerrarCajaAction(){
 
 // ── STOCK ─────────────────────────────────────────────────────────
 
+// Franja de cifras (auditoría, sección 02): "¿qué repongo y cuánta
+// plata tengo parada?" — antes el panel abría directo a la lista, sin
+// responder eso de un vistazo.
+async function loadResumenStock(){
+  try {
+    const data = await api('/api/pos?r=stock-resumen');
+    renderResumenStock(data);
+  } catch(e){ /* silencioso — no bloquea el resto del panel */ }
+}
+
+function renderResumenStock(data){
+  const box = document.getElementById('stockResumen');
+  const ultimoConteo = data.ultimoConteo
+    ? new Date(data.ultimoConteo).toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit' })
+    : 'nunca';
+  box.innerHTML = `
+    <div class="report-grid" style="margin-bottom:var(--sp-4)">
+      <div class="report-card">
+        <div class="stock-row-name-sub" style="margin-bottom:4px">Valorizado a costo</div>
+        <div class="total-val" style="color:var(--ink)">${fmtMoney(data.valorizado)}</div>
+      </div>
+      <div class="report-card">
+        <div class="stock-row-name-sub" style="margin-bottom:4px">Bajo mínimo</div>
+        <div class="total-val" style="color:${Number(data.bajoMinimo) > 0 ? 'var(--red)' : 'var(--green)'}">${data.bajoMinimo}</div>
+      </div>
+      <div class="report-card">
+        <div class="stock-row-name-sub" style="margin-bottom:4px">Mermas del mes</div>
+        <div class="total-val" style="color:var(--ink)">${fmtMoney(data.mermasValor)}</div>
+        <div class="stock-row-name-sub" style="margin-top:4px">${data.mermasCantidad} registro${data.mermasCantidad==1?'':'s'}</div>
+      </div>
+      <div class="report-card">
+        <div class="stock-row-name-sub" style="margin-bottom:4px">Último conteo</div>
+        <div class="total-val" style="color:var(--ink);font-size:var(--fs-lg)">${ultimoConteo}</div>
+      </div>
+    </div>`;
+}
+
 function renderStockList(){
   const box = document.getElementById('stockList');
   if (!productos.length){ box.innerHTML = '<div class="items-empty">Todavía no hay productos cargados.</div>'; return; }
   const idsAlerta = new Set(alertasMargen.map(a => a.id));
-  box.innerHTML = productos.map(p => `
+  box.innerHTML = productos.map(p => {
+    // Nivel en botellas Y en copas (auditoría, sección 02) — es la
+    // conversión que ya hace consumoStock() del lado del backend,
+    // mostrada acá donde se decide si hay que reponer o no.
+    const copasEquivalentes = (p.unidad_venta === 'copa' && p.stock_actual != null)
+      ? Math.floor(Number(p.stock_actual) * Number(p.copas_por_botella || 6))
+      : null;
+    return `
     <div class="stock-row" style="flex-wrap:wrap">
       <div style="flex-basis:100%">
         <div class="stock-row-name">${escapeHtml(p.nombre)}${idsAlerta.has(p.id) ? ' <span style="color:var(--red);font-weight:700">· margen bajo</span>' : ''}</div>
-        <div class="stock-row-name-sub">${escapeHtml(p.categoria)} · ${p.unidad_venta} · vende ${fmtMoney(p.precio)}</div>
+        <div class="stock-row-name-sub">${escapeHtml(p.categoria)} · ${p.unidad_venta} · vende ${fmtMoney(p.precio)}${copasEquivalentes != null ? ` · ≈ ${copasEquivalentes} copas` : ''}</div>
       </div>
       <input type="number" class="stock-input" id="stockAct_${p.id}" value="${fmtStock(p.stock_actual)}" placeholder="${p.unidad_venta === 'copa' ? 'Botellas' : 'Actual'}" min="0" step="0.01">
       <input type="number" class="stock-input" id="stockMin_${p.id}" value="${fmtStock(p.stock_minimo)}" placeholder="${p.unidad_venta === 'copa' ? 'Mín (botellas)' : 'Mín'}" min="0" step="0.01">
@@ -2887,7 +3088,8 @@ function renderStockList(){
       <button class="btn-outline" onclick="guardarStock(${p.id})">${icon('check')} Guardar</button>
       <button class="btn-outline" style="font-size:10.5px;padding:6px 10px;min-height:auto" onclick="abrirMermaForm(${p.id})">${icon('trash')} Merma</button>
       <button class="btn-outline" style="font-size:10.5px;padding:6px 10px;min-height:auto" onclick="abrirConteoForm(${p.id})">${icon('clipboard-list')} Contar</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function setStockTab(tab){

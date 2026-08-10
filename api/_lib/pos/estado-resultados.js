@@ -68,13 +68,55 @@ async function getEstadoResultados(req, res) {
     return { categoria, presupuestado, real, diferencia: real - presupuestado };
   }).sort((a, b) => a.categoria.localeCompare(b.categoria));
 
+  // Serie de resultado neto de los últimos 6 meses (auditoría, sección
+  // 02 — "¿cerré el mes arriba o abajo, y por qué?"): mismo cálculo que
+  // arriba, agregado por mes en vez de para uno solo. Se arma con tres
+  // queries agrupadas por mes (ingresos/costo/gastos) y se combinan acá
+  // — más simple que un JOIN de tres agregaciones con distinta
+  // granularidad de fecha.
+  const [yMes, mMes] = mes.split('-').map(Number);
+  const inicio6Meses = new Date(Date.UTC(yMes, mMes - 1 - 5, 1)).toISOString().slice(0, 10);
+
+  const { rows: ingresosPorMes } = await sql`
+    SELECT date_trunc('month', cerrada_at)::date AS mes, COALESCE(SUM(total),0) AS ingresos
+    FROM comandas
+    WHERE estado='cerrada' AND cerrada_at >= ${inicio6Meses} AND cerrada_at < ${finExclusivo}
+    GROUP BY 1`;
+  const { rows: costoPorMes } = await sql`
+    SELECT date_trunc('month', c.cerrada_at)::date AS mes,
+           COALESCE(SUM(ci.cantidad * COALESCE(p.costo,0)),0) AS costo
+    FROM comanda_items ci
+    JOIN comandas c ON c.id = ci.comanda_id
+    LEFT JOIN productos p ON p.id = ci.producto_id
+    WHERE ci.estado='activo' AND c.estado='cerrada' AND c.cerrada_at >= ${inicio6Meses} AND c.cerrada_at < ${finExclusivo}
+    GROUP BY 1`;
+  const { rows: gastosPorMes } = await sql`
+    SELECT date_trunc('month', fecha)::date AS mes, COALESCE(SUM(monto),0) AS gastos
+    FROM gastos
+    WHERE estado='activo' AND fecha >= ${inicio6Meses} AND fecha < ${finExclusivo}
+    GROUP BY 1`;
+
+  const mapaIngresos = new Map(ingresosPorMes.map((r) => [r.mes.toISOString().slice(0, 7), Number(r.ingresos)]));
+  const mapaCosto = new Map(costoPorMes.map((r) => [r.mes.toISOString().slice(0, 7), Number(r.costo)]));
+  const mapaGastos = new Map(gastosPorMes.map((r) => [r.mes.toISOString().slice(0, 7), Number(r.gastos)]));
+
+  const serieResultadoNeto = [];
+  for (let i = 5; i >= 0; i--) {
+    const fecha = new Date(Date.UTC(yMes, mMes - 1 - i, 1));
+    const key = fecha.toISOString().slice(0, 7);
+    const ing = mapaIngresos.get(key) || 0;
+    const cos = mapaCosto.get(key) || 0;
+    const gas = mapaGastos.get(key) || 0;
+    serieResultadoNeto.push({ mes: key, resultadoNeto: ing - cos - gas });
+  }
+
   return res.status(200).json({
     mes,
     ingresos, comandas: ingresosRows[0].comandas,
     costoVariable, unidadesSinCosto: costoRows[0].unidades_sin_costo,
     gastosTotal, gastosPorCategoria,
     presupuesto, presupuestoTotal, comparativoFijos,
-    resultadoNeto,
+    resultadoNeto, serieResultadoNeto,
   });
 }
 

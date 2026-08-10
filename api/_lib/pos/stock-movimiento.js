@@ -85,4 +85,40 @@ async function listMovimientos(req, res) {
   return res.status(200).json({ movimientos: rows });
 }
 
-module.exports = { registrarMerma, registrarConteo, listMovimientos };
+// Franja de cifras del panel Stock (auditoría, sección 02 — "¿qué
+// repongo y cuánta plata tengo parada?"): valorización a costo de lo
+// que hay en stock, cuántos productos están bajo el mínimo, mermas
+// del mes (valorizadas a costo), fecha del último conteo físico.
+async function getResumenStock(req, res) {
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
+
+  const { rows: valorRows } = await sql`
+    SELECT COALESCE(SUM(stock_actual * costo), 0) AS valorizado
+    FROM productos
+    WHERE activo=true AND stock_actual IS NOT NULL AND costo IS NOT NULL AND stock_actual > 0`;
+
+  const { rows: bajoMinimoRows } = await sql`
+    SELECT COUNT(*) AS cantidad
+    FROM productos
+    WHERE activo=true AND stock_actual IS NOT NULL AND stock_minimo IS NOT NULL AND stock_actual <= stock_minimo`;
+
+  const { rows: mermasRows } = await sql`
+    SELECT COALESCE(SUM(ABS(sm.cantidad) * COALESCE(p.costo,0)), 0) AS valor_mermado, COUNT(*) AS cantidad
+    FROM stock_movimientos sm JOIN productos p ON p.id = sm.producto_id
+    WHERE sm.tipo='merma' AND sm.created_at >= ${inicioMes.toISOString()}`;
+
+  const { rows: ultimoConteoRows } = await sql`
+    SELECT MAX(created_at) AS fecha FROM stock_movimientos WHERE tipo='ajuste_conteo'`;
+
+  return res.status(200).json({
+    valorizado: valorRows[0].valorizado,
+    bajoMinimo: bajoMinimoRows[0].cantidad,
+    mermasValor: mermasRows[0].valor_mermado,
+    mermasCantidad: mermasRows[0].cantidad,
+    ultimoConteo: ultimoConteoRows[0].fecha,
+  });
+}
+
+module.exports = { registrarMerma, registrarConteo, listMovimientos, getResumenStock };

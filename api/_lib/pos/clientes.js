@@ -76,4 +76,29 @@ async function upsertCliente(req, res) {
   }
 }
 
-module.exports = { listClientes, upsertCliente };
+// Franja de cifras del panel Clientes (auditoría, sección 02 — "¿quién
+// vuelve y quién me debe?"): total fiado abierto y cuántos clientes
+// tienen saldo — antes la deuda solo se veía entrando cliente por
+// cliente, no había ninguna cifra agregada. El saldo por cliente se
+// deriva del mismo ledger que ya usa cuenta-corriente.js (SUM(cargo) -
+// SUM(pago)), acá agregado sobre todos los clientes con movimientos.
+async function getResumenClientes(req, res) {
+  const { rows: fiadoRows } = await sql`
+    SELECT COUNT(*) AS clientes_con_saldo, COALESCE(SUM(saldo), 0) AS saldo_total
+    FROM (
+      SELECT cliente_id, SUM(CASE WHEN tipo='cargo' THEN monto ELSE -monto END) AS saldo
+      FROM cuenta_corriente_movimientos
+      GROUP BY cliente_id
+      HAVING SUM(CASE WHEN tipo='cargo' THEN monto ELSE -monto END) > 0
+    ) t`;
+
+  const { rows: totalClientesRows } = await sql`SELECT COUNT(*) AS total FROM clientes`;
+
+  return res.status(200).json({
+    saldoTotal: fiadoRows[0].saldo_total,
+    clientesConSaldo: fiadoRows[0].clientes_con_saldo,
+    totalClientes: totalClientesRows[0].total,
+  });
+}
+
+module.exports = { listClientes, upsertCliente, getResumenClientes };
