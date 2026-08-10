@@ -9,95 +9,72 @@
 // estar bajo _lib) — este archivo solo hace CORS + auth + dispatch.
 // Todas las fases siguientes (stock, caja, reportes) se agregan como
 // entradas nuevas en ROUTES, no como archivos nuevos en /api.
-const { timingSafeStringEqual } = require('./_lib/timing-safe');
+//
+// require() perezoso (detectado en auditoría, hallazgo 3.1): antes los
+// ~28 módulos de _lib/pos se importaban todos al tope del archivo, así
+// que CUALQUIER llamada —listar mesas incluida— cargaba en frío
+// node-forge, el cliente de AFIP y todo el resto, sin usarlos. ROUTES
+// ahora mapea a [ruta-del-módulo, nombreDeExport] en vez de a la
+// función ya importada; el dispatch hace el require recién cuando esa
+// ruta puntual se llama. require() de Node cachea el módulo después de
+// la primera carga, así que dentro de una misma instancia tibia no se
+// re-lee del disco — el costo real es solo por ruta usada, una vez.
 const { requirePos } = require('./_lib/require-pos');
 
-const { listMesas, upsertMesa, saveMesasPos, eliminarMesa } = require('./_lib/pos/mesas');
-const { setMesaEstado } = require('./_lib/pos/mesa-estado');
-const { listProductos, upsertProducto } = require('./_lib/pos/productos');
-const { importVinos } = require('./_lib/pos/productos-import');
-const { listComandas, abrirComanda } = require('./_lib/pos/comandas');
-const { getComanda } = require('./_lib/pos/comanda');
-const { comandaItem } = require('./_lib/pos/comanda-item');
-const { cerrarComanda } = require('./_lib/pos/comanda-cerrar');
-const { anularComanda } = require('./_lib/pos/comanda-anular');
-const { trasladarComanda } = require('./_lib/pos/comanda-trasladar');
-const { setDescuento } = require('./_lib/pos/comanda-descuento');
-const { getCaja, abrirCaja } = require('./_lib/pos/caja');
-const { registrarMovimiento } = require('./_lib/pos/caja-movimiento');
-const { cerrarCaja } = require('./_lib/pos/caja-cerrar');
-const { getReportes } = require('./_lib/pos/reportes');
-const { getAlertasMargen, getConfig, setConfig } = require('./_lib/pos/productos-alertas');
-const { listProveedores, upsertProveedor } = require('./_lib/pos/proveedores');
-const { listProveedorProductos, upsertProveedorProducto, aplicarCosto } = require('./_lib/pos/proveedor-producto');
-const { registrarMerma, registrarConteo, listMovimientos } = require('./_lib/pos/stock-movimiento');
-const { listInsumos, upsertInsumo } = require('./_lib/pos/insumos');
-const { getReceta, upsertRecetaItem, recalcularCostoReceta } = require('./_lib/pos/receta');
-const { listCostosFijos, upsertCostoFijo } = require('./_lib/pos/costos-fijos');
-const { listGastos, upsertGasto } = require('./_lib/pos/gastos');
-const { getEstadoResultados } = require('./_lib/pos/estado-resultados');
-const { listClientes, upsertCliente } = require('./_lib/pos/clientes');
-const { getCliente } = require('./_lib/pos/cliente');
-const { setComandaCliente } = require('./_lib/pos/comanda-cliente');
-const { getClientesFrecuentes } = require('./_lib/pos/clientes-frecuentes');
-const { getClientesSegmento } = require('./_lib/pos/clientes-segmento');
-const { emitirComprobante, listComprobantes, reintentarComprobante } = require('./_lib/pos/comprobantes');
-const { getCuentaCorriente, registrarPago } = require('./_lib/pos/cuenta-corriente');
-
 const ROUTES = {
-  'mesas:GET': listMesas,
-  'mesas:POST': upsertMesa,
-  'mesas-pos:POST': saveMesasPos,
-  'mesa-eliminar:POST': eliminarMesa,
-  'mesa-estado:POST': setMesaEstado,
-  'productos:GET': listProductos,
-  'productos:POST': upsertProducto,
-  'productos-import:POST': importVinos,
-  'comandas:GET': listComandas,
-  'comandas:POST': abrirComanda,
-  'comanda:GET': getComanda,
-  'comanda-item:POST': comandaItem,
-  'comanda-cerrar:POST': cerrarComanda,
-  'comanda-anular:POST': anularComanda,
-  'comanda-trasladar:POST': trasladarComanda,
-  'comanda-descuento:POST': setDescuento,
-  'caja:GET': getCaja,
-  'caja:POST': abrirCaja,
-  'caja-movimiento:POST': registrarMovimiento,
-  'caja-cerrar:POST': cerrarCaja,
-  'reportes:GET': getReportes,
-  'productos-alertas:GET': getAlertasMargen,
-  'pos-config:GET': getConfig,
-  'pos-config:POST': setConfig,
-  'proveedores:GET': listProveedores,
-  'proveedores:POST': upsertProveedor,
-  'proveedor-producto:GET': listProveedorProductos,
-  'proveedor-producto:POST': upsertProveedorProducto,
-  'proveedor-aplicar-costo:POST': aplicarCosto,
-  'stock-merma:POST': registrarMerma,
-  'stock-conteo:POST': registrarConteo,
-  'stock-movimientos:GET': listMovimientos,
-  'insumos:GET': listInsumos,
-  'insumos:POST': upsertInsumo,
-  'receta:GET': getReceta,
-  'receta-item:POST': upsertRecetaItem,
-  'receta-recalcular-costo:POST': recalcularCostoReceta,
-  'costos-fijos:GET': listCostosFijos,
-  'costos-fijos:POST': upsertCostoFijo,
-  'gastos:GET': listGastos,
-  'gastos:POST': upsertGasto,
-  'estado-resultados:GET': getEstadoResultados,
-  'clientes:GET': listClientes,
-  'clientes:POST': upsertCliente,
-  'cliente:GET': getCliente,
-  'comanda-cliente:POST': setComandaCliente,
-  'clientes-frecuentes:GET': getClientesFrecuentes,
-  'clientes-segmento:GET': getClientesSegmento,
-  'comprobante-emitir:POST': emitirComprobante,
-  'comprobantes:GET': listComprobantes,
-  'comprobante-reintentar:POST': reintentarComprobante,
-  'cuenta-corriente:GET': getCuentaCorriente,
-  'cuenta-corriente-pago:POST': registrarPago,
+  'mesas:GET': ['./_lib/pos/mesas', 'listMesas'],
+  'mesas:POST': ['./_lib/pos/mesas', 'upsertMesa'],
+  'mesas-pos:POST': ['./_lib/pos/mesas', 'saveMesasPos'],
+  'mesa-eliminar:POST': ['./_lib/pos/mesas', 'eliminarMesa'],
+  'mesa-estado:POST': ['./_lib/pos/mesa-estado', 'setMesaEstado'],
+  'productos:GET': ['./_lib/pos/productos', 'listProductos'],
+  'productos:POST': ['./_lib/pos/productos', 'upsertProducto'],
+  'productos-import:POST': ['./_lib/pos/productos-import', 'importVinos'],
+  'comandas:GET': ['./_lib/pos/comandas', 'listComandas'],
+  'comandas:POST': ['./_lib/pos/comandas', 'abrirComanda'],
+  'comanda:GET': ['./_lib/pos/comanda', 'getComanda'],
+  'comanda-item:POST': ['./_lib/pos/comanda-item', 'comandaItem'],
+  'comanda-cerrar:POST': ['./_lib/pos/comanda-cerrar', 'cerrarComanda'],
+  'comanda-anular:POST': ['./_lib/pos/comanda-anular', 'anularComanda'],
+  'comanda-trasladar:POST': ['./_lib/pos/comanda-trasladar', 'trasladarComanda'],
+  'comanda-descuento:POST': ['./_lib/pos/comanda-descuento', 'setDescuento'],
+  'caja:GET': ['./_lib/pos/caja', 'getCaja'],
+  'caja:POST': ['./_lib/pos/caja', 'abrirCaja'],
+  'caja-movimiento:POST': ['./_lib/pos/caja-movimiento', 'registrarMovimiento'],
+  'caja-cerrar:POST': ['./_lib/pos/caja-cerrar', 'cerrarCaja'],
+  'reportes:GET': ['./_lib/pos/reportes', 'getReportes'],
+  'productos-alertas:GET': ['./_lib/pos/productos-alertas', 'getAlertasMargen'],
+  'pos-config:GET': ['./_lib/pos/productos-alertas', 'getConfig'],
+  'pos-config:POST': ['./_lib/pos/productos-alertas', 'setConfig'],
+  'proveedores:GET': ['./_lib/pos/proveedores', 'listProveedores'],
+  'proveedores:POST': ['./_lib/pos/proveedores', 'upsertProveedor'],
+  'proveedor-producto:GET': ['./_lib/pos/proveedor-producto', 'listProveedorProductos'],
+  'proveedor-producto:POST': ['./_lib/pos/proveedor-producto', 'upsertProveedorProducto'],
+  'proveedor-aplicar-costo:POST': ['./_lib/pos/proveedor-producto', 'aplicarCosto'],
+  'stock-merma:POST': ['./_lib/pos/stock-movimiento', 'registrarMerma'],
+  'stock-conteo:POST': ['./_lib/pos/stock-movimiento', 'registrarConteo'],
+  'stock-movimientos:GET': ['./_lib/pos/stock-movimiento', 'listMovimientos'],
+  'insumos:GET': ['./_lib/pos/insumos', 'listInsumos'],
+  'insumos:POST': ['./_lib/pos/insumos', 'upsertInsumo'],
+  'receta:GET': ['./_lib/pos/receta', 'getReceta'],
+  'receta-item:POST': ['./_lib/pos/receta', 'upsertRecetaItem'],
+  'receta-recalcular-costo:POST': ['./_lib/pos/receta', 'recalcularCostoReceta'],
+  'costos-fijos:GET': ['./_lib/pos/costos-fijos', 'listCostosFijos'],
+  'costos-fijos:POST': ['./_lib/pos/costos-fijos', 'upsertCostoFijo'],
+  'gastos:GET': ['./_lib/pos/gastos', 'listGastos'],
+  'gastos:POST': ['./_lib/pos/gastos', 'upsertGasto'],
+  'estado-resultados:GET': ['./_lib/pos/estado-resultados', 'getEstadoResultados'],
+  'clientes:GET': ['./_lib/pos/clientes', 'listClientes'],
+  'clientes:POST': ['./_lib/pos/clientes', 'upsertCliente'],
+  'cliente:GET': ['./_lib/pos/cliente', 'getCliente'],
+  'comanda-cliente:POST': ['./_lib/pos/comanda-cliente', 'setComandaCliente'],
+  'clientes-frecuentes:GET': ['./_lib/pos/clientes-frecuentes', 'getClientesFrecuentes'],
+  'clientes-segmento:GET': ['./_lib/pos/clientes-segmento', 'getClientesSegmento'],
+  'comprobante-emitir:POST': ['./_lib/pos/comprobantes', 'emitirComprobante'],
+  'comprobantes:GET': ['./_lib/pos/comprobantes', 'listComprobantes'],
+  'comprobante-reintentar:POST': ['./_lib/pos/comprobantes', 'reintentarComprobante'],
+  'cuenta-corriente:GET': ['./_lib/pos/cuenta-corriente', 'getCuentaCorriente'],
+  'cuenta-corriente-pago:POST': ['./_lib/pos/cuenta-corriente', 'registrarPago'],
 };
 
 module.exports = async function handler(req, res) {
@@ -109,8 +86,11 @@ module.exports = async function handler(req, res) {
   const r = req.query.r;
 
   // Login: no pasa por requirePos porque ES el chequeo de auth.
+  // timing-safe se carga acá adentro (perezoso también), no hace falta
+  // en ninguna otra ruta.
   if (r === 'auth') {
     if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
+    const { timingSafeStringEqual } = require('./_lib/timing-safe');
     const { password } = req.body || {};
     const POS_PASSWORD = process.env.POS_PASSWORD;
     if (!POS_PASSWORD) return res.status(500).json({ error: "POS_PASSWORD no configurada." });
@@ -121,10 +101,12 @@ module.exports = async function handler(req, res) {
 
   if (!requirePos(req, res)) return; // ya respondió 401/500
 
-  const fn = ROUTES[`${r}:${req.method}`];
-  if (!fn) return res.status(404).json({ error: `Recurso no encontrado: ${r}` });
+  const routeInfo = ROUTES[`${r}:${req.method}`];
+  if (!routeInfo) return res.status(404).json({ error: `Recurso no encontrado: ${r}` });
 
   try {
+    const [modulePath, fnName] = routeInfo;
+    const fn = require(modulePath)[fnName];
     await fn(req, res);
   } catch (err) {
     console.error(err);
