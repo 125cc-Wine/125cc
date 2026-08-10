@@ -169,6 +169,19 @@
   .salon-pin-delete:active{transform:scale(.9)}
   .salon-pin-delete .icon{width:12px;height:12px;stroke-width:2.5}
   .salon-pin-label{font-size:var(--fs-2xs);color:var(--ink-2);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px;margin-left:auto;margin-right:auto}
+  /* Minutos desde que se abrió (ocupada) o se pidió la cuenta
+     (cuenta_pedida) — "una mesa en azul hace doce minutos es el
+     problema más caro del turno", antes no se veía en ningún lado. */
+  .salon-pin-minutos{font-size:var(--fs-2xs);color:var(--ink-3);margin-top:1px}
+  /* Aviso: pasados ~8 min pidiendo la cuenta, un pulso ámbar alrededor
+     del pin — se mantiene el azul (mismo significado: "pidieron la
+     cuenta"), no se cambia a rojo (ya significa "ocupada", cambiar de
+     color ahí confundiría los dos estados). */
+  .salon-pin.aviso .salon-pin-dot{animation:pinAviso 1.4s ease-in-out infinite}
+  @keyframes pinAviso{
+    0%,100%{box-shadow:0 2px 8px rgba(20,20,25,.2),0 0 0 0 rgba(207,172,89,.65)}
+    50%{box-shadow:0 2px 8px rgba(20,20,25,.2),0 0 0 7px rgba(207,172,89,0)}
+  }
 
   .row-btns{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-5);flex-wrap:wrap}
   /* Los tres botones comparten el mismo padding vertical y min-height, así
@@ -892,6 +905,22 @@ function enterApp(){
   document.getElementById('topStaff').textContent = sessionStorage.getItem(STAFF_KEY) || '';
   loadMesas();
   loadCaja(); // también deja cajaAbierta seteado para el banner y el flujo de cobro
+  iniciarAutorrefrescoPlano();
+}
+
+// Con 1-2 mozos en celu/tablet, el plano de un dispositivo no reflejaba
+// lo que hizo el otro hasta recargar la página — una mesa podía verse
+// verde en un dispositivo hace diez minutos que otro la ocupó. Polling
+// simple (no una arquitectura de tiempo real): cada 10s, solo con la
+// pestaña visible (ahorra batería/datos en el celu del mozo cuando el
+// teléfono está guardado), y nunca mientras se está editando el plano
+// (perdería el drag en curso).
+function iniciarAutorrefrescoPlano(){
+  setInterval(() => {
+    if (document.visibilityState !== 'visible') return;
+    if (editingSalon) return;
+    loadMesas();
+  }, 10000);
 }
 
 // ── TOAST ─────────────────────────────────────────────────────────
@@ -985,8 +1014,16 @@ function renderSalonPlano(){
   mesas.forEach((m, idx) => {
     const hasPos = m.pos_x != null && m.pos_y != null;
     const pos = hasPos ? { x: Number(m.pos_x), y: Number(m.pos_y) } : posicionPorDefecto(idx);
+
+    // Minutos desde que se abrió (ocupada) o se pidió la cuenta
+    // (cuenta_pedida) — referencia distinta según el estado, pueden
+    // ser momentos muy separados en el tiempo.
+    const referencia = m.estado === 'cuenta_pedida' ? m.cuenta_pedida_at : (m.estado === 'ocupada' ? m.abierta_at : null);
+    const minutos = referencia ? Math.max(0, Math.floor((Date.now() - new Date(referencia).getTime()) / 60000)) : null;
+    const enAviso = m.estado === 'cuenta_pedida' && minutos != null && minutos >= 8;
+
     const pin = document.createElement('div');
-    pin.className = `salon-pin ${m.estado}${selectedId === m.id ? ' selected' : ''}`;
+    pin.className = `salon-pin ${m.estado}${selectedId === m.id ? ' selected' : ''}${enAviso ? ' aviso' : ''}`;
     pin.style.left = pos.x + '%';
     pin.style.top = pos.y + '%';
     pin.dataset.mesaId = m.id;
@@ -996,7 +1033,8 @@ function renderSalonPlano(){
         ${m.capacidad ? `<div class="salon-pin-badge">${m.capacidad}</div>` : ''}
         ${editingSalon ? `<div class="salon-pin-delete" title="Eliminar mesa">${icon('x')}</div>` : ''}
       </div>
-      <div class="salon-pin-label">${escapeHtml(m.nombre)}</div>`;
+      <div class="salon-pin-label">${escapeHtml(m.nombre)}</div>
+      ${minutos != null ? `<div class="salon-pin-minutos">${minutos} min</div>` : ''}`;
     pin.addEventListener('click', () => { if (!editingSalon) openMesa(m.id); });
     if (editingSalon) {
       makeDraggable(pin, m.id);

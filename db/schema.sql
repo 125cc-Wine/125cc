@@ -406,3 +406,13 @@ ALTER TABLE mesas ADD COLUMN IF NOT EXISTS activo boolean NOT NULL DEFAULT true;
 ALTER TABLE comanda_items ADD COLUMN IF NOT EXISTS anulado_at timestamptz;
 ALTER TABLE comanda_items ADD COLUMN IF NOT EXISTS anulado_por text;
 ALTER TABLE comanda_items ADD COLUMN IF NOT EXISTS motivo_anulacion text;
+
+-- ── Minutos en el pin del plano (auditoría, hallazgo 1.3). El pin
+-- distingue libre/ocupada/cuenta_pedida por color pero no decía hace
+-- cuánto — "una mesa en azul hace doce minutos es el problema más caro
+-- del turno". Para 'ocupada' se usa comandas.abierta_at (ya existía).
+-- Para 'cuenta_pedida' hace falta un timestamp propio: mesas.updated_at
+-- no sirve (se pisa con cualquier drag del plano, sin relación con el
+-- estado), y abierta_at mide desde que se abrió la mesa, no desde que
+-- se pidió la cuenta — pueden ser momentos muy distintos. ──
+ALTER TABLE comandas ADD COLUMN IF NOT EXISTS cuenta_pedida_at timestamptz;
