@@ -133,6 +133,11 @@
   }
 
   .salon-toolbar{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-4);flex-wrap:wrap}
+  /* Antes el mozo se enteraba de que la caja estaba cerrada recién al
+     apretar Cobrar, con el cliente parado. Franja fija arriba del
+     plano, siempre visible mientras no haya sesión abierta. */
+  .caja-cerrada-banner{display:none;align-items:center;justify-content:center;gap:8px;background:#B45309;color:#fff;font-weight:700;font-size:var(--fs-sm);padding:10px 14px;border-radius:var(--r-md);margin-bottom:var(--sp-4);cursor:pointer;transition:filter var(--t) var(--ease)}
+  .caja-cerrada-banner:hover{filter:brightness(.92)}
 
   /* Recuadro delimitado (borde + fondo propio), a diferencia del diseño
      anterior donde los círculos flotaban directo sobre el fondo de la
@@ -649,6 +654,10 @@
 
       <!-- IZQUIERDA: plano del salón -->
       <div class="salon-left">
+        <div class="caja-cerrada-banner" id="cajaCerradaBanner" onclick="togglePanel('caja')">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          Caja cerrada — tocá para abrirla
+        </div>
         <div class="salon-toolbar">
           <button class="btn-primary" onclick="startTakeaway()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Takeaway</button>
           <button class="btn-outline" onclick="toggleMesaForm()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Mesa</button>
@@ -754,14 +763,30 @@
 
           <div class="cobrar-panel" id="cobrarPanel">
             <div class="section-title">Cobrar</div>
-            <div id="cobrarResumen"></div>
-            <div class="form-row" style="margin-top:10px">
-              <input type="number" id="dividirN" class="stock-input" style="width:100%" value="1" min="1" max="6" placeholder="Partes">
-              <button class="btn-outline" onclick="dividirPagos()">Dividir en partes iguales</button>
+            <!-- Antes esto solo se sabía después de armar el pedido y
+                 apretar Cobrar (409 del backend, con el cliente
+                 esperando). Ahora se puede abrir la caja sin salir de
+                 la comanda, acá mismo. -->
+            <div id="cobrarSinCaja" style="display:none">
+              <p class="stock-row-name-sub" style="margin-bottom:10px">No hay una caja abierta — abrila para poder cobrar.</p>
+              <div class="form-row" style="margin-bottom:10px">
+                <input type="number" id="cobrarMontoInicialCaja" class="stock-input" style="width:100%" placeholder="Monto inicial de caja" min="0" step="100" value="0">
+              </div>
+              <button class="btn-primary" style="width:100%" onclick="abrirCajaYCobrar()">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                Abrir caja y continuar
+              </button>
             </div>
-            <div id="pagosRows"></div>
-            <button class="btn-outline" style="width:100%;margin-bottom:10px" onclick="agregarPagoRow()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar pago</button>
-            <button class="btn-primary" style="width:100%" onclick="confirmCobrar()">Confirmar cobro</button>
+            <div id="cobrarConCaja">
+              <div id="cobrarResumen"></div>
+              <div class="form-row" style="margin-top:10px">
+                <input type="number" id="dividirN" class="stock-input" style="width:100%" value="1" min="1" max="6" placeholder="Partes">
+                <button class="btn-outline" onclick="dividirPagos()">Dividir en partes iguales</button>
+              </div>
+              <div id="pagosRows"></div>
+              <button class="btn-outline" style="width:100%;margin-bottom:10px" onclick="agregarPagoRow()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar pago</button>
+              <button class="btn-primary" style="width:100%" onclick="confirmCobrar()">Confirmar cobro</button>
+            </div>
           </div>
 
           <div class="quick-form" id="productoForm">
@@ -813,6 +838,7 @@ let catFiltro = 'todas';
 let tipoFiltro = 'todos'; // 'todos' | 'vino' | 'menu'
 let pagosState = [];         // [{medio_pago, monto}] — pagos del cobro actual (uno o varios)
 let editingSalon = false;
+let cajaAbierta = null;      // null = todavía no se consultó, true/false una vez que loadCaja() corrió
 let pendingPositions = {};   // {mesaId: {pos_x, pos_y}} — se llena al arrastrar
 
 // ── AUTH ──────────────────────────────────────────────────────────
@@ -865,6 +891,7 @@ function enterApp(){
   document.getElementById('app').style.display = 'block';
   document.getElementById('topStaff').textContent = sessionStorage.getItem(STAFF_KEY) || '';
   loadMesas();
+  loadCaja(); // también deja cajaAbierta seteado para el banner y el flujo de cobro
 }
 
 // ── TOAST ─────────────────────────────────────────────────────────
@@ -1369,9 +1396,28 @@ function toggleCobrarPanel(){
   const abrir = !panel.classList.contains('open');
   panel.classList.toggle('open');
   if (abrir){
+    // Si no hay caja abierta, se ofrece abrirla acá mismo en vez de
+    // dejar que el mozo arme los pagos y recién se entere con un 409
+    // al confirmar.
+    const sinCaja = cajaAbierta === false;
+    document.getElementById('cobrarSinCaja').style.display = sinCaja ? 'block' : 'none';
+    document.getElementById('cobrarConCaja').style.display = sinCaja ? 'none' : 'block';
     pagosState = [{ medio_pago: 'efectivo', monto: totalConDescuento() }];
     renderPagosRows();
   }
+}
+
+async function abrirCajaYCobrar(){
+  const monto = document.getElementById('cobrarMontoInicialCaja').value;
+  try {
+    const staff = sessionStorage.getItem(STAFF_KEY);
+    await api('/api/pos?r=caja', { method: 'POST', body: { monto_inicial: monto || 0, abierta_por: staff } });
+    cajaAbierta = true;
+    renderCajaBanner();
+    toast('Caja abierta', 'success');
+    document.getElementById('cobrarSinCaja').style.display = 'none';
+    document.getElementById('cobrarConCaja').style.display = 'block';
+  } catch(e){ toast(e.message, 'error'); }
 }
 
 function renderPagosRows(){
@@ -2681,8 +2727,17 @@ function exportarReportesCSV(){
 async function loadCaja(){
   try {
     const data = await api('/api/pos?r=caja');
+    cajaAbierta = !!data.sesion;
+    renderCajaBanner();
     renderCaja(data);
   } catch(e){ toast(e.message, 'error'); }
+}
+
+// Franja fija arriba del plano — antes el mozo se enteraba de que la
+// caja estaba cerrada recién al apretar Cobrar, con el cliente parado.
+function renderCajaBanner(){
+  const banner = document.getElementById('cajaCerradaBanner');
+  if (banner) banner.style.display = cajaAbierta === false ? 'flex' : 'none';
 }
 
 function renderCaja(data){
