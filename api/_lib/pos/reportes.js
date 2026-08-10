@@ -13,6 +13,14 @@
 // ranking "por margen" (si no, COALESCE a 0 los haría parecer 100% de
 // margen, que es engañoso) — se informa cuántas unidades vendidas
 // todavía no tienen costo cargado, para que se note la falta de dato.
+//
+// margenGeneral.ingresos usa comandas.total (neto de descuento), NO
+// SUM(ci.precio_unitario*cantidad) — ese es el precio de lista antes
+// del descuento. Antes de este fix, cualquier comanda con descuento
+// inflaba el margen reportado exactamente por el monto descontado
+// (bug real, detectado en auditoría). El costo sigue viniendo de
+// comanda_items (no hay otra fuente), el descuento no le pega al
+// costo, solo a los ingresos.
 const { sql } = require('../db');
 
 async function getReportes(req, res) {
@@ -32,18 +40,17 @@ async function getReportes(req, res) {
     SELECT COUNT(*) AS cantidad, COALESCE(SUM(total),0) AS total
     FROM comandas WHERE estado='cerrada' AND cerrada_at >= ${antes} AND cerrada_at < ${desde}`;
 
-  const { rows: margenAnteriorRows } = await sql`
-    SELECT
-      COALESCE(SUM(ci.cantidad * ci.precio_unitario), 0) AS ingresos,
-      COALESCE(SUM(ci.cantidad * COALESCE(p.costo, 0)), 0) AS costo
+  const { rows: costoAnteriorRows } = await sql`
+    SELECT COALESCE(SUM(ci.cantidad * COALESCE(p.costo, 0)), 0) AS costo
     FROM comanda_items ci
     JOIN comandas c ON c.id = ci.comanda_id
     LEFT JOIN productos p ON p.id = ci.producto_id
     WHERE ci.estado='activo' AND c.estado='cerrada' AND c.cerrada_at >= ${antes} AND c.cerrada_at < ${desde}`;
-  const ma = margenAnteriorRows[0];
+  const ingresosAnterior = Number(totalAnteriorRows[0].total);
+  const costoAnterior = Number(costoAnteriorRows[0].costo);
   const periodoAnterior = {
     totalGeneral: totalAnteriorRows[0],
-    margenGeneral: { ingresos: ma.ingresos, costo: ma.costo, margen: Number(ma.ingresos) - Number(ma.costo) },
+    margenGeneral: { ingresos: ingresosAnterior, costo: costoAnterior, margen: ingresosAnterior - costoAnterior },
   };
 
   // Serie diaria para el gráfico — los días sin ventas no generan fila
@@ -55,26 +62,43 @@ async function getReportes(req, res) {
     FROM comandas WHERE estado='cerrada' AND cerrada_at >= ${desde}
     GROUP BY 1 ORDER BY 1`;
 
-  const { rows: margenGeneralRows } = await sql`
+  const { rows: costoRows } = await sql`
     SELECT
-      COALESCE(SUM(ci.cantidad * ci.precio_unitario), 0) AS ingresos,
       COALESCE(SUM(ci.cantidad * COALESCE(p.costo, 0)), 0) AS costo,
       COALESCE(SUM(CASE WHEN p.costo IS NULL THEN ci.cantidad ELSE 0 END), 0) AS unidades_sin_costo
     FROM comanda_items ci
     JOIN comandas c ON c.id = ci.comanda_id
     LEFT JOIN productos p ON p.id = ci.producto_id
     WHERE ci.estado='activo' AND c.estado='cerrada' AND c.cerrada_at >= ${desde}`;
-  const mg = margenGeneralRows[0];
+  const ingresosGeneral = Number(totalGeneral[0].total);
+  const costoGeneral = Number(costoRows[0].costo);
   const margenGeneral = {
-    ingresos: mg.ingresos, costo: mg.costo,
-    margen: Number(mg.ingresos) - Number(mg.costo),
-    unidades_sin_costo: mg.unidades_sin_costo,
+    ingresos: ingresosGeneral, costo: costoGeneral,
+    margen: ingresosGeneral - costoGeneral,
+    unidades_sin_costo: costoRows[0].unidades_sin_costo,
   };
 
+  // Desglose real por medio de pago — antes agrupaba por
+  // comandas.medio_pago, así que una cuenta dividida (2+ pagos, medios
+  // distintos) caía entera en 'mixto' sin decir cuánto entró por cada
+  // medio. caja_movimientos SÍ guarda un pago por medio (uno por cada
+  // elemento del array `pagos` de comanda-cerrar.js), eso es lo que
+  // responde "cuánto entró por cada medio". El fiado (cuenta_corriente)
+  // no genera fila en caja_movimientos —la plata no entró— así que se
+  // suma aparte desde cuenta_corriente_movimientos para no desaparecer
+  // del desglose.
   const { rows: totalesPorMedio } = await sql`
-    SELECT medio_pago, COUNT(*) AS cantidad, COALESCE(SUM(total),0) AS total
-    FROM comandas
-    WHERE estado='cerrada' AND cerrada_at >= ${desde}
+    SELECT medio_pago, COUNT(*) AS cantidad, COALESCE(SUM(monto),0) AS total FROM (
+      SELECT cm.medio_pago AS medio_pago, cm.monto AS monto
+      FROM caja_movimientos cm
+      JOIN comandas c ON c.id = cm.comanda_id
+      WHERE cm.tipo='venta' AND c.estado='cerrada' AND c.cerrada_at >= ${desde}
+      UNION ALL
+      SELECT 'cuenta_corriente' AS medio_pago, ccm.monto AS monto
+      FROM cuenta_corriente_movimientos ccm
+      JOIN comandas c ON c.id = ccm.comanda_id
+      WHERE ccm.tipo='cargo' AND c.estado='cerrada' AND c.cerrada_at >= ${desde}
+    ) t
     GROUP BY medio_pago
     ORDER BY total DESC`;
 
@@ -93,7 +117,11 @@ async function getReportes(req, res) {
     LIMIT 15`;
 
   // Ranking por rentabilidad real — solo productos con costo cargado,
-  // para no mezclar "sin dato" con "margen 100%".
+  // para no mezclar "sin dato" con "margen 100%". A diferencia de
+  // margenGeneral, acá sí queda a precio de lista (no neto de
+  // descuento): el descuento es de la comanda entera, no hay forma de
+  // saber cuánto le corresponde a cada línea sin prorratear, y esto es
+  // un ranking relativo entre productos, no una cifra de caja.
   const { rows: topPorMargen } = await sql`
     SELECT ci.producto_id, ci.nombre_snapshot,
            SUM(ci.cantidad) AS unidades,
@@ -114,13 +142,15 @@ async function getReportes(req, res) {
     ORDER BY cerrada_at DESC
     LIMIT 20`;
 
-  // Sin timestamp de anulación en el schema — se ordena por creación de
-  // la línea, no es "recién anulado primero" exacto pero alcanza para
-  // tener visibilidad de qué se anula seguido.
+  // Antes sin filtro de fecha: el panel decía "7 días" pero mostraba
+  // los últimos 30 anulados de toda la historia. anulado_at todavía no
+  // existe en el schema (columna nueva pendiente aparte) — se sigue
+  // ordenando por created_at (creación de la línea, no del momento en
+  // que se anuló), pero ahora al menos respeta el rango del filtro.
   const { rows: anulados } = await sql`
     SELECT id, comanda_id, nombre_snapshot, cantidad, precio_unitario, created_at
     FROM comanda_items
-    WHERE estado='anulado'
+    WHERE estado='anulado' AND created_at >= ${desde}
     ORDER BY created_at DESC
     LIMIT 30`;
 
