@@ -18,7 +18,15 @@
 // copa / 750cc de botella = 1/6, hoy uniforme en todo el catálogo).
 // 'botella' y 'unidad' siguen consumiendo 1 unidad entera de stock por
 // venta, sin cambios — ahí el stock ya coincidía con lo que se vendía.
-const { sql, withTransaction } = require('../db');
+//
+// El chequeo de "la comanda está abierta" se hace CON SELECT...FOR
+// UPDATE sobre comandas, adentro de la misma transacción — antes era
+// un SELECT suelto ANTES de abrir la transacción, así que entre ese
+// chequeo y el resto de la operación otro dispositivo podía cerrar la
+// comanda (comanda-cerrar.js sí lockea comandas) y el ítem terminaba
+// entrando en una comanda ya cobrada, con el stock descontado sin que
+// nadie pagara esa venta.
+const { withTransaction } = require('../db');
 
 function consumoStock(producto) {
   return producto.unidad_venta === 'copa'
@@ -33,15 +41,18 @@ function consumoStock(producto) {
 // última copa legítima de una botella con "sin stock" siendo falso.
 const EPSILON_STOCK = 0.001;
 
+// Lockea y valida la comanda al principio de cualquier transacción de
+// este archivo — lanza un error con código para que el catch de cada
+// rama lo traduzca al status HTTP correcto.
+async function lockearComandaAbierta(client, comandaId) {
+  const { rows } = await client.sql`SELECT estado FROM comandas WHERE id=${comandaId} FOR UPDATE`;
+  if (!rows.length) throw Object.assign(new Error('no_comanda'), { code: 'no_comanda' });
+  if (rows[0].estado !== 'abierta') throw Object.assign(new Error('comanda_cerrada'), { code: 'comanda_cerrada' });
+}
+
 async function comandaItem(req, res) {
   const { comanda_id, accion } = req.body || {};
   if (!comanda_id) return res.status(400).json({ error: "Falta comanda_id." });
-
-  const { rows: comandaRows } = await sql`SELECT estado FROM comandas WHERE id=${comanda_id}`;
-  if (!comandaRows.length) return res.status(404).json({ error: "Comanda no encontrada." });
-  if (comandaRows[0].estado !== 'abierta') {
-    return res.status(409).json({ error: "La comanda no está abierta." });
-  }
 
   // Anular: saca la línea entera y restaura todo el stock de esa línea.
   if (accion === 'anular') {
@@ -49,11 +60,13 @@ async function comandaItem(req, res) {
     if (!item_id) return res.status(400).json({ error: "Falta item_id." });
     try {
       await withTransaction(async (client) => {
+        await lockearComandaAbierta(client, comanda_id);
+
         const { rows: itemRows } = await client.sql`
           SELECT ci.id, ci.producto_id, ci.cantidad, p.unidad_venta, p.copas_por_botella
           FROM comanda_items ci JOIN productos p ON p.id = ci.producto_id
           WHERE ci.id=${item_id} AND ci.comanda_id=${comanda_id} AND ci.estado='activo'
-          FOR UPDATE`;
+          FOR UPDATE OF ci`;
         if (!itemRows.length) throw Object.assign(new Error('no_item'), { code: 'no_item' });
         await client.sql`UPDATE comanda_items SET estado='anulado' WHERE id=${item_id}`;
         const restituir = itemRows[0].cantidad * consumoStock(itemRows[0]);
@@ -63,6 +76,8 @@ async function comandaItem(req, res) {
       });
       return res.status(200).json({ ok: true });
     } catch (err) {
+      if (err.code === 'no_comanda') return res.status(404).json({ error: "Comanda no encontrada." });
+      if (err.code === 'comanda_cerrada') return res.status(409).json({ error: "La comanda no está abierta." });
       if (err.code === 'no_item') return res.status(404).json({ error: "Ítem no encontrado o ya anulado." });
       throw err;
     }
@@ -75,10 +90,12 @@ async function comandaItem(req, res) {
     if (!item_id) return res.status(400).json({ error: "Falta item_id." });
     try {
       await withTransaction(async (client) => {
+        await lockearComandaAbierta(client, comanda_id);
+
         const { rows: itemRows } = await client.sql`
           SELECT ci.cantidad, ci.producto_id, p.unidad_venta, p.copas_por_botella
           FROM comanda_items ci JOIN productos p ON p.id = ci.producto_id
-          WHERE ci.id=${item_id} AND ci.comanda_id=${comanda_id} AND ci.estado='activo' FOR UPDATE`;
+          WHERE ci.id=${item_id} AND ci.comanda_id=${comanda_id} AND ci.estado='activo' FOR UPDATE OF ci`;
         if (!itemRows.length) throw Object.assign(new Error('no_item'), { code: 'no_item' });
         const nuevaCant = itemRows[0].cantidad - 1;
         if (nuevaCant <= 0) {
@@ -93,6 +110,8 @@ async function comandaItem(req, res) {
       });
       return res.status(200).json({ ok: true });
     } catch (err) {
+      if (err.code === 'no_comanda') return res.status(404).json({ error: "Comanda no encontrada." });
+      if (err.code === 'comanda_cerrada') return res.status(409).json({ error: "La comanda no está abierta." });
       if (err.code === 'no_item') return res.status(404).json({ error: "Ítem no encontrado." });
       throw err;
     }
@@ -106,6 +125,8 @@ async function comandaItem(req, res) {
 
   try {
     const item = await withTransaction(async (client) => {
+      await lockearComandaAbierta(client, comanda_id);
+
       const { rows: prodRows } = await client.sql`
         SELECT nombre, precio, stock_actual, unidad_venta, copas_por_botella
         FROM productos WHERE id=${producto_id} FOR UPDATE`;
@@ -139,6 +160,8 @@ async function comandaItem(req, res) {
     });
     return res.status(201).json({ item });
   } catch (err) {
+    if (err.code === 'no_comanda') return res.status(404).json({ error: "Comanda no encontrada." });
+    if (err.code === 'comanda_cerrada') return res.status(409).json({ error: "La comanda no está abierta." });
     if (err.code === 'no_producto') return res.status(404).json({ error: "Producto no encontrado." });
     if (err.code === 'sin_stock') {
       return res.status(409).json({ error: "Sin stock disponible.", disponible: err.disponible });
