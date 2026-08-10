@@ -352,3 +352,39 @@ ALTER TABLE clientes ADD COLUMN IF NOT EXISTS razon_social text;
 ALTER TABLE clientes ADD COLUMN IF NOT EXISTS condicion_iva text
   NOT NULL DEFAULT 'consumidor_final'
   CHECK (condicion_iva IN ('responsable_inscripto','monotributista','exento','consumidor_final'));
+
+-- ── Cuenta corriente de clientes ("fiado"). Solo clientes marcados
+-- explícitamente como de confianza pueden fiar — nunca por default.
+-- El saldo se deriva del ledger (SUM(cargo) - SUM(pago)), igual que
+-- stock_movimientos, en vez de una columna cacheada que se puede
+-- desalinear. Un 'cargo' es una venta cerrada como cuenta_corriente
+-- (no mueve caja, la plata todavía no entró); un 'pago' es cuando el
+-- cliente salda parte o toda la deuda (eso sí entra a caja). ──
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS cuenta_corriente_habilitada boolean NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS cuenta_corriente_movimientos (
+  id             serial PRIMARY KEY,
+  cliente_id     int NOT NULL REFERENCES clientes(id),
+  tipo           text NOT NULL CHECK (tipo IN ('cargo','pago')),
+  monto          numeric(10,2) NOT NULL CHECK (monto > 0),
+  comanda_id     int REFERENCES comandas(id),                  -- solo en 'cargo'
+  medio_pago     text CHECK (medio_pago IN ('efectivo','tarjeta','transferencia')), -- solo en 'pago'
+  descripcion    text,
+  registrado_por text,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_cc_movimientos_cliente ON cuenta_corriente_movimientos(cliente_id);
+
+-- comandas.medio_pago y caja_movimientos.tipo necesitan un valor nuevo
+-- cada uno: una comanda puede cerrarse (parcial o totalmente) como
+-- cuenta_corriente, y cuando el cliente salda la deuda esa plata entra
+-- a caja como 'cobro_cuenta_corriente' — distinto de 'venta' para no
+-- contarlo dos veces como ingreso (los reportes de ingresos leen
+-- comandas.total, no caja_movimientos; esto es solo para el arqueo).
+ALTER TABLE comandas DROP CONSTRAINT IF EXISTS comandas_medio_pago_check;
+ALTER TABLE comandas ADD CONSTRAINT comandas_medio_pago_check
+  CHECK (medio_pago IN ('efectivo','tarjeta','transferencia','mixto','cuenta_corriente'));
+
+ALTER TABLE caja_movimientos DROP CONSTRAINT IF EXISTS caja_movimientos_tipo_check;
+ALTER TABLE caja_movimientos ADD CONSTRAINT caja_movimientos_tipo_check
+  CHECK (tipo IN ('venta','retiro','ingreso','propina','cobro_cuenta_corriente'));

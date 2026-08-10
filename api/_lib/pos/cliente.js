@@ -53,7 +53,8 @@ async function getCliente(req, res) {
   if (!id) return res.status(400).json({ error: "Falta id." });
 
   const { rows: clienteRows } = await sql`
-    SELECT id, nombre, telefono, email, notas, cuit, razon_social, condicion_iva, created_at
+    SELECT id, nombre, telefono, email, notas, cuit, razon_social, condicion_iva,
+           cuenta_corriente_habilitada, created_at
     FROM clientes WHERE id=${id}`;
   if (!clienteRows.length) return res.status(404).json({ error: "Cliente no encontrado." });
   const cliente = clienteRows[0];
@@ -63,9 +64,17 @@ async function getCliente(req, res) {
     FROM comandas WHERE cliente_id=${id} AND estado='cerrada'
     ORDER BY cerrada_at DESC LIMIT 30`;
 
+  let saldoCuentaCorriente = null;
+  if (cliente.cuenta_corriente_habilitada) {
+    const { rows: saldoRows } = await sql`
+      SELECT COALESCE(SUM(CASE WHEN tipo='cargo' THEN monto ELSE -monto END), 0) AS saldo
+      FROM cuenta_corriente_movimientos WHERE cliente_id=${id}`;
+    saldoCuentaCorriente = saldoRows[0].saldo;
+  }
+
   const misCatas = await buscarCatasPorEmail(cliente.email);
 
-  return res.status(200).json({ cliente, historial, misCatas });
+  return res.status(200).json({ cliente, historial, misCatas, saldoCuentaCorriente });
 }
 
 module.exports = { getCliente };

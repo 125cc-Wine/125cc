@@ -42,6 +42,7 @@ const { setComandaCliente } = require('./_lib/pos/comanda-cliente');
 const { getClientesFrecuentes } = require('./_lib/pos/clientes-frecuentes');
 const { getClientesSegmento } = require('./_lib/pos/clientes-segmento');
 const { emitirComprobante, listComprobantes, reintentarComprobante } = require('./_lib/pos/comprobantes');
+const { getCuentaCorriente, registrarPago } = require('./_lib/pos/cuenta-corriente');
 
 const ROUTES = {
   'mesas:GET': listMesas,
@@ -94,6 +95,8 @@ const ROUTES = {
   'comprobante-emitir:POST': emitirComprobante,
   'comprobantes:GET': listComprobantes,
   'comprobante-reintentar:POST': reintentarComprobante,
+  'cuenta-corriente:GET': getCuentaCorriente,
+  'cuenta-corriente-pago:POST': registrarPago,
 };
 
 module.exports = async function handler(req, res) {

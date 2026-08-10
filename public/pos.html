@@ -534,6 +534,10 @@
             <input type="text" id="clAltaRazonSocial" placeholder="Razón social" maxlength="120">
           </div>
           <p class="stock-row-name-sub" style="margin:-2px 0 8px">Responsable Inscripto con CUIT factura Factura A automáticamente. El resto factura como Consumidor Final (Factura B).</p>
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:var(--fs-sm);color:var(--ink-2);cursor:pointer">
+            <input type="checkbox" id="clAltaCuentaCorriente" style="width:18px;height:18px;accent-color:var(--accent)">
+            Habilitar cuenta corriente (fiar a este cliente)
+          </label>
           <div class="quick-form-actions">
             <button class="btn-primary" onclick="submitClienteAltaForm()">Guardar</button>
             <button class="btn-outline" onclick="toggleClienteAltaForm()">Cancelar</button>
@@ -1285,6 +1289,7 @@ function renderPagosRows(){
         <option value="efectivo" ${p.medio_pago==='efectivo'?'selected':''}>Efectivo</option>
         <option value="tarjeta" ${p.medio_pago==='tarjeta'?'selected':''}>Tarjeta</option>
         <option value="transferencia" ${p.medio_pago==='transferencia'?'selected':''}>Transferencia</option>
+        ${currentComanda.cuenta_corriente_habilitada ? `<option value="cuenta_corriente" ${p.medio_pago==='cuenta_corriente'?'selected':''}>Cuenta corriente (fiado)</option>` : ''}
       </select>
       <input type="number" class="stock-input" style="width:100%" value="${p.monto}" min="0" step="50"
         oninput="pagosState[${i}].monto=Number(this.value)||0; renderPagosRows()">
@@ -1893,6 +1898,30 @@ function renderClienteDetallePanel(data){
         : '<div class="stock-row-name-sub">Sin catas en Mis Catas con este email.</div>')
     : (c.email ? '<div class="stock-row-name-sub">No se pudo consultar Mis Catas.</div>' : '');
 
+  const saldo = Number(data.saldoCuentaCorriente || 0);
+  const cuentaCorriente = c.cuenta_corriente_habilitada ? `
+    <div class="total-bar" style="border-radius:var(--r-md);margin-top:12px;background:var(--surface);border:1px solid var(--line)">
+      <div class="total-label" style="color:var(--ink-3)">Cuenta corriente</div>
+      <div class="total-val" style="color:${saldo > 0 ? 'var(--red)' : 'var(--green)'}">${fmtMoney(saldo)}</div>
+    </div>
+    <button class="btn-outline" style="width:100%;margin-top:8px" onclick="toggleCcPagoForm()">Registrar pago</button>
+    <div class="quick-form" id="ccPagoForm">
+      <div class="form-row">
+        <input type="number" id="ccPagoMonto" placeholder="Monto" min="0" step="0.01">
+        <select id="ccPagoMedio" class="stock-input" style="width:100%">
+          <option value="efectivo">Efectivo</option>
+          <option value="tarjeta">Tarjeta</option>
+          <option value="transferencia">Transferencia</option>
+        </select>
+      </div>
+      <div class="quick-form-actions">
+        <button class="btn-primary" onclick="registrarPagoCuentaCorriente(${c.id})">Registrar</button>
+        <button class="btn-outline" onclick="toggleCcPagoForm()">Cancelar</button>
+      </div>
+    </div>
+    <div id="ccMovimientosLista"></div>
+  ` : '';
+
   box.innerHTML = `
     <div class="section-title" style="margin-top:12px">${escapeHtml(c.nombre)}</div>
     <div class="stock-row-name-sub">${[c.telefono, c.email].filter(Boolean).map(escapeHtml).join(' · ') || 'Sin teléfono ni email cargado'}</div>
@@ -1901,9 +1930,46 @@ function renderClienteDetallePanel(data){
     <div class="row-btns" style="margin-top:8px">
       <button class="btn-outline" style="flex:1" onclick="editarClientePanel(${c.id})">Editar</button>
     </div>
+    ${cuentaCorriente}
     <div class="section-title" style="margin-top:12px">Historial de compras</div>
     ${historial}
   `;
+
+  if (c.cuenta_corriente_habilitada) cargarMovimientosCuentaCorriente(c.id);
+}
+
+function toggleCcPagoForm(){
+  document.getElementById('ccPagoForm').classList.toggle('open');
+}
+
+async function registrarPagoCuentaCorriente(clienteId){
+  const monto = document.getElementById('ccPagoMonto').value;
+  const medio_pago = document.getElementById('ccPagoMedio').value;
+  if (!monto) return toast('Falta el monto', 'error');
+  const staff = sessionStorage.getItem(STAFF_KEY);
+  try {
+    await api('/api/pos?r=cuenta-corriente-pago', { method: 'POST', body: { cliente_id: clienteId, monto, medio_pago, registrado_por: staff } });
+    toast('Pago registrado', 'success');
+    document.getElementById('ccPagoMonto').value = '';
+    toggleCcPagoForm();
+    clienteSeleccionadoPanel = null;
+    seleccionarClientePanel(clienteId);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+async function cargarMovimientosCuentaCorriente(clienteId){
+  const box = document.getElementById('ccMovimientosLista');
+  if (!box) return;
+  try {
+    const data = await api('/api/pos?r=cuenta-corriente&cliente_id=' + clienteId);
+    box.innerHTML = data.movimientos.map(m => {
+      const esCargo = m.tipo === 'cargo';
+      return `<div class="stock-row">
+        <div class="stock-row-name-sub">${new Date(m.created_at).toLocaleDateString('es-AR')} · ${esCargo ? 'Consumo' : ('Pago (' + m.medio_pago + ')')}</div>
+        <div style="color:${esCargo ? 'var(--red)' : 'var(--green)'};font-weight:700">${esCargo ? '+' : '−'}${fmtMoney(m.monto)}</div>
+      </div>`;
+    }).join('') || '<div class="items-empty">Sin movimientos todavía.</div>';
+  } catch(e){ /* silencioso, no bloquea el resto del perfil */ }
 }
 
 // Reusa el mismo form de alta, precargado — evita duplicar markup.
@@ -1917,6 +1983,7 @@ function editarClientePanel(id){
     document.getElementById('clAltaCondicionIva').value = data.cliente.condicion_iva || 'consumidor_final';
     document.getElementById('clAltaCuit').value = data.cliente.cuit || '';
     document.getElementById('clAltaRazonSocial').value = data.cliente.razon_social || '';
+    document.getElementById('clAltaCuentaCorriente').checked = !!data.cliente.cuenta_corriente_habilitada;
     toggleClAltaFiscal();
     document.getElementById('clienteAltaForm').classList.add('open');
     document.getElementById('clAltaNombre').focus();
@@ -1943,6 +2010,7 @@ function toggleClienteAltaForm(){
     document.getElementById('clAltaCondicionIva').value = 'consumidor_final';
     document.getElementById('clAltaCuit').value = '';
     document.getElementById('clAltaRazonSocial').value = '';
+    document.getElementById('clAltaCuentaCorriente').checked = false;
     toggleClAltaFiscal();
   }
   if (!abrir) clienteEnEdicion = null;
@@ -1955,12 +2023,13 @@ async function submitClienteAltaForm(){
   const condicion_iva = document.getElementById('clAltaCondicionIva').value;
   const cuit = document.getElementById('clAltaCuit').value.trim();
   const razon_social = document.getElementById('clAltaRazonSocial').value.trim();
+  const cuenta_corriente_habilitada = document.getElementById('clAltaCuentaCorriente').checked;
   if (!nombre) return toast('Falta el nombre', 'error');
   if (condicion_iva === 'responsable_inscripto' && !cuit) return toast('Falta el CUIT para Responsable Inscripto', 'error');
   const staff = sessionStorage.getItem(STAFF_KEY);
   const editandoId = clienteEnEdicion;
   try {
-    const body = { nombre, telefono, email, condicion_iva, cuit, razon_social, creado_por: staff };
+    const body = { nombre, telefono, email, condicion_iva, cuit, razon_social, cuenta_corriente_habilitada, creado_por: staff };
     if (editandoId) body.id = editandoId;
     await api('/api/pos?r=clientes', { method: 'POST', body });
     toast(editandoId ? 'Cliente actualizado' : 'Cliente creado', 'success');
@@ -2256,7 +2325,7 @@ function setReportesRango(dias, btn){
   loadReportes();
 }
 
-const MEDIO_LABEL = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', mixto: 'Mixto' };
+const MEDIO_LABEL = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', mixto: 'Mixto', cuenta_corriente: 'Cuenta corriente' };
 
 async function loadReportes(){
   const box = document.getElementById('reportesContent');
@@ -2400,6 +2469,11 @@ function renderCaja(data){
     <div class="stock-row"><div class="stock-row-name">Retiros</div><div>− ${fmt('retiro_efectivo')}</div></div>
     <div class="stock-row"><div class="stock-row-name">Ingresos</div><div>${fmt('ingreso_efectivo')}</div></div>
     <div class="stock-row"><div class="stock-row-name">Propinas</div><div>${fmt('propina_efectivo')}</div></div>
+
+    <div class="section-title" style="margin-top:16px">Cobros de cuenta corriente</div>
+    <div class="stock-row"><div class="stock-row-name">Efectivo</div><div>${fmt('cobro_cuenta_corriente_efectivo')}</div></div>
+    <div class="stock-row"><div class="stock-row-name">Tarjeta</div><div>${fmt('cobro_cuenta_corriente_tarjeta')}</div></div>
+    <div class="stock-row"><div class="stock-row-name">Transferencia</div><div>${fmt('cobro_cuenta_corriente_transferencia')}</div></div>
 
     <div class="section-title" style="margin-top:16px">Nuevo movimiento</div>
     <div class="form-row">

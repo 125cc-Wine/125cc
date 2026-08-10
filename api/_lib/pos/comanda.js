@@ -8,7 +8,7 @@ async function getComanda(req, res) {
   const { rows: comandaRows } = await sql`
     SELECT c.id, c.mesa_id, m.nombre AS mesa_nombre, c.estado, c.atendido_por,
            c.medio_pago, c.total, c.descuento_tipo, c.descuento_valor,
-           c.cliente_id, cl.nombre AS cliente_nombre,
+           c.cliente_id, cl.nombre AS cliente_nombre, cl.cuenta_corriente_habilitada,
            c.notas, c.abierta_at, c.cerrada_at
     FROM comandas c
     LEFT JOIN mesas m ON m.id = c.mesa_id

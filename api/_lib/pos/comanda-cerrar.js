@@ -9,11 +9,17 @@
 // 4) exige una caja abierta y escribe un movimiento de venta por cada
 //    pago, todo en la misma transacción que el cierre de la comanda y
 //    la liberación de la mesa.
+//
+// cuenta_corriente (fiado): un pago puede ser 'cuenta_corriente' en vez
+// de un medio real — no mueve caja (la plata no entró todavía), en
+// cambio queda como 'cargo' en cuenta_corriente_movimientos contra el
+// cliente asociado a la comanda. Solo permitido si la comanda tiene
+// cliente y ese cliente tiene cuenta_corriente_habilitada=true — nunca
+// se puede fiar a un cliente sin marcar explícitamente de confianza,
+// ni a una comanda sin cliente asociado.
 const { withTransaction } = require('../db');
 
-// Medios válidos para un pago individual — 'mixto' no es un medio real,
-// es lo que queda anotado en comandas.medio_pago cuando hay más de un pago.
-const PAGO_MEDIOS = ['efectivo', 'tarjeta', 'transferencia'];
+const PAGO_MEDIOS = ['efectivo', 'tarjeta', 'transferencia', 'cuenta_corriente'];
 const MEDIO_A_CAJA = { efectivo: 'efectivo', tarjeta: 'tarjeta', transferencia: 'transferencia' };
 
 function aplicarDescuento(subtotal, tipo, valor) {
@@ -34,9 +40,14 @@ async function cerrarComanda(req, res) {
         SELECT id FROM caja_sesiones WHERE estado='abierta' LIMIT 1`;
       if (!sesiones.length) throw Object.assign(new Error('sin_caja'), { code: 'sin_caja' });
 
+      // FOR UPDATE OF c (no un FOR UPDATE liso): Postgres no permite
+      // lockear el lado nullable de un LEFT JOIN — acá solo hace falta
+      // lockear la fila de comandas, clientes se lee sin lock.
       const { rows: openRows } = await client.sql`
-        SELECT id, mesa_id, estado, descuento_tipo, descuento_valor
-        FROM comandas WHERE id=${comanda_id} FOR UPDATE`;
+        SELECT c.id, c.mesa_id, c.estado, c.descuento_tipo, c.descuento_valor, c.cliente_id,
+               cl.cuenta_corriente_habilitada
+        FROM comandas c LEFT JOIN clientes cl ON cl.id = c.cliente_id
+        WHERE c.id=${comanda_id} FOR UPDATE OF c`;
       if (!openRows.length) throw Object.assign(new Error('not_found'), { code: 'not_found' });
       if (openRows[0].estado !== 'abierta') throw Object.assign(new Error('not_open'), { code: 'not_open' });
 
@@ -56,6 +67,11 @@ async function cerrarComanda(req, res) {
           throw Object.assign(new Error('bad_request'), { code: 'bad_request', msg: "Falta medio_pago o pagos." });
         }
         pagos = [{ medio_pago: req.body.medio_pago, monto: total }];
+      }
+
+      const hayFiado = pagos.some((p) => p.medio_pago === 'cuenta_corriente');
+      if (hayFiado && (!openRows[0].cliente_id || !openRows[0].cuenta_corriente_habilitada)) {
+        throw Object.assign(new Error('sin_cuenta_corriente'), { code: 'sin_cuenta_corriente' });
       }
 
       let sumaPagos = 0;
@@ -86,9 +102,15 @@ async function cerrarComanda(req, res) {
       }
 
       for (const p of pagos) {
-        await client.sql`
-          INSERT INTO caja_movimientos (caja_sesion_id, tipo, comanda_id, medio_pago, monto)
-          VALUES (${sesiones[0].id}, 'venta', ${comanda_id}, ${MEDIO_A_CAJA[p.medio_pago]}, ${p.monto})`;
+        if (p.medio_pago === 'cuenta_corriente') {
+          await client.sql`
+            INSERT INTO cuenta_corriente_movimientos (cliente_id, tipo, monto, comanda_id)
+            VALUES (${openRows[0].cliente_id}, 'cargo', ${p.monto}, ${comanda_id})`;
+        } else {
+          await client.sql`
+            INSERT INTO caja_movimientos (caja_sesion_id, tipo, comanda_id, medio_pago, monto)
+            VALUES (${sesiones[0].id}, 'venta', ${comanda_id}, ${MEDIO_A_CAJA[p.medio_pago]}, ${p.monto})`;
+        }
       }
 
       return rows[0];
@@ -99,6 +121,9 @@ async function cerrarComanda(req, res) {
     if (err.code === 'not_found') return res.status(404).json({ error: "Comanda no encontrada." });
     if (err.code === 'not_open') return res.status(409).json({ error: "La comanda ya está cerrada o anulada." });
     if (err.code === 'sin_items') return res.status(409).json({ error: "La comanda no tiene ítems activos para cobrar." });
+    if (err.code === 'sin_cuenta_corriente') {
+      return res.status(409).json({ error: "Esta comanda no tiene un cliente con cuenta corriente habilitada." });
+    }
     if (err.code === 'bad_request') return res.status(400).json({ error: err.msg });
     if (err.code === 'descuadre') {
       return res.status(400).json({ error: `Los pagos ($${err.sumaPagos}) no cubren el total ($${err.total}).` });
