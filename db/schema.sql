@@ -416,3 +416,17 @@ ALTER TABLE comanda_items ADD COLUMN IF NOT EXISTS motivo_anulacion text;
 -- estado), y abierta_at mide desde que se abrió la mesa, no desde que
 -- se pidió la cuenta — pueden ser momentos muy distintos. ──
 ALTER TABLE comandas ADD COLUMN IF NOT EXISTS cuenta_pedida_at timestamptz;
+
+-- ── Migraciones versionadas (auditoría, hallazgo 3.5). Hasta acá, todo
+-- ALTER se aplicaba a mano contra producción, sin staging y sin
+-- registro de qué se aplicó — la operación más riesgosa del proyecto
+-- era también la que menos ceremonia tenía. Este archivo (schema.sql)
+-- sigue siendo la ÚNICA fuente de verdad del schema completo — no
+-- cambia nada de eso. Lo que cambia es CÓMO se aplica un cambio nuevo
+-- de acá en más: en vez de un script ad-hoc de una sola vez, un
+-- archivo numerado en db/migrations/ + `node db/migrate.js`, que
+-- registra cada uno acá para no reaplicarlo. Ver db/migrations/README.md. ──
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  id          text PRIMARY KEY,   -- nombre del archivo, ej '001_ejemplo.sql'
+  applied_at  timestamptz NOT NULL DEFAULT now()
+);
