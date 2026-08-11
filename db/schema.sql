@@ -447,3 +447,20 @@ ALTER TABLE comandas ADD CONSTRAINT comandas_medio_pago_check
 -- db/migrations/002_receta_items_unico.sql. ──
 CREATE UNIQUE INDEX IF NOT EXISTS idx_receta_producto_insumo
   ON receta_items(producto_id, insumo_id);
+
+-- ── Auditoría v2, C2: índices para las queries de reportes/finanzas —
+-- ver db/migrations/003_indices_reportes.sql. ──
+CREATE INDEX IF NOT EXISTS idx_comandas_cerradas
+  ON comandas(cerrada_at) WHERE estado = 'cerrada';
+CREATE INDEX IF NOT EXISTS idx_comanda_items_producto
+  ON comanda_items(producto_id) WHERE estado = 'activo';
+CREATE INDEX IF NOT EXISTS idx_caja_movimientos_comanda
+  ON caja_movimientos(comanda_id) WHERE comanda_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_cc_movimientos_comanda
+  ON cuenta_corriente_movimientos(comanda_id) WHERE comanda_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_comanda_items_anulados
+  ON comanda_items(anulado_at) WHERE estado = 'anulado';
+
+-- ── Auditoría v2, C6: costo congelado al momento de la venta — ver
+-- db/migrations/004_costo_snapshot.sql. ──
+ALTER TABLE comanda_items ADD COLUMN IF NOT EXISTS costo_snapshot numeric(12,4);

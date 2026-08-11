@@ -3,16 +3,16 @@
 // (por unidades vendidas Y por margen real), historial de cierres de caja
 // (con su diferencia) y anulaciones recientes.
 //
-// El margen usa el costo ACTUAL del producto (productos.costo), no un
-// costo "congelado" al momento de la venta — comanda_items no guarda un
-// snapshot de costo (solo de precio). Para algo que cambia tan seguido
-// como el costo de compra de un vino esto puede introducir un desvío
-// chico contra ventas viejas, pero evita una migración de datos más
-// compleja por ahora; si el costo cambia poco entre ventas no es un
-// problema real. Los productos sin costo cargado quedan afuera del
-// ranking "por margen" (si no, COALESCE a 0 los haría parecer 100% de
-// margen, que es engañoso) — se informa cuántas unidades vendidas
-// todavía no tienen costo cargado, para que se note la falta de dato.
+// El margen prefiere el costo CONGELADO al momento de la venta
+// (comanda_items.costo_snapshot, auditoría v2, C6) y cae al costo
+// actual del producto (productos.costo) para las líneas viejas que no
+// lo tienen — antes usaba siempre el costo actual, así que aplicar un
+// precio de proveedor nuevo reescribía hacia atrás el margen de meses
+// ya cerrados y reportados. Los productos sin costo (ni snapshot ni
+// actual) quedan afuera del ranking "por margen" (si no, COALESCE a 0
+// los haría parecer 100% de margen, que es engañoso) — se informa
+// cuántas unidades vendidas todavía no tienen costo cargado, para que
+// se note la falta de dato.
 //
 // margenGeneral.ingresos usa comandas.total (neto de descuento), NO
 // SUM(ci.precio_unitario*cantidad) — ese es el precio de lista antes
@@ -41,7 +41,7 @@ async function getReportes(req, res) {
     FROM comandas WHERE estado='cerrada' AND cerrada_at >= ${antes} AND cerrada_at < ${desde}`;
 
   const { rows: costoAnteriorRows } = await sql`
-    SELECT COALESCE(SUM(ci.cantidad * COALESCE(p.costo, 0)), 0) AS costo
+    SELECT COALESCE(SUM(ci.cantidad * COALESCE(ci.costo_snapshot, p.costo, 0)), 0) AS costo
     FROM comanda_items ci
     JOIN comandas c ON c.id = ci.comanda_id
     LEFT JOIN productos p ON p.id = ci.producto_id
@@ -74,8 +74,8 @@ async function getReportes(req, res) {
 
   const { rows: costoRows } = await sql`
     SELECT
-      COALESCE(SUM(ci.cantidad * COALESCE(p.costo, 0)), 0) AS costo,
-      COALESCE(SUM(CASE WHEN p.costo IS NULL THEN ci.cantidad ELSE 0 END), 0) AS unidades_sin_costo
+      COALESCE(SUM(ci.cantidad * COALESCE(ci.costo_snapshot, p.costo, 0)), 0) AS costo,
+      COALESCE(SUM(CASE WHEN COALESCE(ci.costo_snapshot, p.costo) IS NULL THEN ci.cantidad ELSE 0 END), 0) AS unidades_sin_costo
     FROM comanda_items ci
     JOIN comandas c ON c.id = ci.comanda_id
     LEFT JOIN productos p ON p.id = ci.producto_id
@@ -116,8 +116,8 @@ async function getReportes(req, res) {
     SELECT ci.producto_id, ci.nombre_snapshot,
            SUM(ci.cantidad) AS unidades,
            SUM(ci.cantidad * ci.precio_unitario) AS total,
-           SUM(ci.cantidad * p.costo) AS costo_total,
-           BOOL_AND(p.costo IS NOT NULL) AS tiene_costo
+           SUM(ci.cantidad * COALESCE(ci.costo_snapshot, p.costo)) AS costo_total,
+           BOOL_AND(COALESCE(ci.costo_snapshot, p.costo) IS NOT NULL) AS tiene_costo
     FROM comanda_items ci
     JOIN comandas c ON c.id = ci.comanda_id
     LEFT JOIN productos p ON p.id = ci.producto_id
@@ -135,11 +135,11 @@ async function getReportes(req, res) {
   const { rows: topPorMargen } = await sql`
     SELECT ci.producto_id, ci.nombre_snapshot,
            SUM(ci.cantidad) AS unidades,
-           SUM(ci.cantidad * ci.precio_unitario) - SUM(ci.cantidad * p.costo) AS margen
+           SUM(ci.cantidad * ci.precio_unitario) - SUM(ci.cantidad * COALESCE(ci.costo_snapshot, p.costo)) AS margen
     FROM comanda_items ci
     JOIN comandas c ON c.id = ci.comanda_id
     JOIN productos p ON p.id = ci.producto_id
-    WHERE ci.estado='activo' AND c.estado='cerrada' AND c.cerrada_at >= ${desde} AND p.costo IS NOT NULL
+    WHERE ci.estado='activo' AND c.estado='cerrada' AND c.cerrada_at >= ${desde} AND COALESCE(ci.costo_snapshot, p.costo) IS NOT NULL
     GROUP BY ci.producto_id, ci.nombre_snapshot
     ORDER BY margen DESC
     LIMIT 15`;

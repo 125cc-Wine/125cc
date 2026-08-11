@@ -131,7 +131,7 @@ async function comandaItem(req, res) {
       await lockearComandaAbierta(client, comanda_id);
 
       const { rows: prodRows } = await client.sql`
-        SELECT nombre, precio, stock_actual, unidad_venta, copas_por_botella
+        SELECT nombre, precio, costo, stock_actual, unidad_venta, copas_por_botella
         FROM productos WHERE id=${producto_id} FOR UPDATE`;
       if (!prodRows.length) throw Object.assign(new Error('no_producto'), { code: 'no_producto' });
       const producto = prodRows[0];
@@ -155,9 +155,15 @@ async function comandaItem(req, res) {
           RETURNING id, producto_id, nombre_snapshot, precio_unitario, cantidad, estado`;
         return rows[0];
       }
+      // costo_snapshot (auditoría v2, C6): congela el costo al momento
+      // de la venta, igual que ya se hace con precio_unitario — sin
+      // esto, el costo variable de un mes ya cerrado se recalcula con
+      // el costo de HOY cada vez que se corre el reporte, y aplicar un
+      // precio de proveedor nuevo reescribe hacia atrás el margen de
+      // meses que ya se reportaron.
       const { rows } = await client.sql`
-        INSERT INTO comanda_items (comanda_id, producto_id, nombre_snapshot, precio_unitario, cantidad)
-        VALUES (${comanda_id}, ${producto_id}, ${producto.nombre}, ${producto.precio}, 1)
+        INSERT INTO comanda_items (comanda_id, producto_id, nombre_snapshot, precio_unitario, costo_snapshot, cantidad)
+        VALUES (${comanda_id}, ${producto_id}, ${producto.nombre}, ${producto.precio}, ${producto.costo}, 1)
         RETURNING id, producto_id, nombre_snapshot, precio_unitario, cantidad, estado`;
       return rows[0];
     });

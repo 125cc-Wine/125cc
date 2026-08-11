@@ -45,9 +45,13 @@ async function getEstadoResultados(req, res) {
       AND ((cerrada_at AT TIME ZONE 'America/Argentina/Buenos_Aires') - interval '6 hours') >= ${inicio}::date
       AND ((cerrada_at AT TIME ZONE 'America/Argentina/Buenos_Aires') - interval '6 hours') <  ${finExclusivo}::date`;
 
+  // Costo congelado al momento de la venta (auditoría v2, C6): sin
+  // esto, aplicar un precio de proveedor nuevo hoy reescribe hacia
+  // atrás el costo variable — y por lo tanto el resultado neto — de
+  // meses que ya se cerraron y reportaron.
   const { rows: costoRows } = await sql`
-    SELECT COALESCE(SUM(ci.cantidad * COALESCE(p.costo,0)),0) AS costo_variable,
-           COALESCE(SUM(CASE WHEN p.costo IS NULL THEN ci.cantidad ELSE 0 END),0) AS unidades_sin_costo
+    SELECT COALESCE(SUM(ci.cantidad * COALESCE(ci.costo_snapshot, p.costo,0)),0) AS costo_variable,
+           COALESCE(SUM(CASE WHEN COALESCE(ci.costo_snapshot, p.costo) IS NULL THEN ci.cantidad ELSE 0 END),0) AS unidades_sin_costo
     FROM comanda_items ci
     JOIN comandas c ON c.id = ci.comanda_id
     LEFT JOIN productos p ON p.id = ci.producto_id
@@ -116,7 +120,7 @@ async function getEstadoResultados(req, res) {
     SELECT date_trunc('month',
              (c.cerrada_at AT TIME ZONE 'America/Argentina/Buenos_Aires') - interval '6 hours'
            )::date AS mes,
-           COALESCE(SUM(ci.cantidad * COALESCE(p.costo,0)),0) AS costo
+           COALESCE(SUM(ci.cantidad * COALESCE(ci.costo_snapshot, p.costo,0)),0) AS costo
     FROM comanda_items ci
     JOIN comandas c ON c.id = ci.comanda_id
     LEFT JOIN productos p ON p.id = ci.producto_id
