@@ -271,6 +271,14 @@
   @media(max-width:900px){.carta-grid{grid-template-columns:1fr}}
 
   .carta-pools{display:flex;flex-direction:column;gap:12px}
+  .carta-pools-section-title{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--ink-dark-3);margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .carta-pools-section-title:first-child{margin-top:0}
+  .catalogo-search-input{background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-pill);padding:8px 14px;color:var(--ink-dark);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;flex:1;min-width:160px;max-width:260px;text-transform:none;letter-spacing:normal}
+  .catalogo-search-input:focus{border-color:var(--accent)}
+  .catalogo-bodega{padding:0}
+  .catalogo-bodega > summary{cursor:pointer;list-style:none;padding:14px}
+  .catalogo-bodega > summary::-webkit-details-marker{display:none}
+  .catalogo-bodega .carta-pool-cards{padding:0 14px 14px}
   .carta-pool-segment{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:14px}
   .carta-pool-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line-dark)}
   .carta-pool-title{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--madera)}
@@ -490,6 +498,8 @@
         <div style="font-size:12px;color:var(--ink-dark-3);line-height:1.5">
           Arrastrá los vinos de los pools de abajo a Semana 1 / Semana 2 (14 espacios cada una).
           En pantallas táctiles: elegí la semana destino acá y tocá un vino del pool para agregarlo.
+          Un vino del Catálogo Aroma/La Vid que entra a la carta todavía necesita su ficha completa
+          (nota, maridaje, imagen) en Editor de Vinos antes de aparecer en el menú público.
         </div>
       </div>
       <div class="carta-target-toggle" id="cartaTargetToggle">
@@ -499,8 +509,20 @@
     </div>
 
     <div class="carta-grid">
-      <div class="carta-pools" id="cartaPools">
-        <div class="loading">Cargando vinos...</div>
+      <div class="carta-pools">
+        <div class="carta-pools-section-title">Mi carta 125cc — por tramo de precio</div>
+        <div id="cartaPools">
+          <div class="loading">Cargando vinos...</div>
+        </div>
+
+        <div class="carta-pools-section-title">
+          Catálogo Aroma / La Vid — por bodega
+          <input type="text" class="catalogo-search-input" id="catalogoSearchInput"
+            placeholder="Buscar vino o bodega..." oninput="filterCatalogoExterno()">
+        </div>
+        <div id="catalogoExternoPools">
+          <div class="loading">Cargando catálogo...</div>
+        </div>
       </div>
       <div class="carta-lanes" id="cartaLanes"></div>
     </div>
@@ -1616,6 +1638,8 @@ function nuevasCartaSemanas(){
 }
 
 let cartaWines = [];
+let catalogoExterno = [];      // vinos del catálogo Aroma de Vid / La Vid (gestion-vinoteca2), agrupados por bodega
+let catalogoSearchQuery = '';
 let cartaHistorial = [];       // filas de carta_historial dentro de la ventana de bloqueo (ya filtradas por el server)
 let cartaMesesBloqueo = 12;
 let cartaLoaded = false;
@@ -1623,18 +1647,31 @@ let cartaTarget = 0;           // índice de semana destino para el click-to-add
 let cartaSemanas = nuevasCartaSemanas();
 let cartaDragId = null;
 
+// Los ids de 125cc (Sheet) son números; los del catálogo Aroma/La Vid
+// (Supabase) son UUID de texto. De acá en más, todo el subsistema de carta
+// compara ids SIEMPRE como string — evita bugs de "1" (string) !== 1 (number)
+// al mezclar las dos fuentes en los mismos carriles/bloqueos.
+function cartaFindWine(id){
+  const sid = String(id);
+  return cartaWines.find(w => String(w.id) === sid) || catalogoExterno.find(w => String(w.id) === sid);
+}
+
 async function loadCartaTab(){
   cartaLoaded = true;
   try{
-    const [vinosData, histData] = await Promise.all([
+    const [vinosData, histData, catData] = await Promise.all([
       editorWines.length ? Promise.resolve({vinos: editorWines}) : fetch('/api/obtener-vinos').then(r=>r.json()),
       fetch('/api/actualizar-vino?historial=1', {headers: adminAuthHeader()}).then(r=>{ handleAuthResponse(r); return r.json(); }),
+      fetch('/api/actualizar-vino?catalogo=1', {headers: adminAuthHeader()}).then(r=>{ handleAuthResponse(r); return r.json(); }),
     ]);
-    cartaWines = vinosData.vinos || [];
+    cartaWines = (vinosData.vinos || []).map(w => ({...w, _fuente: '125cc'}));
     if(!editorWines.length){ editorWines = cartaWines; editorLoaded = true; } // comparte caché con Editor de Vinos, evita pedirlo dos veces
     cartaHistorial = histData.historial || [];
     cartaMesesBloqueo = histData.mesesBloqueo || 12;
+    catalogoExterno = (catData.catalogo || []).map(w => ({...w, _fuente: 'catalogo_externo'}));
+    if(catData.error) showToast('Catálogo Aroma/La Vid: ' + catData.error, 'error');
     renderCartaPools();
+    renderCatalogoExterno();
     renderCartaLanes();
   } catch(e){
     document.getElementById('cartaPools').innerHTML = '<div class="empty-msg">Error cargando el calendario de carta.</div>';
@@ -1646,8 +1683,9 @@ async function loadCartaTab(){
 function cartaBlockedMap(){
   const map = new Map();
   cartaHistorial.forEach(h=>{
-    const prev = map.get(h.vino_id);
-    if(!prev || new Date(h.confirmado_at) > new Date(prev.confirmado_at)) map.set(h.vino_id, h);
+    const key = String(h.vino_id);
+    const prev = map.get(key);
+    if(!prev || new Date(h.confirmado_at) > new Date(prev.confirmado_at)) map.set(key, h);
   });
   return map;
 }
@@ -1657,7 +1695,28 @@ function cartaFechaDisponible(confirmadoAt){
   return d;
 }
 function cartaUsedIds(){
-  return new Set(cartaSemanas.flatMap(s => s.vinos.filter(Boolean).map(v => v.id)));
+  return new Set(cartaSemanas.flatMap(s => s.vinos.filter(Boolean).map(v => String(v.id))));
+}
+
+// Tarjeta de vino reusada por los pools de 125cc (por tramo) y por el
+// catálogo externo (por bodega) — misma pinta, misma lógica de bloqueo.
+function cartaWineCardHtml(w, usedIds, blocked){
+  const sid = String(w.id);
+  const bh = blocked.get(sid);
+  const isBlocked = !!bh;
+  const isUsed = usedIds.has(sid);
+  const cls = ['carta-wine-card'];
+  if(isBlocked) cls.push('blocked');
+  if(isUsed) cls.push('used');
+  const title = isBlocked
+    ? `En carta la semana del ${fmtFechaSoloFecha(bh.semana_inicio)} — disponible de nuevo a partir del ${fmtFechaAR(cartaFechaDisponible(bh.confirmado_at))}`
+    : '';
+  return `<div class="${cls.join(' ')}" draggable="${!isBlocked}" title="${esc(title)}"
+              ondragstart="cartaDragStart(event,'${sid}')" ondragend="cartaDragEnd(event)"
+              onclick="cartaCardClick('${sid}')">
+    <div class="carta-wine-card-name">${esc(w.nombre)}</div>
+    <div class="carta-wine-card-sub">${esc(w.bodega||'—')} · $${cartaPrecioNum(w).toLocaleString('es-AR')}</div>
+  </div>`;
 }
 
 function renderCartaPools(){
@@ -1665,24 +1724,8 @@ function renderCartaPools(){
   const blocked = cartaBlockedMap();
   document.getElementById('cartaPools').innerHTML = CARTA_TRAMOS.map(tramo=>{
     const winesTramo = cartaWines.filter(w => tramoDeVino(w).id === tramo.id);
-    const disponibles = winesTramo.filter(w => !usedIds.has(w.id) && !blocked.has(w.id)).length;
-    const cards = winesTramo.map(w=>{
-      const bh = blocked.get(w.id);
-      const isBlocked = !!bh;
-      const isUsed = usedIds.has(w.id);
-      const cls = ['carta-wine-card'];
-      if(isBlocked) cls.push('blocked');
-      if(isUsed) cls.push('used');
-      const title = isBlocked
-        ? `En carta la semana del ${fmtFechaSoloFecha(bh.semana_inicio)} — disponible de nuevo a partir del ${fmtFechaAR(cartaFechaDisponible(bh.confirmado_at))}`
-        : '';
-      return `<div class="${cls.join(' ')}" draggable="${!isBlocked}" title="${esc(title)}"
-                ondragstart="cartaDragStart(event,${w.id})" ondragend="cartaDragEnd(event)"
-                onclick="cartaCardClick(${w.id})">
-        <div class="carta-wine-card-name">${esc(w.nombre)}</div>
-        <div class="carta-wine-card-sub">${esc(w.bodega||'—')} · $${cartaPrecioNum(w).toLocaleString('es-AR')}</div>
-      </div>`;
-    }).join('');
+    const disponibles = winesTramo.filter(w => !usedIds.has(String(w.id)) && !blocked.has(String(w.id))).length;
+    const cards = winesTramo.map(w => cartaWineCardHtml(w, usedIds, blocked)).join('');
     return `<div class="carta-pool-segment">
       <div class="carta-pool-header">
         <span class="carta-pool-title">${tramo.label}</span>
@@ -1690,6 +1733,50 @@ function renderCartaPools(){
       </div>
       <div class="carta-pool-cards">${cards || '<div class="carta-pool-empty">Sin vinos en este tramo</div>'}</div>
     </div>`;
+  }).join('');
+}
+
+// Catálogo externo Aroma de Vid / La Vid — agrupado por bodega en <details>
+// colapsables (son ~110 bodegas, no tiene sentido mostrarlas todas abiertas
+// de una). El buscador filtra por nombre o bodega y abre automáticamente los
+// grupos que tengan resultado.
+function filterCatalogoExterno(){
+  catalogoSearchQuery = document.getElementById('catalogoSearchInput').value || '';
+  renderCatalogoExterno();
+}
+function renderCatalogoExterno(){
+  const usedIds = cartaUsedIds();
+  const blocked = cartaBlockedMap();
+  const q = catalogoSearchQuery.trim().toLowerCase();
+
+  const porBodega = new Map();
+  for(const w of catalogoExterno){
+    if(q && !`${w.nombre} ${w.bodega}`.toLowerCase().includes(q)) continue;
+    const key = w.bodega || 'Sin bodega';
+    if(!porBodega.has(key)) porBodega.set(key, []);
+    porBodega.get(key).push(w);
+  }
+  const bodegas = Array.from(porBodega.keys()).sort((a,b)=>a.localeCompare(b));
+  const cont = document.getElementById('catalogoExternoPools');
+
+  if(!catalogoExterno.length){
+    cont.innerHTML = '<div class="empty-msg">No se pudo cargar el catálogo Aroma/La Vid.</div>';
+    return;
+  }
+  if(!bodegas.length){
+    cont.innerHTML = '<div class="carta-pool-empty">Sin resultados para "'+esc(catalogoSearchQuery)+'"</div>';
+    return;
+  }
+  cont.innerHTML = bodegas.map(bodega=>{
+    const wines = porBodega.get(bodega);
+    const cards = wines.map(w => cartaWineCardHtml(w, usedIds, blocked)).join('');
+    return `<details class="carta-pool-segment catalogo-bodega"${q ? ' open' : ''}>
+      <summary class="carta-pool-header">
+        <span class="carta-pool-title">${esc(bodega)}</span>
+        <span class="carta-pool-count">${wines.length}</span>
+      </summary>
+      <div class="carta-pool-cards">${cards}</div>
+    </details>`;
   }).join('');
 }
 
@@ -1728,7 +1815,7 @@ function setCartaTarget(si, btn){
 // en pantallas táctiles, donde el drag & drop de HTML5 no dispara.
 function cartaCardClick(id){
   const blocked = cartaBlockedMap();
-  if(blocked.has(id) || cartaUsedIds().has(id)) return;
+  if(blocked.has(String(id)) || cartaUsedIds().has(String(id))) return;
   cartaPlaceWine(id, cartaTarget, null);
 }
 
@@ -1752,30 +1839,33 @@ function cartaSlotDrop(e, si, idx){
 // Coloca un vino en la semana `si`, en el espacio `idx` (o el primer
 // espacio libre si idx es null/está ocupado). Si el vino ya estaba en
 // otra semana de esta sesión, lo saca de ahí primero — un vino no puede
-// estar en las dos semanas a la vez.
+// estar en las dos semanas a la vez. `w` puede venir de cartaWines (Sheet
+// 125cc, id numérico) o de catalogoExterno (Aroma/La Vid, id UUID).
 function cartaPlaceWine(id, si, idx){
-  const w = cartaWines.find(x=>x.id===id);
+  const w = cartaFindWine(id);
   if(!w) return;
-  if(cartaBlockedMap().has(id)){ showToast('Ese vino está bloqueado por la regla de no-repetición', 'error'); return; }
+  if(cartaBlockedMap().has(String(id))){ showToast('Ese vino está bloqueado por la regla de no-repetición', 'error'); return; }
 
   cartaSemanas.forEach(s=>{
-    const i = s.vinos.findIndex(v=>v && v.id===id);
+    const i = s.vinos.findIndex(v=>v && String(v.id)===String(id));
     if(i>=0) s.vinos[i] = null;
   });
 
   const target = cartaSemanas[si];
   if(idx==null || target.vinos[idx]){
     idx = target.vinos.findIndex(v=>!v);
-    if(idx<0){ showToast(`${target.label} ya tiene 14 vinos`, 'error'); renderCartaPools(); renderCartaLanes(); return; }
+    if(idx<0){ showToast(`${target.label} ya tiene 14 vinos`, 'error'); renderCartaPools(); renderCatalogoExterno(); renderCartaLanes(); return; }
   }
-  target.vinos[idx] = { id: w.id, nombre: w.nombre, bodega: w.bodega || '' };
+  target.vinos[idx] = { id: w.id, nombre: w.nombre, bodega: w.bodega || '', fuente: w._fuente || '125cc' };
   renderCartaPools();
+  renderCatalogoExterno();
   renderCartaLanes();
 }
 
 function cartaRemoveFromLane(si, idx){
   cartaSemanas[si].vinos[idx] = null;
   renderCartaPools();
+  renderCatalogoExterno();
   renderCartaLanes();
 }
 
@@ -1815,6 +1905,7 @@ async function guardarCarta(){
       const histData = await histRes.json();
       cartaHistorial = histData.historial || [];
       renderCartaPools();
+      renderCatalogoExterno();
       renderCartaLanes();
     } else {
       showToast('Error: '+(data.error||''), 'error');

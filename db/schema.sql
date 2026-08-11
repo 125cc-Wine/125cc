@@ -488,3 +488,12 @@ CREATE TABLE IF NOT EXISTS carta_historial (
 );
 CREATE INDEX IF NOT EXISTS idx_carta_historial_vino ON carta_historial(vino_id);
 CREATE INDEX IF NOT EXISTS idx_carta_historial_confirmado ON carta_historial(confirmado_at);
+
+-- El Calendario de Carta ahora también puede elegir vinos del catálogo
+-- externo de Aroma de Vid / La Vid Consultora (repo gestion-vinoteca2,
+-- Supabase), cuyos ids son UUID (texto) — a diferencia de los enteros que
+-- usa el Sheet de vinos de 125cc. Se relaja vino_id a texto y se suma
+-- `fuente` para distinguir de dónde vino cada fila. Ver
+-- db/migrations/007_carta_historial_catalogo_externo.sql. ──
+ALTER TABLE carta_historial ALTER COLUMN vino_id TYPE text USING vino_id::text;
+ALTER TABLE carta_historial ADD COLUMN IF NOT EXISTS fuente text NOT NULL DEFAULT '125cc';

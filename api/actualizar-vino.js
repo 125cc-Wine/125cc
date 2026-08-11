@@ -27,7 +27,7 @@ async function getHistorialCarta(req, res) {
   // SQL — pasar el número solo y concatenar con '||' en Postgres mezclaría
   // int y text sin cast implícito seguro.
   const { rows } = await sql`
-    SELECT vino_id, vino_nombre, bodega, semana_label, semana_inicio, confirmado_at
+    SELECT vino_id, vino_nombre, bodega, semana_label, semana_inicio, confirmado_at, fuente
     FROM carta_historial
     WHERE confirmado_at > now() - ${MESES_BLOQUEO_CARTA + ' months'}::interval
     ORDER BY confirmado_at DESC
@@ -55,15 +55,73 @@ async function guardarHistorialCarta(req, res, semanas) {
     for (const s of semanas) {
       for (const v of s.vinos) {
         if (!v || v.id == null || !v.nombre) continue; // fila corrupta — se ignora en vez de romper toda la transacción
+        // vino_id es texto: puede ser un id numérico del Sheet de 125cc (se
+        // guarda como string) o un UUID del catálogo externo de Aroma/La Vid.
         await client.sql`
-          INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio)
-          VALUES (${v.id}, ${v.nombre}, ${v.bodega || ''}, ${s.label}, ${s.inicio})
+          INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio, fuente)
+          VALUES (${String(v.id)}, ${v.nombre}, ${v.bodega || ''}, ${s.label}, ${s.inicio}, ${v.fuente || '125cc'})
         `;
       }
     }
   });
 
   return res.status(200).json({ ok: true });
+}
+
+// Catálogo externo de Aroma de Vid / La Vid Consultora (repo
+// gestion-vinoteca2, Supabase — tabla `productos`) para el pool "elegir
+// vino de mi distribuidor", agrupado por bodega en el cliente. Se llama a
+// la REST API de Supabase directo con fetch (apikey del anon key, de solo
+// lectura) en vez de agregar el SDK @supabase/supabase-js — este repo no
+// usa ningún framework/build step y el resto de las integraciones externas
+// (Sheets) ya siguen el mismo patrón de fetch plano.
+async function getCatalogoExterno(req, res) {
+  const VINOTECA_SUPABASE_URL      = process.env.VINOTECA_SUPABASE_URL;
+  const VINOTECA_SUPABASE_ANON_KEY = process.env.VINOTECA_SUPABASE_ANON_KEY;
+  if (!VINOTECA_SUPABASE_URL || !VINOTECA_SUPABASE_ANON_KEY) {
+    return res.status(500).json({ error: "Faltan credenciales del catálogo Aroma/La Vid (VINOTECA_SUPABASE_URL / VINOTECA_SUPABASE_ANON_KEY)." });
+  }
+  const headers = { apikey: VINOTECA_SUPABASE_ANON_KEY, Authorization: `Bearer ${VINOTECA_SUPABASE_ANON_KEY}` };
+
+  // Solo activos, excluye categoria='Otro' (vermouth/destilados/accesorios —
+  // no es vino). Sin filtro de stock: Maio pidió verlos igual aunque no
+  // tengan stock cargado en este momento. Trae las dos empresas juntas (no
+  // se filtra por `empresa`) — se dedupean por nombre más abajo.
+  const PAGE = 1000; // Supabase PostgREST tiene max_rows=1000 por página
+  let all = [];
+  let offset = 0;
+  while (true) {
+    const url = `${VINOTECA_SUPABASE_URL}/rest/v1/productos`
+      + `?select=id,nombre,bodega,precio_venta,empresa`
+      + `&activo=eq.true&categoria=neq.Otro`
+      + `&order=bodega.asc,nombre.asc&limit=${PAGE}&offset=${offset}`;
+    const r = await fetch(url, { headers });
+    if (!r.ok) {
+      const detail = await r.text().catch(() => '');
+      return res.status(502).json({ error: "Error leyendo el catálogo Aroma/La Vid.", detail });
+    }
+    const rows = await r.json();
+    all = all.concat(rows);
+    if (rows.length < PAGE) break;
+    offset += PAGE;
+  }
+
+  // Dedup por nombre normalizado — Aroma y La Vid sincronizan el mismo vino
+  // como fila propia en cada empresa, así que en el pool alcanza con una
+  // sola tarjeta por vino (se queda con la primera que aparece).
+  const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  const porNombre = new Map();
+  for (const p of all) {
+    const key = norm(p.nombre);
+    if (!key || porNombre.has(key)) continue;
+    porNombre.set(key, p);
+  }
+
+  const catalogo = Array.from(porNombre.values())
+    .map(p => ({ id: p.id, nombre: p.nombre, bodega: p.bodega || 'Sin bodega', precio: p.precio_venta || 0 }))
+    .sort((a, b) => a.bodega.localeCompare(b.bodega) || a.nombre.localeCompare(b.nombre));
+
+  return res.status(200).json({ catalogo });
 }
 
 module.exports = async function handler(req, res) {
@@ -74,14 +132,16 @@ module.exports = async function handler(req, res) {
   if (req.method !== "GET" && req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   if (!requireAdmin(req, res)) return;
 
-  // GET solo existe para el historial de carta — el CRUD de vinos de acá
-  // abajo es todo POST (siempre fue así, no se toca).
+  // GET solo existe para el Calendario de Carta (historial y catálogo
+  // externo) — el CRUD de vinos de acá abajo es todo POST (siempre fue así,
+  // no se toca).
   if (req.method === "GET") {
-    if (req.query.historial !== '1') return res.status(404).json({ error: "Recurso no encontrado." });
     try {
-      return await getHistorialCarta(req, res);
+      if (req.query.historial === '1') return await getHistorialCarta(req, res);
+      if (req.query.catalogo === '1')  return await getCatalogoExterno(req, res);
+      return res.status(404).json({ error: "Recurso no encontrado." });
     } catch (err) {
-      console.error("actualizar-vino (historial GET) error:", err);
+      console.error("actualizar-vino (GET) error:", err);
       return res.status(500).json({ error: "Error interno.", detail: err.message });
     }
   }
