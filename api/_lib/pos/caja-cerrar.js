@@ -20,12 +20,27 @@ async function cerrarCaja(req, res) {
       const sesionId = sesiones[0].id;
 
       // Solo movimientos en efectivo mueven el cajón físico. 'retiro' resta,
-      // el resto (venta/ingreso/propina) suma.
+      // el resto (venta/ingreso) suma.
+      //
+      // Propinas (auditoría v2, B2): se reparten al personal ANTES de
+      // cerrar la caja, así que esa plata ya no está en el cajón cuando
+      // se cuenta — entran y salen dentro del mismo turno. Se siguen
+      // registrando como movimiento (sirve para saber cuánto se
+      // repartió) pero NO cuentan para el efectivo esperado; si contaran,
+      // el arqueo daría negativo por el total de propinas todas las
+      // noches — el peor tipo de descuadre, constante y "explicado",
+      // que enseña a ignorar justo la cifra que tiene que gritar cuando
+      // falta plata de verdad.
       const { rows: movRows } = await client.sql`
         SELECT tipo, monto FROM caja_movimientos
         WHERE caja_sesion_id=${sesionId} AND medio_pago='efectivo'`;
-      const netoEfectivo = movRows.reduce((acc, m) =>
-        acc + (m.tipo === 'retiro' ? -Number(m.monto) : Number(m.monto)), 0);
+      const netoEfectivo = movRows.reduce((acc, m) => {
+        if (m.tipo === 'propina') return acc;
+        return acc + (m.tipo === 'retiro' ? -Number(m.monto) : Number(m.monto));
+      }, 0);
+      const propinas = movRows
+        .filter((m) => m.tipo === 'propina')
+        .reduce((acc, m) => acc + Number(m.monto), 0);
 
       const esperado = Number(sesiones[0].monto_inicial) + netoEfectivo;
       const diferencia = contado - esperado;
@@ -36,7 +51,7 @@ async function cerrarCaja(req, res) {
           cerrada_por=${cerrada}, cerrada_at=now()
         WHERE id=${sesionId}
         RETURNING id, estado, monto_inicial, monto_final_contado, monto_final_esperado, diferencia, cerrada_at`;
-      return rows[0];
+      return { ...rows[0], propinas };
     });
     return res.status(200).json({ sesion });
   } catch (err) {

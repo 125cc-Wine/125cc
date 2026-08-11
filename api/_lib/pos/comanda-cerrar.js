@@ -107,6 +107,16 @@ async function cerrarComanda(req, res) {
       if (Math.abs(sumaPagos - total) > 1) {
         throw Object.assign(new Error('descuadre'), { code: 'descuadre', total, sumaPagos });
       }
+      // La tolerancia de arriba sirve para no rechazar un split con
+      // redondeo (ej: $1001 en 2 partes de $500), pero lo que se GUARDA
+      // tiene que sumar el total exacto — si no, reportes (que suma
+      // comandas.total) y el arqueo (que suma caja_movimientos) se
+      // separan de a un peso por cada comanda dividida, una diferencia
+      // que crece mes a mes y nadie puede explicar (auditoría v2, C3).
+      const ajuste = total - sumaPagos;
+      if (ajuste !== 0) {
+        pagos[pagos.length - 1].monto = Number(pagos[pagos.length - 1].monto) + ajuste;
+      }
 
       const medioFinal = pagos.length > 1 ? 'mixto' : pagos[0].medio_pago;
 

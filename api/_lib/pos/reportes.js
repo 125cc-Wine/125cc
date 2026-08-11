@@ -56,9 +56,19 @@ async function getReportes(req, res) {
   // Serie diaria para el gráfico — los días sin ventas no generan fila
   // acá, se completan con 0 en el frontend al recorrer día por día
   // desde `desde` hasta hoy (más simple que generar la serie completa
-  // en SQL con generate_series).
+  // en SQL con generate_series). El frontend usa el mismo corte de
+  // jornada (nocheLocal()) para que las claves de fecha coincidan.
+  //
+  // Turno único de noche (auditoría v2, A4): la jornada comercial va de
+  // la tarde a la madrugada, corte a las 06:00 hora de Buenos Aires —
+  // sin esto, cerrada_at (timestamptz) se agrupa en UTC y una comanda
+  // cobrada a la 1am ya cae en "el día siguiente" (Buenos Aires está 3h
+  // atrás de UTC), partiendo la noche del viernes entre dos días.
   const { rows: serieDiaria } = await sql`
-    SELECT date_trunc('day', cerrada_at)::date AS fecha, COALESCE(SUM(total),0) AS total
+    SELECT date_trunc('day',
+             (cerrada_at AT TIME ZONE 'America/Argentina/Buenos_Aires') - interval '6 hours'
+           )::date AS fecha,
+           COALESCE(SUM(total),0) AS total
     FROM comandas WHERE estado='cerrada' AND cerrada_at >= ${desde}
     GROUP BY 1 ORDER BY 1`;
 

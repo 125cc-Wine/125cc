@@ -2158,7 +2158,7 @@ async function vincularProducto(){
 // resultados de un mes. No reimplementa la fórmula de equilibrio.html
 // (copas necesarias, IVA, comisión, tapeo) — eso queda como link a la
 // calculadora existente para no duplicar esa lógica en dos lugares.
-let finMes = new Date().toISOString().slice(0, 7);
+let finMes = mesLocal();
 let costosFijos = [];
 let ultimoEstadoResultados = null;
 
@@ -2343,7 +2343,7 @@ function renderGastos(gastos){
 function toggleGastoForm(){
   const form = document.getElementById('gastoForm');
   form.classList.toggle('open');
-  if (form.classList.contains('open')) document.getElementById('gastoFecha').value = new Date().toISOString().slice(0, 10);
+  if (form.classList.contains('open')) document.getElementById('gastoFecha').value = nocheLocal();
 }
 
 async function submitGastoForm(){
@@ -2392,7 +2392,7 @@ function renderCostosFijos(){
   // Vigente = la fila de vigente_desde más reciente que no supere hoy,
   // por categoría — el resto se muestra como historial (mismo criterio
   // que usa estado-resultados.js para elegir el presupuesto de un mes).
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = nocheLocal();
   const vigentesIds = new Set();
   const porCategoria = {};
   costosFijos.forEach(c => { (porCategoria[c.categoria] = porCategoria[c.categoria] || []).push(c); });
@@ -2411,7 +2411,7 @@ function renderCostosFijos(){
 function toggleCostoFijoForm(){
   const form = document.getElementById('costoFijoForm');
   form.classList.toggle('open');
-  if (form.classList.contains('open')) document.getElementById('costoFijoVigencia').value = new Date().toISOString().slice(0, 10);
+  if (form.classList.contains('open')) document.getElementById('costoFijoVigencia').value = nocheLocal();
 }
 
 async function submitCostoFijoForm(){
@@ -2693,7 +2693,7 @@ function exportarClientesCSV(){
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `125cc-clientes-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `125cc-clientes-${nocheLocal()}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -2806,7 +2806,7 @@ function exportarComprobantesCSV(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `125cc-comprobantes-${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `125cc-comprobantes-${nocheLocal()}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -3016,13 +3016,21 @@ function deltaBadge(actual, anterior){
 // de finas.
 function prepararSerieGrafico(serieDiaria, dias){
   if (dias <= 31){
+    // d.fecha ya viene agrupada por noche local (ver serieDiaria en
+    // reportes.js) — es un `date` de Postgres, sin ambigüedad de hora,
+    // así que extraer el string por toISOString() es seguro. El
+    // recorrido de acá SÍ necesita nocheLocal(): antes usaba
+    // Date.now()/toISOString() (día UTC) para completar los días sin
+    // ventas, y esa clave no coincidía con la noche local que devuelve
+    // el backend — los viernes con ventas después de las 21h quedaban
+    // en el bucket del sábado (auditoría v2, A4).
     const porFecha = {};
     serieDiaria.forEach(d => { porFecha[new Date(d.fecha).toISOString().slice(0,10)] = Number(d.total); });
     const out = [];
     for (let i = dias - 1; i >= 0; i--){
-      const fecha = new Date(Date.now() - i * 24*60*60*1000);
-      const key = fecha.toISOString().slice(0,10);
-      out.push({ label: fecha.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit' }), total: porFecha[key] || 0 });
+      const key = nocheLocal(i);
+      const [, m, dd] = key.split('-');
+      out.push({ label: `${dd}/${m}`, total: porFecha[key] || 0 });
     }
     return out;
   }
@@ -3278,7 +3286,7 @@ function exportarReportesCSV(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `125cc-reporte-${d.dias}dias-${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `125cc-reporte-${d.dias}dias-${nocheLocal()}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -3389,7 +3397,12 @@ async function cerrarCajaAction(){
     const data = await api('/api/pos?r=caja-cerrar', { method: 'POST', body: { monto_final_contado: contado, cerrada_por: staff } });
     const s = data.sesion;
     const dif = Number(s.diferencia);
-    toast(`Caja cerrada. Diferencia: ${fmtMoney(dif)}`, dif === 0 ? 'success' : 'error');
+    // Propinas ya se restaron del esperado (se reparten antes de
+    // cerrar, no están en el cajón) — se muestran aparte para que quede
+    // claro que la diferencia no las incluye, no para que se resten "de
+    // nuevo" a mano (auditoría v2, B2).
+    const propinasMsg = Number(s.propinas) > 0 ? ` · Propinas repartidas: ${fmtMoney(s.propinas)}` : '';
+    toast(`Caja cerrada. Diferencia: ${fmtMoney(dif)}${propinasMsg}`, dif === 0 ? 'success' : 'error');
     await loadCaja();
   } catch(e){ toast(e.message, 'error'); }
 }
@@ -3641,6 +3654,25 @@ function icon(name, cls){
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────
+// Jornada comercial (auditoría v2, A4): turno único de noche, corte a
+// las 06:00 hora de Buenos Aires — new Date().toISOString() da la
+// fecha en UTC, que después de las 21hs locales (¡o incluso antes,
+// depende del horario del año!) ya muestra "mañana". Y con turno único
+// de noche, a las 2am el encargado sigue trabajando la noche de ayer:
+// cualquier fecha que se ofrezca por default en un formulario (gasto,
+// costo fijo, nombre de archivo CSV) o se use para agrupar el gráfico
+// de reportes tiene que usar esta función, con el mismo corte de 06:00
+// que usan las queries del backend (reportes.js/estado-resultados.js).
+// offsetDias resta días de calendario ANTES de aplicar el corte, para
+// poder pedir "la noche de hace N días" sin duplicar la cuenta acá.
+function nocheLocal(offsetDias){
+  const d = new Date(Date.now() - 6 * 60 * 60 * 1000 - (offsetDias || 0) * 24 * 60 * 60 * 1000);
+  return d.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+}
+function mesLocal(){
+  return nocheLocal().slice(0, 7);
+}
+
 function fmtMoney(n){
   return '$' + Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 });
 }
