@@ -1,16 +1,99 @@
 // api/actualizar-vino.js — CRUD de vinos en Google Sheets (Vercel-compatible)
 // Reemplaza la versión anterior que usaba fs.writeFileSync (solo funciona en local)
+//
+// También carga acá (no en un archivo propio) el historial de "Calendario
+// de Carta" — qué vino estuvo en carta cada semana, para la regla de
+// no-repetición de 12 meses. Debería vivir en su propio endpoint, pero el
+// plan Hobby de Vercel tope a 12 funciones serverless y el repo ya está en
+// ese límite (por eso pos.js es un router único para todo el módulo POS).
+// Se elige este archivo como destino porque comparte dominio (vinos/carta)
+// y auth (requireAdmin) con lo que ya hace — decisión tomada con Maio.
+// El historial persiste en Postgres/Neon (api/_lib/db.js, la misma DB que
+// ya usa el POS), no en el Sheet ni vía GitHub API (no hay integración con
+// GitHub en este repo).
 
-const { getReadWriteToken } = require('./_lib/google-auth');
-const { requireAdmin }      = require('./_lib/require-admin');
+const { getReadWriteToken }        = require('./_lib/google-auth');
+const { requireAdmin }             = require('./_lib/require-admin');
+const { sql, withTransaction }     = require('./_lib/db');
+
+// Temporada de bloqueo del Calendario de Carta: un vino que estuvo en carta
+// no puede volver a los pools de selección hasta que pasen 12 meses desde
+// la última vez que se confirmó. Valor decidido a mano con Maio — no se
+// puede inferir del negocio ni del código.
+const MESES_BLOQUEO_CARTA = 12;
+
+async function getHistorialCarta(req, res) {
+  // El intervalo se arma como string en JS (ej '12 months') y se castea en
+  // SQL — pasar el número solo y concatenar con '||' en Postgres mezclaría
+  // int y text sin cast implícito seguro.
+  const { rows } = await sql`
+    SELECT vino_id, vino_nombre, bodega, semana_label, semana_inicio, confirmado_at
+    FROM carta_historial
+    WHERE confirmado_at > now() - ${MESES_BLOQUEO_CARTA + ' months'}::interval
+    ORDER BY confirmado_at DESC
+  `;
+  return res.status(200).json({ historial: rows, mesesBloqueo: MESES_BLOQUEO_CARTA });
+}
+
+async function guardarHistorialCarta(req, res, semanas) {
+  if (!Array.isArray(semanas) || semanas.length === 0) {
+    return res.status(400).json({ error: "Falta 'semanas' (array)." });
+  }
+  for (const s of semanas) {
+    if (!s || typeof s.label !== 'string' || typeof s.inicio !== 'string' || !Array.isArray(s.vinos)) {
+      return res.status(400).json({ error: "Cada semana necesita label, inicio y vinos[]." });
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s.inicio)) {
+      return res.status(400).json({ error: `Fecha de inicio inválida en ${s.label}.` });
+    }
+    if (!s.vinos.length) {
+      return res.status(400).json({ error: `${s.label} no tiene vinos para guardar.` });
+    }
+  }
+
+  await withTransaction(async (client) => {
+    for (const s of semanas) {
+      for (const v of s.vinos) {
+        if (!v || v.id == null || !v.nombre) continue; // fila corrupta — se ignora en vez de romper toda la transacción
+        await client.sql`
+          INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio)
+          VALUES (${v.id}, ${v.nombre}, ${v.bodega || ''}, ${s.label}, ${s.inicio})
+        `;
+      }
+    }
+  });
+
+  return res.status(200).json({ ok: true });
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "GET" && req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
   if (!requireAdmin(req, res)) return;
+
+  // GET solo existe para el historial de carta — el CRUD de vinos de acá
+  // abajo es todo POST (siempre fue así, no se toca).
+  if (req.method === "GET") {
+    if (req.query.historial !== '1') return res.status(404).json({ error: "Recurso no encontrado." });
+    try {
+      return await getHistorialCarta(req, res);
+    } catch (err) {
+      console.error("actualizar-vino (historial GET) error:", err);
+      return res.status(500).json({ error: "Error interno.", detail: err.message });
+    }
+  }
+
+  if (req.body && req.body.historial) {
+    try {
+      return await guardarHistorialCarta(req, res, req.body.semanas);
+    } catch (err) {
+      console.error("actualizar-vino (historial POST) error:", err);
+      return res.status(500).json({ error: "Error interno.", detail: err.message });
+    }
+  }
 
   const SHEET_ID            = process.env.GOOGLE_SHEET_ID;
   const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;

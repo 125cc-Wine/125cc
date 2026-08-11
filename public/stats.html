@@ -256,6 +256,58 @@
   .map-wine-item-name{font-size:12px;color:var(--ink-dark);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .map-wine-item-num{font-size:10px;color:var(--ink-dark-3);flex-shrink:0}
 
+  /* ══════════════════════════
+     CALENDARIO DE CARTA
+  ══════════════════════════ */
+  .carta-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .carta-target-toggle{display:flex;gap:4px;background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-pill);padding:3px}
+  .carta-target-btn{background:none;border:none;color:var(--ink-dark-3);font-size:11px;font-weight:500;letter-spacing:.04em;padding:8px 16px;border-radius:var(--r-pill);cursor:pointer;font-family:'DM Sans',sans-serif;transition:background var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
+  .carta-target-btn.active{background:var(--accent-grad);color:#fff}
+  .carta-save-btn{background:var(--accent-grad);border:none;border-radius:var(--r-pill);padding:13px 22px;color:#fff;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:transform var(--t-feedback) var(--ease),opacity var(--t-feedback) var(--ease);letter-spacing:.1em;text-transform:uppercase;box-shadow:0 4px 20px rgba(155,32,53,.3)}
+  .carta-save-btn:active{transform:scale(.98)}
+  .carta-save-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+
+  .carta-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  @media(max-width:900px){.carta-grid{grid-template-columns:1fr}}
+
+  .carta-pools{display:flex;flex-direction:column;gap:12px}
+  .carta-pool-segment{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:14px}
+  .carta-pool-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line-dark)}
+  .carta-pool-title{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--madera)}
+  .carta-pool-count{font-size:11px;color:var(--ink-dark-3)}
+  .carta-pool-cards{display:flex;flex-wrap:wrap;gap:8px}
+  .carta-pool-empty{font-size:12px;color:var(--ink-dark-3);padding:6px 0}
+
+  .carta-wine-card{background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:9px 12px;cursor:grab;min-width:150px;max-width:220px;transition:border-color .15s,opacity .15s}
+  .carta-wine-card:hover{border-color:var(--madera)}
+  .carta-wine-card:active{cursor:grabbing}
+  .carta-wine-card.dragging{opacity:.4}
+  .carta-wine-card-name{font-size:12px;font-weight:500;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .carta-wine-card-sub{font-size:10px;color:var(--ink-dark-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .carta-wine-card.blocked{opacity:.35;cursor:not-allowed;background:var(--dark-2)}
+  .carta-wine-card.blocked:hover{border-color:var(--line-dark)}
+  .carta-wine-card.used{display:none}
+
+  .carta-lanes{display:flex;flex-direction:column;gap:16px}
+  .carta-lane{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:14px}
+  .carta-lane.drop-hover{border-color:var(--madera)}
+  .carta-lane-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .carta-lane-title{font-family:var(--font-serif);font-weight:600;font-size:17px;color:var(--ink-dark)}
+  .carta-lane-count{font-size:11px;color:var(--ink-dark-3)}
+  .carta-lane-count.complete{color:#90ee90}
+  .carta-lane-date{background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:7px 10px;color:var(--ink-dark);font-size:12px;font-family:'DM Sans',sans-serif;outline:none}
+  .carta-lane-date:focus{border-color:var(--accent)}
+  .carta-slots{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  @media(max-width:520px){.carta-slots{grid-template-columns:1fr}}
+  .carta-slot{border-radius:var(--r-sm);padding:9px 12px;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .carta-slot.empty{border:1px dashed var(--line-dark-strong);color:var(--ink-dark-3);font-size:11px}
+  .carta-slot.filled{background:var(--dark-3);border:1px solid var(--madera-dk)}
+  .carta-slot-info{min-width:0;flex:1}
+  .carta-slot-name{font-size:12px;font-weight:500;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .carta-slot-sub{font-size:10px;color:var(--ink-dark-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .carta-slot-remove{background:none;border:none;color:var(--ink-dark-3);font-size:16px;line-height:1;cursor:pointer;flex-shrink:0;padding:2px 4px}
+  .carta-slot-remove:hover{color:#f87171}
+
   /* Toast */
   .toast{
     position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
@@ -300,6 +352,7 @@
     <button class="dash-tab active" onclick="switchTab('stats')">Estadísticas</button>
     <button class="dash-tab" onclick="switchTab('mapa')">Editor de Mapa</button>
     <button class="dash-tab" onclick="switchTab('vinos')">Editor de Vinos</button>
+    <button class="dash-tab" onclick="switchTab('carta')">Calendario de Carta</button>
   </div>
 
   <!-- PANEL STATS -->
@@ -427,6 +480,33 @@
           <div style="font-size:12px;color:var(--ink-dark-3)">Hacé click en cualquier vino de la lista para editarlo</div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- PANEL CALENDARIO DE CARTA -->
+  <div class="dash-panel" id="panel-carta">
+    <div class="carta-toolbar">
+      <div>
+        <div style="font-size:12px;color:var(--ink-dark-3);line-height:1.5">
+          Arrastrá los vinos de los pools de abajo a Semana 1 / Semana 2 (14 espacios cada una).
+          En pantallas táctiles: elegí la semana destino acá y tocá un vino del pool para agregarlo.
+        </div>
+      </div>
+      <div class="carta-target-toggle" id="cartaTargetToggle">
+        <button class="carta-target-btn active" onclick="setCartaTarget(0,this)">+ a Semana 1</button>
+        <button class="carta-target-btn" onclick="setCartaTarget(1,this)">+ a Semana 2</button>
+      </div>
+    </div>
+
+    <div class="carta-grid">
+      <div class="carta-pools" id="cartaPools">
+        <div class="loading">Cargando vinos...</div>
+      </div>
+      <div class="carta-lanes" id="cartaLanes"></div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:16px">
+      <button class="carta-save-btn" id="cartaSaveBtn" onclick="guardarCarta()" disabled>Guardar carta</button>
     </div>
   </div>
 
@@ -1023,6 +1103,7 @@ function switchTab(tab, btnEl){
   if(tab==='stats' && wines.length===0) loadStats();
   if(tab==='mapa' && wines.length===0) loadWinesForMap();
   if(tab==='vinos' && !editorLoaded) loadWinesForEditor();
+  if(tab==='carta' && !cartaLoaded) loadCartaTab();
 }
 
 // Salto directo desde el Editor de Vinos al Editor de Mapa con el vino ya seleccionado —
@@ -1491,6 +1572,258 @@ async function deleteWine(id){
     showToast('Error de conexión','error');
   }
 }
+
+// ══════════════════════════════════════════════════════════════
+// CALENDARIO DE CARTA
+// ══════════════════════════════════════════════════════════════
+// Tramos de góndola — mismo corte y mismo orden de multiplicador que
+// fmtPrecio() en public/index.html (espejo también en
+// api/_lib/pos/productos-import.js). El precio por copa NUNCA se guarda,
+// así que acá solo se usa el tramo para agrupar los pools — el precio que
+// se muestra en cada tarjeta es el de góndola tal cual viene del Sheet.
+const CARTA_TRAMOS = [
+  { id:'t1', label:'Hasta $13.999',     test:p => p < 14000 },
+  { id:'t2', label:'$14.000 – $17.999', test:p => p >= 14000 && p < 18000 },
+  { id:'t3', label:'$18.000 – $29.999', test:p => p >= 18000 && p < 30000 },
+  { id:'t4', label:'$30.000 y más',     test:p => p >= 30000 },
+];
+function cartaPrecioNum(w){ return parseFloat(String(w.precio||0).replace(/[^\d.]/g,'')) || 0; }
+function tramoDeVino(w){
+  const p = cartaPrecioNum(w);
+  return CARTA_TRAMOS.find(t => t.test(p)) || CARTA_TRAMOS[CARTA_TRAMOS.length - 1];
+}
+
+function toISODate(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtFechaAR(d){
+  return (d instanceof Date ? d : new Date(d)).toLocaleDateString('es-AR');
+}
+// Para columnas `date` puras (semana_inicio) que vuelven de la API — a
+// propósito NO pasa por `new Date(str)`: un string sin hora se interpreta
+// como medianoche UTC, y convertirlo a la hora local de Argentina (UTC-3)
+// puede correr la fecha un día para atrás. Se arma DD/MM/YYYY a mano desde
+// los primeros 10 caracteres (YYYY-MM-DD), sin ninguna conversión de zona horaria.
+function fmtFechaSoloFecha(s){
+  const m = String(s).slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : String(s);
+}
+function nuevasCartaSemanas(){
+  return [
+    { label: 'Semana 1', inicio: toISODate(new Date()), vinos: Array(14).fill(null) },
+    { label: 'Semana 2', inicio: toISODate(new Date(Date.now() + 7*86400000)), vinos: Array(14).fill(null) },
+  ];
+}
+
+let cartaWines = [];
+let cartaHistorial = [];       // filas de carta_historial dentro de la ventana de bloqueo (ya filtradas por el server)
+let cartaMesesBloqueo = 12;
+let cartaLoaded = false;
+let cartaTarget = 0;           // índice de semana destino para el click-to-add (pantallas táctiles)
+let cartaSemanas = nuevasCartaSemanas();
+let cartaDragId = null;
+
+async function loadCartaTab(){
+  cartaLoaded = true;
+  try{
+    const [vinosData, histData] = await Promise.all([
+      editorWines.length ? Promise.resolve({vinos: editorWines}) : fetch('/api/obtener-vinos').then(r=>r.json()),
+      fetch('/api/actualizar-vino?historial=1', {headers: adminAuthHeader()}).then(r=>{ handleAuthResponse(r); return r.json(); }),
+    ]);
+    cartaWines = vinosData.vinos || [];
+    if(!editorWines.length){ editorWines = cartaWines; editorLoaded = true; } // comparte caché con Editor de Vinos, evita pedirlo dos veces
+    cartaHistorial = histData.historial || [];
+    cartaMesesBloqueo = histData.mesesBloqueo || 12;
+    renderCartaPools();
+    renderCartaLanes();
+  } catch(e){
+    document.getElementById('cartaPools').innerHTML = '<div class="empty-msg">Error cargando el calendario de carta.</div>';
+  }
+}
+
+// vino_id -> fila más reciente de carta_historial (el server ya filtra a
+// los últimos cartaMesesBloqueo, así que "está en el mapa" = "bloqueado").
+function cartaBlockedMap(){
+  const map = new Map();
+  cartaHistorial.forEach(h=>{
+    const prev = map.get(h.vino_id);
+    if(!prev || new Date(h.confirmado_at) > new Date(prev.confirmado_at)) map.set(h.vino_id, h);
+  });
+  return map;
+}
+function cartaFechaDisponible(confirmadoAt){
+  const d = new Date(confirmadoAt);
+  d.setMonth(d.getMonth() + cartaMesesBloqueo);
+  return d;
+}
+function cartaUsedIds(){
+  return new Set(cartaSemanas.flatMap(s => s.vinos.filter(Boolean).map(v => v.id)));
+}
+
+function renderCartaPools(){
+  const usedIds = cartaUsedIds();
+  const blocked = cartaBlockedMap();
+  document.getElementById('cartaPools').innerHTML = CARTA_TRAMOS.map(tramo=>{
+    const winesTramo = cartaWines.filter(w => tramoDeVino(w).id === tramo.id);
+    const disponibles = winesTramo.filter(w => !usedIds.has(w.id) && !blocked.has(w.id)).length;
+    const cards = winesTramo.map(w=>{
+      const bh = blocked.get(w.id);
+      const isBlocked = !!bh;
+      const isUsed = usedIds.has(w.id);
+      const cls = ['carta-wine-card'];
+      if(isBlocked) cls.push('blocked');
+      if(isUsed) cls.push('used');
+      const title = isBlocked
+        ? `En carta la semana del ${fmtFechaSoloFecha(bh.semana_inicio)} — disponible de nuevo a partir del ${fmtFechaAR(cartaFechaDisponible(bh.confirmado_at))}`
+        : '';
+      return `<div class="${cls.join(' ')}" draggable="${!isBlocked}" title="${esc(title)}"
+                ondragstart="cartaDragStart(event,${w.id})" ondragend="cartaDragEnd(event)"
+                onclick="cartaCardClick(${w.id})">
+        <div class="carta-wine-card-name">${esc(w.nombre)}</div>
+        <div class="carta-wine-card-sub">${esc(w.bodega||'—')} · $${cartaPrecioNum(w).toLocaleString('es-AR')}</div>
+      </div>`;
+    }).join('');
+    return `<div class="carta-pool-segment">
+      <div class="carta-pool-header">
+        <span class="carta-pool-title">${tramo.label}</span>
+        <span class="carta-pool-count">${disponibles} disponible${disponibles===1?'':'s'}</span>
+      </div>
+      <div class="carta-pool-cards">${cards || '<div class="carta-pool-empty">Sin vinos en este tramo</div>'}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderCartaLanes(){
+  document.getElementById('cartaLanes').innerHTML = cartaSemanas.map((s,si)=>{
+    const filled = s.vinos.filter(Boolean).length;
+    const slots = s.vinos.map((v,idx)=>{
+      if(!v) return `<div class="carta-slot empty" ondragover="cartaSlotDragOver(event)" ondrop="cartaSlotDrop(event,${si},${idx})">Espacio libre</div>`;
+      return `<div class="carta-slot filled" ondragover="cartaSlotDragOver(event)" ondrop="cartaSlotDrop(event,${si},${idx})">
+        <div class="carta-slot-info">
+          <div class="carta-slot-name">${esc(v.nombre)}</div>
+          <div class="carta-slot-sub">${esc(v.bodega||'—')}</div>
+        </div>
+        <button class="carta-slot-remove" onclick="cartaRemoveFromLane(${si},${idx})" title="Quitar">×</button>
+      </div>`;
+    }).join('');
+    return `<div class="carta-lane" ondragover="cartaLaneDragOver(event)" ondragleave="cartaLaneDragLeave(event)" ondrop="cartaSlotDrop(event,${si},null)">
+      <div class="carta-lane-header">
+        <span class="carta-lane-title">${esc(s.label)}</span>
+        <input type="date" class="carta-lane-date" value="${s.inicio}" onchange="cartaSetFecha(${si},this.value)">
+        <span class="carta-lane-count${filled===14?' complete':''}">${filled}/14</span>
+      </div>
+      <div class="carta-slots">${slots}</div>
+    </div>`;
+  }).join('');
+  updateCartaSaveBtn();
+}
+
+function setCartaTarget(si, btn){
+  cartaTarget = si;
+  document.querySelectorAll('#cartaTargetToggle .carta-target-btn').forEach(b=>b.classList.remove('active'));
+  (btn || event.target).classList.add('active');
+}
+
+// Click directo en una tarjeta del pool (además de arrastrar) — necesario
+// en pantallas táctiles, donde el drag & drop de HTML5 no dispara.
+function cartaCardClick(id){
+  const blocked = cartaBlockedMap();
+  if(blocked.has(id) || cartaUsedIds().has(id)) return;
+  cartaPlaceWine(id, cartaTarget, null);
+}
+
+function cartaDragStart(e, id){
+  cartaDragId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.target.classList.add('dragging');
+}
+function cartaDragEnd(e){ e.target.classList.remove('dragging'); }
+function cartaLaneDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drop-hover'); }
+function cartaLaneDragLeave(e){ e.currentTarget.classList.remove('drop-hover'); }
+function cartaSlotDragOver(e){ e.preventDefault(); e.stopPropagation(); }
+function cartaSlotDrop(e, si, idx){
+  e.preventDefault(); e.stopPropagation();
+  e.currentTarget.closest('.carta-lane')?.classList.remove('drop-hover');
+  if(cartaDragId==null) return;
+  cartaPlaceWine(cartaDragId, si, idx);
+  cartaDragId = null;
+}
+
+// Coloca un vino en la semana `si`, en el espacio `idx` (o el primer
+// espacio libre si idx es null/está ocupado). Si el vino ya estaba en
+// otra semana de esta sesión, lo saca de ahí primero — un vino no puede
+// estar en las dos semanas a la vez.
+function cartaPlaceWine(id, si, idx){
+  const w = cartaWines.find(x=>x.id===id);
+  if(!w) return;
+  if(cartaBlockedMap().has(id)){ showToast('Ese vino está bloqueado por la regla de no-repetición', 'error'); return; }
+
+  cartaSemanas.forEach(s=>{
+    const i = s.vinos.findIndex(v=>v && v.id===id);
+    if(i>=0) s.vinos[i] = null;
+  });
+
+  const target = cartaSemanas[si];
+  if(idx==null || target.vinos[idx]){
+    idx = target.vinos.findIndex(v=>!v);
+    if(idx<0){ showToast(`${target.label} ya tiene 14 vinos`, 'error'); renderCartaPools(); renderCartaLanes(); return; }
+  }
+  target.vinos[idx] = { id: w.id, nombre: w.nombre, bodega: w.bodega || '' };
+  renderCartaPools();
+  renderCartaLanes();
+}
+
+function cartaRemoveFromLane(si, idx){
+  cartaSemanas[si].vinos[idx] = null;
+  renderCartaPools();
+  renderCartaLanes();
+}
+
+function cartaSetFecha(si, val){
+  cartaSemanas[si].inicio = val;
+  updateCartaSaveBtn();
+}
+
+function updateCartaSaveBtn(){
+  const btn = document.getElementById('cartaSaveBtn');
+  if(!btn) return;
+  btn.disabled = !cartaSemanas.every(s => s.vinos.filter(Boolean).length===14 && s.inicio);
+}
+
+async function guardarCarta(){
+  if(!cartaSemanas.every(s => s.vinos.filter(Boolean).length===14 && s.inicio)){
+    showToast('Completá los 14 vinos y la fecha de ambas semanas', 'error');
+    return;
+  }
+  showToast('Guardando...');
+  try{
+    const res = await fetch('/api/actualizar-vino', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', ...adminAuthHeader()},
+      body: JSON.stringify({
+        historial: true,
+        semanas: cartaSemanas.map(s => ({ label: s.label, inicio: s.inicio, vinos: s.vinos })),
+      }),
+    });
+    handleAuthResponse(res);
+    const data = await res.json();
+    if(data.ok){
+      showToast('✓ Carta guardada — historial actualizado', 'success');
+      cartaSemanas = nuevasCartaSemanas();
+      const histRes = await fetch('/api/actualizar-vino?historial=1', {headers: adminAuthHeader()});
+      handleAuthResponse(histRes);
+      const histData = await histRes.json();
+      cartaHistorial = histData.historial || [];
+      renderCartaPools();
+      renderCartaLanes();
+    } else {
+      showToast('Error: '+(data.error||''), 'error');
+    }
+  } catch(e){
+    showToast('Error de conexión', 'error');
+  }
+}
+
 if(sessionStorage.getItem(SESSION_KEY)==='1'){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('dashboard').style.display='block';
