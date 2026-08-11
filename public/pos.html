@@ -1274,7 +1274,7 @@ async function submitMesaForm(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
-async function openMesa(mesaId){
+function openMesa(mesaId){
   if (editingSalon) return;
   const mesa = mesas.find(m => m.id === mesaId);
   if (!mesa) return;
@@ -1283,9 +1283,82 @@ async function openMesa(mesaId){
     openComanda(mesa.comanda_id);
     return;
   }
+  // Mesa libre: no se crea la comanda al toque — primero se pide
+  // comensales y cliente (los dos opcionales, para no frenar un
+  // service rápido) en un paso previo. Antes clickear la mesa la abría
+  // directo sin ningún paso intermedio.
+  abrirMesaDialogShow(mesaId);
+}
+
+let mesaParaAbrir = null;
+let clienteParaAbrirMesa = null;
+
+function abrirMesaDialogShow(mesaId){
+  const mesa = mesas.find(m => m.id === mesaId);
+  mesaParaAbrir = mesaId;
+  clienteParaAbrirMesa = null;
+  document.getElementById('abrirMesaTitle').textContent = 'Abrir ' + (mesa ? mesa.nombre : 'mesa');
+  document.getElementById('abrirMesaComensales').value = '';
+  document.getElementById('abrirMesaClienteInput').value = '';
+  document.getElementById('abrirMesaClienteResultados').innerHTML = '';
+  document.getElementById('abrirMesaClienteSeleccionado').style.display = 'none';
+  document.getElementById('abrirMesaBackdrop').classList.add('open');
+  document.getElementById('abrirMesaDialog').classList.add('open');
+}
+
+function cancelarAbrirMesa(){
+  mesaParaAbrir = null;
+  document.getElementById('abrirMesaBackdrop').classList.remove('open');
+  document.getElementById('abrirMesaDialog').classList.remove('open');
+  clearPinSelection();
+}
+
+let abrirMesaBuscarTimeout = null;
+function buscarClienteAbrirMesa(){
+  clearTimeout(abrirMesaBuscarTimeout);
+  abrirMesaBuscarTimeout = setTimeout(async () => {
+    const q = document.getElementById('abrirMesaClienteInput').value.trim();
+    const box = document.getElementById('abrirMesaClienteResultados');
+    if (!q){ box.innerHTML = ''; return; }
+    try {
+      const data = await api('/api/pos?r=clientes&q=' + encodeURIComponent(q));
+      box.innerHTML = data.clientes.map(c => `
+        <div class="stock-row" style="cursor:pointer" onclick="seleccionarClienteAbrirMesa(${c.id}, '${escapeHtml(c.nombre)}')">
+          <div class="stock-row-name">${escapeHtml(c.nombre)}</div>
+          <div class="stock-row-name-sub">${escapeHtml(c.telefono || c.email || '')}</div>
+        </div>`).join('') || '<div class="items-empty">Sin resultados. Podés asignarlo/crearlo después desde el panel.</div>';
+    } catch(e){ /* silencioso, no bloquea el paso de abrir mesa */ }
+  }, 250);
+}
+
+function seleccionarClienteAbrirMesa(id, nombre){
+  clienteParaAbrirMesa = id;
+  document.getElementById('abrirMesaClienteInput').value = '';
+  document.getElementById('abrirMesaClienteResultados').innerHTML = '';
+  const sel = document.getElementById('abrirMesaClienteSeleccionado');
+  sel.style.display = 'flex';
+  sel.innerHTML = `<div class="stock-row-name">${icon('check')} ${escapeHtml(nombre)}</div><button class="item-remove" onclick="quitarClienteAbrirMesa()">${icon('x')}</button>`;
+}
+
+function quitarClienteAbrirMesa(){
+  clienteParaAbrirMesa = null;
+  document.getElementById('abrirMesaClienteSeleccionado').style.display = 'none';
+}
+
+async function confirmarAbrirMesa(){
+  if (!mesaParaAbrir) return;
+  const comensales = document.getElementById('abrirMesaComensales').value;
+  const mesaId = mesaParaAbrir;
+  const clienteId = clienteParaAbrirMesa;
   try {
     const staff = sessionStorage.getItem(STAFF_KEY);
-    const data = await api('/api/pos?r=comandas', { method: 'POST', body: { mesa_id: mesaId, atendido_por: staff } });
+    const data = await api('/api/pos?r=comandas', { method: 'POST', body: { mesa_id: mesaId, atendido_por: staff, comensales: comensales || null } });
+    if (clienteId){
+      await api('/api/pos?r=comanda-cliente', { method: 'POST', body: { comanda_id: data.comanda.id, cliente_id: clienteId } });
+    }
+    mesaParaAbrir = null;
+    document.getElementById('abrirMesaBackdrop').classList.remove('open');
+    document.getElementById('abrirMesaDialog').classList.remove('open');
     openComanda(data.comanda.id);
   } catch(e){ toast(e.message, 'error'); }
 }
@@ -1309,7 +1382,10 @@ async function openComanda(id){
     document.getElementById('panelContent').style.display = 'block';
     document.getElementById('comandaHeader').classList.toggle('takeaway', !currentComanda.mesa_id);
     document.getElementById('comandaTitle').textContent = currentComanda.mesa_nombre || 'Takeaway';
-    document.getElementById('comandaSub').textContent = currentComanda.atendido_por ? ('Atiende: ' + currentComanda.atendido_por) : '';
+    document.getElementById('comandaSub').textContent = [
+      currentComanda.atendido_por ? ('Atiende: ' + currentComanda.atendido_por) : null,
+      currentComanda.comensales ? (currentComanda.comensales + (currentComanda.comensales === 1 ? ' comensal' : ' comensales')) : null,
+    ].filter(Boolean).join(' · ');
     document.getElementById('cobrarPanel').classList.remove('open');
     document.getElementById('productoForm').classList.remove('open');
     document.getElementById('trasladarForm').classList.remove('open');
@@ -3782,6 +3858,28 @@ if (sessionStorage.getItem(SESSION_KEY)) enterApp();
   <div class="quick-form-actions">
     <button class="btn-outline" style="flex:1" onclick="resolveConfirm(false)">Cancelar</button>
     <button class="btn-primary" style="flex:1" onclick="resolveConfirm(true)">Confirmar</button>
+  </div>
+</div>
+
+<!-- Paso previo a abrir una mesa libre: comensales + cliente (opcionales),
+     antes de crear la comanda — antes clickear la mesa la abría directo,
+     sin ningún paso intermedio. -->
+<div class="confirm-backdrop" id="abrirMesaBackdrop" onclick="cancelarAbrirMesa()"></div>
+<div class="confirm-dialog" id="abrirMesaDialog" style="width:min(92vw,380px);text-align:left">
+  <div class="section-title" id="abrirMesaTitle" style="margin-bottom:var(--sp-3)">Abrir mesa</div>
+  <div class="field" style="margin-bottom:var(--sp-3)">
+    <label class="field-label" for="abrirMesaComensales">Comensales</label>
+    <input type="number" id="abrirMesaComensales" placeholder="opcional, ej: 4" min="1" max="100" step="1">
+  </div>
+  <div class="field" style="margin-bottom:4px">
+    <label class="field-label" for="abrirMesaClienteInput">Cliente</label>
+    <input type="text" id="abrirMesaClienteInput" placeholder="Buscar por nombre o teléfono (opcional)" oninput="buscarClienteAbrirMesa()">
+  </div>
+  <div id="abrirMesaClienteResultados"></div>
+  <div class="stock-row" id="abrirMesaClienteSeleccionado" style="display:none"></div>
+  <div class="quick-form-actions" style="margin-top:var(--sp-3)">
+    <button class="btn-outline" style="flex:1" onclick="cancelarAbrirMesa()">Cancelar</button>
+    <button class="btn-primary" style="flex:1" onclick="confirmarAbrirMesa()">Abrir mesa</button>
   </div>
 </div>
 </body>

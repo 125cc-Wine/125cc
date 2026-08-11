@@ -20,15 +20,26 @@ async function listComandas(req, res) {
 
 async function abrirComanda(req, res) {
   // mesa_id nulo = takeaway/barra suelta
-  const { mesa_id, atendido_por } = req.body || {};
+  const { mesa_id, atendido_por, comensales } = req.body || {};
   const atendido = atendido_por ? String(atendido_por).slice(0, 60) : null;
   const mesaId = mesa_id || null;
+
+  // comensales: opcional, se completa en el paso "Abrir mesa" del
+  // frontend — no tiene sentido para un takeaway, pero no se restringe
+  // acá (si algún día se pide, ya funciona).
+  let comensalesNum = null;
+  if (comensales != null && comensales !== '') {
+    comensalesNum = Number(comensales);
+    if (!Number.isInteger(comensalesNum) || comensalesNum <= 0 || comensalesNum > 100) {
+      return res.status(400).json({ error: "Cantidad de comensales inválida." });
+    }
+  }
 
   try {
     const comanda = await withTransaction(async (client) => {
       const { rows } = await client.sql`
-        INSERT INTO comandas (mesa_id, atendido_por) VALUES (${mesaId}, ${atendido})
-        RETURNING id, mesa_id, estado, atendido_por, total, abierta_at`;
+        INSERT INTO comandas (mesa_id, atendido_por, comensales) VALUES (${mesaId}, ${atendido}, ${comensalesNum})
+        RETURNING id, mesa_id, estado, atendido_por, comensales, total, abierta_at`;
       if (mesaId) {
         await client.sql`UPDATE mesas SET estado='ocupada', updated_at=now() WHERE id=${mesaId}`;
       }

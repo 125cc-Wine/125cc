@@ -464,3 +464,7 @@ CREATE INDEX IF NOT EXISTS idx_comanda_items_anulados
 -- ── Auditoría v2, C6: costo congelado al momento de la venta — ver
 -- db/migrations/004_costo_snapshot.sql. ──
 ALTER TABLE comanda_items ADD COLUMN IF NOT EXISTS costo_snapshot numeric(12,4);
+
+-- ── Flujo de "Abrir mesa" con comensales — ver
+-- db/migrations/005_comensales.sql. ──
+ALTER TABLE comandas ADD COLUMN IF NOT EXISTS comensales int;
