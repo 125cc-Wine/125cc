@@ -28,6 +28,33 @@
 // preserva la carga perezosa sin romper el bundling.
 const { requirePos } = require('./_lib/require-pos');
 
+// Límite de intentos de login (auditoría v2, C4): una sola contraseña
+// compartida de local, corta y memorizable porque la tipean varias
+// personas por turno, con Access-Control-Allow-Origin: * — cualquiera
+// puede probarla desde el navegador sin fricción. En memoria por IP:
+// no es perfecto en serverless (cada instancia tibia tiene su propio
+// contador, y Vercel puede repartir requests entre varias), pero
+// convierte un ataque de minutos en uno de días sin agregar
+// infraestructura (tabla o KV) para esto. Si se quiere algo robusto de
+// verdad, es decisión del dueño.
+const intentosLogin = new Map(); // ip -> { n, hasta }
+const MAX_INTENTOS_LOGIN = 8;
+const BLOQUEO_LOGIN_MS = 5 * 60 * 1000;
+
+function loginPermitido(ip) {
+  const e = intentosLogin.get(ip);
+  if (!e || e.hasta === 0) return true; // sin registro, o acumulando intentos sin bloqueo activo todavía
+  if (e.hasta > Date.now()) return false; // bloqueo activo
+  intentosLogin.delete(ip); // el bloqueo ya venció
+  return true;
+}
+function loginFallo(ip) {
+  const e = intentosLogin.get(ip) || { n: 0, hasta: 0 };
+  e.n += 1;
+  if (e.n >= MAX_INTENTOS_LOGIN) { e.hasta = Date.now() + BLOQUEO_LOGIN_MS; e.n = 0; }
+  intentosLogin.set(ip, e);
+}
+
 const ROUTES = {
   'mesas:GET': () => require('./_lib/pos/mesas').listMesas,
   'mesas:POST': () => require('./_lib/pos/mesas').upsertMesa,
@@ -103,7 +130,15 @@ module.exports = async function handler(req, res) {
     const POS_PASSWORD = process.env.POS_PASSWORD;
     if (!POS_PASSWORD) return res.status(500).json({ error: "POS_PASSWORD no configurada." });
     if (!password) return res.status(400).json({ error: "Falta password." });
-    if (timingSafeStringEqual(password, POS_PASSWORD)) return res.status(200).json({ ok: true });
+    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'sin-ip';
+    if (!loginPermitido(ip)) {
+      return res.status(429).json({ error: "Demasiados intentos. Esperá unos minutos." });
+    }
+    if (timingSafeStringEqual(password, POS_PASSWORD)) {
+      intentosLogin.delete(ip);
+      return res.status(200).json({ ok: true });
+    }
+    loginFallo(ip);
     return res.status(401).json({ ok: false, error: "Contraseña incorrecta." });
   }
 

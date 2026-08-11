@@ -440,3 +440,10 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 ALTER TABLE comandas DROP CONSTRAINT IF EXISTS comandas_medio_pago_check;
 ALTER TABLE comandas ADD CONSTRAINT comandas_medio_pago_check
   CHECK (medio_pago IN ('efectivo','tarjeta','transferencia','mixto','cuenta_corriente','cortesia'));
+
+-- ── Auditoría v2, C1: un insumo no puede aparecer dos veces en la
+-- receta de un mismo plato (cargarlo dos veces infla el costo
+-- calculado sin nada que lo señale). Ver
+-- db/migrations/002_receta_items_unico.sql. ──
+CREATE UNIQUE INDEX IF NOT EXISTS idx_receta_producto_insumo
+  ON receta_items(producto_id, insumo_id);

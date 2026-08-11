@@ -1927,7 +1927,7 @@ async function eliminarRecetaItem(id){
   const ok = await confirmDialog('¿Quitar este ingrediente de la receta?');
   if (!ok) return;
   try {
-    await api('/api/pos?r=receta-item', { method: 'POST', body: { id, accion: 'eliminar' } });
+    await api('/api/pos?r=receta-item', { method: 'POST', body: { id, producto_id: platoSeleccionado, accion: 'eliminar' } });
     toast('Ingrediente quitado', 'success');
     renderPlatoDetalle();
   } catch(e){ toast(e.message, 'error'); }

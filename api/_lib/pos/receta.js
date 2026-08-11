@@ -22,7 +22,12 @@ async function upsertRecetaItem(req, res) {
 
   if (accion === 'eliminar') {
     if (!id) return res.status(400).json({ error: "Falta id." });
-    const { rows } = await sql`DELETE FROM receta_items WHERE id=${id} RETURNING id`;
+    // Acotado a producto_id (auditoría v2, C1) — igual que la rama de
+    // update de abajo, para no poder borrar por id un ítem de la
+    // receta de OTRO producto. Riesgo real bajo (una sola contraseña
+    // de local, sin roles), pero es gratis cerrarlo.
+    if (!producto_id) return res.status(400).json({ error: "Falta producto_id." });
+    const { rows } = await sql`DELETE FROM receta_items WHERE id=${id} AND producto_id=${producto_id} RETURNING id`;
     if (!rows.length) return res.status(404).json({ error: "Ítem de receta no encontrado." });
     return res.status(200).json({ ok: true });
   }
@@ -39,9 +44,14 @@ async function upsertRecetaItem(req, res) {
     if (!rows.length) return res.status(404).json({ error: "Ítem de receta no encontrado." });
     return res.status(200).json({ item: rows[0] });
   }
+  // ON CONFLICT (auditoría v2, C1): cargar el mismo insumo dos veces en
+  // la misma receta suma sobre la línea existente en vez de duplicarla
+  // — antes creaba una fila nueva y recalcularCostoReceta sumaba las
+  // dos, inflando el costo calculado sin nada que lo señale.
   const { rows } = await sql`
     INSERT INTO receta_items (producto_id, insumo_id, cantidad)
     VALUES (${producto_id}, ${insumo_id}, ${cant})
+    ON CONFLICT (producto_id, insumo_id) DO UPDATE SET cantidad = ${cant}
     RETURNING id, producto_id, insumo_id, cantidad`;
   return res.status(201).json({ item: rows[0] });
 }

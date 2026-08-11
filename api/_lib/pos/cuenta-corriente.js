@@ -39,6 +39,24 @@ async function registrarPago(req, res) {
       const { rows: sesiones } = await client.sql`SELECT id FROM caja_sesiones WHERE estado='abierta' LIMIT 1`;
       if (!sesiones.length) throw Object.assign(new Error('sin_caja'), { code: 'sin_caja' });
 
+      // Auditoría v2, B3: antes se podía registrar un pago por cualquier
+      // monto contra cualquier cliente_id, sin chequear que existiera,
+      // que debiera esa plata, ni lockear — dos toques al botón entraban
+      // los dos pagos y el saldo podía quedar negativo (como si el
+      // local le debiera al cliente). Lockear la fila del cliente
+      // serializa dos pagos simultáneos del mismo cliente; el saldo se
+      // lee ya con el lock tomado.
+      const { rows: cliRows } = await client.sql`SELECT id FROM clientes WHERE id=${cliente_id} FOR UPDATE`;
+      if (!cliRows.length) throw Object.assign(new Error('no_cliente'), { code: 'no_cliente' });
+
+      const { rows: saldoRows } = await client.sql`
+        SELECT COALESCE(SUM(CASE WHEN tipo='cargo' THEN monto ELSE -monto END), 0) AS saldo
+        FROM cuenta_corriente_movimientos WHERE cliente_id=${cliente_id}`;
+      const saldo = Number(saldoRows[0].saldo);
+      if (saldo <= 0) throw Object.assign(new Error('sin_deuda'), { code: 'sin_deuda' });
+      // Tolerancia de $1, mismo criterio que el ajuste de split de pagos.
+      if (montoNum > saldo + 1) throw Object.assign(new Error('excede'), { code: 'excede', saldo });
+
       const { rows } = await client.sql`
         INSERT INTO cuenta_corriente_movimientos (cliente_id, tipo, monto, medio_pago, descripcion, registrado_por)
         VALUES (${cliente_id}, 'pago', ${montoNum}, ${medio_pago}, ${descripcion || null}, ${registrado_por || null})
@@ -53,6 +71,9 @@ async function registrarPago(req, res) {
     return res.status(201).json({ movimiento });
   } catch (err) {
     if (err.code === 'sin_caja') return res.status(409).json({ error: "No hay una caja abierta." });
+    if (err.code === 'no_cliente') return res.status(404).json({ error: "Cliente no encontrado." });
+    if (err.code === 'sin_deuda') return res.status(409).json({ error: "Este cliente no tiene deuda pendiente." });
+    if (err.code === 'excede') return res.status(400).json({ error: `El pago supera la deuda ($${err.saldo}).` });
     throw err;
   }
 }
