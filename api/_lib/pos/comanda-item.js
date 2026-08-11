@@ -27,12 +27,7 @@
 // entrando en una comanda ya cobrada, con el stock descontado sin que
 // nadie pagara esa venta.
 const { withTransaction } = require('../db');
-
-function consumoStock(producto) {
-  return producto.unidad_venta === 'copa'
-    ? 1 / Number(producto.copas_por_botella || 6)
-    : 1;
-}
+const { consumoStock } = require('./stock-unidades');
 
 // Tolerancia para el chequeo de "hay stock": 1/6 no es representable
 // exacto en decimal, así que restar esa fracción muchas veces (una

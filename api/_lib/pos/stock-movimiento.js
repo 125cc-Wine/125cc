@@ -94,8 +94,14 @@ async function getResumenStock(req, res) {
   inicioMes.setDate(1);
   inicioMes.setHours(0, 0, 0, 0);
 
+  // stock_actual está en unidades de COMPRA (botellas); costo está en
+  // unidades de VENTA (copas, ver productos.js). Para valorizar hay que
+  // volver a botella multiplicando por copas_por_botella (auditoría v2, A2).
   const { rows: valorRows } = await sql`
-    SELECT COALESCE(SUM(stock_actual * costo), 0) AS valorizado
+    SELECT COALESCE(SUM(
+      stock_actual * costo *
+      CASE WHEN unidad_venta = 'copa' THEN COALESCE(copas_por_botella, 6) ELSE 1 END
+    ), 0) AS valorizado
     FROM productos
     WHERE activo=true AND stock_actual IS NOT NULL AND costo IS NOT NULL AND stock_actual > 0`;
 

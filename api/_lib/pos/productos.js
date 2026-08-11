@@ -1,5 +1,12 @@
 // api/_lib/pos/productos.js — catálogo de venta del POS (independiente del
 // Sheet de Vinos): listar para el picker de la comanda / crear-editar producto.
+//
+// Convención de unidades (auditoría v2, A2): productos.costo es SIEMPRE
+// por unidad de VENTA (la copa, si unidad_venta='copa') — no por unidad
+// de compra (la botella). reportes.js/estado-resultados.js multiplican
+// costo × cantidad-vendida-en-copas asumiendo esto; proveedor-
+// producto.js (aplicarCosto) divide por copas_por_botella al copiar un
+// precio de compra para respetarlo.
 const { sql } = require('../db');
 
 const UNIDADES = ['copa', 'botella', 'unidad'];

@@ -3,7 +3,13 @@
 // de comanda-cerrar.js: no exige caja abierta, no escribe ningún
 // movimiento de venta, y restaura el stock de los ítems que hubiera
 // activos (se cancelan, no se vendieron). La mesa vuelve a libre.
+//
+// Restitución de stock en unidades de COMPRA (auditoría v2, A1): un
+// producto vendido por copa consume fracción de botella (ver
+// stock-unidades.js) — restituir `cantidad` (copas) tal cual inflaba el
+// stock x6 en cada anulación de vino por copa.
 const { withTransaction } = require('../db');
+const { consumoStock } = require('./stock-unidades');
 
 async function anularComanda(req, res) {
   const { comanda_id } = req.body || {};
@@ -19,11 +25,12 @@ async function anularComanda(req, res) {
       }
 
       const { rows: items } = await client.sql`
-        SELECT id, producto_id, cantidad FROM comanda_items
-        WHERE comanda_id=${comanda_id} AND estado='activo'`;
+        SELECT ci.id, ci.producto_id, ci.cantidad, p.unidad_venta, p.copas_por_botella
+        FROM comanda_items ci JOIN productos p ON p.id = ci.producto_id
+        WHERE ci.comanda_id=${comanda_id} AND ci.estado='activo'`;
       for (const it of items) {
         await client.sql`
-          UPDATE productos SET stock_actual = stock_actual + ${it.cantidad}
+          UPDATE productos SET stock_actual = stock_actual + ${it.cantidad * consumoStock(it)}
           WHERE id=${it.producto_id} AND stock_actual IS NOT NULL`;
       }
       await client.sql`
