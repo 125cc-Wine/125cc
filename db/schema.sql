@@ -430,3 +430,13 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
   id          text PRIMARY KEY,   -- nombre del archivo, ej '001_ejemplo.sql'
   applied_at  timestamptz NOT NULL DEFAULT now()
 );
+
+-- ── Auditoría v2, A3: cortesía de la casa. Una comanda con 100% de
+-- descuento cierra en $0 sin ningún pago (no entra plata, no hay
+-- movimiento de caja) pero SÍ queda registrada como venta, con su
+-- costo — antes el único camino era anularla, que restituye el stock y
+-- borra el costo del estado de resultados como si nunca se hubiera
+-- servido. Ver db/migrations/001_cortesia_medio_pago.sql. ──
+ALTER TABLE comandas DROP CONSTRAINT IF EXISTS comandas_medio_pago_check;
+ALTER TABLE comandas ADD CONSTRAINT comandas_medio_pago_check
+  CHECK (medio_pago IN ('efectivo','tarjeta','transferencia','mixto','cuenta_corriente','cortesia'));

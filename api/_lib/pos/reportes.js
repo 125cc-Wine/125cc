@@ -149,6 +149,15 @@ async function getReportes(req, res) {
   // como respaldo para filas anuladas antes de que existiera la
   // columna (van a quedar con anulado_at NULL para siempre, es
   // historial viejo, no vale la pena migrar datos para esto).
+  // Cortesías del período (auditoría v2, A3): no aparecen en
+  // totalesPorMedio (no generan movimiento de caja ni de cuenta
+  // corriente, así que no hay de dónde agregarlas ahí) — se informan
+  // aparte para que quede visible cuántas se dieron, no solo que el
+  // total no bajó por ellas.
+  const { rows: cortesiasRows } = await sql`
+    SELECT COUNT(*) AS cantidad
+    FROM comandas WHERE estado='cerrada' AND medio_pago='cortesia' AND cerrada_at >= ${desde}`;
+
   const { rows: anulados } = await sql`
     SELECT id, comanda_id, nombre_snapshot, cantidad, precio_unitario, anulado_por,
            COALESCE(anulado_at, created_at) AS anulado_en
@@ -160,6 +169,7 @@ async function getReportes(req, res) {
   return res.status(200).json({
     dias, totalGeneral: totalGeneral[0], margenGeneral, periodoAnterior, serieDiaria,
     totalesPorMedio, topProductos, topPorMargen, cajas, anulados,
+    cortesias: cortesiasRows[0].cantidad,
   });
 }
 

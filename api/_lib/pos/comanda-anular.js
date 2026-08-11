@@ -12,7 +12,7 @@ const { withTransaction } = require('../db');
 const { consumoStock } = require('./stock-unidades');
 
 async function anularComanda(req, res) {
-  const { comanda_id } = req.body || {};
+  const { comanda_id, registrado_por, motivo } = req.body || {};
   if (!comanda_id) return res.status(400).json({ error: "Falta comanda_id." });
 
   try {
@@ -33,8 +33,15 @@ async function anularComanda(req, res) {
           UPDATE productos SET stock_actual = stock_actual + ${it.cantidad * consumoStock(it)}
           WHERE id=${it.producto_id} AND stock_actual IS NOT NULL`;
       }
+      // Auditoría v2, B1: el mismo rastro que ya se captura al anular una
+      // línea suelta (comanda-item.js) — antes anular la comanda ENTERA
+      // (el camino que más importa, es el que vacía una mesa completa)
+      // dejaba las líneas sin quién ni cuándo, cayendo al created_at en
+      // el panel de anulaciones.
       await client.sql`
-        UPDATE comanda_items SET estado='anulado'
+        UPDATE comanda_items
+        SET estado='anulado', anulado_at=now(), anulado_por=${registrado_por || null},
+            motivo_anulacion=${motivo || 'comanda anulada'}
         WHERE comanda_id=${comanda_id} AND estado='activo'`;
 
       const { rows } = await client.sql`

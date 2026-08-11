@@ -59,6 +59,24 @@ async function cerrarComanda(req, res) {
 
       const total = aplicarDescuento(subtotal, openRows[0].descuento_tipo, openRows[0].descuento_valor);
 
+      // Cortesía de la casa (auditoría v2, A3): con 100% de descuento el
+      // total queda en 0 y no hay forma de armar un pago válido (todo
+      // monto <= 0 se rechaza más abajo) — antes el único camino era
+      // anular la comanda entera, que restituye el stock y borra el
+      // costo del estado de resultados como si nunca se hubiera servido.
+      // Se cierra sin ningún pago (no entra plata, no hay movimiento de
+      // caja) pero la venta SÍ queda registrada con su costo.
+      if (total === 0) {
+        const { rows: cortesiaRows } = await client.sql`
+          UPDATE comandas SET estado='cerrada', medio_pago='cortesia', total=0, cerrada_at=now()
+          WHERE id=${comanda_id}
+          RETURNING id, mesa_id, estado, medio_pago, total, cerrada_at`;
+        if (openRows[0].mesa_id) {
+          await client.sql`UPDATE mesas SET estado='libre', updated_at=now() WHERE id=${openRows[0].mesa_id}`;
+        }
+        return cortesiaRows[0];
+      }
+
       // Normalizar pagos: acepta {pagos:[...]} o, por compatibilidad,
       // {medio_pago} suelto como un único pago por el total.
       let pagos = req.body.pagos;

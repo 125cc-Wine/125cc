@@ -19,6 +19,23 @@ async function setMesaEstado(req, res) {
 
   try {
     const mesa = await withTransaction(async (client) => {
+      // Auditoría v2, B4: pasar a 'libre' con una comanda todavía
+      // abierta dejaría el plano mintiendo (mesa verde, venta en curso)
+      // y la mesa imposible de reabrir después — one_open_comanda_per_mesa
+      // rechaza una comanda nueva mientras la vieja siga 'abierta'. El
+      // override tiene que cerrar/anular la comanda primero, no solo
+      // pintar la mesa. Verificado: hoy no hay ningún llamado desde
+      // pos.html que mande estado:'libre' (el único caller manda
+      // 'cuenta_pedida'), así que este chequeo no cambia ningún flujo
+      // en uso — es un candado para cuando exista uno.
+      if (estado === 'libre') {
+        const { rows: abiertas } = await client.sql`
+          SELECT id FROM comandas WHERE mesa_id=${id} AND estado='abierta' FOR UPDATE`;
+        if (abiertas.length) {
+          throw Object.assign(new Error('comanda_abierta'), { code: 'comanda_abierta', comandaId: abiertas[0].id });
+        }
+      }
+
       const { rows } = await client.sql`
         UPDATE mesas SET estado = ${estado}, updated_at = now()
         WHERE id = ${id} RETURNING id, nombre, estado`;
@@ -34,6 +51,12 @@ async function setMesaEstado(req, res) {
     return res.status(200).json({ mesa });
   } catch (err) {
     if (err.code === 'no_mesa') return res.status(404).json({ error: "Mesa no encontrada." });
+    if (err.code === 'comanda_abierta') {
+      return res.status(409).json({
+        error: "La mesa tiene una comanda abierta. Cobrala o anulala para liberarla.",
+        comanda_id: err.comandaId,
+      });
+    }
     throw err;
   }
 }

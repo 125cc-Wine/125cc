@@ -868,13 +868,13 @@
             </div>
             <div id="cobrarConCaja">
               <div id="cobrarResumen"></div>
-              <div class="form-row" style="margin-top:10px">
+              <div class="form-row" style="margin-top:10px" id="cobrarDividirRow">
                 <input type="number" id="dividirN" class="stock-input" style="width:100%" value="1" min="1" max="6" placeholder="Partes">
                 <button class="btn-outline" onclick="dividirPagos()">Dividir en partes iguales</button>
               </div>
               <div id="pagosRows"></div>
-              <button class="btn-outline" style="width:100%;margin-bottom:10px" onclick="agregarPagoRow()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar pago</button>
-              <button class="btn-primary" style="width:100%" onclick="confirmCobrar()">Confirmar cobro</button>
+              <button class="btn-outline" style="width:100%;margin-bottom:10px" id="btnAgregarPago" onclick="agregarPagoRow()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar pago</button>
+              <button class="btn-primary" style="width:100%" id="btnConfirmarCobro" onclick="confirmCobrar()">Confirmar cobro</button>
             </div>
           </div>
 
@@ -1534,8 +1534,31 @@ async function abrirCajaYCobrar(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
+// Cortesía de la casa (auditoría v2, A3): con total $0 (100% de
+// descuento) no tiene sentido pedir elegir un medio de pago para
+// $0 — se reemplaza el formulario de pagos por una confirmación
+// explícita. pagosState sigue teniendo su fila por defecto (el
+// backend la ignora cuando total===0, ver comanda-cerrar.js), así que
+// confirmCobrar() no necesita ninguna rama especial.
 function renderPagosRows(){
   const total = totalConDescuento();
+  const dividirRow = document.getElementById('cobrarDividirRow');
+  const addBtn = document.getElementById('btnAgregarPago');
+  const confirmBtn = document.getElementById('btnConfirmarCobro');
+
+  if (total === 0){
+    document.getElementById('cobrarResumen').innerHTML = `
+      <div class="stock-row-name-sub" style="margin-bottom:4px">Cortesía de la casa — se cierra sin cobrar nada. La venta y su costo quedan registrados igual, sin mover la caja.</div>`;
+    document.getElementById('pagosRows').innerHTML = '';
+    dividirRow.style.display = 'none';
+    addBtn.style.display = 'none';
+    confirmBtn.innerHTML = `${icon('check')} Confirmar cortesía`;
+    return;
+  }
+  dividirRow.style.display = '';
+  addBtn.style.display = '';
+  confirmBtn.textContent = 'Confirmar cobro';
+
   const suma = pagosState.reduce((s,p) => s + (Number(p.monto) || 0), 0);
   const ok = Math.abs(suma - total) <= 1;
   document.getElementById('cobrarResumen').innerHTML = `
@@ -1590,7 +1613,7 @@ async function confirmCobrar(){
   const comandaId = currentComanda.id;
   try {
     await api('/api/pos?r=comanda-cerrar', { method: 'POST', body: { comanda_id: comandaId, pagos: pagosState } });
-    toast('Comanda cobrada', 'success');
+    toast(total === 0 ? 'Cortesía registrada' : 'Comanda cobrada', 'success');
     cerrarPanel();
     // La factura se emite DESPUÉS de cerrar, sin esperar su resultado —
     // la comanda ya quedó cobrada pase lo que pase con AFIP. Si falla,
@@ -1644,7 +1667,8 @@ async function trasladarComandaAction(){
 async function cerrarMesaSinCobrar(){
   if (!(await confirmDialog('¿Cerrar esta mesa sin cobrar? Se cancelan todos los ítems cargados.'))) return;
   try {
-    await api('/api/pos?r=comanda-anular', { method: 'POST', body: { comanda_id: currentComanda.id } });
+    const staff = sessionStorage.getItem(STAFF_KEY);
+    await api('/api/pos?r=comanda-anular', { method: 'POST', body: { comanda_id: currentComanda.id, registrado_por: staff } });
     toast('Mesa cerrada sin cobrar', 'success');
     cerrarPanel();
   } catch(e){ toast(e.message, 'error'); }
@@ -2959,7 +2983,7 @@ function setReportesRango(dias, btn){
   loadReportes();
 }
 
-const MEDIO_LABEL = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', mixto: 'Mixto', cuenta_corriente: 'Cuenta corriente' };
+const MEDIO_LABEL = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia', mixto: 'Mixto', cuenta_corriente: 'Cuenta corriente', cortesia: 'Cortesía' };
 
 async function loadReportes(){
   const box = document.getElementById('reportesContent');
@@ -3199,6 +3223,7 @@ function renderReportes(data){
       <div class="report-card">
         <div class="section-title">Por medio de pago</div>
         ${porMedio}
+        ${Number(data.cortesias) > 0 ? `<div class="stock-row-name-sub" style="margin-top:8px">${data.cortesias} cortesía${Number(data.cortesias)===1?'':'s'} de la casa (no suman acá — no entró plata)</div>` : ''}
       </div>
       <div class="report-card">
         <div class="section-title">Productos más vendidos</div>
