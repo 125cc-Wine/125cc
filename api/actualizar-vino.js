@@ -23,6 +23,19 @@ const { sql, withTransaction }     = require('./_lib/db');
 const MESES_BLOQUEO_CARTA = 12;
 
 async function getHistorialCarta(req, res) {
+  // ?todo=1 trae todo el historial sin ventana de 12 meses — lo usa la
+  // "Vista de historial" (solo lectura, mirar la rotación pasada completa).
+  // Sin el flag, se queda con la ventana de bloqueo — es lo único que
+  // necesita el cálculo de qué está bloqueado en los pools.
+  if (req.query.todo === '1') {
+    const { rows } = await sql`
+      SELECT vino_id, vino_nombre, bodega, semana_label, semana_inicio, confirmado_at, fuente
+      FROM carta_historial
+      ORDER BY semana_inicio DESC, confirmado_at DESC
+    `;
+    return res.status(200).json({ historial: rows, mesesBloqueo: MESES_BLOQUEO_CARTA });
+  }
+
   // El intervalo se arma como string en JS (ej '12 months') y se castea en
   // SQL — pasar el número solo y concatenar con '||' en Postgres mezclaría
   // int y text sin cast implícito seguro.

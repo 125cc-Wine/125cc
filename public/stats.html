@@ -265,6 +265,21 @@
   .carta-mes-picker input[type=month]{background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:8px 12px;color:var(--ink-dark);font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
   .carta-mes-picker input[type=month]:focus{border-color:var(--accent)}
   .carta-lane-sub{font-size:11px;color:var(--ink-dark-3);margin-top:2px}
+
+  .carta-banner{background:var(--dark-2);border:1px solid var(--madera-dk);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:16px;margin-bottom:16px}
+  .carta-banner-title{font-family:var(--font-serif);font-weight:600;font-size:18px;color:var(--ink-dark)}
+  .carta-banner-sub{font-size:12px;color:var(--madera);margin-top:2px}
+  .carta-banner-checklist{list-style:none;margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px 16px}
+  .carta-banner-item{font-size:12px;color:var(--ink-dark-3)}
+  .carta-banner-item.ok{color:var(--ink-dark)}
+  .carta-banner-item-bodega{color:var(--ink-dark-3)}
+
+  .carta-historial-section{margin-top:24px}
+  .carta-historial-toggle{background:none;border:1px solid var(--line-dark-strong);color:var(--ink-dark-2);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:10px 18px;border-radius:var(--r-pill);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
+  .carta-historial-toggle:hover{border-color:var(--ink-dark-2);color:var(--ink-dark)}
+  .carta-historial-group{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:14px;margin-top:12px}
+  .carta-historial-group-title{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--madera);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line-dark)}
+  .carta-historial-group-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 16px;font-size:12px;color:var(--ink-dark-2)}
   .carta-target-toggle{display:flex;gap:4px;background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-pill);padding:3px}
   .carta-target-btn{background:none;border:none;color:var(--ink-dark-3);font-size:11px;font-weight:500;letter-spacing:.04em;padding:8px 16px;border-radius:var(--r-pill);cursor:pointer;font-family:'DM Sans',sans-serif;transition:background var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
   .carta-target-btn.active{background:var(--accent-grad);color:#fff}
@@ -517,6 +532,8 @@
       </div>
     </div>
 
+    <div class="carta-banner" id="cartaBanner" style="display:none"></div>
+
     <div class="carta-grid">
       <div class="carta-pools">
         <div class="carta-pools-section-title">Mi carta 125cc — por tramo de precio</div>
@@ -538,6 +555,11 @@
 
     <div style="display:flex;justify-content:flex-end;margin-top:16px">
       <button class="carta-save-btn" id="cartaSaveBtn" onclick="guardarCarta()" disabled>Guardar carta</button>
+    </div>
+
+    <div class="carta-historial-section">
+      <button class="carta-historial-toggle" onclick="toggleCartaHistorial()">Ver historial de cartas anteriores ▾</button>
+      <div id="cartaHistorialView" style="display:none"></div>
     </div>
   </div>
 
@@ -1657,6 +1679,35 @@ function datosQuincena(mesISO, cual){ // cual: 1 o 2
   if(cual === 1) return { inicio: `${anio}-${pad(mes)}-01`, rango: '1–15' };
   return { inicio: `${anio}-${pad(mes)}-16`, rango: `16–${ultimoDiaMes(anio,mes)}` };
 }
+function hoyISO(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+// Reconstruye el fin y el rango de una quincena a partir de su fecha de
+// inicio (siempre día 01 o 16, por cómo se generan) — usado para el banner
+// y la vista de historial, que reciben fechas ya guardadas en vez de un
+// mesISO+cual como datosQuincena().
+function finDeQuincena(inicioISO){
+  const [anio, mes, dia] = inicioISO.split('-').map(Number);
+  return dia === 1 ? `${anio}-${String(mes).padStart(2,'0')}-15` : `${anio}-${String(mes).padStart(2,'0')}-${String(ultimoDiaMes(anio,mes)).padStart(2,'0')}`;
+}
+function rangoDeQuincena(inicioISO){
+  const [anio, mes, dia] = inicioISO.split('-').map(Number);
+  return dia === 1 ? '1–15' : `16–${ultimoDiaMes(anio,mes)}`;
+}
+// Reagrupa filas sueltas de carta_historial (una por vino) en quincenas
+// (una por semana_inicio+semana_label, con su lista de vinos adentro) — lo
+// usan el banner y la vista de historial.
+function agruparHistorialPorQuincena(rows){
+  const grupos = new Map();
+  rows.forEach(h=>{
+    const inicio = String(h.semana_inicio).slice(0,10);
+    const key = `${inicio}|${h.semana_label}`;
+    if(!grupos.has(key)) grupos.set(key, { inicio, fin: finDeQuincena(inicio), label: h.semana_label, vinos: [] });
+    grupos.get(key).vinos.push(h);
+  });
+  return Array.from(grupos.values());
+}
 
 let cartaMes = toISOMonth(new Date()); // 'YYYY-MM' — mes que se está planificando
 // El <script> está al final del body, así que el <input type="month"> ya
@@ -1730,9 +1781,110 @@ async function loadCartaTab(){
     renderCartaPools();
     renderCatalogoExterno();
     renderCartaLanes();
+    renderCartaBanner();
   } catch(e){
     document.getElementById('cartaPools').innerHTML = '<div class="empty-msg">Error cargando el calendario de carta.</div>';
   }
+}
+
+// ── Banner "quincena vigente/próxima" ───────────────────────────────────
+// Conecta el historial guardado con el resto de la app: de todas las
+// quincenas confirmadas (cartaHistorial, ya limitado a la ventana de
+// bloqueo por el server), busca la que está corriendo hoy o, si ninguna
+// está corriendo, la próxima a arrancar — y cruza sus vinos contra el Sheet
+// real (cartaWines) para mostrar cuáles ya tienen ficha completa.
+function cartaBannerInfo(){
+  const grupos = agruparHistorialPorQuincena(cartaHistorial);
+  if(!grupos.length) return null;
+  const hoy = hoyISO();
+  const vigente = grupos.find(g => g.inicio <= hoy && hoy <= g.fin);
+  if(vigente) return { ...vigente, estado: 'vigente' };
+  const futuras = grupos.filter(g => g.inicio > hoy).sort((a,b)=>a.inicio.localeCompare(b.inicio));
+  return futuras.length ? { ...futuras[0], estado: 'proxima' } : null;
+}
+function diasEntreISO(desde, hasta){
+  const [a1,m1,d1] = desde.split('-').map(Number);
+  const [a2,m2,d2] = hasta.split('-').map(Number);
+  return Math.round((new Date(a2,m2-1,d2) - new Date(a1,m1-1,d1)) / 86400000);
+}
+function renderCartaBanner(){
+  const el = document.getElementById('cartaBanner');
+  if(!el) return;
+  const info = cartaBannerInfo();
+  if(!info){ el.style.display = 'none'; el.innerHTML = ''; return; }
+
+  const hoy = hoyISO();
+  const cuando = info.estado === 'vigente'
+    ? `en curso desde el ${fmtFechaSoloFecha(info.inicio)}`
+    : `arranca en ${diasEntreISO(hoy, info.inicio)} día${diasEntreISO(hoy,info.inicio)===1?'':'s'} (${fmtFechaSoloFecha(info.inicio)})`;
+
+  // "Ficha completa" = el vino existe en el Sheet en vivo (por nombre,
+  // insensible a mayúsculas/acentos) y tiene algo cargado en `nota` — es
+  // una aproximación barata, no una validación exhaustiva de todos los
+  // campos, pero alcanza para saber de un vistazo qué falta cargar.
+  const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+  const sheetPorNombre = new Map(cartaWines.map(w => [norm(w.nombre), w]));
+  let listas = 0;
+  const items = info.vinos
+    .slice().sort((a,b)=>(a.bodega||'').localeCompare(b.bodega||'') || a.vino_nombre.localeCompare(b.vino_nombre))
+    .map(h=>{
+      const enSheet = sheetPorNombre.get(norm(h.vino_nombre));
+      const completo = !!(enSheet && enSheet.nota && enSheet.nota.trim());
+      if(completo) listas++;
+      return `<li class="carta-banner-item${completo?' ok':''}">${completo?'✓':'⏳'} ${esc(h.vino_nombre)} <span class="carta-banner-item-bodega">· ${esc(h.bodega||'—')}</span></li>`;
+    }).join('');
+
+  el.style.display = '';
+  el.innerHTML = `
+    <div class="carta-banner-title">${esc(info.label)} de ${esc(nombreMesLabel(info.inicio.slice(0,7)))} — ${cuando}</div>
+    <div class="carta-banner-sub">${listas} de ${info.vinos.length} vinos ya tienen ficha completa en el Sheet</div>
+    <ul class="carta-banner-checklist">${items}</ul>
+  `;
+}
+
+// ── Vista de historial (solo lectura) ───────────────────────────────────
+let cartaHistorialCompleto = null; // null = todavía no se pidió (o el caché quedó invalidado)
+let cartaHistorialAbierto = false;
+
+async function cargarCartaHistorialCompleto(){
+  const el = document.getElementById('cartaHistorialView');
+  el.innerHTML = '<div class="loading">Cargando historial...</div>';
+  try{
+    const res = await fetch('/api/actualizar-vino?historial=1&todo=1', {headers: adminAuthHeader()});
+    handleAuthResponse(res);
+    const data = await res.json();
+    cartaHistorialCompleto = data.historial || [];
+    renderCartaHistorialView();
+  } catch(e){
+    el.innerHTML = '<div class="empty-msg">Error cargando el historial.</div>';
+  }
+}
+
+async function toggleCartaHistorial(){
+  cartaHistorialAbierto = !cartaHistorialAbierto;
+  const el = document.getElementById('cartaHistorialView');
+  const btn = document.querySelector('.carta-historial-toggle');
+  el.style.display = cartaHistorialAbierto ? '' : 'none';
+  if(btn) btn.textContent = 'Ver historial de cartas anteriores ' + (cartaHistorialAbierto ? '▴' : '▾');
+  if(cartaHistorialAbierto && cartaHistorialCompleto === null) await cargarCartaHistorialCompleto();
+}
+function renderCartaHistorialView(){
+  const el = document.getElementById('cartaHistorialView');
+  if(!cartaHistorialCompleto || !cartaHistorialCompleto.length){
+    el.innerHTML = '<div class="carta-pool-empty">Todavía no se confirmó ninguna carta.</div>';
+    return;
+  }
+  const grupos = agruparHistorialPorQuincena(cartaHistorialCompleto).sort((a,b)=>b.inicio.localeCompare(a.inicio));
+  el.innerHTML = grupos.map(g=>{
+    const items = g.vinos
+      .slice().sort((a,b)=>(a.bodega||'').localeCompare(b.bodega||'') || a.vino_nombre.localeCompare(b.vino_nombre))
+      .map(h => `<li>${esc(h.vino_nombre)} <span class="carta-banner-item-bodega">· ${esc(h.bodega||'—')}</span></li>`)
+      .join('');
+    return `<div class="carta-historial-group">
+      <div class="carta-historial-group-title">${esc(g.label)} · ${esc(nombreMesLabel(g.inicio.slice(0,7)))} (días ${rangoDeQuincena(g.inicio)})</div>
+      <ul class="carta-historial-group-list">${items}</ul>
+    </div>`;
+  }).join('');
 }
 
 // vino_id -> fila más reciente de carta_historial (el server ya filtra a
@@ -1968,9 +2120,12 @@ async function guardarCarta(){
       handleAuthResponse(histRes);
       const histData = await histRes.json();
       cartaHistorial = histData.historial || [];
+      cartaHistorialCompleto = null; // invalida el caché de la vista de historial, tiene datos nuevos
       renderCartaPools();
       renderCatalogoExterno();
       renderCartaLanes();
+      renderCartaBanner();
+      if(cartaHistorialAbierto) cargarCartaHistorialCompleto(); // estaba abierta: recarga sin cerrarla
     } else {
       showToast('Error: '+(data.error||''), 'error');
     }
