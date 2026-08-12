@@ -143,9 +143,10 @@ async function getCatalogoExterno(req, res) {
     // varietal/region viajan para precargar la ficha del vino si se crea un
     // borrador en el Sheet al confirmar la carta (93%/85% de los vinos
     // activos los tienen cargados en gestion-vinoteca2). categoria viaja
-    // para mapear el `tipo` de 125cc al crear ese borrador.
+    // para mapear el `tipo` de 125cc al crear ese borrador. stock viaja
+    // para la alerta de "elegiste un vino sin stock en el distribuidor".
     const url = `${VINOTECA_SUPABASE_URL}/rest/v1/productos`
-      + `?select=id,nombre,bodega,precio_venta,empresa,varietal,region,categoria`
+      + `?select=id,nombre,bodega,precio_venta,empresa,varietal,region,categoria,stock`
       + `&activo=eq.true&categoria=neq.Otro`
       + `&order=bodega.asc,nombre.asc&limit=${PAGE}&offset=${offset}`;
     const r = await fetch(url, { headers });
@@ -161,19 +162,23 @@ async function getCatalogoExterno(req, res) {
 
   // Dedup por nombre normalizado — Aroma y La Vid sincronizan el mismo vino
   // como fila propia en cada empresa, así que en el pool alcanza con una
-  // sola tarjeta por vino (se queda con la primera que aparece).
+  // sola tarjeta por vino. Entre las dos, se queda con la que tenga más
+  // stock (no la primera que aparece) — así no se marca "sin stock" a un
+  // vino que sí está disponible del otro lado.
   const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
   const porNombre = new Map();
   for (const p of all) {
     const key = norm(p.nombre);
-    if (!key || porNombre.has(key)) continue;
-    porNombre.set(key, p);
+    if (!key) continue;
+    const existente = porNombre.get(key);
+    if (!existente || (p.stock || 0) > (existente.stock || 0)) porNombre.set(key, p);
   }
 
   const catalogo = Array.from(porNombre.values())
     .map(p => ({
       id: p.id, nombre: p.nombre, bodega: p.bodega || 'Sin bodega', precio: p.precio_venta || 0,
       varietal: p.varietal || '', region: p.region || '', categoria: p.categoria || '',
+      stock: p.stock ?? null,
     }))
     .sort((a, b) => a.bodega.localeCompare(b.bodega) || a.nombre.localeCompare(b.nombre));
 
