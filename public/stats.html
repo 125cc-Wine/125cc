@@ -340,7 +340,16 @@
   .carta-manual-add-btn{background:var(--madera-dk);border:none;border-radius:var(--r-pill);padding:8px 16px;color:var(--ink-dark);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity var(--t-feedback) var(--ease)}
   .carta-manual-add-btn:hover{opacity:.85}
 
-  .carta-lanes{display:flex;flex-direction:column;gap:16px}
+  /* Pedido de Maio: que el tablero de quincenas "acompañe" al scrollear
+     buscando un vino en los pools, como una celda congelada en Excel — se
+     queda pegado debajo de .top-bar (que ya es sticky arriba de todo) en
+     vez de irse de la pantalla, y si no entra completo en el alto visible
+     se scrollea solo puertas adentro en vez de tapar el resto. Se apaga en
+     mobile (.carta-grid pasa a 1 columna ahí — pools arriba, carriles
+     abajo — donde "flotar" no tendría sentido, quedaría pegado tapando
+     los pools que siguen apareciendo por encima al hacer scroll). */
+  .carta-lanes{display:flex;flex-direction:column;gap:16px;position:sticky;top:76px;max-height:calc(100vh - 168px);overflow-y:auto;padding-right:4px}
+  @media(max-width:900px){.carta-lanes{position:static;max-height:none;overflow-y:visible;padding-right:0}}
   .carta-lane{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:14px}
   .carta-lane.drop-hover{border-color:var(--madera)}
   .carta-lane-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
