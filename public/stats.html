@@ -284,6 +284,8 @@
   .catalogo-bodega > summary{cursor:pointer;list-style:none;padding:14px}
   .catalogo-bodega > summary::-webkit-details-marker{display:none}
   .catalogo-bodega .carta-pool-cards{padding:0 14px 14px}
+  .catalogo-tramo-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dark-3);margin:10px 14px 6px}
+  .catalogo-tramo-label:first-of-type{margin-top:0}
   .carta-pool-segment{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:14px}
   .carta-pool-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line-dark)}
   .carta-pool-title{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--madera)}
@@ -1824,13 +1826,22 @@ function renderCatalogoExterno(){
   }
   cont.innerHTML = bodegas.map(bodega=>{
     const wines = porBodega.get(bodega);
-    const cards = wines.map(w => cartaWineCardHtml(w, usedIds, blocked)).join('');
+    // Dentro de cada bodega, subagrupar por el mismo tramo de precio que
+    // "Mi carta 125cc" — pedido de Maio, para poder armar la carta sin
+    // saltar entre vinos baratos y caros de la misma bodega sin querer.
+    const tramosHtml = CARTA_TRAMOS.map(tramo=>{
+      const winesTramo = wines.filter(w => tramoDeVino(w).id === tramo.id);
+      if(!winesTramo.length) return '';
+      const cards = winesTramo.map(w => cartaWineCardHtml(w, usedIds, blocked)).join('');
+      return `<div class="catalogo-tramo-label">${tramo.label}</div>
+        <div class="carta-pool-cards">${cards}</div>`;
+    }).join('');
     return `<details class="carta-pool-segment catalogo-bodega"${q ? ' open' : ''}>
       <summary class="carta-pool-header">
         <span class="carta-pool-title">${esc(bodega)}</span>
         <span class="carta-pool-count">${wines.length}</span>
       </summary>
-      <div class="carta-pool-cards">${cards}</div>
+      ${tramosHtml}
     </details>`;
   }).join('');
 }
