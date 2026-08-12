@@ -2049,7 +2049,7 @@ function renderCartaLanes(){
                   ondragover="cartaSlotDragOver(event)" ondrop="cartaSlotDrop(event,${si},${idx})">
         <div class="carta-slot-info">
           <div class="carta-slot-name">${esc(v.nombre)}</div>
-          <div class="carta-slot-sub">${esc(v.bodega||'—')}</div>
+          <div class="carta-slot-sub">${esc(v.bodega||'—')} · $${cartaPrecioNum(v).toLocaleString('es-AR')}</div>
         </div>
         <button class="carta-slot-remove" onclick="cartaRemoveFromLane(${si},${idx})" title="Quitar">×</button>
       </div>`;
