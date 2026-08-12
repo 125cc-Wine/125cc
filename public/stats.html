@@ -260,6 +260,11 @@
      CALENDARIO DE CARTA
   ══════════════════════════ */
   .carta-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .carta-mes-picker{display:flex;align-items:center;gap:10px}
+  .carta-mes-picker label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-dark-3)}
+  .carta-mes-picker input[type=month]{background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:8px 12px;color:var(--ink-dark);font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
+  .carta-mes-picker input[type=month]:focus{border-color:var(--accent)}
+  .carta-lane-sub{font-size:11px;color:var(--ink-dark-3);margin-top:2px}
   .carta-target-toggle{display:flex;gap:4px;background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-pill);padding:3px}
   .carta-target-btn{background:none;border:none;color:var(--ink-dark-3);font-size:11px;font-weight:500;letter-spacing:.04em;padding:8px 16px;border-radius:var(--r-pill);cursor:pointer;font-family:'DM Sans',sans-serif;transition:background var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
   .carta-target-btn.active{background:var(--accent-grad);color:#fff}
@@ -303,8 +308,6 @@
   .carta-lane-title{font-family:var(--font-serif);font-weight:600;font-size:17px;color:var(--ink-dark)}
   .carta-lane-count{font-size:11px;color:var(--ink-dark-3)}
   .carta-lane-count.complete{color:#90ee90}
-  .carta-lane-date{background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:7px 10px;color:var(--ink-dark);font-size:12px;font-family:'DM Sans',sans-serif;outline:none}
-  .carta-lane-date:focus{border-color:var(--accent)}
   .carta-slots{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
   @media(max-width:520px){.carta-slots{grid-template-columns:1fr}}
   .carta-slot{border-radius:var(--r-sm);padding:9px 12px;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:6px}
@@ -495,16 +498,20 @@
   <div class="dash-panel" id="panel-carta">
     <div class="carta-toolbar">
       <div>
-        <div style="font-size:12px;color:var(--ink-dark-3);line-height:1.5">
-          Arrastrá los vinos de los pools de abajo a Semana 1 / Semana 2 (14 espacios cada una).
-          En pantallas táctiles: elegí la semana destino acá y tocá un vino del pool para agregarlo.
+        <div class="carta-mes-picker">
+          <label for="cartaMesInput">Mes a planificar</label>
+          <input type="month" id="cartaMesInput" onchange="cartaSetMes(this.value)">
+        </div>
+        <div style="font-size:12px;color:var(--ink-dark-3);line-height:1.5;margin-top:8px">
+          Arrastrá los vinos de los pools de abajo a Quincena 1 / Quincena 2 (14 espacios cada una).
+          En pantallas táctiles: elegí la quincena destino acá y tocá un vino del pool para agregarlo.
           Un vino del Catálogo Aroma/La Vid que entra a la carta todavía necesita su ficha completa
           (nota, maridaje, imagen) en Editor de Vinos antes de aparecer en el menú público.
         </div>
       </div>
       <div class="carta-target-toggle" id="cartaTargetToggle">
-        <button class="carta-target-btn active" onclick="setCartaTarget(0,this)">+ a Semana 1</button>
-        <button class="carta-target-btn" onclick="setCartaTarget(1,this)">+ a Semana 2</button>
+        <button class="carta-target-btn active" onclick="setCartaTarget(0,this)">+ a Quincena 1</button>
+        <button class="carta-target-btn" onclick="setCartaTarget(1,this)">+ a Quincena 2</button>
       </div>
     </div>
 
@@ -1615,9 +1622,6 @@ function tramoDeVino(w){
   return CARTA_TRAMOS.find(t => t.test(p)) || CARTA_TRAMOS[CARTA_TRAMOS.length - 1];
 }
 
-function toISODate(d){
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
 function fmtFechaAR(d){
   return (d instanceof Date ? d : new Date(d)).toLocaleDateString('es-AR');
 }
@@ -1630,11 +1634,49 @@ function fmtFechaSoloFecha(s){
   const m = String(s).slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : String(s);
 }
+// El Calendario de Carta planifica por mes, dividido en 2 quincenas fijas
+// (1–15 y 16–fin de mes) — ya no hay fecha libre por carril, se recalculan
+// solas al elegir el mes. Encaja con el recambio de carta cada 14 días
+// (memoria del proyecto): una quincena son ~14-16 días según el mes.
+function toISOMonth(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function ultimoDiaMes(anio, mes){ // mes: 1-12
+  return new Date(anio, mes, 0).getDate();
+}
+function nombreMesLabel(mesISO){
+  const [anio, mes] = mesISO.split('-').map(Number);
+  const s = new Date(anio, mes-1, 1).toLocaleDateString('es-AR', {month:'long', year:'numeric'});
+  return s.charAt(0).toUpperCase() + s.slice(1); // es-AR devuelve "agosto de 2026" en minúscula
+}
+function datosQuincena(mesISO, cual){ // cual: 1 o 2
+  const [anio, mes] = mesISO.split('-').map(Number);
+  const pad = n => String(n).padStart(2,'0');
+  if(cual === 1) return { inicio: `${anio}-${pad(mes)}-01`, rango: '1–15' };
+  return { inicio: `${anio}-${pad(mes)}-16`, rango: `16–${ultimoDiaMes(anio,mes)}` };
+}
+
+let cartaMes = toISOMonth(new Date()); // 'YYYY-MM' — mes que se está planificando
+// El <script> está al final del body, así que el <input type="month"> ya
+// existe en el DOM acá — se le pone el valor inicial a mano porque el HTML
+// es estático (no hay templating server-side para interpolar cartaMes).
+{ const mesEl = document.getElementById('cartaMesInput'); if(mesEl) mesEl.value = cartaMes; }
+
 function nuevasCartaSemanas(){
   return [
-    { label: 'Semana 1', inicio: toISODate(new Date()), vinos: Array(14).fill(null) },
-    { label: 'Semana 2', inicio: toISODate(new Date(Date.now() + 7*86400000)), vinos: Array(14).fill(null) },
+    { label: 'Quincena 1', ...datosQuincena(cartaMes,1), vinos: Array(14).fill(null) },
+    { label: 'Quincena 2', ...datosQuincena(cartaMes,2), vinos: Array(14).fill(null) },
   ];
+}
+
+// Cambiar de mes recalcula las fechas de las dos quincenas pero conserva los
+// vinos ya elegidos en esta sesión — no tiene sentido tirarlos solo porque
+// se ajustó el mes.
+function cartaSetMes(val){
+  cartaMes = val;
+  cartaSemanas[0] = { ...cartaSemanas[0], ...datosQuincena(cartaMes,1) };
+  cartaSemanas[1] = { ...cartaSemanas[1], ...datosQuincena(cartaMes,2) };
+  renderCartaLanes();
 }
 
 let cartaWines = [];
@@ -1795,8 +1837,10 @@ function renderCartaLanes(){
     }).join('');
     return `<div class="carta-lane" ondragover="cartaLaneDragOver(event)" ondragleave="cartaLaneDragLeave(event)" ondrop="cartaSlotDrop(event,${si},null)">
       <div class="carta-lane-header">
-        <span class="carta-lane-title">${esc(s.label)}</span>
-        <input type="date" class="carta-lane-date" value="${s.inicio}" onchange="cartaSetFecha(${si},this.value)">
+        <div>
+          <span class="carta-lane-title">${esc(s.label)}</span>
+          <div class="carta-lane-sub">${esc(nombreMesLabel(cartaMes))} · días ${esc(s.rango)}</div>
+        </div>
         <span class="carta-lane-count${filled===14?' complete':''}">${filled}/14</span>
       </div>
       <div class="carta-slots">${slots}</div>
@@ -1867,11 +1911,6 @@ function cartaRemoveFromLane(si, idx){
   renderCartaPools();
   renderCatalogoExterno();
   renderCartaLanes();
-}
-
-function cartaSetFecha(si, val){
-  cartaSemanas[si].inicio = val;
-  updateCartaSaveBtn();
 }
 
 function updateCartaSaveBtn(){
