@@ -320,11 +320,20 @@
   .carta-wine-card:hover{border-top-color:var(--madera);border-right-color:var(--madera);border-bottom-color:var(--madera)}
   .carta-wine-card:active{cursor:grabbing}
   .carta-wine-card.dragging{opacity:.4}
-  .carta-wine-card-name{font-size:12px;font-weight:500;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .carta-wine-card-toprow{display:flex;align-items:center;gap:4px}
+  .carta-wine-card-name{flex:1;min-width:0;font-size:12px;font-weight:500;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .carta-wine-card-sub{font-size:10px;color:var(--ink-dark-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .carta-wine-card-remove{background:none;border:none;color:var(--ink-dark-3);font-size:14px;line-height:1;cursor:pointer;flex-shrink:0;padding:0 2px}
+  .carta-wine-card-remove:hover{color:#f87171}
   .carta-wine-card.blocked{opacity:.35;cursor:not-allowed;background:var(--dark-2)}
   .carta-wine-card.blocked:hover{border-top-color:var(--line-dark);border-right-color:var(--line-dark);border-bottom-color:var(--line-dark)}
   .carta-wine-card.used{display:none}
+
+  .carta-manual-form{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .carta-manual-input{background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:8px 12px;color:var(--ink-dark);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;flex:1;min-width:110px}
+  .carta-manual-input:focus{border-color:var(--accent)}
+  .carta-manual-add-btn{background:var(--madera-dk);border:none;border-radius:var(--r-pill);padding:8px 16px;color:var(--ink-dark);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity var(--t-feedback) var(--ease)}
+  .carta-manual-add-btn:hover{opacity:.85}
 
   .carta-lanes{display:flex;flex-direction:column;gap:16px}
   .carta-lane{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:14px}
@@ -553,6 +562,17 @@
 
     <div class="carta-grid">
       <div class="carta-pools">
+        <div class="carta-pools-section-title">Vinos cargados a mano</div>
+        <form class="carta-manual-form" onsubmit="event.preventDefault();cartaAgregarManual();">
+          <input type="text" id="manualNombre" class="carta-manual-input" placeholder="Nombre del vino" style="flex:2">
+          <input type="text" id="manualBodega" class="carta-manual-input" placeholder="Bodega">
+          <input type="number" id="manualPrecio" class="carta-manual-input" placeholder="Precio góndola" min="0">
+          <button type="submit" class="carta-manual-add-btn">+ Agregar</button>
+        </form>
+        <div class="carta-pool-cards" id="cartaManualPool">
+          <div class="carta-pool-empty">Todavía no cargaste ningún vino a mano.</div>
+        </div>
+
         <div class="carta-pools-section-title">Mi carta 125cc — por tramo de precio</div>
         <div id="cartaPools">
           <div class="loading">Cargando vinos...</div>
@@ -1776,12 +1796,14 @@ function cartaSetMes(val){
   cartaSemanas = planDelMes(cartaMes);
   renderCartaPools();       // el estado "usado" depende de cartaSemanas, que acaba de cambiar
   renderCatalogoExterno();
+  renderCartaManualPool();
   renderCartaLanes();
 }
 
 let cartaWines = [];
 let catalogoExterno = [];      // vinos del catálogo Aroma de Vid / La Vid (gestion-vinoteca2), agrupados por bodega
 let catalogoSearchQuery = '';
+let cartaManuales = [];        // vinos cargados a mano en esta sesión (no viven en el Sheet ni en Supabase)
 let cartaHistorial = [];       // filas de carta_historial dentro de la ventana de bloqueo (ya filtradas por el server)
 let cartaMesesBloqueo = 12;
 let cartaLoaded = false;
@@ -1789,12 +1811,59 @@ let cartaTarget = 0;           // índice de semana destino para el click-to-add
 let cartaDragId = null;
 
 // Los ids de 125cc (Sheet) son números; los del catálogo Aroma/La Vid
-// (Supabase) son UUID de texto. De acá en más, todo el subsistema de carta
-// compara ids SIEMPRE como string — evita bugs de "1" (string) !== 1 (number)
-// al mezclar las dos fuentes en los mismos carriles/bloqueos.
+// (Supabase) son UUID de texto; los cargados a mano usan un id sintético
+// ('manual-...'). De acá en más, todo el subsistema de carta compara ids
+// SIEMPRE como string — evita bugs de "1" (string) !== 1 (number) al
+// mezclar las tres fuentes en los mismos carriles/bloqueos.
 function cartaFindWine(id){
   const sid = String(id);
-  return cartaWines.find(w => String(w.id) === sid) || catalogoExterno.find(w => String(w.id) === sid);
+  return cartaWines.find(w => String(w.id) === sid)
+    || catalogoExterno.find(w => String(w.id) === sid)
+    || cartaManuales.find(w => String(w.id) === sid);
+}
+
+// Agrega un vino escrito a mano (no está en el Sheet ni en el catálogo
+// Aroma/La Vid — ej. algo que se compró suelto). Queda disponible como
+// cualquier otra tarjeta: se arrastra o se toca para sumarlo a una
+// quincena, y al guardar la carta viaja igual que los demás (fuente
+// 'manual' en vez de '125cc'/'catalogo_externo').
+function cartaAgregarManual(){
+  const nombreEl = document.getElementById('manualNombre');
+  const bodegaEl = document.getElementById('manualBodega');
+  const precioEl = document.getElementById('manualPrecio');
+  const nombre = (nombreEl.value || '').trim();
+  if(!nombre){ showToast('Falta el nombre del vino', 'error'); nombreEl.focus(); return; }
+  const bodega = (bodegaEl.value || '').trim();
+  const precio = parseFloat(precioEl.value) || 0;
+  const id = 'manual-' + Date.now() + '-' + Math.random().toString(36).slice(2,7);
+  cartaManuales.push({ id, nombre, bodega, precio, _fuente: 'manual' });
+  nombreEl.value = ''; bodegaEl.value = ''; precioEl.value = '';
+  nombreEl.focus();
+  renderCartaManualPool();
+  showToast('✓ Agregado — arrastralo o tocalo para sumarlo a una quincena', 'success');
+}
+function cartaEliminarManual(id){
+  const sid = String(id);
+  cartaManuales = cartaManuales.filter(w => String(w.id) !== sid);
+  cartaSemanas.forEach(s=>{ // si estaba puesto en alguna quincena, sacarlo también de ahí
+    const i = s.vinos.findIndex(v => v && String(v.id) === sid);
+    if(i>=0) s.vinos[i] = null;
+  });
+  renderCartaPools();
+  renderCatalogoExterno();
+  renderCartaManualPool();
+  renderCartaLanes();
+}
+function renderCartaManualPool(){
+  const el = document.getElementById('cartaManualPool');
+  if(!el) return;
+  if(!cartaManuales.length){
+    el.innerHTML = '<div class="carta-pool-empty">Todavía no cargaste ningún vino a mano.</div>';
+    return;
+  }
+  const usedIds = cartaUsedIds();
+  const blocked = cartaBlockedMap();
+  el.innerHTML = cartaManuales.map(w => cartaWineCardHtml(w, usedIds, blocked)).join('');
 }
 
 async function loadCartaTab(){
@@ -1814,6 +1883,7 @@ async function loadCartaTab(){
     renderCartaTramoLegend();
     renderCartaPools();
     renderCatalogoExterno();
+    renderCartaManualPool();
     renderCartaLanes();
     renderCartaBanner();
   } catch(e){
@@ -1955,10 +2025,18 @@ function cartaWineCardHtml(w, usedIds, blocked){
   const title = isBlocked
     ? `En carta la semana del ${fmtFechaSoloFecha(bh.semana_inicio)} — disponible de nuevo a partir del ${fmtFechaAR(cartaFechaDisponible(bh.confirmado_at))}`
     : tramo.label;
+  // Solo los vinos cargados a mano se pueden borrar de la lista — los de
+  // 125cc/catálogo externo viven en su fuente, no tiene sentido "borrarlos" acá.
+  const removeBtn = w._fuente === 'manual'
+    ? `<button class="carta-wine-card-remove" onclick="event.stopPropagation();cartaEliminarManual('${sid}')" title="Sacar de la lista">×</button>`
+    : '';
   return `<div class="${cls.join(' ')}" style="border-left-color:${tramo.color}" draggable="${!isBlocked}" title="${esc(title)}"
               ondragstart="cartaDragStart(event,'${sid}')" ondragend="cartaDragEnd(event)"
               onclick="cartaCardClick('${sid}')">
-    <div class="carta-wine-card-name">${esc(w.nombre)}</div>
+    <div class="carta-wine-card-toprow">
+      <div class="carta-wine-card-name">${esc(w.nombre)}</div>
+      ${removeBtn}
+    </div>
     <div class="carta-wine-card-sub">${esc(w.bodega||'—')} · $${cartaPrecioNum(w).toLocaleString('es-AR')}</div>
   </div>`;
 }
@@ -2118,13 +2196,14 @@ function cartaPlaceWine(id, si, idx){
   const target = cartaSemanas[si];
   if(idx==null || target.vinos[idx]){
     idx = target.vinos.findIndex(v=>!v);
-    if(idx<0){ showToast(`${target.label} ya tiene 14 vinos`, 'error'); renderCartaPools(); renderCatalogoExterno(); renderCartaLanes(); return; }
+    if(idx<0){ showToast(`${target.label} ya tiene 14 vinos`, 'error'); renderCartaPools(); renderCatalogoExterno(); renderCartaManualPool(); renderCartaLanes(); return; }
   }
   // `precio` viaja para poder pintar el color de tramo en el carril — el
   // backend lo ignora al guardar (solo usa id/nombre/bodega/fuente).
   target.vinos[idx] = { id: w.id, nombre: w.nombre, bodega: w.bodega || '', precio: w.precio, fuente: w._fuente || '125cc' };
   renderCartaPools();
   renderCatalogoExterno();
+  renderCartaManualPool();
   renderCartaLanes();
 }
 
@@ -2132,6 +2211,7 @@ function cartaRemoveFromLane(si, idx){
   cartaSemanas[si].vinos[idx] = null;
   renderCartaPools();
   renderCatalogoExterno();
+  renderCartaManualPool();
   renderCartaLanes();
 }
 
@@ -2177,6 +2257,7 @@ async function guardarCarta(){
       cartaHistorialCompleto = null; // invalida el caché de la vista de historial, tiene datos nuevos
       renderCartaPools();
       renderCatalogoExterno();
+      renderCartaManualPool();
       renderCartaLanes();
       renderCartaBanner();
       if(cartaHistorialAbierto) cargarCartaHistorialCompleto(); // estaba abierta: recarga sin cerrarla
