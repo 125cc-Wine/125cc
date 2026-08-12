@@ -2135,18 +2135,23 @@ function cartaRemoveFromLane(si, idx){
   renderCartaLanes();
 }
 
+// Pedido de Maio: guardar en cualquier momento, no solo con las 28 posiciones
+// completas — el único requisito real es que haya algo para guardar. Los
+// espacios vacíos simplemente no generan fila en el historial (el server ya
+// los saltea).
 function updateCartaSaveBtn(){
   const btn = document.getElementById('cartaSaveBtn');
   if(!btn) return;
-  btn.disabled = !cartaSemanas.every(s => s.vinos.filter(Boolean).length===14 && s.inicio);
   const total = cartaSemanas.reduce((n,s) => n + s.vinos.filter(Boolean).length, 0);
+  btn.disabled = total === 0;
   const prog = document.getElementById('cartaSaveProgress');
   if(prog) prog.textContent = `${total}/${cartaSemanas.length*14} vinos elegidos`;
 }
 
 async function guardarCarta(){
-  if(!cartaSemanas.every(s => s.vinos.filter(Boolean).length===14 && s.inicio)){
-    showToast('Completá los 14 vinos y la fecha de ambas semanas', 'error');
+  const total = cartaSemanas.reduce((n,s) => n + s.vinos.filter(Boolean).length, 0);
+  if(!total){
+    showToast('Elegí al menos un vino para guardar', 'error');
     return;
   }
   showToast('Guardando...');
@@ -2162,7 +2167,7 @@ async function guardarCarta(){
     handleAuthResponse(res);
     const data = await res.json();
     if(data.ok){
-      showToast('✓ Carta guardada — historial actualizado', 'success');
+      showToast(`✓ Carta guardada — ${total} vino${total===1?'':'s'} confirmado${total===1?'':'s'}`, 'success');
       cartaPlanesPorMes[cartaMes] = nuevoPlanMes(cartaMes);
       cartaSemanas = cartaPlanesPorMes[cartaMes];
       const histRes = await fetch('/api/actualizar-vino?historial=1', {headers: adminAuthHeader()});

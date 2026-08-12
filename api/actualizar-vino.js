@@ -59,26 +59,34 @@ async function guardarHistorialCarta(req, res, semanas) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(s.inicio)) {
       return res.status(400).json({ error: `Fecha de inicio inválida en ${s.label}.` });
     }
-    if (!s.vinos.length) {
-      return res.status(400).json({ error: `${s.label} no tiene vinos para guardar.` });
+  }
+
+  // Guardado parcial permitido (pedido de Maio): no hace falta llenar las 14
+  // posiciones de cada quincena para confirmar — los espacios vacíos (null)
+  // simplemente no generan fila. Lo único que se rechaza es un guardado
+  // totalmente vacío (no tendría nada para escribir).
+  const vinosValidos = [];
+  for (const s of semanas) {
+    for (const v of s.vinos) {
+      if (v && v.id != null && v.nombre) vinosValidos.push({ v, s });
     }
+  }
+  if (!vinosValidos.length) {
+    return res.status(400).json({ error: "No hay ningún vino cargado para guardar." });
   }
 
   await withTransaction(async (client) => {
-    for (const s of semanas) {
-      for (const v of s.vinos) {
-        if (!v || v.id == null || !v.nombre) continue; // fila corrupta — se ignora en vez de romper toda la transacción
-        // vino_id es texto: puede ser un id numérico del Sheet de 125cc (se
-        // guarda como string) o un UUID del catálogo externo de Aroma/La Vid.
-        await client.sql`
-          INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio, fuente)
-          VALUES (${String(v.id)}, ${v.nombre}, ${v.bodega || ''}, ${s.label}, ${s.inicio}, ${v.fuente || '125cc'})
-        `;
-      }
+    for (const { v, s } of vinosValidos) {
+      // vino_id es texto: puede ser un id numérico del Sheet de 125cc (se
+      // guarda como string) o un UUID del catálogo externo de Aroma/La Vid.
+      await client.sql`
+        INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio, fuente)
+        VALUES (${String(v.id)}, ${v.nombre}, ${v.bodega || ''}, ${s.label}, ${s.inicio}, ${v.fuente || '125cc'})
+      `;
     }
   });
 
-  return res.status(200).json({ ok: true });
+  return res.status(200).json({ ok: true, vinosGuardados: vinosValidos.length });
 }
 
 // Catálogo externo de Aroma de Vid / La Vid Consultora (repo
