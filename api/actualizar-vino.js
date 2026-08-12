@@ -75,18 +75,46 @@ async function guardarHistorialCarta(req, res, semanas) {
     return res.status(400).json({ error: "No hay ningún vino cargado para guardar." });
   }
 
+  const idsGuardados = [];
   await withTransaction(async (client) => {
     for (const { v, s } of vinosValidos) {
       // vino_id es texto: puede ser un id numérico del Sheet de 125cc (se
       // guarda como string) o un UUID del catálogo externo de Aroma/La Vid.
-      await client.sql`
+      // RETURNING id: se necesita para poder "deshacer" este guardado
+      // puntual después, sin tocar otras filas que compartan vino_id de
+      // una confirmación anterior.
+      const { rows } = await client.sql`
         INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio, fuente)
         VALUES (${String(v.id)}, ${v.nombre}, ${v.bodega || ''}, ${s.label}, ${s.inicio}, ${v.fuente || '125cc'})
+        RETURNING id
       `;
+      idsGuardados.push(rows[0].id);
     }
   });
 
-  return res.status(200).json({ ok: true, vinosGuardados: vinosValidos.length });
+  return res.status(200).json({ ok: true, vinosGuardados: vinosValidos.length, idsGuardados });
+}
+
+// Deshace un guardado reciente — borra filas puntuales de carta_historial
+// por su id de fila (no por vino_id, que podría repetirse en confirmaciones
+// viejas). Ventana de 15 minutos desde que se confirmó: esto es "epa, me
+// equivoqué recién", no un borrador general del historial — pasado ese
+// margen, corregirlo es una operación manual a propósito.
+const VENTANA_DESHACER_MIN = 15;
+async function deshacerHistorialCarta(req, res, ids) {
+  if (!Array.isArray(ids) || !ids.length) {
+    return res.status(400).json({ error: "Falta 'ids' (array)." });
+  }
+  const idsNum = ids.map(Number).filter(Number.isInteger);
+  if (!idsNum.length) {
+    return res.status(400).json({ error: "'ids' inválido." });
+  }
+  const { rowCount } = await sql`
+    DELETE FROM carta_historial
+    WHERE id = ANY(${idsNum})
+      AND confirmado_at > now() - ${VENTANA_DESHACER_MIN + ' minutes'}::interval
+  `;
+  return res.status(200).json({ ok: true, filasBorradas: rowCount });
 }
 
 // Catálogo externo de Aroma de Vid / La Vid Consultora (repo
@@ -172,6 +200,15 @@ module.exports = async function handler(req, res) {
       return await guardarHistorialCarta(req, res, req.body.semanas);
     } catch (err) {
       console.error("actualizar-vino (historial POST) error:", err);
+      return res.status(500).json({ error: "Error interno.", detail: err.message });
+    }
+  }
+
+  if (req.body && req.body.historialDeshacer) {
+    try {
+      return await deshacerHistorialCarta(req, res, req.body.ids);
+    } catch (err) {
+      console.error("actualizar-vino (historial deshacer) error:", err);
       return res.status(500).json({ error: "Error interno.", detail: err.message });
     }
   }

@@ -292,6 +292,9 @@
      scrolleó. */
   .carta-save-bar{position:sticky;bottom:0;z-index:40;display:flex;align-items:center;justify-content:flex-end;gap:14px;margin:16px -16px 0;padding:14px 16px;background:var(--dark-2);border-top:1px solid var(--line-dark);box-shadow:0 -4px 20px rgba(0,0,0,.3)}
   .carta-save-progress{font-size:12px;color:var(--ink-dark-3)}
+  .carta-undo-bar{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-dark-3)}
+  .carta-undo-btn{background:none;border:1px solid var(--line-dark-strong);color:var(--ink-dark-2);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:6px 14px;border-radius:var(--r-pill);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
+  .carta-undo-btn:hover{border-color:#f87171;color:#f87171}
 
   .carta-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
   @media(max-width:900px){.carta-grid{grid-template-columns:1fr}}
@@ -326,6 +329,7 @@
   .carta-wine-card-copa{font-size:10px;color:var(--madera);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .carta-wine-card-remove{background:none;border:none;color:var(--ink-dark-3);font-size:14px;line-height:1;cursor:pointer;flex-shrink:0;padding:0 2px}
   .carta-wine-card-remove:hover{color:#f87171}
+  .carta-wine-card-dupflag{color:#f1c232;margin-right:3px}
   .carta-wine-card.blocked{opacity:.35;cursor:not-allowed;background:var(--dark-2)}
   .carta-wine-card.blocked:hover{border-top-color:var(--line-dark);border-right-color:var(--line-dark);border-bottom-color:var(--line-dark)}
   .carta-wine-card.used{display:none}
@@ -360,6 +364,16 @@
   .carta-tramo-legend{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:16px;font-size:11px;color:var(--ink-dark-3)}
   .carta-tramo-legend-item{display:flex;align-items:center;gap:6px}
   .carta-tramo-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+  .carta-diff{margin-top:12px;padding-top:10px;border-top:1px solid var(--line-dark);font-size:12px}
+  .carta-diff summary{cursor:pointer;list-style:none;color:var(--ink-dark-3)}
+  .carta-diff summary::-webkit-details-marker{display:none}
+  .carta-diff summary:hover{color:var(--ink-dark)}
+  .carta-diff-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin:8px 0 4px}
+  .carta-diff-entran{color:#90ee90}
+  .carta-diff-salen{color:#f87171}
+  .carta-diff-list{list-style:none;font-size:12px;color:var(--ink-dark-2)}
+  .carta-diff-igual{margin-top:12px;padding-top:10px;border-top:1px solid var(--line-dark);font-size:12px;color:var(--ink-dark-3)}
 
   /* Toast */
   .toast{
@@ -592,6 +606,7 @@
     </div>
 
     <div class="carta-save-bar">
+      <span class="carta-undo-bar" id="cartaUndoBar" style="display:none"></span>
       <span class="carta-save-progress" id="cartaSaveProgress"></span>
       <button class="carta-save-btn" id="cartaSaveBtn" onclick="guardarCarta()" disabled>Guardar carta</button>
     </div>
@@ -1752,6 +1767,26 @@ function hoyISO(){
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+// Normalización compartida (minúscula, sin acentos, sin espacios de sobra)
+// — la usan el banner, el diff contra la carta en vivo y la detección de
+// duplicados para comparar nombres entre el Sheet, el catálogo externo y
+// el historial sin que un acento o una mayúscula de diferencia rompa el match.
+function normalizarTexto(s){
+  return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+}
+// Qué le falta a un vino del Sheet para considerarse "listo para el menú
+// público" — los 3 campos que más se notan de un vistazo: nota (texto de
+// cata), imagen, y al menos un maridaje. No es una validación de TODOS los
+// campos (región, altitud, crianza, etc. quedan afuera a propósito, son
+// menos críticos), pero cubre lo que un cliente ve primero en la ficha.
+function cartaFichaFaltante(w){
+  if(!w) return ['no está en el Sheet'];
+  const falta = [];
+  if(!w.nota || !w.nota.trim()) falta.push('nota');
+  if(!w.imagen || !w.imagen.trim()) falta.push('imagen');
+  if(!Array.isArray(w.maridaje) || !w.maridaje.length) falta.push('maridaje');
+  return falta;
+}
 // Reconstruye el fin y el rango de una quincena a partir de su fecha de
 // inicio (siempre día 01 o 16, por cómo se generan) — usado para el banner
 // y la vista de historial, que reciben fechas ya guardadas en vez de un
@@ -1838,6 +1873,53 @@ function cartaFindWine(id){
     || cartaManuales.find(w => String(w.id) === sid);
 }
 
+// id (string) -> { motivo } — vinos que probablemente sean el mismo vino
+// real cargado dos veces con nombre/bodega ligeramente distintos (caso
+// real encontrado: "Lorca Natural..." / bodega "Lorca" vs "Mauricio Lorca
+// Natural..." / bodega "Mauricio Lorca", el mismo vino con la bodega
+// escrita completa en un import y abreviada en el resto). Se recalcula una
+// sola vez por carga de datos, no en cada render.
+let cartaDuplicados = new Map();
+function computeCartaDuplicados(){
+  cartaDuplicados = new Map();
+  const marcar = (idA, nombreA, idB, nombreB, motivo) => {
+    cartaDuplicados.set(String(idA), { motivo: `${motivo}: "${nombreB}"` });
+    cartaDuplicados.set(String(idB), { motivo: `${motivo}: "${nombreA}"` });
+  };
+
+  // 1) Cruce exacto entre "Mi carta 125cc" y el Catálogo Aroma/La Vid —
+  // mismo nombre normalizado en las dos fuentes, casi seguro el mismo vino.
+  const porNombreSheet = new Map(cartaWines.map(w => [normalizarTexto(w.nombre), w]));
+  catalogoExterno.forEach(w => {
+    const otro = porNombreSheet.get(normalizarTexto(w.nombre));
+    if(otro) marcar(w.id, w.nombre, otro.id, otro.nombre, 'mismo nombre que en Mi carta 125cc');
+  });
+
+  // 2) Bodegas con nombres parecidos dentro del catálogo externo (el caso
+  // Lorca). Primero se buscan los PARES de bodega que colisionan — son
+  // ~110 nombres de bodega, no ~1100 vinos — y recién ahí se cruzan por
+  // nombre los vinos de esas dos bodegas puntuales. Evita comparar los
+  // ~1100 vinos entre sí (110² es barato, 1100² no tanto).
+  const bodegas = Array.from(new Set(catalogoExterno.map(w => w.bodega).filter(Boolean)));
+  for(let i=0; i<bodegas.length; i++){
+    for(let j=i+1; j<bodegas.length; j++){
+      const a = normalizarTexto(bodegas[i]), b = normalizarTexto(bodegas[j]);
+      if(a === b || (!a.includes(b) && !b.includes(a))) continue; // ninguna es substring de la otra
+      const g1 = catalogoExterno.filter(w => w.bodega === bodegas[i]);
+      const g2 = catalogoExterno.filter(w => w.bodega === bodegas[j]);
+      g1.forEach(w1=>{
+        const n1 = normalizarTexto(w1.nombre);
+        g2.forEach(w2=>{
+          const n2 = normalizarTexto(w2.nombre);
+          if(n1 === n2 || n1.includes(n2) || n2.includes(n1)){
+            marcar(w1.id, w1.nombre, w2.id, w2.nombre, `posible duplicado (bodega "${bodegas[i]}" / "${bodegas[j]}")`);
+          }
+        });
+      });
+    }
+  }
+}
+
 // Agrega un vino escrito a mano (no está en el Sheet ni en el catálogo
 // Aroma/La Vid — ej. algo que se compró suelto). Queda disponible como
 // cualquier otra tarjeta: se arrastra o se toca para sumarlo a una
@@ -1912,6 +1994,7 @@ async function loadCartaTab(){
     cartaMesesBloqueo = histData.mesesBloqueo || 12;
     catalogoExterno = (catData.catalogo || []).map(w => ({...w, _fuente: 'catalogo_externo'}));
     if(catData.error) showToast('Catálogo Aroma/La Vid: ' + catData.error, 'error');
+    computeCartaDuplicados();
     renderCartaTramoLegend();
     renderCartaPools();
     renderCatalogoExterno();
@@ -1954,20 +2037,23 @@ function renderCartaBanner(){
     ? `en curso desde el ${fmtFechaSoloFecha(info.inicio)}`
     : `arranca en ${diasEntreISO(hoy, info.inicio)} día${diasEntreISO(hoy,info.inicio)===1?'':'s'} (${fmtFechaSoloFecha(info.inicio)})`;
 
-  // "Ficha completa" = el vino existe en el Sheet en vivo (por nombre,
-  // insensible a mayúsculas/acentos) y tiene algo cargado en `nota` — es
-  // una aproximación barata, no una validación exhaustiva de todos los
-  // campos, pero alcanza para saber de un vistazo qué falta cargar.
-  const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
-  const sheetPorNombre = new Map(cartaWines.map(w => [norm(w.nombre), w]));
+  // "Ficha completa" = el vino existe en el Sheet en vivo (por nombre) y
+  // tiene los 3 campos que más se notan en el menú público: nota (texto de
+  // cata), imagen, y al menos un maridaje — antes solo miraba `nota`, lo
+  // que marcaba como "✓ listo" vinos sin foto o sin maridaje cargado.
+  // Sigue sin ser una validación exhaustiva de TODOS los campos (región,
+  // altitud, crianza, etc.), pero cubre lo que más se ve de un vistazo.
+  const sheetPorNombre = new Map(cartaWines.map(w => [normalizarTexto(w.nombre), w]));
   let listas = 0;
   const items = info.vinos
     .slice().sort((a,b)=>(a.bodega||'').localeCompare(b.bodega||'') || a.vino_nombre.localeCompare(b.vino_nombre))
     .map(h=>{
-      const enSheet = sheetPorNombre.get(norm(h.vino_nombre));
-      const completo = !!(enSheet && enSheet.nota && enSheet.nota.trim());
+      const enSheet = sheetPorNombre.get(normalizarTexto(h.vino_nombre));
+      const faltantes = cartaFichaFaltante(enSheet);
+      const completo = !!enSheet && faltantes.length === 0;
       if(completo) listas++;
-      return `<li class="carta-banner-item${completo?' ok':''}">${completo?'✓':'⏳'} ${esc(h.vino_nombre)} <span class="carta-banner-item-bodega">· ${esc(h.bodega||'—')}</span></li>`;
+      const detalle = !enSheet ? 'no está cargado en el Sheet' : faltantes.length ? `falta: ${faltantes.join(', ')}` : 'ficha completa';
+      return `<li class="carta-banner-item${completo?' ok':''}" title="${esc(detalle)}">${completo?'✓':'⏳'} ${esc(h.vino_nombre)} <span class="carta-banner-item-bodega">· ${esc(h.bodega||'—')}</span></li>`;
     }).join('');
 
   el.style.display = '';
@@ -1976,6 +2062,60 @@ function renderCartaBanner(){
     <div class="carta-banner-sub">${listas} de ${info.vinos.length} vinos ya tienen ficha completa en el Sheet</div>
     <ul class="carta-banner-checklist">${items}</ul>
   `;
+}
+
+// ── Deshacer el último guardado ──────────────────────────────────────────
+// Se puede deshacer mientras esta pestaña siga abierta y no haya pasado la
+// ventana de 15 minutos que exige el server (VENTANA_DESHACER_MIN en
+// actualizar-vino.js) — pasado eso, corregirlo es a mano en la DB a propósito.
+let cartaUltimoGuardado = null; // { ids, total } | null
+
+function renderCartaUndoBar(){
+  const el = document.getElementById('cartaUndoBar');
+  if(!el) return;
+  if(!cartaUltimoGuardado){ el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = '';
+  el.innerHTML = `
+    <span>Guardaste ${cartaUltimoGuardado.total} vino${cartaUltimoGuardado.total===1?'':'s'} recién.</span>
+    <button class="carta-undo-btn" onclick="deshacerUltimoGuardado()">Deshacer</button>
+  `;
+}
+
+async function deshacerUltimoGuardado(){
+  if(!cartaUltimoGuardado) return;
+  const { ids, total } = cartaUltimoGuardado;
+  try{
+    const res = await fetch('/api/actualizar-vino', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', ...adminAuthHeader()},
+      body: JSON.stringify({ historialDeshacer: true, ids }),
+    });
+    handleAuthResponse(res);
+    const data = await res.json();
+    if(!data.ok){ showToast('Error: '+(data.error||''), 'error'); return; }
+    if(!data.filasBorradas){
+      showToast('Ya no se puede deshacer (pasaron más de 15 minutos)', 'error');
+      cartaUltimoGuardado = null;
+      renderCartaUndoBar();
+      return;
+    }
+    showToast(`✓ Deshecho — ${data.filasBorradas} vino${data.filasBorradas===1?'':'s'} sacado${data.filasBorradas===1?'':'s'} del historial`, 'success');
+    cartaUltimoGuardado = null;
+    renderCartaUndoBar();
+    const histRes = await fetch('/api/actualizar-vino?historial=1', {headers: adminAuthHeader()});
+    handleAuthResponse(histRes);
+    const histData = await histRes.json();
+    cartaHistorial = histData.historial || [];
+    cartaHistorialCompleto = null;
+    renderCartaPools();
+    renderCatalogoExterno();
+    renderCartaManualPool();
+    renderCartaLanes();
+    renderCartaBanner();
+    if(cartaHistorialAbierto) cargarCartaHistorialCompleto();
+  } catch(e){
+    showToast('Error de conexión', 'error');
+  }
 }
 
 // ── Vista de historial (solo lectura) ───────────────────────────────────
@@ -2051,12 +2191,15 @@ function cartaWineCardHtml(w, usedIds, blocked){
   const isBlocked = !!bh;
   const isUsed = usedIds.has(sid);
   const tramo = tramoDeVino(w);
+  const dup = cartaDuplicados.get(sid);
   const cls = ['carta-wine-card'];
   if(isBlocked) cls.push('blocked');
   if(isUsed) cls.push('used');
   const title = isBlocked
     ? `En carta la semana del ${fmtFechaSoloFecha(bh.semana_inicio)} — disponible de nuevo a partir del ${fmtFechaAR(cartaFechaDisponible(bh.confirmado_at))}`
+    : dup ? `⚠ Posible duplicado — ${dup.motivo}`
     : tramo.label;
+  const dupBadge = dup ? `<span class="carta-wine-card-dupflag" title="⚠ Posible duplicado — ${esc(dup.motivo)}">⚠</span>` : '';
   // Solo los vinos cargados a mano se pueden borrar de la lista — los de
   // 125cc/catálogo externo viven en su fuente, no tiene sentido "borrarlos" acá.
   const removeBtn = w._fuente === 'manual'
@@ -2066,7 +2209,7 @@ function cartaWineCardHtml(w, usedIds, blocked){
               ondragstart="cartaDragStart(event,'${sid}')" ondragend="cartaDragEnd(event)"
               onclick="cartaCardClick('${sid}')">
     <div class="carta-wine-card-toprow">
-      <div class="carta-wine-card-name">${esc(w.nombre)}</div>
+      <div class="carta-wine-card-name">${dupBadge}${esc(w.nombre)}</div>
       ${removeBtn}
     </div>
     <div class="carta-wine-card-sub">${esc(w.bodega||'—')} · $${cartaPrecioNum(w).toLocaleString('es-AR')}</div>
@@ -2144,6 +2287,18 @@ function renderCatalogoExterno(){
   }).join('');
 }
 
+// Diferencia entre lo que está HOY en el Sheet en vivo (cartaWines — en
+// 125cc el Sheet completo ES la carta actual, no hay un flag "activo"
+// aparte) y lo que se está armando en esta quincena — match por nombre
+// normalizado, porque los ids de las 3 fuentes no coinciden entre sí.
+function cartaDiffVsVivo(s){
+  const enPlan = new Set(s.vinos.filter(Boolean).map(v => normalizarTexto(v.nombre)));
+  const enVivo = new Set(cartaWines.map(w => normalizarTexto(w.nombre)));
+  const salen  = cartaWines.filter(w => !enPlan.has(normalizarTexto(w.nombre)));
+  const entran = s.vinos.filter(Boolean).filter(v => !enVivo.has(normalizarTexto(v.nombre)));
+  return { salen, entran };
+}
+
 function renderCartaLanes(){
   document.getElementById('cartaLanes').innerHTML = cartaSemanas.map((s,si)=>{
     const filled = s.vinos.filter(Boolean).length;
@@ -2165,6 +2320,24 @@ function renderCartaLanes(){
         <button class="carta-slot-remove" onclick="cartaRemoveFromLane(${si},${idx})" title="Quitar">×</button>
       </div>`;
     }).join('');
+
+    // Pedido de Maio: ver al lado de lo que estás planificando qué cambia
+    // respecto a lo que hoy está en vivo en el Sheet. Solo tiene sentido
+    // mostrarlo si ya hay algo cargado en la quincena.
+    let diffHtml = '';
+    if(filled){
+      const { salen, entran } = cartaDiffVsVivo(s);
+      if(salen.length || entran.length){
+        diffHtml = `<details class="carta-diff">
+          <summary>Diferencia vs. carta en vivo — ${salen.length} sale${salen.length===1?'':'n'}, ${entran.length} entra${entran.length===1?'':'n'}</summary>
+          ${entran.length ? `<div class="carta-diff-label carta-diff-entran">Entran</div><ul class="carta-diff-list">${entran.map(v=>`<li>+ ${esc(v.nombre)} <span class="carta-banner-item-bodega">· ${esc(v.bodega||'—')}</span></li>`).join('')}</ul>` : ''}
+          ${salen.length ? `<div class="carta-diff-label carta-diff-salen">Salen</div><ul class="carta-diff-list">${salen.map(w=>`<li>− ${esc(w.nombre)} <span class="carta-banner-item-bodega">· ${esc(w.bodega||'—')}</span></li>`).join('')}</ul>` : ''}
+        </details>`;
+      } else {
+        diffHtml = `<div class="carta-diff-igual">Sin diferencias con la carta en vivo</div>`;
+      }
+    }
+
     return `<div class="carta-lane" ondragover="cartaLaneDragOver(event)" ondragleave="cartaLaneDragLeave(event)" ondrop="cartaSlotDrop(event,${si},null)">
       <div class="carta-lane-header">
         <div>
@@ -2175,6 +2348,7 @@ function renderCartaLanes(){
       </div>
       <div class="carta-tramo-resumen">${tramoResumen}</div>
       <div class="carta-slots">${slots}</div>
+      ${diffHtml}
     </div>`;
   }).join('');
   updateCartaSaveBtn();
@@ -2281,6 +2455,8 @@ async function guardarCarta(){
     const data = await res.json();
     if(data.ok){
       showToast(`✓ Carta guardada — ${total} vino${total===1?'':'s'} confirmado${total===1?'':'s'}`, 'success');
+      cartaUltimoGuardado = { ids: data.idsGuardados || [], total: data.vinosGuardados || total };
+      renderCartaUndoBar();
       cartaPlanesPorMes[cartaMes] = nuevoPlanMes(cartaMes);
       cartaSemanas = cartaPlanesPorMes[cartaMes];
       const histRes = await fetch('/api/actualizar-vino?historial=1', {headers: adminAuthHeader()});
