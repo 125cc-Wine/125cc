@@ -323,6 +323,7 @@
   .carta-wine-card-toprow{display:flex;align-items:center;gap:4px}
   .carta-wine-card-name{flex:1;min-width:0;font-size:12px;font-weight:500;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .carta-wine-card-sub{font-size:10px;color:var(--ink-dark-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .carta-wine-card-copa{font-size:10px;color:var(--madera);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .carta-wine-card-remove{background:none;border:none;color:var(--ink-dark-3);font-size:14px;line-height:1;cursor:pointer;flex-shrink:0;padding:0 2px}
   .carta-wine-card-remove:hover{color:#f87171}
   .carta-wine-card.blocked{opacity:.35;cursor:not-allowed;background:var(--dark-2)}
@@ -1689,6 +1690,21 @@ function tramoDeVino(w){
   const p = cartaPrecioNum(w);
   return CARTA_TRAMOS.find(t => t.test(p)) || CARTA_TRAMOS[CARTA_TRAMOS.length - 1];
 }
+// Espejo exacto de fmtPrecio() en public/index.html (y de precioCopa() en
+// api/_lib/pos/productos-import.js) — el precio por copa NUNCA se guarda en
+// ningún lado, siempre se calcula al vuelo desde el precio de góndola. Acá
+// se usa para mostrar, mientras se arma la carta, cuánto va a salir la copa
+// de cada vino sin tener que hacer la cuenta a mano.
+function cartaPrecioCopa(w){
+  const botella = cartaPrecioNum(w);
+  if(!botella) return 0;
+  let factor = 1.50;
+  if(botella < 14000)      factor = 1.70;
+  else if(botella < 18000) factor = 1.60;
+  else if(botella < 30000) factor = 1.50;
+  else                     factor = 1.25;
+  return Math.round(((botella / 6) * factor) / 500) * 500;
+}
 // Leyenda de colores — contenido fijo (no depende de datos cargados), se
 // pinta una sola vez al abrir la pestaña.
 function renderCartaTramoLegend(){
@@ -2038,6 +2054,7 @@ function cartaWineCardHtml(w, usedIds, blocked){
       ${removeBtn}
     </div>
     <div class="carta-wine-card-sub">${esc(w.bodega||'—')} · $${cartaPrecioNum(w).toLocaleString('es-AR')}</div>
+    <div class="carta-wine-card-copa">Copa: $${cartaPrecioCopa(w).toLocaleString('es-AR')}</div>
   </div>`;
 }
 
@@ -2127,7 +2144,7 @@ function renderCartaLanes(){
                   ondragover="cartaSlotDragOver(event)" ondrop="cartaSlotDrop(event,${si},${idx})">
         <div class="carta-slot-info">
           <div class="carta-slot-name">${esc(v.nombre)}</div>
-          <div class="carta-slot-sub">${esc(v.bodega||'—')} · $${cartaPrecioNum(v).toLocaleString('es-AR')}</div>
+          <div class="carta-slot-sub">${esc(v.bodega||'—')} · $${cartaPrecioNum(v).toLocaleString('es-AR')} · copa $${cartaPrecioCopa(v).toLocaleString('es-AR')}</div>
         </div>
         <button class="carta-slot-remove" onclick="cartaRemoveFromLane(${si},${idx})" title="Quitar">×</button>
       </div>`;
