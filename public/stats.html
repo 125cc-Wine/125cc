@@ -1843,6 +1843,16 @@ function cartaFindWine(id){
 // cualquier otra tarjeta: se arrastra o se toca para sumarlo a una
 // quincena, y al guardar la carta viaja igual que los demás (fuente
 // 'manual' en vez de '125cc'/'catalogo_externo').
+// Id ESTABLE a partir de nombre+bodega normalizados — no aleatorio. Antes
+// usaba timestamp+random: cada carga generaba un id distinto, así que si el
+// mismo vino cargado a mano se volvía a escribir en otro mes, el bloqueo de
+// 12 meses nunca lo reconocía (comparaba contra un id que no se iba a
+// repetir jamás). Con esto, escribir el mismo nombre+bodega dos veces
+// siempre da el mismo id, igual que un vino real del Sheet o del catálogo.
+function cartaManualId(nombre, bodega){
+  const slug = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return 'manual-' + slug(nombre) + (bodega ? '__' + slug(bodega) : '');
+}
 function cartaAgregarManual(){
   const nombreEl = document.getElementById('manualNombre');
   const bodegaEl = document.getElementById('manualBodega');
@@ -1851,12 +1861,18 @@ function cartaAgregarManual(){
   if(!nombre){ showToast('Falta el nombre del vino', 'error'); nombreEl.focus(); return; }
   const bodega = (bodegaEl.value || '').trim();
   const precio = parseFloat(precioEl.value) || 0;
-  const id = 'manual-' + Date.now() + '-' + Math.random().toString(36).slice(2,7);
-  cartaManuales.push({ id, nombre, bodega, precio, _fuente: 'manual' });
+  const id = cartaManualId(nombre, bodega);
+  const existente = cartaManuales.find(w => w.id === id);
+  if(existente){
+    existente.precio = precio; // ya estaba cargado — por si el precio cambió, lo actualiza
+    showToast('Ya estaba cargado — actualicé el precio', 'success');
+  } else {
+    cartaManuales.push({ id, nombre, bodega, precio, _fuente: 'manual' });
+    showToast('✓ Agregado — arrastralo o tocalo para sumarlo a una quincena', 'success');
+  }
   nombreEl.value = ''; bodegaEl.value = ''; precioEl.value = '';
   nombreEl.focus();
   renderCartaManualPool();
-  showToast('✓ Agregado — arrastralo o tocalo para sumarlo a una quincena', 'success');
 }
 function cartaEliminarManual(id){
   const sid = String(id);
