@@ -2416,7 +2416,12 @@ function cartaPlaceWine(id, si, idx){
   }
   // `precio` viaja para poder pintar el color de tramo en el carril — el
   // backend lo ignora al guardar (solo usa id/nombre/bodega/fuente).
-  target.vinos[idx] = { id: w.id, nombre: w.nombre, bodega: w.bodega || '', precio: w.precio, fuente: w._fuente || '125cc' };
+  // varietal/region/categoria viajan (cuando existan) para poder precargar
+  // la ficha si hace falta crear un borrador en el Sheet al guardar.
+  target.vinos[idx] = {
+    id: w.id, nombre: w.nombre, bodega: w.bodega || '', precio: w.precio, fuente: w._fuente || '125cc',
+    varietal: w.varietal || '', region: w.region || '', categoria: w.categoria || '',
+  };
   renderCartaPools();
   renderCatalogoExterno();
   renderCartaManualPool();
@@ -2444,12 +2449,74 @@ function updateCartaSaveBtn(){
   if(prog) prog.textContent = `${total}/${cartaSemanas.length*14} vinos elegidos`;
 }
 
+// Mapea categoria del catálogo Aroma/La Vid ('Tinto'/'Blanco'/'Rosado'/
+// 'Espumante') al `tipo` de 125cc ('Tinto'/'Blanco'/'Rosado'/'Naranjo') —
+// Espumante no tiene equivalente directo, cae en Blanco (más cercano de
+// cómo se sirve). Sin categoria (vinos cargados a mano) cae en Tinto,
+// mismo default que newWine() en Editor de Vinos.
+function cartaCategoriaATipo(categoria){
+  const mapa = { Tinto:'Tinto', Blanco:'Blanco', Rosado:'Rosado', Espumante:'Blanco' };
+  return mapa[categoria] || 'Tinto';
+}
+
+// Arma el borrador de vino para crear en el Sheet — mismos campos que
+// newWine() en Editor de Vinos, con lo que ya tengamos del catálogo
+// (varietal/región/tipo) precargado. nota/maridaje/imagen quedan vacíos:
+// eso sigue siendo 100% trabajo manual en Editor de Vinos.
+function cartaVinoParaSheet(v){
+  return {
+    nombre: v.nombre, bodega: v.bodega || '', tipo: cartaCategoriaATipo(v.categoria),
+    precio: cartaPrecioNum(v), copa: '125 cc',
+    varietal: v.varietal || '', region: v.region || '',
+    x: 0, y: 0, nota: '', maridaje: [], bodega_info: '', tienda_url: '', imagen: '',
+    perfil_cuerpo: 3, perfil_frescura: 3, perfil_taninos: 3,
+  };
+}
+
+async function cartaCrearBorradorSheet(v){
+  const res = await fetch('/api/actualizar-vino', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json', ...adminAuthHeader()},
+    body: JSON.stringify({ vino: cartaVinoParaSheet(v), nuevo: true }),
+  });
+  handleAuthResponse(res);
+  const data = await res.json();
+  if(!data.ok) throw new Error(`"${v.nombre}": ${data.error || 'error desconocido'}`);
+  return data;
+}
+
 async function guardarCarta(){
   const total = cartaSemanas.reduce((n,s) => n + s.vinos.filter(Boolean).length, 0);
   if(!total){
     showToast('Elegí al menos un vino para guardar', 'error');
     return;
   }
+
+  // Vinos del catálogo Aroma/La Vid o cargados a mano que todavía no
+  // existen en el Sheet (match por nombre) — se les crea el borrador antes
+  // de confirmar el historial, así ya aparecen en Editor de Vinos con
+  // nombre/bodega/precio/tipo/varietal/región cargados, listos para
+  // completarles nota/maridaje/imagen.
+  const sheetPorNombre = new Set(cartaWines.map(w => normalizarTexto(w.nombre)));
+  const yaConsiderados = new Set();
+  const nuevosEnSheet = cartaSemanas.flatMap(s => s.vinos.filter(Boolean)).filter(v => {
+    if(v.fuente === '125cc') return false;
+    const key = normalizarTexto(v.nombre);
+    if(sheetPorNombre.has(key) || yaConsiderados.has(key)) return false;
+    yaConsiderados.add(key);
+    return true;
+  });
+
+  if(nuevosEnSheet.length){
+    showToast(`Creando ${nuevosEnSheet.length} borrador${nuevosEnSheet.length===1?'':'es'} en el Sheet...`);
+    try{
+      for(const v of nuevosEnSheet) await cartaCrearBorradorSheet(v);
+    } catch(e){
+      showToast('Error creando borrador en el Sheet — '+e.message, 'error');
+      return; // no sigue al guardado del historial si esto falló, para no confirmar una carta con vinos que no llegaron a existir en el Sheet
+    }
+  }
+
   showToast('Guardando...');
   try{
     const res = await fetch('/api/actualizar-vino', {
@@ -2463,16 +2530,28 @@ async function guardarCarta(){
     handleAuthResponse(res);
     const data = await res.json();
     if(data.ok){
-      showToast(`✓ Carta guardada — ${total} vino${total===1?'':'s'} confirmado${total===1?'':'s'}`, 'success');
+      const msgBorradores = nuevosEnSheet.length ? ` (${nuevosEnSheet.length} borrador${nuevosEnSheet.length===1?'':'es'} nuevo${nuevosEnSheet.length===1?'':'s'} en el Sheet)` : '';
+      showToast(`✓ Carta guardada — ${total} vino${total===1?'':'s'} confirmado${total===1?'':'s'}${msgBorradores}`, 'success');
       cartaUltimoGuardado = { ids: data.idsGuardados || [], total: data.vinosGuardados || total };
       renderCartaUndoBar();
       cartaPlanesPorMes[cartaMes] = nuevoPlanMes(cartaMes);
       cartaSemanas = cartaPlanesPorMes[cartaMes];
+
+      // Refresca el Sheet en memoria si se crearon borradores — así "Mi
+      // carta 125cc" y la detección de duplicados ya los ven de una.
+      if(nuevosEnSheet.length){
+        const vinosRes = await fetch('/api/obtener-vinos');
+        const vinosData = await vinosRes.json();
+        cartaWines = (vinosData.vinos || []).map(w => ({...w, _fuente: '125cc'}));
+        editorWines = cartaWines; editorLoaded = true;
+      }
+
       const histRes = await fetch('/api/actualizar-vino?historial=1', {headers: adminAuthHeader()});
       handleAuthResponse(histRes);
       const histData = await histRes.json();
       cartaHistorial = histData.historial || [];
       cartaHistorialCompleto = null; // invalida el caché de la vista de historial, tiene datos nuevos
+      computeCartaDuplicados();
       renderCartaPools();
       renderCatalogoExterno();
       renderCartaManualPool();

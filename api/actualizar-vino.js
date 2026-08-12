@@ -140,8 +140,12 @@ async function getCatalogoExterno(req, res) {
   let all = [];
   let offset = 0;
   while (true) {
+    // varietal/region viajan para precargar la ficha del vino si se crea un
+    // borrador en el Sheet al confirmar la carta (93%/85% de los vinos
+    // activos los tienen cargados en gestion-vinoteca2). categoria viaja
+    // para mapear el `tipo` de 125cc al crear ese borrador.
     const url = `${VINOTECA_SUPABASE_URL}/rest/v1/productos`
-      + `?select=id,nombre,bodega,precio_venta,empresa`
+      + `?select=id,nombre,bodega,precio_venta,empresa,varietal,region,categoria`
       + `&activo=eq.true&categoria=neq.Otro`
       + `&order=bodega.asc,nombre.asc&limit=${PAGE}&offset=${offset}`;
     const r = await fetch(url, { headers });
@@ -167,7 +171,10 @@ async function getCatalogoExterno(req, res) {
   }
 
   const catalogo = Array.from(porNombre.values())
-    .map(p => ({ id: p.id, nombre: p.nombre, bodega: p.bodega || 'Sin bodega', precio: p.precio_venta || 0 }))
+    .map(p => ({
+      id: p.id, nombre: p.nombre, bodega: p.bodega || 'Sin bodega', precio: p.precio_venta || 0,
+      varietal: p.varietal || '', region: p.region || '', categoria: p.categoria || '',
+    }))
     .sort((a, b) => a.bodega.localeCompare(b.bodega) || a.nombre.localeCompare(b.nombre));
 
   return res.status(200).json({ catalogo });
