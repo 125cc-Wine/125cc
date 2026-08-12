@@ -1662,20 +1662,34 @@ let cartaMes = toISOMonth(new Date()); // 'YYYY-MM' — mes que se está planifi
 // es estático (no hay templating server-side para interpolar cartaMes).
 { const mesEl = document.getElementById('cartaMesInput'); if(mesEl) mesEl.value = cartaMes; }
 
-function nuevasCartaSemanas(){
+// Cada mes tiene su propio plan (array de 2 quincenas) — guardado acá por
+// mesISO. BUG que reportó Maio: antes había un solo `cartaSemanas` global
+// que se mutaba in-place al cambiar de mes (se pisaba solo la fecha, pero
+// los vinos elegidos quedaban en los mismos objetos), así que un vino
+// cargado en Agosto aparecía "precargado" en cualquier otro mes que se
+// mirara después — eran literalmente los mismos objetos. Ahora cada mes
+// tiene su propio estado de sesión, creado vacío la primera vez que se
+// visita y conservado si volvés a ese mes después.
+let cartaPlanesPorMes = {};
+
+function nuevoPlanMes(mesISO){
   return [
-    { label: 'Quincena 1', ...datosQuincena(cartaMes,1), vinos: Array(14).fill(null) },
-    { label: 'Quincena 2', ...datosQuincena(cartaMes,2), vinos: Array(14).fill(null) },
+    { label: 'Quincena 1', ...datosQuincena(mesISO,1), vinos: Array(14).fill(null) },
+    { label: 'Quincena 2', ...datosQuincena(mesISO,2), vinos: Array(14).fill(null) },
   ];
 }
+function planDelMes(mesISO){
+  if(!cartaPlanesPorMes[mesISO]) cartaPlanesPorMes[mesISO] = nuevoPlanMes(mesISO);
+  return cartaPlanesPorMes[mesISO];
+}
 
-// Cambiar de mes recalcula las fechas de las dos quincenas pero conserva los
-// vinos ya elegidos en esta sesión — no tiene sentido tirarlos solo porque
-// se ajustó el mes.
+let cartaSemanas = planDelMes(cartaMes); // referencia al plan del mes actualmente visible
+
 function cartaSetMes(val){
   cartaMes = val;
-  cartaSemanas[0] = { ...cartaSemanas[0], ...datosQuincena(cartaMes,1) };
-  cartaSemanas[1] = { ...cartaSemanas[1], ...datosQuincena(cartaMes,2) };
+  cartaSemanas = planDelMes(cartaMes);
+  renderCartaPools();       // el estado "usado" depende de cartaSemanas, que acaba de cambiar
+  renderCatalogoExterno();
   renderCartaLanes();
 }
 
@@ -1686,7 +1700,6 @@ let cartaHistorial = [];       // filas de carta_historial dentro de la ventana 
 let cartaMesesBloqueo = 12;
 let cartaLoaded = false;
 let cartaTarget = 0;           // índice de semana destino para el click-to-add (pantallas táctiles)
-let cartaSemanas = nuevasCartaSemanas();
 let cartaDragId = null;
 
 // Los ids de 125cc (Sheet) son números; los del catálogo Aroma/La Vid
@@ -1938,7 +1951,8 @@ async function guardarCarta(){
     const data = await res.json();
     if(data.ok){
       showToast('✓ Carta guardada — historial actualizado', 'success');
-      cartaSemanas = nuevasCartaSemanas();
+      cartaPlanesPorMes[cartaMes] = nuevoPlanMes(cartaMes);
+      cartaSemanas = cartaPlanesPorMes[cartaMes];
       const histRes = await fetch('/api/actualizar-vino?historial=1', {headers: adminAuthHeader()});
       handleAuthResponse(histRes);
       const histData = await histRes.json();
