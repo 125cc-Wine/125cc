@@ -308,14 +308,16 @@
   .carta-pool-cards{display:flex;flex-wrap:wrap;gap:8px}
   .carta-pool-empty{font-size:12px;color:var(--ink-dark-3);padding:6px 0}
 
-  .carta-wine-card{background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:9px 12px;cursor:grab;min-width:150px;max-width:220px;transition:border-color .15s,opacity .15s}
-  .carta-wine-card:hover{border-color:var(--madera)}
+  .carta-wine-card{background:var(--dark-3);border:1px solid var(--line-dark);border-left:4px solid transparent;border-radius:var(--r-sm);padding:9px 12px;cursor:grab;min-width:150px;max-width:220px;transition:border-color .15s,opacity .15s}
+  /* El borde izquierdo (color de tramo) se pisa por style="" inline — el hover
+     solo toca los otros 3 lados para no taparlo con --madera */
+  .carta-wine-card:hover{border-top-color:var(--madera);border-right-color:var(--madera);border-bottom-color:var(--madera)}
   .carta-wine-card:active{cursor:grabbing}
   .carta-wine-card.dragging{opacity:.4}
   .carta-wine-card-name{font-size:12px;font-weight:500;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .carta-wine-card-sub{font-size:10px;color:var(--ink-dark-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .carta-wine-card.blocked{opacity:.35;cursor:not-allowed;background:var(--dark-2)}
-  .carta-wine-card.blocked:hover{border-color:var(--line-dark)}
+  .carta-wine-card.blocked:hover{border-top-color:var(--line-dark);border-right-color:var(--line-dark);border-bottom-color:var(--line-dark)}
   .carta-wine-card.used{display:none}
 
   .carta-lanes{display:flex;flex-direction:column;gap:16px}
@@ -329,12 +331,19 @@
   @media(max-width:520px){.carta-slots{grid-template-columns:1fr}}
   .carta-slot{border-radius:var(--r-sm);padding:9px 12px;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:6px}
   .carta-slot.empty{border:1px dashed var(--line-dark-strong);color:var(--ink-dark-3);font-size:11px}
-  .carta-slot.filled{background:var(--dark-3);border:1px solid var(--madera-dk)}
+  .carta-slot.filled{background:var(--dark-3);border:1px solid var(--madera-dk);border-left:4px solid var(--madera-dk)}
   .carta-slot-info{min-width:0;flex:1}
   .carta-slot-name{font-size:12px;font-weight:500;color:var(--ink-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .carta-slot-sub{font-size:10px;color:var(--ink-dark-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .carta-slot-remove{background:none;border:none;color:var(--ink-dark-3);font-size:16px;line-height:1;cursor:pointer;flex-shrink:0;padding:2px 4px}
   .carta-slot-remove:hover{color:#f87171}
+
+  .carta-tramo-resumen{display:flex;gap:6px;margin-bottom:10px}
+  .carta-tramo-chip{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:var(--r-pill);background:var(--tc);color:#1a1a1a;font-size:11px;font-weight:700}
+
+  .carta-tramo-legend{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:16px;font-size:11px;color:var(--ink-dark-3)}
+  .carta-tramo-legend-item{display:flex;align-items:center;gap:6px}
+  .carta-tramo-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 
   /* Toast */
   .toast{
@@ -533,6 +542,8 @@
     </div>
 
     <div class="carta-banner" id="cartaBanner" style="display:none"></div>
+
+    <div class="carta-tramo-legend" id="cartaTramoLegend"></div>
 
     <div class="carta-grid">
       <div class="carta-pools">
@@ -1634,16 +1645,31 @@ async function deleteWine(id){
 // api/_lib/pos/productos-import.js). El precio por copa NUNCA se guarda,
 // así que acá solo se usa el tramo para agrupar los pools — el precio que
 // se muestra en cada tarjeta es el de góndola tal cual viene del Sheet.
+//
+// `color` es solo para identificar el tramo de un vistazo al armar una
+// quincena (pedido de Maio: ver la mezcla de precios mientras arrastrás,
+// sin tener que leer el número) — deliberadamente NO son --tinto/--blanco/
+// --rosado/--naranja (esos ya significan "tipo de vino" en el resto del
+// sitio; reusarlos acá para "tramo de precio" confundiría los dos ejes).
 const CARTA_TRAMOS = [
-  { id:'t1', label:'Hasta $13.999',     test:p => p < 14000 },
-  { id:'t2', label:'$14.000 – $17.999', test:p => p >= 14000 && p < 18000 },
-  { id:'t3', label:'$18.000 – $29.999', test:p => p >= 18000 && p < 30000 },
-  { id:'t4', label:'$30.000 y más',     test:p => p >= 30000 },
+  { id:'t1', label:'Hasta $13.999',     test:p => p < 14000,               color:'#6FA8DC' },
+  { id:'t2', label:'$14.000 – $17.999', test:p => p >= 14000 && p < 18000, color:'#93C47D' },
+  { id:'t3', label:'$18.000 – $29.999', test:p => p >= 18000 && p < 30000, color:'#F1C232' },
+  { id:'t4', label:'$30.000 y más',     test:p => p >= 30000,              color:'#E06666' },
 ];
 function cartaPrecioNum(w){ return parseFloat(String(w.precio||0).replace(/[^\d.]/g,'')) || 0; }
 function tramoDeVino(w){
   const p = cartaPrecioNum(w);
   return CARTA_TRAMOS.find(t => t.test(p)) || CARTA_TRAMOS[CARTA_TRAMOS.length - 1];
+}
+// Leyenda de colores — contenido fijo (no depende de datos cargados), se
+// pinta una sola vez al abrir la pestaña.
+function renderCartaTramoLegend(){
+  const el = document.getElementById('cartaTramoLegend');
+  if(!el) return;
+  el.innerHTML = CARTA_TRAMOS.map(t =>
+    `<span class="carta-tramo-legend-item"><span class="carta-tramo-legend-dot" style="background:${t.color}"></span>${esc(t.label)}</span>`
+  ).join('');
 }
 
 function fmtFechaAR(d){
@@ -1778,6 +1804,7 @@ async function loadCartaTab(){
     cartaMesesBloqueo = histData.mesesBloqueo || 12;
     catalogoExterno = (catData.catalogo || []).map(w => ({...w, _fuente: 'catalogo_externo'}));
     if(catData.error) showToast('Catálogo Aroma/La Vid: ' + catData.error, 'error');
+    renderCartaTramoLegend();
     renderCartaPools();
     renderCatalogoExterno();
     renderCartaLanes();
@@ -1914,13 +1941,14 @@ function cartaWineCardHtml(w, usedIds, blocked){
   const bh = blocked.get(sid);
   const isBlocked = !!bh;
   const isUsed = usedIds.has(sid);
+  const tramo = tramoDeVino(w);
   const cls = ['carta-wine-card'];
   if(isBlocked) cls.push('blocked');
   if(isUsed) cls.push('used');
   const title = isBlocked
     ? `En carta la semana del ${fmtFechaSoloFecha(bh.semana_inicio)} — disponible de nuevo a partir del ${fmtFechaAR(cartaFechaDisponible(bh.confirmado_at))}`
-    : '';
-  return `<div class="${cls.join(' ')}" draggable="${!isBlocked}" title="${esc(title)}"
+    : tramo.label;
+  return `<div class="${cls.join(' ')}" style="border-left-color:${tramo.color}" draggable="${!isBlocked}" title="${esc(title)}"
               ondragstart="cartaDragStart(event,'${sid}')" ondragend="cartaDragEnd(event)"
               onclick="cartaCardClick('${sid}')">
     <div class="carta-wine-card-name">${esc(w.nombre)}</div>
@@ -2001,9 +2029,17 @@ function renderCatalogoExterno(){
 function renderCartaLanes(){
   document.getElementById('cartaLanes').innerHTML = cartaSemanas.map((s,si)=>{
     const filled = s.vinos.filter(Boolean).length;
+    // Resumen de mezcla de precios de esta quincena — pedido de Maio, para
+    // ver de un vistazo si se está cargando desbalanceada hacia un tramo.
+    const conteoTramos = CARTA_TRAMOS.map(t => ({ ...t, n: s.vinos.filter(v => v && tramoDeVino(v).id === t.id).length }));
+    const tramoResumen = conteoTramos.map(t =>
+      `<span class="carta-tramo-chip" style="--tc:${t.color}" title="${esc(t.label)}: ${t.n}">${t.n}</span>`
+    ).join('');
     const slots = s.vinos.map((v,idx)=>{
       if(!v) return `<div class="carta-slot empty" ondragover="cartaSlotDragOver(event)" ondrop="cartaSlotDrop(event,${si},${idx})">Espacio libre</div>`;
-      return `<div class="carta-slot filled" ondragover="cartaSlotDragOver(event)" ondrop="cartaSlotDrop(event,${si},${idx})">
+      const tramo = tramoDeVino(v);
+      return `<div class="carta-slot filled" style="border-left-color:${tramo.color}" title="${esc(tramo.label)}"
+                  ondragover="cartaSlotDragOver(event)" ondrop="cartaSlotDrop(event,${si},${idx})">
         <div class="carta-slot-info">
           <div class="carta-slot-name">${esc(v.nombre)}</div>
           <div class="carta-slot-sub">${esc(v.bodega||'—')}</div>
@@ -2019,6 +2055,7 @@ function renderCartaLanes(){
         </div>
         <span class="carta-lane-count${filled===14?' complete':''}">${filled}/14</span>
       </div>
+      <div class="carta-tramo-resumen">${tramoResumen}</div>
       <div class="carta-slots">${slots}</div>
     </div>`;
   }).join('');
@@ -2076,7 +2113,9 @@ function cartaPlaceWine(id, si, idx){
     idx = target.vinos.findIndex(v=>!v);
     if(idx<0){ showToast(`${target.label} ya tiene 14 vinos`, 'error'); renderCartaPools(); renderCatalogoExterno(); renderCartaLanes(); return; }
   }
-  target.vinos[idx] = { id: w.id, nombre: w.nombre, bodega: w.bodega || '', fuente: w._fuente || '125cc' };
+  // `precio` viaja para poder pintar el color de tramo en el carril — el
+  // backend lo ignora al guardar (solo usa id/nombre/bodega/fuente).
+  target.vinos[idx] = { id: w.id, nombre: w.nombre, bodega: w.bodega || '', precio: w.precio, fuente: w._fuente || '125cc' };
   renderCartaPools();
   renderCatalogoExterno();
   renderCartaLanes();
