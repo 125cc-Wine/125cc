@@ -286,6 +286,12 @@
   .carta-save-btn{background:var(--accent-grad);border:none;border-radius:var(--r-pill);padding:13px 22px;color:#fff;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:transform var(--t-feedback) var(--ease),opacity var(--t-feedback) var(--ease);letter-spacing:.1em;text-transform:uppercase;box-shadow:0 4px 20px rgba(155,32,53,.3)}
   .carta-save-btn:active{transform:scale(.98)}
   .carta-save-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+  /* Sticky abajo del viewport — antes quedaba al final de una lista de ~110
+     bodegas y había que scrollear todo el pool para llegar. Mismo criterio
+     que .top-bar (sticky arriba): siempre a mano sin importar cuánto se
+     scrolleó. */
+  .carta-save-bar{position:sticky;bottom:0;z-index:40;display:flex;align-items:center;justify-content:flex-end;gap:14px;margin:16px -16px 0;padding:14px 16px;background:var(--dark-2);border-top:1px solid var(--line-dark);box-shadow:0 -4px 20px rgba(0,0,0,.3)}
+  .carta-save-progress{font-size:12px;color:var(--ink-dark-3)}
 
   .carta-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
   @media(max-width:900px){.carta-grid{grid-template-columns:1fr}}
@@ -564,7 +570,8 @@
       <div class="carta-lanes" id="cartaLanes"></div>
     </div>
 
-    <div style="display:flex;justify-content:flex-end;margin-top:16px">
+    <div class="carta-save-bar">
+      <span class="carta-save-progress" id="cartaSaveProgress"></span>
       <button class="carta-save-btn" id="cartaSaveBtn" onclick="guardarCarta()" disabled>Guardar carta</button>
     </div>
 
@@ -2132,6 +2139,9 @@ function updateCartaSaveBtn(){
   const btn = document.getElementById('cartaSaveBtn');
   if(!btn) return;
   btn.disabled = !cartaSemanas.every(s => s.vinos.filter(Boolean).length===14 && s.inicio);
+  const total = cartaSemanas.reduce((n,s) => n + s.vinos.filter(Boolean).length, 0);
+  const prog = document.getElementById('cartaSaveProgress');
+  if(prog) prog.textContent = `${total}/${cartaSemanas.length*14} vinos elegidos`;
 }
 
 async function guardarCarta(){
