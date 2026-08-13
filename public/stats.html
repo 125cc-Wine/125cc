@@ -2630,19 +2630,37 @@ function cartaWineCardHtml(w, usedIds, blocked){
   </div>`;
 }
 
+// "Mi carta 125cc" muestra sólo los vinos YA puestos en alguna de las 2
+// quincenas del mes que se está viendo — antes mostraba TODOS los vinos del
+// Sheet (43, entre el menú curado y borradores de otros meses/sesiones de
+// planificación), lo que hacía parecer que había muchos más vinos "en la
+// carta" de los que realmente estaban elegidos para este mes. Es un
+// resumen de lo elegido, agrupado por tramo — para sumar un vino NUEVO se
+// usa el Catálogo Aroma/La Vid o "cargado a mano"; los vinos curados del
+// menú actual que no estén puestos en este mes no aparecen acá.
+//
+// Match por NOMBRE normalizado, no por id: un vino del catálogo externo
+// tiene un id (UUID) en cartaSemanas/historial distinto del id numérico que
+// le tocó a su borrador acá en el Sheet — son dos espacios de id sin
+// relación — así que comparar por id dejaba esta lista siempre vacía para
+// cualquier vino que no fuera 100% nativo del Sheet.
 function renderCartaPools(){
-  const usedIds = cartaUsedIds();
   const blocked = cartaBlockedMap();
+  const usedNombres = new Set(cartaSemanas.flatMap(s => s.vinos.filter(Boolean)).map(v => normalizarTexto(v.nombre)));
+  const enEstaCarta = cartaWines.filter(w => usedNombres.has(normalizarTexto(w.nombre)));
+  // Le pasamos a cartaWineCardHtml un set de ids armado desde enEstaCarta (no
+  // cartaUsedIds() por el mismo motivo de arriba) — así el estilo "ya
+  // puesto" de la tarjeta es correcto para TODAS, catálogo externo incluido.
+  const usedIdsCards = new Set(enEstaCarta.map(w => String(w.id)));
   document.getElementById('cartaPools').innerHTML = CARTA_TRAMOS.map(tramo=>{
-    const winesTramo = cartaWines.filter(w => tramoDeVino(w).id === tramo.id);
-    const disponibles = winesTramo.filter(w => !usedIds.has(String(w.id)) && !blocked.has(String(w.id))).length;
-    const cards = winesTramo.map(w => cartaWineCardHtml(w, usedIds, blocked)).join('');
+    const winesTramo = enEstaCarta.filter(w => tramoDeVino(w).id === tramo.id);
+    const cards = winesTramo.map(w => cartaWineCardHtml(w, usedIdsCards, blocked)).join('');
     return `<div class="carta-pool-segment">
       <div class="carta-pool-header">
         <span class="carta-pool-title">${tramo.label}</span>
-        <span class="carta-pool-count">${disponibles} disponible${disponibles===1?'':'s'}</span>
+        <span class="carta-pool-count">${winesTramo.length} elegido${winesTramo.length===1?'':'s'}</span>
       </div>
-      <div class="carta-pool-cards">${cards || '<div class="carta-pool-empty">Sin vinos en este tramo</div>'}</div>
+      <div class="carta-pool-cards">${cards || '<div class="carta-pool-empty">Ningún vino elegido en este tramo todavía</div>'}</div>
     </div>`;
   }).join('');
 }
