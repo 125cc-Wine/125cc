@@ -2901,6 +2901,18 @@ async function guardarCarta(){
   // de confirmar el historial, así ya aparecen en Editor de Vinos con
   // nombre/bodega/precio/tipo/varietal/región cargados, listos para
   // completarles nota/maridaje/imagen.
+  //
+  // cache:'no-store' a propósito: /api/obtener-vinos manda
+  // Cache-Control max-age=30, así que un fetch normal acá podía devolver una
+  // respuesta de hasta 30s atrás — si en esos 30s ya se había creado un
+  // borrador (ej. un guardado anterior en la misma sesión de prueba), este
+  // chequeo no lo veía todavía y lo volvía a crear duplicado. Esto fue la
+  // causa real de ~26 vinos duplicados en el Sheet (encontrados y limpiados
+  // a mano — scripts/dedup-vinos-sheet.js).
+  const sheetFrescoRes = await fetch('/api/obtener-vinos', {cache:'no-store'});
+  const sheetFrescoData = await sheetFrescoRes.json();
+  cartaWines = (sheetFrescoData.vinos || []).map(w => ({...w, _fuente: '125cc'}));
+  editorWines = cartaWines; editorLoaded = true;
   const sheetPorNombre = new Set(cartaWines.map(w => normalizarTexto(w.nombre)));
   const yaConsiderados = new Set();
   const nuevosEnSheet = cartaSemanas.flatMap(s => s.vinos.filter(Boolean)).filter(v => {
@@ -2961,7 +2973,7 @@ async function guardarCarta(){
       // Refresca el Sheet en memoria si se crearon borradores — así "Mi
       // carta 125cc" y la detección de duplicados ya los ven de una.
       if(nuevosEnSheet.length){
-        const vinosRes = await fetch('/api/obtener-vinos');
+        const vinosRes = await fetch('/api/obtener-vinos', {cache:'no-store'});
         const vinosData = await vinosRes.json();
         cartaWines = (vinosData.vinos || []).map(w => ({...w, _fuente: '125cc'}));
         editorWines = cartaWines; editorLoaded = true;
