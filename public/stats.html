@@ -2145,20 +2145,26 @@ function cartaFindWine(id){
     || cartaManuales.find(w => String(w.id) === sid);
 }
 
-// Para una fila de carta_historial: intenta cartaFindWine(vino_id) primero
-// (rápido, funciona siempre que catalogoExterno haya cargado bien), y si no
-// encuentra nada cae a buscar por NOMBRE normalizado dentro de cartaWines
-// (el Sheet, que siempre está cargado). Hace falta este segundo intento
-// porque un vino del catálogo externo guarda en el historial su UUID
-// original — si el fetch a Supabase falló o tardó (ver aviso en
-// loadCartaTab), cartaFindWine no lo va a encontrar ahí aunque su borrador
-// ya exista en el Sheet con nombre y precio completos. Usan esto
-// nuevoPlanMes() (hidratación del calendario) y los exports a Excel — sin
-// este fallback, un vino así aparecía con precio $0 y tramo "Hasta
-// $13.999" aunque en realidad tuviera un precio real cargado.
+// Para una fila de carta_historial: busca PRIMERO por nombre normalizado en
+// cartaWines (el Sheet) y recién si eso falla cae a cartaFindWine(vino_id)
+// (catálogo externo / manuales, por id).
+//
+// A propósito en ese orden, no al revés — se probó con id primero y salía
+// mal: para un vino del catálogo externo, cartaFindWine encuentra su fila
+// en catalogoExterno (por su UUID) y devuelve el precio EN VIVO de Supabase
+// — que puede ya no ser el mismo que cuando se confirmó ese vino a la carta
+// (el distribuidor le cambió el precio, lo sacó de stock y lo dejó en 0,
+// etc.). El Sheet en cambio tiene el precio CONGELADO al momento de
+// confirmar (cartaVinoParaSheet lo copia ahí una sola vez, al crear el
+// borrador) — es el dato históricamente correcto para nuevoPlanMes()
+// (hidratación del calendario) y sobre todo para los exports a Excel, que
+// son justamente un registro de lo que se cobró en cada mes, no el precio
+// de hoy. Buscar por nombre en vez de id funciona porque todo vino
+// confirmado ya tiene su borrador en el Sheet con el mismo nombre (lo crea
+// cartaCrearBorradorSheet antes de guardar el historial).
 function cartaResolverHistorial(h){
-  return cartaFindWine(h.vino_id)
-    || cartaWines.find(w => normalizarTexto(w.nombre) === normalizarTexto(h.vino_nombre));
+  return cartaWines.find(w => normalizarTexto(w.nombre) === normalizarTexto(h.vino_nombre))
+    || cartaFindWine(h.vino_id);
 }
 
 let cartaPlanesPorMes = {};
