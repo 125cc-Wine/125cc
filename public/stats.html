@@ -1536,7 +1536,7 @@ async function extraerImagenDeLink(){
     }
     document.getElementById('ef-img').value = data.imagen;
     previewImg(data.imagen);
-    showToast('✓ Imagen encontrada', 'success');
+    showToast(data.fondoRecortado ? '✓ Imagen encontrada (fondo recortado)' : '✓ Imagen encontrada (sin recortar fondo — usá la de la tienda)', 'success');
   } catch(e){
     showToast('Error de conexión','error');
   } finally {

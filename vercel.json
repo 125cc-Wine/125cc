@@ -16,6 +16,9 @@
   "crons": [
     { "path": "/api/sync-precios", "schedule": "0 9 * * *" }
   ],
+  "functions": {
+    "api/extraer-imagen.js": { "maxDuration": 30 }
+  },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/stats",    "dest": "/stats.html" },
