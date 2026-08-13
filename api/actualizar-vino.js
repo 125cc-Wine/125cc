@@ -76,9 +76,33 @@ async function guardarHistorialCarta(req, res, semanas) {
     return res.status(400).json({ error: "No hay ningún vino cargado para guardar." });
   }
 
+  // El admin ahora ve en el calendario lo que ya estaba confirmado para ese
+  // mes (antes arrancaba siempre vacío — ver comentario en nuevoPlanMes() de
+  // stats.html) y puede re-guardar la misma quincena después de agregar o
+  // sacar algo. Sin este chequeo, cada re-guardado volvía a INSERTar una
+  // fila para cada vino que ya estaba, duplicándolo en el historial. Se
+  // saltea (no se toca) cualquier combinación vino_id+semana_inicio+
+  // semana_label que ya exista, sin importar cuándo se confirmó.
+  const semanaInicios = [...new Set(semanas.map(s => s.inicio))];
+  const { rows: existentes } = await sql`
+    SELECT vino_id, semana_inicio, semana_label FROM carta_historial
+    WHERE semana_inicio = ANY(${semanaInicios}::date[])
+  `;
+  // r.semana_inicio llega como objeto Date (columna `date`) — String(date) da
+  // un formato verboso tipo "Thu Jan 01 2099 ...", NO "2099-01-01", así que
+  // el slice(0,10) de eso no matchea nunca con `s.inicio` (que sí es
+  // "YYYY-MM-DD" desde el body). toISOString() sí arranca con la fecha en
+  // ese formato.
+  const yaExiste = new Set(existentes.map(r => `${r.vino_id}|${r.semana_inicio.toISOString().slice(0, 10)}|${r.semana_label}`));
+
   const idsGuardados = [];
+  let omitidos = 0;
   await withTransaction(async (client) => {
     for (const { v, s } of vinosValidos) {
+      const key = `${String(v.id)}|${s.inicio}|${s.label}`;
+      if (yaExiste.has(key)) { omitidos++; continue; }
+      yaExiste.add(key); // por si vinosValidos trae el mismo vino repetido en el propio request
+
       // vino_id es texto: puede ser un id numérico del Sheet de 125cc (se
       // guarda como string) o un UUID del catálogo externo de Aroma/La Vid.
       // RETURNING id: se necesita para poder "deshacer" este guardado
@@ -93,7 +117,11 @@ async function guardarHistorialCarta(req, res, semanas) {
     }
   });
 
-  return res.status(200).json({ ok: true, vinosGuardados: vinosValidos.length, idsGuardados });
+  if (!idsGuardados.length) {
+    return res.status(200).json({ ok: true, vinosGuardados: 0, vinosOmitidos: omitidos, idsGuardados, sinCambios: true });
+  }
+
+  return res.status(200).json({ ok: true, vinosGuardados: idsGuardados.length, vinosOmitidos: omitidos, idsGuardados });
 }
 
 // Deshace un guardado reciente — borra filas puntuales de carta_historial

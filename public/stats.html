@@ -2090,13 +2090,58 @@ let cartaMes = toISOMonth(new Date()); // 'YYYY-MM' — mes que se está planifi
 // mirara después — eran literalmente los mismos objetos. Ahora cada mes
 // tiene su propio estado de sesión, creado vacío la primera vez que se
 // visita y conservado si volvés a ese mes después.
+// Declarado acá arriba (no donde estaba antes, más abajo) porque
+// nuevoPlanMes()/cartaFindWine() ya los necesitan desde la primera llamada a
+// planDelMes() más abajo en este mismo script — con `let` más abajo tira
+// ReferenceError (temporal dead zone) apenas carga la página.
+let cartaWines = [];
+let catalogoExterno = [];      // vinos del catálogo Aroma de Vid / La Vid (gestion-vinoteca2), agrupados por bodega
+let cartaManuales = [];        // vinos cargados a mano en esta sesión (no viven en el Sheet ni en Supabase)
+let cartaHistorial = [];       // filas de carta_historial dentro de la ventana de bloqueo (ya filtradas por el server)
+
+// Los ids de 125cc (Sheet) son números; los del catálogo Aroma/La Vid
+// (Supabase) son UUID de texto; los cargados a mano usan un id sintético
+// ('manual-...'). De acá en más, todo el subsistema de carta compara ids
+// SIEMPRE como string — evita bugs de "1" (string) !== 1 (number) al
+// mezclar las tres fuentes en los mismos carriles/bloqueos.
+function cartaFindWine(id){
+  const sid = String(id);
+  return cartaWines.find(w => String(w.id) === sid)
+    || catalogoExterno.find(w => String(w.id) === sid)
+    || cartaManuales.find(w => String(w.id) === sid);
+}
+
 let cartaPlanesPorMes = {};
 
+// Si ese mes ya tiene quincenas confirmadas en carta_historial, arranca el
+// plan con esos vinos ya puestos en vez de vacío — antes esto SIEMPRE
+// arrancaba en blanco (nuevoPlanMes ignoraba cartaHistorial por completo),
+// entonces cambiar al mes que acabás de guardar, o simplemente recargar la
+// página, mostraba el calendario vacío y parecía que nada se había
+// guardado — el guardado en sí andaba bien, lo que faltaba era leerlo de
+// vuelta. cartaFindWine cruza por id contra Sheet/catálogo externo/manuales
+// para completar precio (necesario para el color de tramo); si el vino ya
+// no aparece en ningún lado, se muestra igual con nombre/bodega del
+// historial y cae en el primer tramo por no tener precio.
 function nuevoPlanMes(mesISO){
-  return [
+  const quincenas = [
     { label: 'Quincena 1', ...datosQuincena(mesISO,1), vinos: Array(14).fill(null) },
     { label: 'Quincena 2', ...datosQuincena(mesISO,2), vinos: Array(14).fill(null) },
   ];
+  quincenas.forEach(q => {
+    cartaHistorial
+      .filter(h => String(h.semana_inicio).slice(0,10) === q.inicio)
+      .forEach((h, i) => {
+        if(i >= 14) return; // no debería pasar — el guardado ya limita a 14 por quincena
+        const w = cartaFindWine(h.vino_id);
+        q.vinos[i] = {
+          id: h.vino_id, nombre: h.vino_nombre, bodega: h.bodega || '',
+          precio: w ? w.precio : undefined, fuente: h.fuente || '125cc',
+          varietal: w?.varietal || '', region: w?.region || '', categoria: w?.categoria || '',
+        };
+      });
+  });
+  return quincenas;
 }
 function planDelMes(mesISO){
   if(!cartaPlanesPorMes[mesISO]) cartaPlanesPorMes[mesISO] = nuevoPlanMes(mesISO);
@@ -2114,27 +2159,11 @@ function cartaSetMes(val){
   renderCartaLanes();
 }
 
-let cartaWines = [];
-let catalogoExterno = [];      // vinos del catálogo Aroma de Vid / La Vid (gestion-vinoteca2), agrupados por bodega
 let catalogoSearchQuery = '';
-let cartaManuales = [];        // vinos cargados a mano en esta sesión (no viven en el Sheet ni en Supabase)
-let cartaHistorial = [];       // filas de carta_historial dentro de la ventana de bloqueo (ya filtradas por el server)
 let cartaMesesBloqueo = 12;
 let cartaLoaded = false;
 let cartaTarget = 0;           // índice de semana destino para el click-to-add (pantallas táctiles)
 let cartaDragId = null;
-
-// Los ids de 125cc (Sheet) son números; los del catálogo Aroma/La Vid
-// (Supabase) son UUID de texto; los cargados a mano usan un id sintético
-// ('manual-...'). De acá en más, todo el subsistema de carta compara ids
-// SIEMPRE como string — evita bugs de "1" (string) !== 1 (number) al
-// mezclar las tres fuentes en los mismos carriles/bloqueos.
-function cartaFindWine(id){
-  const sid = String(id);
-  return cartaWines.find(w => String(w.id) === sid)
-    || catalogoExterno.find(w => String(w.id) === sid)
-    || cartaManuales.find(w => String(w.id) === sid);
-}
 
 // id (string) -> { motivo } — vinos que probablemente sean el mismo vino
 // real cargado dos veces con nombre/bodega ligeramente distintos (caso
@@ -2257,6 +2286,14 @@ async function loadCartaTab(){
     cartaMesesBloqueo = histData.mesesBloqueo || 12;
     catalogoExterno = (catData.catalogo || []).map(w => ({...w, _fuente: 'catalogo_externo'}));
     if(catData.error) showToast('Catálogo Aroma/La Vid: ' + catData.error, 'error');
+
+    // El plan del mes actual (cartaSemanas) se armó vacío al cargar el script,
+    // antes de tener cartaHistorial — recién ahora hay datos para hidratarlo.
+    // Seguro reconstruirlo acá: loadCartaTab() es el punto de entrada de la
+    // pestaña, todavía no pudo haber ningún cambio sin guardar que perder.
+    cartaPlanesPorMes = {};
+    cartaSemanas = planDelMes(cartaMes);
+
     computeCartaDuplicados();
     renderCartaTramoLegend();
     renderCartaPools();
@@ -2850,11 +2887,19 @@ async function guardarCarta(){
     const data = await res.json();
     if(data.ok){
       const msgBorradores = nuevosEnSheet.length ? ` (${nuevosEnSheet.length} borrador${nuevosEnSheet.length===1?'':'es'} nuevo${nuevosEnSheet.length===1?'':'s'} en el Sheet)` : '';
-      showToast(`✓ Carta guardada — ${total} vino${total===1?'':'s'} confirmado${total===1?'':'s'}${msgBorradores}`, 'success');
-      cartaUltimoGuardado = { ids: data.idsGuardados || [], total: data.vinosGuardados || total };
+      // vinosGuardados es lo que realmente insertó el server — puede ser menos
+      // que `total` (los slots llenos en pantalla) si parte ya venía guardada
+      // de antes (el calendario ahora precarga lo confirmado, ver
+      // nuevoPlanMes en este mismo archivo) y se volvió a guardar sin cambios ahí.
+      const nuevos = data.vinosGuardados ?? total;
+      const msg = nuevos
+        ? `✓ Carta guardada — ${nuevos} vino${nuevos===1?'':'s'} nuevo${nuevos===1?'':'s'} confirmado${nuevos===1?'':'s'}${msgBorradores}`
+        : '✓ Ya estaba todo guardado — sin cambios para confirmar';
+      showToast(msg, 'success');
+      // Sin filas nuevas no hay nada que deshacer — no tiene sentido ofrecer
+      // el botón (el server igual rechazaría un deshacer con ids vacío).
+      cartaUltimoGuardado = nuevos ? { ids: data.idsGuardados || [], total: nuevos } : null;
       renderCartaUndoBar();
-      cartaPlanesPorMes[cartaMes] = nuevoPlanMes(cartaMes);
-      cartaSemanas = cartaPlanesPorMes[cartaMes];
 
       // Refresca el Sheet en memoria si se crearon borradores — así "Mi
       // carta 125cc" y la detección de duplicados ya los ven de una.
@@ -2870,6 +2915,14 @@ async function guardarCarta(){
       const histData = await histRes.json();
       cartaHistorial = histData.historial || [];
       cartaHistorialCompleto = null; // invalida el caché de la vista de historial, tiene datos nuevos
+
+      // Recién ahora cartaHistorial ya tiene lo que se acaba de confirmar —
+      // reconstruye el plan de este mes desde ahí en vez de dejarlo vacío,
+      // así lo guardado se sigue viendo puesto en el calendario (antes acá
+      // se pisaba con un plan en blanco, antes de que llegara este fetch).
+      delete cartaPlanesPorMes[cartaMes];
+      cartaSemanas = planDelMes(cartaMes);
+
       computeCartaDuplicados();
       renderCartaPools();
       renderCatalogoExterno();
