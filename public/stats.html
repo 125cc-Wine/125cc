@@ -355,6 +355,13 @@
      mobile (.carta-grid pasa a 1 columna ahí — pools arriba, carriles
      abajo — donde "flotar" no tendría sentido, quedaría pegado tapando
      los pools que siguen apareciendo por encima al hacer scroll). */
+  .carta-lanes-orden{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .carta-lanes-orden label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dark-3)}
+  .carta-lanes-orden select{background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:6px 10px;color:var(--ink-dark);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer}
+  .carta-lanes-orden select:focus{border-color:var(--accent)}
+  .carta-lane-bodegas{font-size:11px;color:var(--ink-dark-3);line-height:1.6;margin:8px 0 2px;padding-top:8px;border-top:1px solid var(--line-dark)}
+  .carta-lane-bodegas b{color:var(--ink-dark-2);font-weight:500}
+  .carta-lane-bodegas .repetida{color:#facc15}
   .carta-lanes{display:flex;flex-direction:column;gap:16px;position:sticky;top:76px;max-height:calc(100vh - 168px);overflow-y:auto;padding-right:4px}
   @media(max-width:900px){.carta-lanes{position:static;max-height:none;overflow-y:visible;padding-right:0}}
   .carta-lane{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:14px}
@@ -646,7 +653,20 @@
           <div class="loading">Cargando catálogo...</div>
         </div>
       </div>
-      <div class="carta-lanes" id="cartaLanes"></div>
+      <div>
+        <div class="carta-lanes-orden">
+          <label for="cartaLanesOrdenSelect">Ordenar vinos elegidos por</label>
+          <select id="cartaLanesOrdenSelect" onchange="cartaSetLanesOrden(this.value)">
+            <option value="slot">Orden en que se cargaron</option>
+            <option value="precio_desc">Precio (mayor a menor)</option>
+            <option value="precio_asc">Precio (menor a mayor)</option>
+            <option value="bodega">Bodega</option>
+            <option value="varietal">Varietal</option>
+            <option value="nombre">Nombre</option>
+          </select>
+        </div>
+        <div class="carta-lanes" id="cartaLanes"></div>
+      </div>
     </div>
 
     <div class="carta-save-bar">
@@ -2206,6 +2226,7 @@ let catalogoSearchQuery = '';
 let cartaMesesBloqueo = 12;
 let cartaLoaded = false;
 let cartaTarget = 0;           // índice de semana destino para el click-to-add (pantallas táctiles)
+let cartaLanesOrden = 'slot';  // cómo se muestran los vinos elegidos dentro de cada quincena — ver cartaSetLanesOrden()
 let cartaDragId = null;
 
 // id (string) -> { motivo } — vinos que probablemente sean el mismo vino
@@ -2760,6 +2781,48 @@ function cartaDiffVsVivo(s){
   return { salen, entran };
 }
 
+// Cambia el orden EN PANTALLA de los vinos elegidos dentro de cada
+// quincena — no mueve nada de casillero (cartaSemanas/el guardado siguen
+// intactos), sólo cambia cómo se listan. Puramente cosmético/de revisión.
+function cartaSetLanesOrden(val){
+  cartaLanesOrden = val;
+  renderCartaLanes();
+}
+
+// Compara dos vinos elegidos según cartaLanesOrden. `slot` no ordena nada
+// (deja el orden en que se fueron cargando los casilleros).
+function compararCartaOrden(a, b){
+  switch(cartaLanesOrden){
+    case 'precio_desc': return cartaPrecioNum(b.v) - cartaPrecioNum(a.v);
+    case 'precio_asc':  return cartaPrecioNum(a.v) - cartaPrecioNum(b.v);
+    case 'bodega':      return (a.v.bodega||'').localeCompare(b.v.bodega||'') || a.v.nombre.localeCompare(b.v.nombre);
+    case 'varietal':    return (a.v.varietal||'').localeCompare(b.v.varietal||'') || a.v.nombre.localeCompare(b.v.nombre);
+    case 'nombre':      return a.v.nombre.localeCompare(b.v.nombre);
+    default:            return 0; // 'slot' — se queda con el orden original del array
+  }
+}
+
+// Bodegas y varietales de la quincena, con cuántas veces aparece cada
+// uno — pedido puntual: ver de un vistazo si te quedaste repitiendo mucho
+// una misma bodega (o varietal) en vez de diversificar. Ordenado por
+// cantidad descendente, así lo repetido salta primero a la vista.
+function cartaLaneResumenCampo(vinos, campo){
+  const conteo = new Map();
+  vinos.forEach(v => {
+    const val = (v[campo] || '').trim();
+    if(!val) return;
+    conteo.set(val, (conteo.get(val)||0) + 1);
+  });
+  return Array.from(conteo.entries()).sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]));
+}
+function cartaLaneResumenHtml(label, entradas){
+  if(!entradas.length) return '';
+  const items = entradas.map(([val, n]) =>
+    `<b class="${n>1?'repetida':''}">${esc(val)}${n>1?` ×${n}`:''}</b>`
+  ).join(', ');
+  return `<div class="carta-lane-bodegas">${label} (${entradas.length} distinta${entradas.length===1?'':'s'}): ${items}</div>`;
+}
+
 function renderCartaLanes(){
   document.getElementById('cartaLanes').innerHTML = cartaSemanas.map((s,si)=>{
     const filled = s.vinos.filter(Boolean).length;
@@ -2769,8 +2832,8 @@ function renderCartaLanes(){
     const tramoResumen = conteoTramos.map(t =>
       `<span class="carta-tramo-chip" style="--tc:${t.color}" title="${esc(t.label)}: ${t.n}">${t.n}</span>`
     ).join('');
-    const slots = s.vinos.map((v,idx)=>{
-      if(!v) return `<div class="carta-slot empty" ondragover="cartaSlotDragOver(event)" ondrop="cartaSlotDrop(event,${si},${idx})">Espacio libre</div>`;
+
+    const slotHtml = ({v, idx}) => {
       const tramo = tramoDeVino(v);
       return `<div class="carta-slot filled" style="border-left-color:${tramo.color}" title="${esc(tramo.label)}"
                   ondragover="cartaSlotDragOver(event)" ondrop="cartaSlotDrop(event,${si},${idx})">
@@ -2780,7 +2843,26 @@ function renderCartaLanes(){
         </div>
         <button class="carta-slot-remove" onclick="cartaRemoveFromLane(${si},${idx})" title="Quitar">×</button>
       </div>`;
-    }).join('');
+    };
+    const emptyHtml = (idx) => `<div class="carta-slot empty" ondragover="cartaSlotDragOver(event)" ondrop="cartaSlotDrop(event,${si},${idx})">Espacio libre</div>`;
+
+    // idx es SIEMPRE el casillero real (para drag/drop y "Quitar"), aunque
+    // cartaLanesOrden reordene cómo se listan acá abajo. En 'slot' (orden
+    // por default) se deja tal cual el array — vacíos intercalados en su
+    // posición real, como siempre fue. En cualquier otro orden no tiene
+    // sentido mantener esa posición (se está ordenando A PROPÓSITO), así
+    // que los vacíos se agrupan al final.
+    let slots;
+    if(cartaLanesOrden === 'slot'){
+      slots = s.vinos.map((v,idx) => v ? slotHtml({v,idx}) : emptyHtml(idx)).join('');
+    } else {
+      const entries = s.vinos.map((v,idx) => ({v,idx})).filter(e => e.v).sort(compararCartaOrden);
+      const vaciosIdx = s.vinos.map((v,idx) => v ? null : idx).filter(idx => idx !== null);
+      slots = entries.map(slotHtml).join('') + vaciosIdx.map(emptyHtml).join('');
+    }
+
+    const bodegasHtml   = cartaLaneResumenHtml('Bodegas',   cartaLaneResumenCampo(s.vinos.filter(Boolean), 'bodega'));
+    const varietalesHtml = cartaLaneResumenHtml('Varietales', cartaLaneResumenCampo(s.vinos.filter(Boolean), 'varietal'));
 
     // Pedido de Maio: ver al lado de lo que estás planificando qué cambia
     // respecto a lo que hoy está en vivo en el Sheet. Solo tiene sentido
@@ -2809,6 +2891,8 @@ function renderCartaLanes(){
       </div>
       <div class="carta-tramo-resumen">${tramoResumen}</div>
       <div class="carta-slots">${slots}</div>
+      ${bodegasHtml}
+      ${varietalesHtml}
       ${diffHtml}
     </div>`;
   }).join('');
