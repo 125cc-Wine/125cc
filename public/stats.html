@@ -2917,14 +2917,20 @@ async function guardarCarta(){
     const data = await res.json();
     if(data.ok){
       const msgBorradores = nuevosEnSheet.length ? ` (${nuevosEnSheet.length} borrador${nuevosEnSheet.length===1?'':'es'} nuevo${nuevosEnSheet.length===1?'':'s'} en el Sheet)` : '';
-      // vinosGuardados es lo que realmente insertó el server — puede ser menos
-      // que `total` (los slots llenos en pantalla) si parte ya venía guardada
-      // de antes (el calendario ahora precarga lo confirmado, ver
-      // nuevoPlanMes en este mismo archivo) y se volvió a guardar sin cambios ahí.
-      const nuevos = data.vinosGuardados ?? total;
-      const msg = nuevos
-        ? `✓ Carta guardada — ${nuevos} vino${nuevos===1?'':'s'} nuevo${nuevos===1?'':'s'} confirmado${nuevos===1?'':'s'}${msgBorradores}`
-        : '✓ Ya estaba todo guardado — sin cambios para confirmar';
+      // vinosGuardados/vinosBorrados son lo que realmente cambió en el
+      // server — "Guardar carta" ahora sincroniza cada quincena con lo que
+      // está en pantalla (sacaste un vino de un casillero y pusiste otro →
+      // el viejo se borra del historial, no queda confirmado igual).
+      const nuevos = data.vinosGuardados ?? 0;
+      const borrados = data.vinosBorrados ?? 0;
+      let msg;
+      if(!nuevos && !borrados) msg = '✓ Ya estaba todo guardado — sin cambios para confirmar';
+      else {
+        const partes = [];
+        if(nuevos) partes.push(`${nuevos} nuevo${nuevos===1?'':'s'}`);
+        if(borrados) partes.push(`${borrados} sacado${borrados===1?'':'s'}`);
+        msg = `✓ Carta guardada — ${partes.join(', ')}${msgBorradores}`;
+      }
       showToast(msg, 'success');
       // Sin filas nuevas no hay nada que deshacer — no tiene sentido ofrecer
       // el botón (el server igual rechazaría un deshacer con ids vacío).

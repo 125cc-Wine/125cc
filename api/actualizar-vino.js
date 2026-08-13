@@ -77,51 +77,70 @@ async function guardarHistorialCarta(req, res, semanas) {
   }
 
   // El admin ahora ve en el calendario lo que ya estaba confirmado para ese
-  // mes (antes arrancaba siempre vacío — ver comentario en nuevoPlanMes() de
-  // stats.html) y puede re-guardar la misma quincena después de agregar o
-  // sacar algo. Sin este chequeo, cada re-guardado volvía a INSERTar una
-  // fila para cada vino que ya estaba, duplicándolo en el historial. Se
-  // saltea (no se toca) cualquier combinación vino_id+semana_inicio+
-  // semana_label que ya exista, sin importar cuándo se confirmó.
-  const semanaInicios = [...new Set(semanas.map(s => s.inicio))];
-  const { rows: existentes } = await sql`
-    SELECT vino_id, semana_inicio, semana_label FROM carta_historial
-    WHERE semana_inicio = ANY(${semanaInicios}::date[])
-  `;
-  // r.semana_inicio llega como objeto Date (columna `date`) — String(date) da
-  // un formato verboso tipo "Thu Jan 01 2099 ...", NO "2099-01-01", así que
-  // el slice(0,10) de eso no matchea nunca con `s.inicio` (que sí es
-  // "YYYY-MM-DD" desde el body). toISOString() sí arranca con la fecha en
-  // ese formato.
-  const yaExiste = new Set(existentes.map(r => `${r.vino_id}|${r.semana_inicio.toISOString().slice(0, 10)}|${r.semana_label}`));
-
+  // mes (nuevoPlanMes() en stats.html hidrata desde acá) y edita esa
+  // selección — saca un vino de un casillero, pone otro, guarda de nuevo.
+  // "Guardar carta" SINCRONIZA cada quincena con lo que está en pantalla en
+  // vez de sólo agregar: lo que ya no está elegido se borra del historial de
+  // esa quincena puntual, y sólo se insertan los vinos que faltan. Antes
+  // esto sólo insertaba — sacar un vino y poner otro dejaba a los DOS
+  // confirmados (el nuevo sumado, el viejo todavía bloqueando la regla de
+  // no-repetición de 12 meses aunque ya no se estuviera usando).
   const idsGuardados = [];
-  let omitidos = 0;
+  let borrados = 0;
   await withTransaction(async (client) => {
-    for (const { v, s } of vinosValidos) {
-      const key = `${String(v.id)}|${s.inicio}|${s.label}`;
-      if (yaExiste.has(key)) { omitidos++; continue; }
-      yaExiste.add(key); // por si vinosValidos trae el mismo vino repetido en el propio request
+    for (const s of semanas) {
+      const idsActuales = [...new Set(
+        s.vinos.filter(v => v && v.id != null && v.nombre).map(v => String(v.id))
+      )];
 
-      // vino_id es texto: puede ser un id numérico del Sheet de 125cc (se
-      // guarda como string) o un UUID del catálogo externo de Aroma/La Vid.
-      // RETURNING id: se necesita para poder "deshacer" este guardado
-      // puntual después, sin tocar otras filas que compartan vino_id de
-      // una confirmación anterior.
-      const { rows } = await client.sql`
-        INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio, fuente)
-        VALUES (${String(v.id)}, ${v.nombre}, ${v.bodega || ''}, ${s.label}, ${s.inicio}, ${v.fuente || '125cc'})
-        RETURNING id
+      // Borra de ESTA quincena lo que ya no está elegido. Con casillero vacío
+      // (idsActuales=[]) borra toda la quincena — guardar sin nada puesto es
+      // una forma válida de vaciarla del todo (el guardado global sigue
+      // exigiendo que ALGUNA quincena del request tenga algo, ver más arriba).
+      const delResult = idsActuales.length
+        ? await client.sql`
+            DELETE FROM carta_historial
+            WHERE semana_inicio = ${s.inicio} AND semana_label = ${s.label}
+              AND vino_id != ALL(${idsActuales}::text[])
+          `
+        : await client.sql`
+            DELETE FROM carta_historial
+            WHERE semana_inicio = ${s.inicio} AND semana_label = ${s.label}
+          `;
+      borrados += delResult.rowCount;
+
+      if (!idsActuales.length) continue;
+
+      const { rows: existentes } = await client.sql`
+        SELECT vino_id FROM carta_historial
+        WHERE semana_inicio = ${s.inicio} AND semana_label = ${s.label}
       `;
-      idsGuardados.push(rows[0].id);
+      const yaExiste = new Set(existentes.map(r => r.vino_id));
+
+      for (const v of s.vinos) {
+        if (!v || v.id == null || !v.nombre) continue;
+        if (yaExiste.has(String(v.id))) continue; // no se toca lo que no cambió
+        yaExiste.add(String(v.id)); // por si el mismo vino aparece repetido en s.vinos
+
+        // vino_id es texto: puede ser un id numérico del Sheet de 125cc (se
+        // guarda como string) o un UUID del catálogo externo de Aroma/La Vid.
+        // RETURNING id: se necesita para poder "deshacer" este guardado
+        // puntual después, sin tocar otras filas que compartan vino_id de
+        // una confirmación anterior.
+        const { rows } = await client.sql`
+          INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio, fuente)
+          VALUES (${String(v.id)}, ${v.nombre}, ${v.bodega || ''}, ${s.label}, ${s.inicio}, ${v.fuente || '125cc'})
+          RETURNING id
+        `;
+        idsGuardados.push(rows[0].id);
+      }
     }
   });
 
-  if (!idsGuardados.length) {
-    return res.status(200).json({ ok: true, vinosGuardados: 0, vinosOmitidos: omitidos, idsGuardados, sinCambios: true });
-  }
-
-  return res.status(200).json({ ok: true, vinosGuardados: idsGuardados.length, vinosOmitidos: omitidos, idsGuardados });
+  return res.status(200).json({
+    ok: true, vinosGuardados: idsGuardados.length, vinosBorrados: borrados, idsGuardados,
+    sinCambios: !idsGuardados.length && !borrados,
+  });
 }
 
 // Deshace un guardado reciente — borra filas puntuales de carta_historial
