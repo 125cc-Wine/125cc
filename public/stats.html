@@ -1939,11 +1939,16 @@ async function deleteWine(id){
 // ══════════════════════════════════════════════════════════════
 // CALENDARIO DE CARTA
 // ══════════════════════════════════════════════════════════════
-// Tramos de góndola — mismo corte y mismo orden de multiplicador que
-// fmtPrecio() en public/index.html (espejo también en
-// api/_lib/pos/productos-import.js). El precio por copa NUNCA se guarda,
-// así que acá solo se usa el tramo para agrupar los pools — el precio que
-// se muestra en cada tarjeta es el de góndola tal cual viene del Sheet.
+// Tramos de góndola — para $30.000 y menos, mismo corte que el multiplicador
+// de fmtPrecio() en public/index.html (espejo también en
+// api/_lib/pos/productos-import.js). Por arriba de $30.000 este agrupado se
+// desdobló en tres franjas ($30-50k / $50-70k / $70k+) sólo para visualizar
+// mejor la mezcla de precios al armar la quincena — fmtPrecio()/precioCopa()
+// siguen con un único multiplicador (1.25) para todo lo ≥$30.000, así que el
+// precio de copa NO tiene un corte distinto por franja acá arriba, sólo el
+// agrupado visual. El precio por copa NUNCA se guarda, así que acá el tramo
+// sólo se usa para agrupar los pools — el precio que se muestra en cada
+// tarjeta es el de góndola tal cual viene del Sheet.
 //
 // `color` es solo para identificar el tramo de un vistazo al armar una
 // quincena (pedido de Maio: ver la mezcla de precios mientras arrastrás,
@@ -1954,7 +1959,9 @@ const CARTA_TRAMOS = [
   { id:'t1', label:'Hasta $13.999',     test:p => p < 14000,               color:'#6FA8DC' },
   { id:'t2', label:'$14.000 – $17.999', test:p => p >= 14000 && p < 18000, color:'#93C47D' },
   { id:'t3', label:'$18.000 – $29.999', test:p => p >= 18000 && p < 30000, color:'#F1C232' },
-  { id:'t4', label:'$30.000 y más',     test:p => p >= 30000,              color:'#E06666' },
+  { id:'t4', label:'$30.000 – $49.999', test:p => p >= 30000 && p < 50000, color:'#E06666' },
+  { id:'t5', label:'$50.000 – $69.999', test:p => p >= 50000 && p < 70000, color:'#8E7CC3' },
+  { id:'t6', label:'$70.000 y más',     test:p => p >= 70000,              color:'#674EA7' },
 ];
 function cartaPrecioNum(w){ return parseFloat(String(w.precio||0).replace(/[^\d.]/g,'')) || 0; }
 function tramoDeVino(w){
