@@ -264,6 +264,8 @@
   .carta-mes-picker label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-dark-3)}
   .carta-mes-picker input[type=month]{background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:8px 12px;color:var(--ink-dark);font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
   .carta-mes-picker input[type=month]:focus{border-color:var(--accent)}
+  .carta-export-btn{background:transparent;border:1px solid var(--line-dark-strong);border-radius:var(--r-pill);padding:8px 14px;color:var(--ink-dark-2);font-size:11px;font-weight:500;letter-spacing:.05em;font-family:'DM Sans',sans-serif;cursor:pointer;transition:border-color var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
+  .carta-export-btn:hover{border-color:var(--madera);color:var(--madera)}
   .carta-lane-sub{font-size:11px;color:var(--ink-dark-3);margin-top:2px}
 
   .carta-alertas{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
@@ -595,6 +597,7 @@
         <div class="carta-mes-picker">
           <label for="cartaMesInput">Mes a planificar</label>
           <input type="month" id="cartaMesInput" onchange="cartaSetMes(this.value)">
+          <button type="button" class="carta-export-btn" onclick="exportarMesCSV()" title="Descarga un CSV con los vinos de este mes — se abre directo en Google Sheets con Archivo → Importar">⬇ Exportar este mes</button>
         </div>
         <div style="font-size:12px;color:var(--ink-dark-3);line-height:1.5;margin-top:8px">
           Arrastrá los vinos de los pools de abajo a Quincena 1 / Quincena 2 (14 espacios cada una).
@@ -1983,6 +1986,16 @@ function cartaPrecioCopa(w){
   else                     factor = 1.25;
   return Math.round(((botella / 6) * factor) / 500) * 500;
 }
+// Costo de la copa (no el precio de venta) — el costo de compra se estima
+// como el 50% del precio de góndola, repartido entre las 6 copas teóricas
+// por botella. Pedido puntual para el export de "Exportar este mes"; no se
+// usa en ningún otro lado de la carta (el precio que se cobra sigue siendo
+// cartaPrecioCopa()).
+function cartaCostoCopa(w){
+  const botella = cartaPrecioNum(w);
+  if(!botella) return 0;
+  return Math.round((botella * 0.5) / 6);
+}
 // Leyenda de colores — contenido fijo (no depende de datos cargados), se
 // pinta una sola vez al abrir la pestaña.
 function renderCartaTramoLegend(){
@@ -2905,6 +2918,48 @@ async function cartaCrearBorradorSheet(v){
   const data = await res.json();
   if(!data.ok) throw new Error(`"${v.nombre}": ${data.error || 'error desconocido'}`);
   return data;
+}
+
+// Descarga un CSV de los vinos del mes que se está viendo (cartaSemanas —
+// lo que está en pantalla, guardado o no) para abrir en Google Sheets con
+// Archivo → Importar. No pasa por el server — arma todo con lo que ya está
+// cargado en el cliente, no hace falta un endpoint nuevo.
+function csvCelda(v){
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+function exportarMesCSV(){
+  const vinos = cartaSemanas.flatMap(s => s.vinos.filter(Boolean).map(v => ({...v, _quincena: s.label})));
+  if(!vinos.length){ showToast('No hay vinos puestos en este mes para exportar', 'error'); return; }
+
+  // Orden pedido: agrupado por bodega, después varietal — precio/costo de
+  // copa quedan como columnas para que se pueda reordenar por esas en
+  // Sheets con un clic si hace falta otra vista.
+  vinos.sort((a,b) =>
+    (a.bodega||'').localeCompare(b.bodega||'') ||
+    (a.varietal||'').localeCompare(b.varietal||'') ||
+    a.nombre.localeCompare(b.nombre)
+  );
+
+  const headers = ['Bodega','Varietal','Vino','Quincena','Precio góndola','Valor de copa','Costo de copa'];
+  const filas = vinos.map(v => [
+    v.bodega||'', v.varietal||'', v.nombre, v._quincena,
+    cartaPrecioNum(v), cartaPrecioCopa(v), cartaCostoCopa(v),
+  ]);
+  const csv = [headers, ...filas].map(fila => fila.map(csvCelda).join(',')).join('\r\n');
+
+  // BOM al frente — sin esto Google Sheets/Excel interpretan los acentos
+  // (é, ñ) como caracteres corruptos al importar un CSV en UTF-8.
+  const blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `125cc-carta-${cartaMes}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast(`✓ CSV descargado — ${vinos.length} vinos`, 'success');
 }
 
 async function guardarCarta(){
