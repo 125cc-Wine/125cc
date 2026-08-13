@@ -1106,6 +1106,22 @@ function fetchFavoritos(){
   }).catch(()=>{});
 }
 
+// /api/obtener-vinos devuelve TODO lo que hay en el Sheet — incluye no sólo
+// el menú actual, sino también los borradores que el Calendario de Carta
+// (admin) crea automáticamente al planificar meses futuros (para poder
+// completarles nota/maridaje/imagen con anticipación, antes de que ese mes
+// arranque). Sin este filtro, el menú público mostraba esos borradores
+// mezclados con el menú real — mismo criterio que ya usa el checklist de
+// "ficha completa" del admin (cartaFichaFaltante en stats.html): sin nota,
+// sin imagen o sin maridaje, no se considera listo para mostrarle a un
+// cliente todavía.
+function vinoListoParaMenu(w){
+  return !!(w && w.nota && w.nota.trim() && w.imagen && w.imagen.trim() && Array.isArray(w.maridaje) && w.maridaje.length);
+}
+function filtrarVinosListos(vinos){
+  return (vinos||[]).filter(vinoListoParaMenu);
+}
+
 // ── Caché del cliente (1 minuto — alineado con el Cache-Control de /api/obtener-vinos) ──
 const CACHE_KEY='125cc_wines_v1';
 const CACHE_TTL=60*1000;
@@ -1163,12 +1179,15 @@ fetch('./vinos.json').then(r=>r.json()).then(config=>{
       initApp(config, null);
       // Actualizar en background
       fetch('/api/obtener-vinos').then(r=>r.json()).then(d=>{
-        if(d && d.vinos && d.vinos.length>0){setCachedWines(d.vinos);wines=d.vinos;buildMap();renderWineList();}
+        if(d && d.vinos && d.vinos.length>0){
+          const listos=filtrarVinosListos(d.vinos);
+          setCachedWines(listos);wines=listos;buildMap();renderWineList();
+        }
       }).catch(()=>{});
     } else {
       // Primera visita — esperar la API
       fetch('/api/obtener-vinos').then(r=>r.json()).catch(()=>null).then(d=>{
-        const apiWines=(d && d.vinos && d.vinos.length>0)?d.vinos:config.vinos;
+        const apiWines=(d && d.vinos && d.vinos.length>0)?filtrarVinosListos(d.vinos):filtrarVinosListos(config.vinos);
         wines=apiWines;
         initApp(config, apiWines);
       });
