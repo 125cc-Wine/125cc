@@ -2123,23 +2123,36 @@ let cartaPlanesPorMes = {};
 // para completar precio (necesario para el color de tramo); si el vino ya
 // no aparece en ningún lado, se muestra igual con nombre/bodega del
 // historial y cae en el primer tramo por no tener precio.
+//
+// Dedupea por vino_id ANTES de llenar los 14 casilleros — carta_historial
+// puede traer más de una fila para el mismo vino en la misma quincena
+// (quedaron 26 así de guardados repetidos de antes de que guardarHistorialCarta
+// fuera idempotente; se limpiaron a mano una vez, pero esto es la defensa
+// para que no vuelva a pasar). Sin este dedup, una quincena con menos de 14
+// vinos elegidos aparecía con TODOS los casilleros llenos igual —
+// "autocompletados" con el mismo vino repetido ocupando más de un lugar.
 function nuevoPlanMes(mesISO){
   const quincenas = [
     { label: 'Quincena 1', ...datosQuincena(mesISO,1), vinos: Array(14).fill(null) },
     { label: 'Quincena 2', ...datosQuincena(mesISO,2), vinos: Array(14).fill(null) },
   ];
   quincenas.forEach(q => {
+    const porVino = new Map(); // vino_id -> fila más reciente para esa quincena
     cartaHistorial
       .filter(h => String(h.semana_inicio).slice(0,10) === q.inicio)
-      .forEach((h, i) => {
-        if(i >= 14) return; // no debería pasar — el guardado ya limita a 14 por quincena
-        const w = cartaFindWine(h.vino_id);
-        q.vinos[i] = {
-          id: h.vino_id, nombre: h.vino_nombre, bodega: h.bodega || '',
-          precio: w ? w.precio : undefined, fuente: h.fuente || '125cc',
-          varietal: w?.varietal || '', region: w?.region || '', categoria: w?.categoria || '',
-        };
+      .forEach(h => {
+        const existente = porVino.get(h.vino_id);
+        if(!existente || new Date(h.confirmado_at) > new Date(existente.confirmado_at)) porVino.set(h.vino_id, h);
       });
+    Array.from(porVino.values()).forEach((h, i) => {
+      if(i >= 14) return; // no debería pasar — el guardado ya limita a 14 vinos ÚNICOS por quincena
+      const w = cartaFindWine(h.vino_id);
+      q.vinos[i] = {
+        id: h.vino_id, nombre: h.vino_nombre, bodega: h.bodega || '',
+        precio: w ? w.precio : undefined, fuente: h.fuente || '125cc',
+        varietal: w?.varietal || '', region: w?.region || '', categoria: w?.categoria || '',
+      };
+    });
   });
   return quincenas;
 }
@@ -2359,6 +2372,23 @@ function cartaAlertas(){
   const hoy = hoyISO();
   const grupos = agruparHistorialPorQuincena(cartaHistorial);
   const confirmada = inicio => grupos.some(g => g.inicio === inicio);
+
+  // Una quincena sólo tiene 14 espacios físicos, pero carta_historial es un
+  // log que sólo crece — nada "saca" un vino de ahí cuando lo reemplazás en
+  // una sesión posterior, entonces con el tiempo puede acumular más de 14
+  // vinos ÚNICOS confirmados para la misma quincena. El calendario (ver
+  // nuevoPlanMes) sólo puede mostrar 14 — el resto queda confirmado en el
+  // historial pero sin casillero visible, así que esto tiene que avisar en
+  // vez de quedar escondido en silencio.
+  grupos.forEach(g => {
+    const unicos = new Set(g.vinos.map(v => v.vino_id)).size;
+    if(unicos > 14){
+      alertas.push({
+        nivel: 'critico',
+        texto: `${esc(g.label)} de ${esc(nombreMesLabel(g.inicio.slice(0,7)))} (días ${esc(rangoDeQuincena(g.inicio))}) tiene ${unicos} vinos confirmados en el historial pero sólo entran 14 en el calendario — revisá "Ver historial completo" y decidí cuáles sacar.`,
+      });
+    }
+  });
 
   const actual = cartaQuincenaDeFecha(hoy);
   if(!confirmada(actual.inicio)){
