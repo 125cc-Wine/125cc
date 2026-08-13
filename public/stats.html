@@ -597,7 +597,7 @@
         <div class="carta-mes-picker">
           <label for="cartaMesInput">Mes a planificar</label>
           <input type="month" id="cartaMesInput" onchange="cartaSetMes(this.value)">
-          <button type="button" class="carta-export-btn" onclick="exportarMesCSV()" title="Descarga un CSV con los vinos de este mes — se abre directo en Google Sheets con Archivo → Importar">⬇ Exportar este mes</button>
+          <button type="button" class="carta-export-btn" onclick="exportarMesExcel()" title="Descarga un Excel con los vinos de este mes — se abre directo en Google Sheets con Archivo → Importar">⬇ Exportar este mes</button>
         </div>
         <div style="font-size:12px;color:var(--ink-dark-3);line-height:1.5;margin-top:8px">
           Arrastrá los vinos de los pools de abajo a Quincena 1 / Quincena 2 (14 espacios cada una).
@@ -2920,46 +2920,67 @@ async function cartaCrearBorradorSheet(v){
   return data;
 }
 
-// Descarga un CSV de los vinos del mes que se está viendo (cartaSemanas —
-// lo que está en pantalla, guardado o no) para abrir en Google Sheets con
-// Archivo → Importar. No pasa por el server — arma todo con lo que ya está
-// cargado en el cliente, no hace falta un endpoint nuevo.
-function csvCelda(v){
-  const s = String(v ?? '');
-  return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+// Descarga un .xlsx de los vinos del mes que se está viendo (cartaSemanas —
+// lo que está en pantalla, guardado o no) — abre directo en Excel o Google
+// Sheets con Archivo → Importar/Abrir. Arma todo con lo que ya está cargado
+// en el cliente, no hace falta un endpoint nuevo.
+//
+// SheetJS se carga on-demand desde CDN recién cuando se toca el botón, no
+// en cada carga de la página — es la única forma práctica de generar un
+// .xlsx real (con celdas numéricas de verdad, no texto) desde el navegador
+// sin sumar ~1MB a todas las visitas de /stats por una acción que se usa
+// de vez en cuando.
+let sheetJSCargando = null;
+function cargarSheetJS(){
+  if(window.XLSX) return Promise.resolve();
+  if(sheetJSCargando) return sheetJSCargando;
+  sheetJSCargando = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload = () => resolve();
+    s.onerror = () => { sheetJSCargando = null; reject(new Error('No se pudo cargar la librería de Excel (¿sin internet?).')); };
+    document.head.appendChild(s);
+  });
+  return sheetJSCargando;
 }
-function exportarMesCSV(){
+
+async function exportarMesExcel(){
   const vinos = cartaSemanas.flatMap(s => s.vinos.filter(Boolean).map(v => ({...v, _quincena: s.label})));
   if(!vinos.length){ showToast('No hay vinos puestos en este mes para exportar', 'error'); return; }
 
-  // Orden pedido: agrupado por bodega, después varietal — precio/costo de
-  // copa quedan como columnas para que se pueda reordenar por esas en
-  // Sheets con un clic si hace falta otra vista.
-  vinos.sort((a,b) =>
-    (a.bodega||'').localeCompare(b.bodega||'') ||
-    (a.varietal||'').localeCompare(b.varietal||'') ||
-    a.nombre.localeCompare(b.nombre)
-  );
+  const btn = document.querySelector('.carta-export-btn');
+  const original = btn?.textContent;
+  if(btn){ btn.disabled = true; btn.textContent = 'Preparando...'; }
+  try{
+    await cargarSheetJS();
 
-  const headers = ['Bodega','Varietal','Vino','Quincena','Precio góndola','Valor de copa','Costo de copa'];
-  const filas = vinos.map(v => [
-    v.bodega||'', v.varietal||'', v.nombre, v._quincena,
-    cartaPrecioNum(v), cartaPrecioCopa(v), cartaCostoCopa(v),
-  ]);
-  const csv = [headers, ...filas].map(fila => fila.map(csvCelda).join(',')).join('\r\n');
+    // Orden pedido: agrupado por bodega, después varietal — precio/costo de
+    // copa quedan como columnas para reordenar por esas en Sheets/Excel con
+    // un clic si hace falta otra vista.
+    vinos.sort((a,b) =>
+      (a.bodega||'').localeCompare(b.bodega||'') ||
+      (a.varietal||'').localeCompare(b.varietal||'') ||
+      a.nombre.localeCompare(b.nombre)
+    );
 
-  // BOM al frente — sin esto Google Sheets/Excel interpretan los acentos
-  // (é, ñ) como caracteres corruptos al importar un CSV en UTF-8.
-  const blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `125cc-carta-${cartaMes}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-  showToast(`✓ CSV descargado — ${vinos.length} vinos`, 'success');
+    const headers = ['Bodega','Varietal','Vino','Quincena','Precio góndola','Valor de copa','Costo de copa'];
+    const filas = vinos.map(v => [
+      v.bodega||'', v.varietal||'', v.nombre, v._quincena,
+      cartaPrecioNum(v), cartaPrecioCopa(v), cartaCostoCopa(v),
+    ]);
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...filas]);
+    ws['!cols'] = [{wch:22},{wch:18},{wch:34},{wch:11},{wch:14},{wch:13},{wch:13}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, nombreMesLabel(cartaMes).slice(0,31)); // 31 = límite de Excel para nombre de hoja
+    XLSX.writeFile(wb, `125cc-carta-${cartaMes}.xlsx`);
+
+    showToast(`✓ Excel descargado — ${vinos.length} vinos`, 'success');
+  } catch(e){
+    showToast(e.message || 'Error generando el Excel', 'error');
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = original; }
+  }
 }
 
 async function guardarCarta(){
