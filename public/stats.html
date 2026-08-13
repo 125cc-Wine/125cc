@@ -597,7 +597,8 @@
         <div class="carta-mes-picker">
           <label for="cartaMesInput">Mes a planificar</label>
           <input type="month" id="cartaMesInput" onchange="cartaSetMes(this.value)">
-          <button type="button" class="carta-export-btn" onclick="exportarMesExcel()" title="Descarga un Excel con los vinos de este mes — se abre directo en Google Sheets con Archivo → Importar">⬇ Exportar este mes</button>
+          <button type="button" class="carta-export-btn" id="exportarMesBtn" onclick="exportarMesExcel()" title="Descarga un Excel con los vinos de este mes — se abre directo en Google Sheets con Archivo → Importar">⬇ Exportar este mes</button>
+          <button type="button" class="carta-export-btn" id="exportarTodoBtn" onclick="exportarTodoExcel()" title="Descarga un solo Excel con una pestaña por cada mes que tenga carta confirmada">⬇ Exportar todos los meses</button>
         </div>
         <div style="font-size:12px;color:var(--ink-dark-3);line-height:1.5;margin-top:8px">
           Arrastrá los vinos de los pools de abajo a Quincena 1 / Quincena 2 (14 espacios cada una).
@@ -2124,6 +2125,22 @@ function cartaFindWine(id){
     || cartaManuales.find(w => String(w.id) === sid);
 }
 
+// Para una fila de carta_historial: intenta cartaFindWine(vino_id) primero
+// (rápido, funciona siempre que catalogoExterno haya cargado bien), y si no
+// encuentra nada cae a buscar por NOMBRE normalizado dentro de cartaWines
+// (el Sheet, que siempre está cargado). Hace falta este segundo intento
+// porque un vino del catálogo externo guarda en el historial su UUID
+// original — si el fetch a Supabase falló o tardó (ver aviso en
+// loadCartaTab), cartaFindWine no lo va a encontrar ahí aunque su borrador
+// ya exista en el Sheet con nombre y precio completos. Usan esto
+// nuevoPlanMes() (hidratación del calendario) y los exports a Excel — sin
+// este fallback, un vino así aparecía con precio $0 y tramo "Hasta
+// $13.999" aunque en realidad tuviera un precio real cargado.
+function cartaResolverHistorial(h){
+  return cartaFindWine(h.vino_id)
+    || cartaWines.find(w => normalizarTexto(w.nombre) === normalizarTexto(h.vino_nombre));
+}
+
 let cartaPlanesPorMes = {};
 
 // Si ese mes ya tiene quincenas confirmadas en carta_historial, arranca el
@@ -2159,7 +2176,7 @@ function nuevoPlanMes(mesISO){
       });
     Array.from(porVino.values()).forEach((h, i) => {
       if(i >= 14) return; // no debería pasar — el guardado ya limita a 14 vinos ÚNICOS por quincena
-      const w = cartaFindWine(h.vino_id);
+      const w = cartaResolverHistorial(h);
       q.vinos[i] = {
         id: h.vino_id, nombre: h.vino_nombre, bodega: h.bodega || '',
         precio: w ? w.precio : undefined, fuente: h.fuente || '125cc',
@@ -2944,38 +2961,107 @@ function cargarSheetJS(){
   return sheetJSCargando;
 }
 
+// Rentabilidad = margen bruto por copa, (venta - costo) / venta — no
+// markup sobre el costo. Mismo par de funciones (cartaPrecioCopa/
+// cartaCostoCopa) que ya se usan en el resto de la carta, un decimal.
+function cartaRentabilidadPct(w){
+  const venta = cartaPrecioCopa(w);
+  if(!venta) return 0;
+  return Math.round(((venta - cartaCostoCopa(w)) / venta) * 1000) / 10;
+}
+const EXPORT_HEADERS = ['Bodega','Varietal','Vino','Quincena','Precio góndola','Valor de copa','Costo de copa','Rentabilidad %'];
+const EXPORT_COLS = [{wch:22},{wch:18},{wch:34},{wch:11},{wch:14},{wch:13},{wch:13},{wch:14}];
+function ordenarVinosExport(vinos){
+  return vinos.sort((a,b) =>
+    (a.bodega||'').localeCompare(b.bodega||'') ||
+    (a.varietal||'').localeCompare(b.varietal||'') ||
+    a.nombre.localeCompare(b.nombre)
+  );
+}
+function filaExport(v){
+  return [
+    v.bodega||'', v.varietal||'', v.nombre, v._quincena,
+    cartaPrecioNum(v), cartaPrecioCopa(v), cartaCostoCopa(v), cartaRentabilidadPct(v),
+  ];
+}
+function hojaExport(vinos, tituloHoja, wb){
+  const ws = XLSX.utils.aoa_to_sheet([EXPORT_HEADERS, ...ordenarVinosExport(vinos).map(filaExport)]);
+  ws['!cols'] = EXPORT_COLS;
+  XLSX.utils.book_append_sheet(wb, ws, tituloHoja.slice(0,31)); // 31 = límite de Excel para nombre de hoja
+}
+
 async function exportarMesExcel(){
   const vinos = cartaSemanas.flatMap(s => s.vinos.filter(Boolean).map(v => ({...v, _quincena: s.label})));
   if(!vinos.length){ showToast('No hay vinos puestos en este mes para exportar', 'error'); return; }
 
-  const btn = document.querySelector('.carta-export-btn');
+  const btn = document.getElementById('exportarMesBtn');
+  const original = btn?.textContent;
+  if(btn){ btn.disabled = true; btn.textContent = 'Preparando...'; }
+  try{
+    await cargarSheetJS();
+    const wb = XLSX.utils.book_new();
+    hojaExport(vinos, nombreMesLabel(cartaMes), wb);
+    XLSX.writeFile(wb, `125cc-carta-${cartaMes}.xlsx`);
+    showToast(`✓ Excel descargado — ${vinos.length} vinos`, 'success');
+  } catch(e){
+    showToast(e.message || 'Error generando el Excel', 'error');
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = original; }
+  }
+}
+
+// Un solo .xlsx con una pestaña por cada mes que tenga al menos una
+// quincena confirmada — usa el historial COMPLETO (?todo=1, sin la ventana
+// de 12 meses que trae el fetch normal de la pestaña), así no se pierden
+// meses viejos que ya salieron de esa ventana. Reusa cartaHistorialCompleto
+// si la "Vista de historial" ya lo cargó en esta sesión, para no pedirlo
+// dos veces.
+async function exportarTodoExcel(){
+  const btn = document.getElementById('exportarTodoBtn');
   const original = btn?.textContent;
   if(btn){ btn.disabled = true; btn.textContent = 'Preparando...'; }
   try{
     await cargarSheetJS();
 
-    // Orden pedido: agrupado por bodega, después varietal — precio/costo de
-    // copa quedan como columnas para reordenar por esas en Sheets/Excel con
-    // un clic si hace falta otra vista.
-    vinos.sort((a,b) =>
-      (a.bodega||'').localeCompare(b.bodega||'') ||
-      (a.varietal||'').localeCompare(b.varietal||'') ||
-      a.nombre.localeCompare(b.nombre)
-    );
+    if(cartaHistorialCompleto === null){
+      const res = await fetch('/api/actualizar-vino?historial=1&todo=1', {headers: adminAuthHeader()});
+      handleAuthResponse(res);
+      const data = await res.json();
+      cartaHistorialCompleto = data.historial || [];
+    }
+    if(!cartaHistorialCompleto.length){
+      showToast('Todavía no se confirmó ninguna carta', 'error');
+      return;
+    }
 
-    const headers = ['Bodega','Varietal','Vino','Quincena','Precio góndola','Valor de copa','Costo de copa'];
-    const filas = vinos.map(v => [
-      v.bodega||'', v.varietal||'', v.nombre, v._quincena,
-      cartaPrecioNum(v), cartaPrecioCopa(v), cartaCostoCopa(v),
-    ]);
+    // Agrupa por mes (YYYY-MM de semana_inicio) y, dentro de cada mes,
+    // dedupea por vino_id quedándose con la fila más reciente — mismo
+    // criterio que nuevoPlanMes(), por si quedara alguna repetición vieja
+    // en el historial de meses que no se hayan limpiado a mano.
+    const porMes = new Map();
+    cartaHistorialCompleto.forEach(h => {
+      const inicio = String(h.semana_inicio).slice(0,10);
+      const mes = inicio.slice(0,7);
+      if(!porMes.has(mes)) porMes.set(mes, new Map());
+      const porVino = porMes.get(mes);
+      const key = `${h.semana_label}|${h.vino_id}`;
+      const existente = porVino.get(key);
+      if(!existente || new Date(h.confirmado_at) > new Date(existente.confirmado_at)){
+        const w = cartaResolverHistorial(h);
+        porVino.set(key, {
+          id: h.vino_id, nombre: h.vino_nombre, bodega: h.bodega || '',
+          precio: w ? w.precio : undefined, varietal: w?.varietal || '',
+          _quincena: h.semana_label, confirmado_at: h.confirmado_at,
+        });
+      }
+    });
 
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...filas]);
-    ws['!cols'] = [{wch:22},{wch:18},{wch:34},{wch:11},{wch:14},{wch:13},{wch:13}];
+    const meses = Array.from(porMes.keys()).sort();
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, nombreMesLabel(cartaMes).slice(0,31)); // 31 = límite de Excel para nombre de hoja
-    XLSX.writeFile(wb, `125cc-carta-${cartaMes}.xlsx`);
+    meses.forEach(mes => hojaExport(Array.from(porMes.get(mes).values()), nombreMesLabel(mes), wb));
+    XLSX.writeFile(wb, '125cc-carta-todos-los-meses.xlsx');
 
-    showToast(`✓ Excel descargado — ${vinos.length} vinos`, 'success');
+    showToast(`✓ Excel descargado — ${meses.length} mes${meses.length===1?'':'es'}`, 'success');
   } catch(e){
     showToast(e.message || 'Error generando el Excel', 'error');
   } finally {
