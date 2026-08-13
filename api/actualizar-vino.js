@@ -86,6 +86,7 @@ async function guardarHistorialCarta(req, res, semanas) {
   // confirmados (el nuevo sumado, el viejo todavía bloqueando la regla de
   // no-repetición de 12 meses aunque ya no se estuviera usando).
   const idsGuardados = [];
+  const filasBorradas = []; // snapshot de lo que se borra, para poder restaurarlo con "Deshacer"
   let borrados = 0;
   await withTransaction(async (client) => {
     for (const s of semanas) {
@@ -97,17 +98,25 @@ async function guardarHistorialCarta(req, res, semanas) {
       // (idsActuales=[]) borra toda la quincena — guardar sin nada puesto es
       // una forma válida de vaciarla del todo (el guardado global sigue
       // exigiendo que ALGUNA quincena del request tenga algo, ver más arriba).
+      // RETURNING: guarda una copia de lo borrado — "Deshacer" la usa para
+      // reinsertarlo si te equivocaste (ver deshacerHistorialCarta).
       const delResult = idsActuales.length
         ? await client.sql`
             DELETE FROM carta_historial
             WHERE semana_inicio = ${s.inicio} AND semana_label = ${s.label}
               AND vino_id != ALL(${idsActuales}::text[])
+            RETURNING vino_id, vino_nombre, bodega, fuente
           `
         : await client.sql`
             DELETE FROM carta_historial
             WHERE semana_inicio = ${s.inicio} AND semana_label = ${s.label}
+            RETURNING vino_id, vino_nombre, bodega, fuente
           `;
       borrados += delResult.rowCount;
+      delResult.rows.forEach(r => filasBorradas.push({
+        vino_id: r.vino_id, vino_nombre: r.vino_nombre, bodega: r.bodega, fuente: r.fuente,
+        semana_label: s.label, semana_inicio: s.inicio,
+      }));
 
       if (!idsActuales.length) continue;
 
@@ -137,32 +146,63 @@ async function guardarHistorialCarta(req, res, semanas) {
     }
   });
 
+  // borradoEn: sello de tiempo del SERVER (no lo manda el cliente a ciegas)
+  // para que "Deshacer" pueda validar la ventana de 15 min también del lado
+  // de la restauración de bajas — ver deshacerHistorialCarta.
   return res.status(200).json({
     ok: true, vinosGuardados: idsGuardados.length, vinosBorrados: borrados, idsGuardados,
+    filasBorradas, borradoEn: new Date().toISOString(),
     sinCambios: !idsGuardados.length && !borrados,
   });
 }
 
-// Deshace un guardado reciente — borra filas puntuales de carta_historial
-// por su id de fila (no por vino_id, que podría repetirse en confirmaciones
-// viejas). Ventana de 15 minutos desde que se confirmó: esto es "epa, me
-// equivoqué recién", no un borrador general del historial — pasado ese
-// margen, corregirlo es una operación manual a propósito.
+// Deshace un guardado reciente. Dos partes independientes, se puede pedir
+// cualquiera de las dos o las dos juntas:
+//  - `ids`: borra esas filas de carta_historial por su id (lo que se acaba
+//    de INSERTAR) — como antes.
+//  - `restaurar` + `borradoEn`: reinserta filas que ese mismo guardado había
+//    BORRADO (un vino que sacaste de un casillero sin querer). `borradoEn`
+//    es el timestamp que devolvió guardarHistorialCarta en ese momento —
+//    se valida server-side contra la ventana de 15 min, no se confía en la
+//    hora del cliente.
+// Ventana de 15 minutos desde que pasó: esto es "epa, me equivoqué recién",
+// no un borrador general del historial — pasado ese margen, corregirlo es
+// una operación manual a propósito.
 const VENTANA_DESHACER_MIN = 15;
-async function deshacerHistorialCarta(req, res, ids) {
-  if (!Array.isArray(ids) || !ids.length) {
-    return res.status(400).json({ error: "Falta 'ids' (array)." });
+async function deshacerHistorialCarta(req, res, { ids, restaurar, borradoEn }) {
+  const idsNum = Array.isArray(ids) ? ids.map(Number).filter(Number.isInteger) : [];
+  const filas  = Array.isArray(restaurar) ? restaurar : [];
+  if (!idsNum.length && !filas.length) {
+    return res.status(400).json({ error: "Nada para deshacer." });
   }
-  const idsNum = ids.map(Number).filter(Number.isInteger);
-  if (!idsNum.length) {
-    return res.status(400).json({ error: "'ids' inválido." });
+
+  let filasBorradas = 0;
+  if (idsNum.length) {
+    const { rowCount } = await sql`
+      DELETE FROM carta_historial
+      WHERE id = ANY(${idsNum})
+        AND confirmado_at > now() - ${VENTANA_DESHACER_MIN + ' minutes'}::interval
+    `;
+    filasBorradas = rowCount;
   }
-  const { rowCount } = await sql`
-    DELETE FROM carta_historial
-    WHERE id = ANY(${idsNum})
-      AND confirmado_at > now() - ${VENTANA_DESHACER_MIN + ' minutes'}::interval
-  `;
-  return res.status(200).json({ ok: true, filasBorradas: rowCount });
+
+  let filasRestauradas = 0;
+  const dentroDeVentana = borradoEn
+    && (Date.now() - new Date(borradoEn).getTime()) <= VENTANA_DESHACER_MIN * 60 * 1000;
+  if (filas.length && dentroDeVentana) {
+    await withTransaction(async (client) => {
+      for (const f of filas) {
+        if (!f || f.vino_id == null || !f.vino_nombre || !f.semana_label || !/^\d{4}-\d{2}-\d{2}$/.test(f.semana_inicio || '')) continue;
+        await client.sql`
+          INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio, fuente)
+          VALUES (${String(f.vino_id)}, ${f.vino_nombre}, ${f.bodega || ''}, ${f.semana_label}, ${f.semana_inicio}, ${f.fuente || '125cc'})
+        `;
+        filasRestauradas++;
+      }
+    });
+  }
+
+  return res.status(200).json({ ok: true, filasBorradas, filasRestauradas });
 }
 
 // Catálogo externo de Aroma de Vid / La Vid Consultora (repo
@@ -418,7 +458,7 @@ module.exports = async function handler(req, res) {
 
   if (req.body && req.body.historialDeshacer) {
     try {
-      return await deshacerHistorialCarta(req, res, req.body.ids);
+      return await deshacerHistorialCarta(req, res, req.body);
     } catch (err) {
       console.error("actualizar-vino (historial deshacer) error:", err);
       return res.status(500).json({ error: "Error interno.", detail: err.message });

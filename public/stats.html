@@ -2462,38 +2462,50 @@ function renderCartaBanner(){
 // Se puede deshacer mientras esta pestaña siga abierta y no haya pasado la
 // ventana de 15 minutos que exige el server (VENTANA_DESHACER_MIN en
 // actualizar-vino.js) — pasado eso, corregirlo es a mano en la DB a propósito.
-let cartaUltimoGuardado = null; // { ids, total } | null
+let cartaUltimoGuardado = null; // { ids, filasBorradas, borradoEn, total, totalBorrados } | null
 
 function renderCartaUndoBar(){
   const el = document.getElementById('cartaUndoBar');
   if(!el) return;
   if(!cartaUltimoGuardado){ el.style.display = 'none'; el.innerHTML = ''; return; }
   el.style.display = '';
+  const { total, totalBorrados } = cartaUltimoGuardado;
+  const partes = [];
+  if(total) partes.push(`guardaste ${total} vino${total===1?'':'s'}`);
+  if(totalBorrados) partes.push(`sacaste ${totalBorrados} vino${totalBorrados===1?'':'s'}`);
   el.innerHTML = `
-    <span>Guardaste ${cartaUltimoGuardado.total} vino${cartaUltimoGuardado.total===1?'':'s'} recién.</span>
+    <span>${partes.join(' y ')} recién.</span>
     <button class="carta-undo-btn" onclick="deshacerUltimoGuardado()">Deshacer</button>
   `;
 }
 
+// Deshace el último "Guardar carta": borra lo que se insertó (ids) Y
+// restaura lo que se borró (filasBorradas) — sacar un vino de un casillero
+// por error y guardar ya no es irreversible, tiene el mismo margen de 15
+// min que deshacer una alta. borradoEn lo valida el server, no confiamos en
+// el reloj del cliente.
 async function deshacerUltimoGuardado(){
   if(!cartaUltimoGuardado) return;
-  const { ids, total } = cartaUltimoGuardado;
+  const { ids, filasBorradas, borradoEn } = cartaUltimoGuardado;
   try{
     const res = await fetch('/api/actualizar-vino', {
       method: 'POST',
       headers: {'Content-Type':'application/json', ...adminAuthHeader()},
-      body: JSON.stringify({ historialDeshacer: true, ids }),
+      body: JSON.stringify({ historialDeshacer: true, ids, restaurar: filasBorradas, borradoEn }),
     });
     handleAuthResponse(res);
     const data = await res.json();
     if(!data.ok){ showToast('Error: '+(data.error||''), 'error'); return; }
-    if(!data.filasBorradas){
+    if(!data.filasBorradas && !data.filasRestauradas){
       showToast('Ya no se puede deshacer (pasaron más de 15 minutos)', 'error');
       cartaUltimoGuardado = null;
       renderCartaUndoBar();
       return;
     }
-    showToast(`✓ Deshecho — ${data.filasBorradas} vino${data.filasBorradas===1?'':'s'} sacado${data.filasBorradas===1?'':'s'} del historial`, 'success');
+    const partes = [];
+    if(data.filasBorradas) partes.push(`${data.filasBorradas} vino${data.filasBorradas===1?'':'s'} sacado${data.filasBorradas===1?'':'s'}`);
+    if(data.filasRestauradas) partes.push(`${data.filasRestauradas} restaurado${data.filasRestauradas===1?'':'s'}`);
+    showToast(`✓ Deshecho — ${partes.join(', ')}`, 'success');
     cartaUltimoGuardado = null;
     renderCartaUndoBar();
     const histRes = await fetch('/api/actualizar-vino?historial=1', {headers: adminAuthHeader()});
@@ -2501,6 +2513,12 @@ async function deshacerUltimoGuardado(){
     const histData = await histRes.json();
     cartaHistorial = histData.historial || [];
     cartaHistorialCompleto = null;
+    // Recién ahora cartaHistorial refleja el estado post-deshacer — sin esto
+    // el calendario seguía mostrando lo que se acababa de deshacer hasta
+    // cambiar de mes o recargar (mismo motivo que en guardarCarta/loadCartaTab).
+    delete cartaPlanesPorMes[cartaMes];
+    cartaSemanas = planDelMes(cartaMes);
+    computeCartaDuplicados();
     renderCartaPools();
     renderCatalogoExterno();
     renderCartaManualPool();
@@ -2932,9 +2950,12 @@ async function guardarCarta(){
         msg = `✓ Carta guardada — ${partes.join(', ')}${msgBorradores}`;
       }
       showToast(msg, 'success');
-      // Sin filas nuevas no hay nada que deshacer — no tiene sentido ofrecer
-      // el botón (el server igual rechazaría un deshacer con ids vacío).
-      cartaUltimoGuardado = nuevos ? { ids: data.idsGuardados || [], total: nuevos } : null;
+      // Sin altas ni bajas no hay nada que deshacer — no tiene sentido
+      // ofrecer el botón (el server igual rechazaría un deshacer vacío).
+      cartaUltimoGuardado = (nuevos || borrados) ? {
+        ids: data.idsGuardados || [], filasBorradas: data.filasBorradas || [], borradoEn: data.borradoEn,
+        total: nuevos, totalBorrados: borrados,
+      } : null;
       renderCartaUndoBar();
 
       // Refresca el Sheet en memoria si se crearon borradores — así "Mi
