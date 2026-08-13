@@ -2,6 +2,7 @@
 // Lee la hoja "Vinos" del Google Sheet y la devuelve como JSON al menú
 
 const { getReadOnlyToken } = require('./_lib/google-auth');
+const { normalizarBodega, leerBodegas } = require('./_lib/bodegas');
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -24,6 +25,13 @@ module.exports = async function handler(req, res) {
   try {
     const token = await getReadOnlyToken(GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY);
 
+    // ?bodegas=1 — lo usa el admin (panel "Bodegas") para listar/editar el
+    // catálogo centralizado. El menú público nunca manda este flag.
+    if (req.query.bodegas === '1') {
+      const { bodegas } = await leerBodegas(SHEET_ID, token);
+      return res.status(200).json({ bodegas });
+    }
+
     // Leer hoja Vinos — A:V incluye las 22 columnas hasta perfil_taninos
     const sheetRes = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:V500`,
@@ -41,6 +49,13 @@ module.exports = async function handler(req, res) {
     if (rows.length < 2) {
       return res.status(200).json({ vinos: [] });
     }
+
+    // Catálogo centralizado de bodegas (pestaña "Bodegas") — bodega_info de acá
+    // pisa la del propio vino cuando el nombre matchea (normalizado). Si una
+    // bodega todavía no está migrada, el vino conserva su bodega_info propia
+    // como fallback — así nunca desaparece texto por no estar todavía en la
+    // pestaña nueva.
+    const { porNombre: bodegaInfoPorNombre } = await leerBodegas(SHEET_ID, token);
 
     // Fila 0 = encabezados, filas 1+ = datos
     const headers = rows[0].map(h => h.trim().toLowerCase()
@@ -73,7 +88,7 @@ module.exports = async function handler(req, res) {
           maridaje:    obj.maridaje
             ? obj.maridaje.split(",").map(s => s.trim()).filter(Boolean)
             : [],
-          bodega_info: obj.bodega_info   || "",
+          bodega_info: bodegaInfoPorNombre.get(normalizarBodega(obj.bodega)) || obj.bodega_info || "",
           tienda_url:  obj.tienda_url    || "",
           imagen:      obj.imagen        || "",
           perfil: {

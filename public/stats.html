@@ -433,6 +433,7 @@
     <button class="dash-tab active" onclick="switchTab('stats')">Estadísticas</button>
     <button class="dash-tab" onclick="switchTab('mapa')">Editor de Mapa</button>
     <button class="dash-tab" onclick="switchTab('vinos')">Editor de Vinos</button>
+    <button class="dash-tab" onclick="switchTab('bodegas')">Bodegas</button>
     <button class="dash-tab" onclick="switchTab('carta')">Calendario de Carta</button>
   </div>
 
@@ -559,6 +560,29 @@
           <div class="no-selection-icon">🍷</div>
           <div style="font-size:14px;font-weight:500;color:var(--ink-dark);margin-bottom:8px">Seleccioná un vino</div>
           <div style="font-size:12px;color:var(--ink-dark-3)">Hacé click en cualquier vino de la lista para editarlo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL BODEGAS — catálogo centralizado: nombre + descripción una sola vez
+       por bodega, en vez de repetida en cada vino que la usa. -->
+  <div class="dash-panel" id="panel-bodegas">
+    <div class="wine-editor-grid">
+      <div class="wine-list-sidebar">
+        <div class="wine-list-search">
+          <input type="text" placeholder="Buscar bodega..." oninput="filterBodegasList()" id="bodegaSearchInput">
+        </div>
+        <div class="wine-list-items" id="bodegaListItems">
+          <div style="padding:20px;text-align:center;color:var(--ink-dark-3);font-size:12px">Cargando...</div>
+        </div>
+        <button class="add-wine-btn" onclick="newBodega()">+ Agregar bodega</button>
+      </div>
+      <div class="wine-edit-form" id="bodegaEditForm">
+        <div class="no-selection">
+          <div class="no-selection-icon">🏛️</div>
+          <div style="font-size:14px;font-weight:500;color:var(--ink-dark);margin-bottom:8px">Seleccioná una bodega</div>
+          <div style="font-size:12px;color:var(--ink-dark-3)">Hacé click en cualquier bodega de la lista para editarla</div>
         </div>
       </div>
     </div>
@@ -1226,7 +1250,168 @@ function switchTab(tab, btnEl){
   if(tab==='stats' && wines.length===0) loadStats();
   if(tab==='mapa' && wines.length===0) loadWinesForMap();
   if(tab==='vinos' && !editorLoaded) loadWinesForEditor();
+  if(tab==='bodegas' && !bodegasPanelLoaded) loadBodegasTab();
   if(tab==='carta' && !cartaLoaded) loadCartaTab();
+}
+
+// ══════════════════════════════
+// BODEGAS — catálogo centralizado (pestaña "Bodegas" del Sheet). Antes cada
+// vino tenía su propio texto "sobre la bodega" repetido; ahora vive una sola
+// vez acá y el Editor de Vinos sólo referencia el nombre. Mismo criterio de
+// normalización que usa el backend (api/_lib/bodegas.js) — tiene que
+// coincidir letra por letra o el match/preview queda desalineado.
+// ══════════════════════════════
+let bodegasList = [];
+let bodegasFetched = false;
+let bodegasPanelLoaded = false;
+let editingBodegaId = null;
+
+function normalizarBodegaJS(s){
+  return (s||'').toString().toLowerCase().trim()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ');
+}
+
+async function fetchBodegasList(force=false){
+  if(bodegasFetched && !force) return bodegasList;
+  try{
+    const res = await fetch('/api/obtener-vinos?bodegas=1');
+    const data = await res.json();
+    bodegasList = data.bodegas || [];
+    bodegasFetched = true;
+  }catch(e){ /* silencioso — el datalist/preview del editor de vinos simplemente queda sin sugerencias */ }
+  return bodegasList;
+}
+
+async function loadBodegasTab(){
+  if(!editorLoaded) await loadWinesForEditor(); // necesita editorWines para el conteo "N vinos" de cada bodega
+  await fetchBodegasList(true);
+  bodegasPanelLoaded = true;
+  renderBodegasSidebar(bodegasList);
+}
+
+function contarVinosPorBodega(nombre){
+  const key = normalizarBodegaJS(nombre);
+  return editorWines.filter(w => normalizarBodegaJS(w.bodega) === key).length;
+}
+
+function renderBodegasSidebar(list){
+  const el = document.getElementById('bodegaListItems');
+  if(!list.length){
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--ink-dark-3);font-size:12px">No hay bodegas cargadas todavía</div>';
+    return;
+  }
+  el.innerHTML = list.map(b => {
+    const n = contarVinosPorBodega(b.nombre);
+    return `<div class="wine-list-item${b.id===editingBodegaId?' selected':''}" onclick="editBodega(${b.id})">
+      <div class="wine-list-item-name">${esc(b.nombre)}</div>
+      <div class="wine-list-item-sub">${n} vino${n===1?'':'s'} en la carta</div>
+    </div>`;
+  }).join('');
+}
+
+function filterBodegasList(){
+  const q = (document.getElementById('bodegaSearchInput')?.value || '').toLowerCase();
+  const filtered = !q ? bodegasList : bodegasList.filter(b => b.nombre.toLowerCase().includes(q));
+  renderBodegasSidebar(filtered);
+}
+
+function newBodega(){
+  editingBodegaId = null;
+  renderBodegasSidebar(bodegasList);
+  renderBodegaForm({id:null, nombre:'', bodega_info:''}, true);
+}
+
+function editBodega(id){
+  const b = bodegasList.find(x=>x.id===id);
+  if(!b) return;
+  editingBodegaId = id;
+  renderBodegasSidebar(bodegasList);
+  renderBodegaForm(b, false);
+}
+
+function renderBodegaForm(b, isNew){
+  const usadaPor = isNew ? [] : editorWines.filter(w => normalizarBodegaJS(w.bodega) === normalizarBodegaJS(b.nombre));
+  document.getElementById('bodegaEditForm').innerHTML = `
+    <h3>${isNew ? 'Nueva bodega' : (esc(b.nombre) || 'Editar bodega')}</h3>
+    <div class="form-full">
+      <label class="form-label">Nombre *</label>
+      <input class="form-input" id="bf-nombre" value="${esc(b.nombre)}" placeholder="Ej: Reinero">
+    </div>
+    <div class="form-full">
+      <label class="form-label">Sobre la bodega y el terruño</label>
+      <textarea class="form-input" id="bf-info" placeholder="Historia de la bodega, filosofía, terruño...">${esc(b.bodega_info||'')}</textarea>
+    </div>
+    ${!isNew ? `<div class="form-full" style="font-size:11px;color:var(--ink-dark-3)">
+      ${usadaPor.length ? `Vinos que usan esta bodega: ${usadaPor.map(w=>esc(w.nombre)).join(', ')}` : 'Ningún vino usa esta bodega todavía.'}
+    </div>` : ''}
+    <div class="form-actions">
+      <button class="btn-save" onclick="saveBodega(${b.id}, ${isNew})">${isNew ? '✦ Crear bodega' : '✦ Guardar cambios'}</button>
+      ${!isNew ? `<button class="btn-delete" onclick="deleteBodega(${b.id})">Eliminar</button>` : ''}
+    </div>`;
+}
+
+async function saveBodega(id, isNew){
+  const nombre = document.getElementById('bf-nombre').value.trim();
+  const bodega_info = document.getElementById('bf-info').value.trim();
+  if(!nombre){ showToast('El nombre es obligatorio','error'); return; }
+
+  showToast('Guardando...');
+  try{
+    const payload = isNew ? {nombre, bodega_info} : {id, nombre, bodega_info};
+    const res = await fetch('/api/actualizar-vino', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', ...adminAuthHeader()},
+      body: JSON.stringify({ bodegaGuardar: payload })
+    });
+    handleAuthResponse(res);
+    const result = await res.json();
+    if(result.ok){
+      await fetchBodegasList(true);
+      editingBodegaId = result.id;
+      if(result.vinosActualizados){
+        // El rename en cascada tocó Vinos!bodega — refresca lo que ya está cargado en memoria.
+        editorLoaded = false;
+        await loadWinesForEditor();
+        showToast(`✓ Bodega guardada — se actualizó en ${result.vinosActualizados} vino${result.vinosActualizados===1?'':'s'}`, 'success');
+      } else {
+        showToast('✓ Bodega guardada', 'success');
+      }
+      renderBodegasSidebar(bodegasList);
+      editBodega(result.id);
+    } else {
+      showToast('Error: '+(result.error||''), 'error');
+    }
+  }catch(e){
+    showToast('Error de conexión','error');
+  }
+}
+
+async function deleteBodega(id){
+  if(!confirm('¿Eliminar esta bodega? Esta acción no se puede deshacer.')) return;
+  showToast('Eliminando...');
+  try{
+    const res = await fetch('/api/actualizar-vino', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', ...adminAuthHeader()},
+      body: JSON.stringify({ bodegaEliminarId: id })
+    });
+    handleAuthResponse(res);
+    const result = await res.json();
+    if(result.ok){
+      bodegasList = bodegasList.filter(x=>x.id!==id);
+      editingBodegaId = null;
+      renderBodegasSidebar(bodegasList);
+      document.getElementById('bodegaEditForm').innerHTML = `<div class="no-selection">
+        <div class="no-selection-icon">🏛️</div>
+        <div style="font-size:14px;font-weight:500;color:var(--ink-dark);margin-bottom:8px">Bodega eliminada</div>
+      </div>`;
+      showToast('✓ Bodega eliminada', 'success');
+    } else {
+      showToast(result.error || 'No se pudo eliminar', 'error');
+    }
+  }catch(e){
+    showToast('Error de conexión','error');
+  }
 }
 
 // Salto directo desde el Editor de Vinos al Editor de Mapa con el vino ya seleccionado —
@@ -1246,6 +1431,16 @@ async function loadWinesForEditor(){
     editorWines = data.vinos || [];
     editorLoaded = true;
     renderWineListSidebar(editorWines);
+    // No bloqueante — el datalist/preview de bodega del form lo necesita. Si el
+    // admin ya tenía un vino abierto antes de que esto resuelva, re-dibuja el
+    // preview para que no quede mostrando "bodega nueva" por una carrera con el fetch.
+    fetchBodegasList().then(() => {
+      if(editingId != null){
+        const w = editorWines.find(x=>x.id===editingId);
+        const bodegaEl = document.getElementById('ef-bodega');
+        if(w && bodegaEl) refreshBodegaInfoBlock(bodegaEl.value.trim(), w.bodega_info);
+      }
+    });
   } catch(e){
     showToast('Error cargando vinos','error');
   }
@@ -1343,7 +1538,8 @@ function renderWineForm(w, isNew=false){
     <div class="form-row">
       <div>
         <label class="form-label">Bodega</label>
-        <input class="form-input" id="ef-bodega" value="${esc(w.bodega||'')}" placeholder="Ej: Reinero">
+        <input class="form-input" id="ef-bodega" list="bodegasDatalist" value="${esc(w.bodega||'')}" placeholder="Ej: Reinero" oninput="onBodegaFieldChange()">
+        <datalist id="bodegasDatalist">${bodegasList.map(b=>`<option value="${esc(b.nombre)}">`).join('')}</datalist>
       </div>
       <div>
         <label class="form-label">Varietal / Cepa</label>
@@ -1398,10 +1594,7 @@ function renderWineForm(w, isNew=false){
         <input class="form-input" id="ef-tienda-url" value="${esc(w.tienda_url||'')}" placeholder="https://...">
       </div>
     </div>
-    <div class="form-full">
-      <label class="form-label">Sobre la bodega y el terruño</label>
-      <textarea class="form-input" id="ef-bodega-info" placeholder="Historia de la bodega, filosofía, terruño...">${esc(w.bodega_info||'')}</textarea>
-    </div>
+    <div class="form-full" id="bodegaInfoBlock"></div>
 
     <div class="form-section">Perfil sensorial (1–5) — alimenta el Sommelier</div>
     <div class="form-row">
@@ -1469,7 +1662,38 @@ function renderWineForm(w, isNew=false){
       ${!isNew ? `<button class="btn-duplicate" onclick="duplicateWine(${w.id})">Duplicar</button>` : ''}
       ${!isNew ? `<button class="btn-delete" onclick="deleteWine(${w.id})">Eliminar</button>` : ''}
     </div>`;
+  refreshBodegaInfoBlock(w.bodega||'', w.bodega_info||'');
   refreshChecklist();
+}
+
+// Preview de "sobre la bodega" dentro del form del vino: si el nombre
+// tipeado matchea una bodega existente (normalizado), muestra su
+// descripción de sólo lectura + link para editarla en la pestaña Bodegas.
+// Si no matchea ninguna, deja escribir la descripción ahí mismo — saveWine()
+// crea esa bodega nueva sola al guardar (ver comentario en saveWine).
+function onBodegaFieldChange(){
+  refreshBodegaInfoBlock(document.getElementById('ef-bodega').value.trim(), '');
+}
+function refreshBodegaInfoBlock(bodegaNombre, fallbackInfo){
+  const el = document.getElementById('bodegaInfoBlock');
+  if(!el) return;
+  if(!bodegaNombre){
+    el.innerHTML = `<label class="form-label">Sobre la bodega y el terruño</label>
+      <div style="font-size:12px;color:var(--ink-dark-3);padding:11px 13px;background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm)">Cargá primero el nombre de la bodega.</div>
+      <input type="hidden" id="ef-bodega-info" value="">`;
+    return;
+  }
+  const match = bodegasList.find(b => normalizarBodegaJS(b.nombre) === normalizarBodegaJS(bodegaNombre));
+  if(match){
+    el.innerHTML = `<label class="form-label">Sobre la bodega y el terruño</label>
+      <div style="font-size:12px;color:var(--ink-dark-2);padding:11px 13px;background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);line-height:1.5">${esc(match.bodega_info) || '(sin descripción todavía)'}</div>
+      <div style="font-size:10px;color:var(--ink-dark-3);margin-top:5px">Bodega existente — se edita desde <a href="#" onclick="event.preventDefault();switchTab('bodegas',document.querySelector('.dash-tab[onclick*=bodegas]'));editBodega(${match.id})" style="color:var(--madera)">la pestaña Bodegas ↗</a></div>
+      <input type="hidden" id="ef-bodega-info" value="${esc(match.bodega_info||'')}">`;
+  } else {
+    el.innerHTML = `<label class="form-label">Sobre la bodega y el terruño (bodega nueva)</label>
+      <textarea class="form-input" id="ef-bodega-info" placeholder="Historia de la bodega, filosofía, terruño...">${esc(fallbackInfo||'')}</textarea>
+      <div style="font-size:10px;color:var(--ink-dark-3);margin-top:5px">"${esc(bodegaNombre)}" todavía no está en el catálogo de bodegas — se crea sola al guardar el vino.</div>`;
+  }
 }
 
 function esc(s){ return (s||'').toString().replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1657,6 +1881,22 @@ async function saveWine(id, isNew){
       }
       editingId = data.id;
       renderWineListSidebar(editorWines);
+
+      // Si tipearon una bodega que todavía no existe en el catálogo centralizado,
+      // se crea sola acá (con la descripción que hayan puesto en el form) — así
+      // cargar un vino de una bodega nueva sigue siendo un solo paso. No bloquea
+      // el guardado del vino si esto falla (ya se guardó, esto es solo housekeeping).
+      if(data.bodega && !bodegasList.some(b => normalizarBodegaJS(b.nombre) === normalizarBodegaJS(data.bodega))){
+        try{
+          await fetch('/api/actualizar-vino', {
+            method:'POST',
+            headers:{'Content-Type':'application/json', ...adminAuthHeader()},
+            body: JSON.stringify({ bodegaGuardar: { nombre: data.bodega, bodega_info: data.bodega_info || '' } })
+          });
+          await fetchBodegasList(true);
+        }catch(e){ /* no bloquea — la bodega se puede cargar a mano después desde su pestaña */ }
+      }
+
       showToast('✓ Vino guardado', 'success');
     } else {
       showToast('Error: '+(result.error||''), 'error');

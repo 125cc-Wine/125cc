@@ -15,6 +15,7 @@
 const { getReadWriteToken }        = require('./_lib/google-auth');
 const { requireAdmin }             = require('./_lib/require-admin');
 const { sql, withTransaction }     = require('./_lib/db');
+const { normalizarBodega }         = require('./_lib/bodegas');
 
 // Temporada de bloqueo del Calendario de Carta: un vino que estuvo en carta
 // no puede volver a los pools de selección hasta que pasen 12 meses desde
@@ -185,6 +186,158 @@ async function getCatalogoExterno(req, res) {
   return res.status(200).json({ catalogo });
 }
 
+// Catálogo centralizado de bodegas (pestaña "Bodegas") — lo usa el panel
+// nuevo del admin. Antes cada vino tenía su propio texto "sobre la bodega y
+// el terruño" repetido en cada fila (mismo dato copiado 2-3 veces por
+// bodega, sin forma de mantenerlos en sync). Acá vive una sola vez por
+// bodega y obtener-vinos.js lo fusiona en cada vino al leer.
+const normSheet = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '_');
+
+// Guarda (crea o actualiza) una bodega. Si el nombre cambió respecto al que
+// ya estaba en el Sheet, hace rename en cascada sobre Vinos!bodega — si no,
+// las filas que apuntaban al nombre viejo dejan de matchear en
+// obtener-vinos.js y pierden el texto centralizado en silencio.
+async function guardarBodega(token, SHEET_ID, datos) {
+  const nombre = (datos.nombre || '').trim();
+  if (!nombre) return { status: 400, body: { error: "El nombre de la bodega es obligatorio." } };
+  const bodega_info = (datos.bodega_info || '').trim();
+
+  const sheetRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Bodegas!A1:C500`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!sheetRes.ok) return { status: 502, body: { error: "Error leyendo Bodegas.", detail: await sheetRes.text() } };
+  const data     = await sheetRes.json();
+  const dataRows = (data.values || []).slice(1);
+
+  let nombreViejo = null;
+  let id          = datos.id;
+
+  if (id != null) {
+    const rowIdx = dataRows.findIndex(r => (r[0] || '').toString().trim() === id.toString());
+    if (rowIdx < 0) return { status: 404, body: { error: "Bodega no encontrada." } };
+    nombreViejo = dataRows[rowIdx][1] || '';
+
+    const choque = dataRows.find((r, i) => i !== rowIdx && normalizarBodega(r[1]) === normalizarBodega(nombre));
+    if (choque) return { status: 409, body: { error: `Ya existe una bodega llamada "${choque[1]}".` } };
+
+    const sheetRow = rowIdx + 2; // +1 header, +1 porque Sheets es 1-indexed
+    const updRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Bodegas!A${sheetRow}:C${sheetRow}?valueInputOption=USER_ENTERED`,
+      {
+        method:  'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ range: `Bodegas!A${sheetRow}:C${sheetRow}`, values: [[id, nombre, bodega_info]] }),
+      }
+    );
+    if (!updRes.ok) return { status: 502, body: { error: "Error actualizando bodega.", detail: await updRes.text() } };
+  } else {
+    const choque = dataRows.find(r => normalizarBodega(r[1]) === normalizarBodega(nombre));
+    if (choque) return { status: 409, body: { error: `Ya existe una bodega llamada "${choque[1]}".` } };
+
+    id = dataRows.reduce((m, r) => Math.max(m, parseInt(r[0] || 0) || 0), 0) + 1;
+    const appendRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Bodegas!A:C:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      {
+        method:  'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ values: [[id, nombre, bodega_info]] }),
+      }
+    );
+    if (!appendRes.ok) return { status: 502, body: { error: "Error creando bodega.", detail: await appendRes.text() } };
+  }
+
+  let vinosActualizados = 0;
+  if (nombreViejo && normalizarBodega(nombreViejo) !== normalizarBodega(nombre)) {
+    vinosActualizados = await renombrarBodegaEnVinos(token, SHEET_ID, nombreViejo, nombre);
+  }
+
+  return { status: 200, body: { ok: true, id, vinosActualizados } };
+}
+
+// Reescribe Vinos!bodega en todas las filas que referenciaban `nombreViejo`
+// (comparado normalizado) para que pasen a `nombreNuevo`. Devuelve cuántas
+// filas tocó.
+async function renombrarBodegaEnVinos(token, SHEET_ID, nombreViejo, nombreNuevo) {
+  const dataRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:V500`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  const data = await dataRes.json();
+  const rows = data.values || [];
+  if (!rows.length) return 0;
+
+  const idxBodega = rows[0].findIndex(h => normSheet(h) === 'bodega');
+  if (idxBodega < 0) return 0;
+
+  const col       = String.fromCharCode(65 + idxBodega);
+  const objetivo  = normalizarBodega(nombreViejo);
+  const cambios   = [];
+  rows.slice(1).forEach((row, i) => {
+    if (normalizarBodega(row[idxBodega]) === objetivo) {
+      cambios.push({ range: `Vinos!${col}${i + 2}`, values: [[nombreNuevo]] });
+    }
+  });
+  if (!cambios.length) return 0;
+
+  const batchRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`,
+    {
+      method:  'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ valueInputOption: 'USER_ENTERED', data: cambios }),
+    }
+  );
+  if (!batchRes.ok) throw new Error(`Error renombrando bodega en vinos: ${await batchRes.text()}`);
+  return cambios.length;
+}
+
+// Borra una bodega — bloqueado si todavía hay vinos que la referencian, para
+// no dejarlos huérfanos en silencio (el admin tiene que reasignarles bodega
+// primero, a mano, en el Editor de Vinos).
+async function eliminarBodega(token, SHEET_ID, id) {
+  const [bodegasRes, vinosRes] = await Promise.all([
+    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Bodegas!A1:C500`, { headers: { Authorization: `Bearer ${token}` } }),
+    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:V500`,   { headers: { Authorization: `Bearer ${token}` } }),
+  ]);
+  const bRows = (await bodegasRes.json()).values || [];
+  const rowIdx = bRows.slice(1).findIndex(r => (r[0] || '').toString().trim() === id.toString());
+  if (rowIdx < 0) return { status: 404, body: { error: "Bodega no encontrada." } };
+  const nombre = bRows[rowIdx + 1][1];
+
+  const vRows = (await vinosRes.json()).values || [];
+  if (vRows.length) {
+    const idxBodega = vRows[0].findIndex(h => normSheet(h) === 'bodega');
+    const idxNombre = vRows[0].findIndex(h => normSheet(h) === 'nombre');
+    const usados = vRows.slice(1)
+      .filter(r => normalizarBodega(r[idxBodega]) === normalizarBodega(nombre))
+      .map(r => r[idxNombre]);
+    if (usados.length) {
+      return { status: 409, body: {
+        error: `No se puede borrar: ${usados.length} vino(s) todavía usan esta bodega (${usados.slice(0, 5).join(', ')}${usados.length > 5 ? '…' : ''}). Cambiales la bodega primero.`,
+      } };
+    }
+  }
+
+  const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?fields=sheets.properties`, { headers: { Authorization: `Bearer ${token}` } });
+  const meta    = await metaRes.json();
+  const sheetId = meta.sheets?.find(s => s.properties?.title === 'Bodegas')?.properties?.sheetId;
+  if (sheetId == null) return { status: 500, body: { error: "No se encontró la hoja Bodegas." } };
+
+  const sheetRowIdx = rowIdx + 1; // 0-indexed, +1 saltea header
+  const delRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,
+    {
+      method:  'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ requests: [{ deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: sheetRowIdx, endIndex: sheetRowIdx + 1 } } }] }),
+    }
+  );
+  if (!delRes.ok) return { status: 502, body: { error: "Error eliminando bodega.", detail: await delRes.text() } };
+
+  return { status: 200, body: { ok: true } };
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -221,6 +374,40 @@ module.exports = async function handler(req, res) {
       return await deshacerHistorialCarta(req, res, req.body.ids);
     } catch (err) {
       console.error("actualizar-vino (historial deshacer) error:", err);
+      return res.status(500).json({ error: "Error interno.", detail: err.message });
+    }
+  }
+
+  // Panel "Bodegas" — CRUD del catálogo centralizado. Van antes del bloque de
+  // vinos porque no comparten forma de request (no traen `vino`).
+  if (req.body && req.body.bodegaGuardar) {
+    try {
+      const SHEET_ID = process.env.GOOGLE_SHEET_ID;
+      const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
+      const GOOGLE_PRIVATE_KEY  = process.env.GOOGLE_PRIVATE_KEY;
+      if (!SHEET_ID || !GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY)
+        return res.status(500).json({ error: "Faltan credenciales de Google." });
+      const token = await getReadWriteToken(GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY);
+      const { status, body } = await guardarBodega(token, SHEET_ID, req.body.bodegaGuardar);
+      return res.status(status).json(body);
+    } catch (err) {
+      console.error("actualizar-vino (bodega guardar) error:", err);
+      return res.status(500).json({ error: "Error interno.", detail: err.message });
+    }
+  }
+
+  if (req.body && req.body.bodegaEliminarId != null) {
+    try {
+      const SHEET_ID = process.env.GOOGLE_SHEET_ID;
+      const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
+      const GOOGLE_PRIVATE_KEY  = process.env.GOOGLE_PRIVATE_KEY;
+      if (!SHEET_ID || !GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY)
+        return res.status(500).json({ error: "Faltan credenciales de Google." });
+      const token = await getReadWriteToken(GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY);
+      const { status, body } = await eliminarBodega(token, SHEET_ID, req.body.bodegaEliminarId);
+      return res.status(status).json(body);
+    } catch (err) {
+      console.error("actualizar-vino (bodega eliminar) error:", err);
       return res.status(500).json({ error: "Error interno.", detail: err.message });
     }
   }
