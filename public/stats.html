@@ -485,7 +485,7 @@
     <button class="dash-tab" onclick="switchTab('vinos')">Editor de Vinos</button>
     <button class="dash-tab" onclick="switchTab('bodegas')">Bodegas</button>
     <button class="dash-tab" onclick="switchTab('carta')">Calendario de Carta</button>
-    <button class="dash-tab" onclick="switchTab('pedidos')">Pedidos</button>
+    <button class="dash-tab" onclick="switchTab('pedidos')">Pedidos y Rentabilidad</button>
   </div>
 
   <!-- PANEL STATS -->
@@ -724,23 +724,26 @@
     </div>
   </div>
 
-  <!-- PANEL PEDIDOS — consolida por bodega todo lo confirmado de HOY en
-       adelante (no lo ya servido), sumando las cajas cargadas en cada
-       quincena del Calendario de Carta. La cantidad se carga a mano ahí
-       (casillero "Cajas" de cada vino elegido) — acá sólo se suma y se
-       agrupa, es una vista de sólo lectura. -->
+  <!-- PANEL PEDIDOS Y RENTABILIDAD — dos vistas de sólo lectura sobre el
+       mismo historial confirmado: precio/costo/markup por mes (arriba,
+       igual al Excel de "Exportar todos los meses", siempre al día) y el
+       pedido consolidado por bodega con cajas (abajo — sumando todos los
+       meses futuros en los que aparece cada bodega). -->
   <div class="dash-panel" id="panel-pedidos">
+    <div class="carta-pools-section-title">
+      Precio, costo y markup por mes — igual al Excel de "Exportar todos los meses", siempre al día
+    </div>
+    <div id="pedidosTablaMeses"><div class="loading">Cargando...</div></div>
+
+    <div class="carta-pools-section-title" style="margin-top:28px">
+      Pedido consolidado por bodega
+    </div>
     <div style="font-size:12px;color:var(--ink-3);line-height:1.5;margin-bottom:16px">
       Vinos confirmados de hoy en adelante, agrupados por bodega, con las cajas cargadas en el Calendario de Carta.
       Un vino que aparece en más de un mes suma las cajas de todos — es el pedido consolidado para esa bodega.
       Las cajas sin cargar todavía se muestran con un aviso.
     </div>
     <div id="pedidosView"><div class="loading">Cargando...</div></div>
-
-    <div class="carta-pools-section-title" style="margin-top:28px">
-      Detalle por mes — igual al Excel de "Exportar todos los meses", siempre al día
-    </div>
-    <div id="pedidosTablaMeses"><div class="loading">Cargando...</div></div>
   </div>
 
 </div>
@@ -2770,7 +2773,7 @@ async function loadPedidosTab(){
   try{
     // cartaWines hace falta para que cartaResolverHistorial() encuentre el
     // precio congelado de cada vino (columna Precio/Rentabilidad de la
-    // tabla de abajo) — si el admin entra a Pedidos sin haber pasado antes
+    // tabla de arriba) — si el admin entra a Pedidos sin haber pasado antes
     // por Calendario de Carta, cartaWines todavía está vacío y todo salía
     // en $0 (mismo bug ya resuelto ahí, hay que evitarlo también acá).
     if(!cartaWines.length){
@@ -2836,7 +2839,7 @@ function renderPedidosTablaMeses(){
       <summary>${esc(nombreMesLabel(mes))}</summary>
       <div class="pedido-tabla-scroll">
         <table class="pedido-tabla">
-          <thead><tr><th>Quincena</th><th>Bodega</th><th>Varietal</th><th>Vino</th><th class="num">Precio góndola</th><th class="num">Valor de copa</th><th class="num">Costo de copa</th><th class="num">Rentabilidad</th></tr></thead>
+          <thead><tr><th>Quincena</th><th>Bodega</th><th>Varietal</th><th>Vino</th><th class="num">Precio góndola</th><th class="num">Valor de copa</th><th class="num">Costo de copa</th><th class="num">Rentabilidad (ROI)</th></tr></thead>
           <tbody>${filas}</tbody>
         </table>
       </div>
@@ -3300,15 +3303,17 @@ function cargarSheetJS(){
   return sheetJSCargando;
 }
 
-// Rentabilidad = margen bruto por copa, (venta - costo) / venta — no
-// markup sobre el costo. Mismo par de funciones (cartaPrecioCopa/
+// Rentabilidad = markup/ROI por copa, (venta - costo) / costo — cuánto se
+// gana en proporción a lo que costó, NO en proporción al precio de venta
+// (eso sería margen bruto, la otra definición posible — se decidió con el
+// usuario quedarse con esta). Mismo par de funciones (cartaPrecioCopa/
 // cartaCostoCopa) que ya se usan en el resto de la carta, un decimal.
 function cartaRentabilidadPct(w){
-  const venta = cartaPrecioCopa(w);
-  if(!venta) return 0;
-  return Math.round(((venta - cartaCostoCopa(w)) / venta) * 1000) / 10;
+  const costo = cartaCostoCopa(w);
+  if(!costo) return 0;
+  return Math.round(((cartaPrecioCopa(w) - costo) / costo) * 1000) / 10;
 }
-const EXPORT_HEADERS = ['Bodega','Varietal','Vino','Quincena','Precio góndola','Valor de copa','Costo de copa','Rentabilidad %'];
+const EXPORT_HEADERS = ['Bodega','Varietal','Vino','Quincena','Precio góndola','Valor de copa','Costo de copa','Rentabilidad % (ROI)'];
 const EXPORT_COLS = [{wch:22},{wch:18},{wch:34},{wch:11},{wch:14},{wch:13},{wch:13},{wch:14}];
 // Agrupado principal por quincena — dentro de cada una, mismo criterio de
 // siempre (bodega → varietal → nombre).
