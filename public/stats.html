@@ -381,6 +381,8 @@
   .carta-lane-title{font-family:var(--font-serif);font-weight:600;font-size:17px;color:var(--ink-dark)}
   .carta-lane-count{font-size:11px;color:var(--ink-dark-3)}
   .carta-lane-count.complete{color:#90ee90}
+  .carta-lane-promedio{font-size:12px;color:var(--ink-dark-2);margin:8px 0 10px}
+  .carta-lane-promedio b{color:var(--madera);font-weight:600}
   .carta-slots{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
   @media(max-width:520px){.carta-slots{grid-template-columns:1fr}}
   .carta-slot{border-radius:var(--r-sm);padding:9px 12px;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:6px}
@@ -2991,6 +2993,16 @@ function renderCartaLanes(){
     const bodegasHtml   = cartaLaneResumenHtml('Bodegas',   cartaLaneResumenCampo(s.vinos.filter(Boolean), 'bodega'));
     const varietalesHtml = cartaLaneResumenHtml('Varietales', cartaLaneResumenCampo(s.vinos.filter(Boolean), 'varietal'));
 
+    // Precio promedio de copa de esta quincena — pedido puntual para poder
+    // ir regulando el mix de precios mientras se arma (además del desglose
+    // por tramo de más abajo, que muestra la distribución pero no un
+    // número único de referencia). Sólo promedia los casilleros llenos.
+    const preciosCopa = s.vinos.filter(Boolean).map(cartaPrecioCopa);
+    const promedioCopa = preciosCopa.length ? Math.round(preciosCopa.reduce((a,b)=>a+b,0) / preciosCopa.length) : 0;
+    const promedioCopaHtml = filled
+      ? `<div class="carta-lane-promedio">Precio promedio de copa: <b>$${promedioCopa.toLocaleString('es-AR')}</b></div>`
+      : '';
+
     // Pedido de Maio: ver al lado de lo que estás planificando qué cambia
     // respecto a lo que hoy está en vivo en el Sheet. Solo tiene sentido
     // mostrarlo si ya hay algo cargado en la quincena.
@@ -3016,6 +3028,7 @@ function renderCartaLanes(){
         </div>
         <span class="carta-lane-count${filled===14?' complete':''}">${filled}/14</span>
       </div>
+      ${promedioCopaHtml}
       <div class="carta-tramo-resumen">${tramoResumen}</div>
       <div class="carta-slots">${slots}</div>
       ${bodegasHtml}
