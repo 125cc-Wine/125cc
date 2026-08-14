@@ -3061,8 +3061,11 @@ function cartaRentabilidadPct(w){
 }
 const EXPORT_HEADERS = ['Bodega','Varietal','Vino','Quincena','Precio góndola','Valor de copa','Costo de copa','Rentabilidad %'];
 const EXPORT_COLS = [{wch:22},{wch:18},{wch:34},{wch:11},{wch:14},{wch:13},{wch:13},{wch:14}];
+// Agrupado principal por quincena — dentro de cada una, mismo criterio de
+// siempre (bodega → varietal → nombre).
 function ordenarVinosExport(vinos){
   return vinos.sort((a,b) =>
+    (a._quincena||'').localeCompare(b._quincena||'') ||
     (a.bodega||'').localeCompare(b.bodega||'') ||
     (a.varietal||'').localeCompare(b.varietal||'') ||
     a.nombre.localeCompare(b.nombre)
@@ -3075,7 +3078,18 @@ function filaExport(v){
   ];
 }
 function hojaExport(vinos, tituloHoja, wb){
-  const ws = XLSX.utils.aoa_to_sheet([EXPORT_HEADERS, ...ordenarVinosExport(vinos).map(filaExport)]);
+  // Fila en blanco entre el bloque de una quincena y el de la siguiente —
+  // SheetJS Community (la versión gratis que se usa acá, sin licencia Pro)
+  // no puede escribir estilos (negrita, color de fondo), así que la
+  // separación es una fila vacía en vez de un encabezado resaltado.
+  const aoa = [EXPORT_HEADERS];
+  let quincenaActual = null;
+  ordenarVinosExport(vinos).forEach(v => {
+    if(quincenaActual !== null && v._quincena !== quincenaActual) aoa.push([]);
+    quincenaActual = v._quincena;
+    aoa.push(filaExport(v));
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols'] = EXPORT_COLS;
   XLSX.utils.book_append_sheet(wb, ws, tituloHoja.slice(0,31)); // 31 = límite de Excel para nombre de hoja
 }
