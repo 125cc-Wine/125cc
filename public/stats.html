@@ -2927,14 +2927,38 @@ function renderPedidosTablaMeses(){
 
 // vino_id -> fila más reciente de carta_historial (el server ya filtra a
 // los últimos cartaMesesBloqueo, así que "está en el mapa" = "bloqueado").
+// Indexa TAMBIÉN por nombre normalizado, no sólo por id — bug real
+// reportado: vinos ya puestos en la carta seguían figurando como
+// "elegibles" en el pool del Catálogo Aroma/La Vid. Causa: ese catálogo
+// dedupea cada producto por nombre entre las dos empresas (Aroma/La Vid) y
+// se queda con la fila de la que tenga MÁS STOCK EN ESE MOMENTO (ver
+// getCatalogoExterno en api/actualizar-vino.js) — el id "ganador" no es
+// estable, puede cambiar de una empresa a la otra si el stock se mueve
+// entre que se confirmó el vino a la carta y ahora. El bloqueo, que
+// comparaba sólo por id, dejaba de reconocer un vino ya confirmado apenas
+// el catálogo le devolvía el id de la OTRA empresa en un fetch posterior.
+// El fallback por nombre cubre ese caso — mismo patrón que ya usa
+// cartaResolverHistorial() para el precio.
 function cartaBlockedMap(){
-  const map = new Map();
+  const porId = new Map();
+  const porNombre = new Map();
   cartaHistorial.forEach(h=>{
-    const key = String(h.vino_id);
-    const prev = map.get(key);
-    if(!prev || new Date(h.confirmado_at) > new Date(prev.confirmado_at)) map.set(key, h);
+    const idKey = String(h.vino_id);
+    const prevId = porId.get(idKey);
+    if(!prevId || new Date(h.confirmado_at) > new Date(prevId.confirmado_at)) porId.set(idKey, h);
+
+    const nombreKey = normalizarTexto(h.vino_nombre);
+    const prevNombre = porNombre.get(nombreKey);
+    if(!prevNombre || new Date(h.confirmado_at) > new Date(prevNombre.confirmado_at)) porNombre.set(nombreKey, h);
   });
-  return map;
+  return { porId, porNombre };
+}
+// Busca el bloqueo de un vino por id primero, por nombre si no matcheó —
+// recibe el objeto vino completo (no sólo el id) para poder hacer el
+// fallback. `blocked` es lo que devuelve cartaBlockedMap().
+function cartaBlockedFor(blocked, w){
+  if(!w) return undefined;
+  return blocked.porId.get(String(w.id)) || blocked.porNombre.get(normalizarTexto(w.nombre));
 }
 function cartaFechaDisponible(confirmadoAt){
   const d = new Date(confirmadoAt);
@@ -2949,7 +2973,7 @@ function cartaUsedIds(){
 // catálogo externo (por bodega) — misma pinta, misma lógica de bloqueo.
 function cartaWineCardHtml(w, usedIds, blocked){
   const sid = String(w.id);
-  const bh = blocked.get(sid);
+  const bh = cartaBlockedFor(blocked, w);
   const isBlocked = !!bh;
   const isUsed = usedIds.has(sid);
   const tramo = tramoDeVino(w);
@@ -3047,6 +3071,11 @@ function renderCatalogoExterno(){
   }
   cont.innerHTML = bodegas.map(bodega=>{
     const wines = porBodega.get(bodega);
+    // Disponibles = ni ya elegido en este mes (usedIds) ni bloqueado por la
+    // regla de no-repetición de 12 meses — pedido puntual, para saber de un
+    // vistazo si a una bodega ya "no le queda nada" sin tener que abrir el
+    // acordeón y revisar tarjeta por tarjeta.
+    const disponibles = wines.filter(w => !usedIds.has(String(w.id)) && !cartaBlockedFor(blocked, w)).length;
     // Dentro de cada bodega, subagrupar por el mismo tramo de precio que
     // "Mi carta 125cc" — pedido de Maio, para poder armar la carta sin
     // saltar entre vinos baratos y caros de la misma bodega sin querer.
@@ -3060,7 +3089,7 @@ function renderCatalogoExterno(){
     return `<details class="carta-pool-segment catalogo-bodega"${q ? ' open' : ''}>
       <summary class="carta-pool-header">
         <span class="carta-pool-title">${esc(bodega)}</span>
-        <span class="carta-pool-count">${wines.length}</span>
+        <span class="carta-pool-count">${disponibles}/${wines.length} disponibles</span>
       </summary>
       ${tramosHtml}
     </details>`;
@@ -3232,8 +3261,8 @@ function setCartaTarget(si, btn){
 // Click directo en una tarjeta del pool (además de arrastrar) — necesario
 // en pantallas táctiles, donde el drag & drop de HTML5 no dispara.
 function cartaCardClick(id){
-  const blocked = cartaBlockedMap();
-  if(blocked.has(String(id)) || cartaUsedIds().has(String(id))) return;
+  const w = cartaFindWine(id);
+  if(cartaBlockedFor(cartaBlockedMap(), w) || cartaUsedIds().has(String(id))) return;
   cartaPlaceWine(id, cartaTarget, null);
 }
 
@@ -3262,7 +3291,7 @@ function cartaSlotDrop(e, si, idx){
 function cartaPlaceWine(id, si, idx){
   const w = cartaFindWine(id);
   if(!w) return;
-  if(cartaBlockedMap().has(String(id))){ showToast('Ese vino está bloqueado por la regla de no-repetición', 'error'); return; }
+  if(cartaBlockedFor(cartaBlockedMap(), w)){ showToast('Ese vino está bloqueado por la regla de no-repetición', 'error'); return; }
 
   cartaSemanas.forEach(s=>{
     const i = s.vinos.findIndex(v=>v && String(v.id)===String(id));
