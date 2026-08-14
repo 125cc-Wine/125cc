@@ -2823,7 +2823,7 @@ function renderPedidosTablaMeses(){
     const filas = vinos.map(v => {
       const nuevaQuincena = v._quincena !== quincenaActual;
       quincenaActual = v._quincena;
-      const [bodega, varietal, nombre, quincena, precio, copa, costo, rent] = filaExport(v);
+      const [bodega, varietal, nombre, quincena, precio, copa, ventaBotella, costo, rent] = filaExport(v);
       return `<tr class="${nuevaQuincena ? 'pedido-tabla-quincena-inicio' : ''}">
         <td class="pedido-tabla-quincena">${nuevaQuincena ? esc(quincena) : ''}</td>
         <td>${esc(bodega)}</td>
@@ -2831,6 +2831,7 @@ function renderPedidosTablaMeses(){
         <td>${esc(nombre)}</td>
         <td class="num">$${precio.toLocaleString('es-AR')}</td>
         <td class="num">$${copa.toLocaleString('es-AR')}</td>
+        <td class="num">$${ventaBotella.toLocaleString('es-AR')}</td>
         <td class="num">$${costo.toLocaleString('es-AR')}</td>
         <td class="num">${rent}%</td>
       </tr>`;
@@ -2839,7 +2840,7 @@ function renderPedidosTablaMeses(){
       <summary>${esc(nombreMesLabel(mes))}</summary>
       <div class="pedido-tabla-scroll">
         <table class="pedido-tabla">
-          <thead><tr><th>Quincena</th><th>Bodega</th><th>Varietal</th><th>Vino</th><th class="num">Precio góndola</th><th class="num">Valor de copa</th><th class="num">Costo de copa</th><th class="num">Rentabilidad (ROI)</th></tr></thead>
+          <thead><tr><th>Quincena</th><th>Bodega</th><th>Varietal</th><th>Vino</th><th class="num">Precio góndola</th><th class="num">Valor de copa</th><th class="num">Venta botella (x6 copas)</th><th class="num">Costo de copa</th><th class="num">Rentabilidad (ROI)</th></tr></thead>
           <tbody>${filas}</tbody>
         </table>
       </div>
@@ -3313,8 +3314,15 @@ function cartaRentabilidadPct(w){
   if(!costo) return 0;
   return Math.round(((cartaPrecioCopa(w) - costo) / costo) * 1000) / 10;
 }
-const EXPORT_HEADERS = ['Bodega','Varietal','Vino','Quincena','Precio góndola','Valor de copa','Costo de copa','Rentabilidad % (ROI)'];
-const EXPORT_COLS = [{wch:22},{wch:18},{wch:34},{wch:11},{wch:14},{wch:13},{wch:13},{wch:14}];
+// Precio de copa × 6 (las 6 copas teóricas por botella, mismo criterio que
+// cartaPrecioCopa/cartaCostoCopa ya usan) — a cuánto termina "vendiéndose"
+// la botella entera si se sirve toda por copa, para comparar de un vistazo
+// contra el precio de góndola (lo que costó comprarla).
+function cartaVentaBotellaCopas(w){
+  return cartaPrecioCopa(w) * 6;
+}
+const EXPORT_HEADERS = ['Bodega','Varietal','Vino','Quincena','Precio góndola','Valor de copa','Venta botella (x6 copas)','Costo de copa','Rentabilidad % (ROI)'];
+const EXPORT_COLS = [{wch:22},{wch:18},{wch:34},{wch:11},{wch:14},{wch:13},{wch:17},{wch:13},{wch:14}];
 // Agrupado principal por quincena — dentro de cada una, mismo criterio de
 // siempre (bodega → varietal → nombre).
 function ordenarVinosExport(vinos){
@@ -3328,7 +3336,7 @@ function ordenarVinosExport(vinos){
 function filaExport(v){
   return [
     v.bodega||'', v.varietal||'', v.nombre, v._quincena,
-    cartaPrecioNum(v), cartaPrecioCopa(v), cartaCostoCopa(v), cartaRentabilidadPct(v),
+    cartaPrecioNum(v), cartaPrecioCopa(v), cartaVentaBotellaCopas(v), cartaCostoCopa(v), cartaRentabilidadPct(v),
   ];
 }
 function hojaExport(vinos, tituloHoja, wb){
