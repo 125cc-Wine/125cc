@@ -343,6 +343,20 @@
   .pedido-vino-cajas{font-size:13px;font-weight:600;color:var(--ink);flex-shrink:0;min-width:60px;text-align:right}
   .pedido-vino-cajas.sin-cargar{font-size:10px;font-weight:400;color:var(--warning)}
 
+  .pedido-tabla-mes{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow-1);padding:14px 16px;margin-bottom:12px}
+  .pedido-tabla-mes summary{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--ink);cursor:pointer;list-style:none}
+  .pedido-tabla-mes summary::-webkit-details-marker{display:none}
+  .pedido-tabla-mes summary::before{content:'▾ ';color:var(--madera)}
+  .pedido-tabla-mes:not([open]) summary::before{content:'▸ '}
+  .pedido-tabla-scroll{overflow-x:auto;margin-top:12px}
+  .pedido-tabla{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}
+  .pedido-tabla th{text-align:left;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:500;padding:6px 10px;border-bottom:1px solid var(--line-strong)}
+  .pedido-tabla td{padding:6px 10px;color:var(--ink-2);border-bottom:1px solid var(--line)}
+  .pedido-tabla th.num,.pedido-tabla td.num{text-align:right}
+  .pedido-tabla td.pedido-tabla-quincena{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--madera);font-weight:500}
+  .pedido-tabla tr.pedido-tabla-quincena-inicio td{border-top:2px solid var(--line-strong)}
+  .pedido-tabla tr.pedido-tabla-quincena-inicio:first-child td{border-top:none}
+
   .carta-wine-card{background:var(--bg2);border:1px solid var(--line);border-left:4px solid transparent;border-radius:var(--r-sm);padding:9px 12px;cursor:grab;min-width:150px;max-width:220px;transition:border-color .15s,opacity .15s}
   /* El borde izquierdo (color de tramo) se pisa por style="" inline — el hover
      solo toca los otros 3 lados para no taparlo con --madera */
@@ -722,6 +736,11 @@
       Las cajas sin cargar todavía se muestran con un aviso.
     </div>
     <div id="pedidosView"><div class="loading">Cargando...</div></div>
+
+    <div class="carta-pools-section-title" style="margin-top:28px">
+      Detalle por mes — igual al Excel de "Exportar todos los meses", siempre al día
+    </div>
+    <div id="pedidosTablaMeses"><div class="loading">Cargando...</div></div>
   </div>
 
 </div>
@@ -2747,19 +2766,82 @@ function renderPedidosView(){
 
 async function loadPedidosTab(){
   const el = document.getElementById('pedidosView');
-  if(cartaHistorialCompleto === null){
-    if(el) el.innerHTML = '<div class="loading">Cargando...</div>';
-    try{
+  const elTabla = document.getElementById('pedidosTablaMeses');
+  try{
+    // cartaWines hace falta para que cartaResolverHistorial() encuentre el
+    // precio congelado de cada vino (columna Precio/Rentabilidad de la
+    // tabla de abajo) — si el admin entra a Pedidos sin haber pasado antes
+    // por Calendario de Carta, cartaWines todavía está vacío y todo salía
+    // en $0 (mismo bug ya resuelto ahí, hay que evitarlo también acá).
+    if(!cartaWines.length){
+      const vinosData = editorWines.length ? {vinos: editorWines} : await (await fetch('/api/obtener-vinos')).json();
+      cartaWines = (vinosData.vinos || []).map(w => ({...w, _fuente: '125cc'}));
+      if(!editorWines.length){ editorWines = cartaWines; editorLoaded = true; }
+    }
+    if(cartaHistorialCompleto === null){
+      if(el) el.innerHTML = '<div class="loading">Cargando...</div>';
+      if(elTabla) elTabla.innerHTML = '<div class="loading">Cargando...</div>';
       const res = await fetch('/api/actualizar-vino?historial=1&todo=1', {headers: adminAuthHeader()});
       handleAuthResponse(res);
       const data = await res.json();
       cartaHistorialCompleto = data.historial || [];
-    } catch(e){
-      if(el) el.innerHTML = '<div class="empty-msg">Error cargando los pedidos.</div>';
-      return;
     }
+  } catch(e){
+    if(el) el.innerHTML = '<div class="empty-msg">Error cargando los pedidos.</div>';
+    if(elTabla) elTabla.innerHTML = '';
+    return;
   }
   renderPedidosView();
+  renderPedidosTablaMeses();
+}
+
+// Tabla en vivo, misma estructura/orden/columnas que el .xlsx de "Exportar
+// todos los meses" (agruparHistorialPorMes + ordenarVinosExport +
+// filaExport, TODAS reusadas tal cual) pero como HTML en pantalla — no hay
+// botón que tocar, siempre muestra el estado actual del historial completo.
+// Separación visual entre quincenas: clase CSS en la fila (acá SÍ hay
+// estilos, a diferencia del Excel con SheetJS Community).
+function renderPedidosTablaMeses(){
+  const el = document.getElementById('pedidosTablaMeses');
+  if(!el) return;
+  if(!cartaHistorialCompleto || !cartaHistorialCompleto.length){
+    el.innerHTML = '<div class="carta-pool-empty">Todavía no se confirmó ninguna carta.</div>';
+    return;
+  }
+  const porMes = agruparHistorialPorMes(cartaHistorialCompleto);
+  const meses = Array.from(porMes.keys()).sort();
+  if(!meses.length){
+    el.innerHTML = '<div class="carta-pool-empty">Todavía no se confirmó ninguna carta.</div>';
+    return;
+  }
+  el.innerHTML = meses.map(mes => {
+    const vinos = ordenarVinosExport(Array.from(porMes.get(mes).values()));
+    let quincenaActual = null;
+    const filas = vinos.map(v => {
+      const nuevaQuincena = v._quincena !== quincenaActual;
+      quincenaActual = v._quincena;
+      const [bodega, varietal, nombre, quincena, precio, copa, costo, rent] = filaExport(v);
+      return `<tr class="${nuevaQuincena ? 'pedido-tabla-quincena-inicio' : ''}">
+        <td class="pedido-tabla-quincena">${nuevaQuincena ? esc(quincena) : ''}</td>
+        <td>${esc(bodega)}</td>
+        <td>${esc(varietal)}</td>
+        <td>${esc(nombre)}</td>
+        <td class="num">$${precio.toLocaleString('es-AR')}</td>
+        <td class="num">$${copa.toLocaleString('es-AR')}</td>
+        <td class="num">$${costo.toLocaleString('es-AR')}</td>
+        <td class="num">${rent}%</td>
+      </tr>`;
+    }).join('');
+    return `<details class="pedido-tabla-mes" open>
+      <summary>${esc(nombreMesLabel(mes))}</summary>
+      <div class="pedido-tabla-scroll">
+        <table class="pedido-tabla">
+          <thead><tr><th>Quincena</th><th>Bodega</th><th>Varietal</th><th>Vino</th><th class="num">Precio góndola</th><th class="num">Valor de copa</th><th class="num">Costo de copa</th><th class="num">Rentabilidad</th></tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+    </details>`;
+  }).join('');
 }
 
 // vino_id -> fila más reciente de carta_historial (el server ya filtra a
@@ -3287,6 +3369,33 @@ async function exportarMesExcel(){
 // meses viejos que ya salieron de esa ventana. Reusa cartaHistorialCompleto
 // si la "Vista de historial" ya lo cargó en esta sesión, para no pedirlo
 // dos veces.
+// Agrupa TODO el historial por mes (YYYY-MM de semana_inicio) y, dentro de
+// cada mes, dedupea por vino_id quedándose con la fila más reciente — mismo
+// criterio que nuevoPlanMes(), por si quedara alguna repetición vieja en el
+// historial de meses que no se hayan limpiado a mano. Usado tanto por el
+// export a Excel como por la tabla en vivo de la pestaña Pedidos — misma
+// lógica exacta, para que las dos vistas nunca puedan divergir entre sí.
+function agruparHistorialPorMes(historial){
+  const porMes = new Map();
+  historial.forEach(h => {
+    const inicio = String(h.semana_inicio).slice(0,10);
+    const mes = inicio.slice(0,7);
+    if(!porMes.has(mes)) porMes.set(mes, new Map());
+    const porVino = porMes.get(mes);
+    const key = `${h.semana_label}|${h.vino_id}`;
+    const existente = porVino.get(key);
+    if(!existente || new Date(h.confirmado_at) > new Date(existente.confirmado_at)){
+      const w = cartaResolverHistorial(h);
+      porVino.set(key, {
+        id: h.vino_id, nombre: h.vino_nombre, bodega: h.bodega || '',
+        precio: w ? w.precio : undefined, varietal: w?.varietal || '',
+        _quincena: h.semana_label, confirmado_at: h.confirmado_at,
+      });
+    }
+  });
+  return porMes;
+}
+
 async function exportarTodoExcel(){
   const btn = document.getElementById('exportarTodoBtn');
   const original = btn?.textContent;
@@ -3305,28 +3414,7 @@ async function exportarTodoExcel(){
       return;
     }
 
-    // Agrupa por mes (YYYY-MM de semana_inicio) y, dentro de cada mes,
-    // dedupea por vino_id quedándose con la fila más reciente — mismo
-    // criterio que nuevoPlanMes(), por si quedara alguna repetición vieja
-    // en el historial de meses que no se hayan limpiado a mano.
-    const porMes = new Map();
-    cartaHistorialCompleto.forEach(h => {
-      const inicio = String(h.semana_inicio).slice(0,10);
-      const mes = inicio.slice(0,7);
-      if(!porMes.has(mes)) porMes.set(mes, new Map());
-      const porVino = porMes.get(mes);
-      const key = `${h.semana_label}|${h.vino_id}`;
-      const existente = porVino.get(key);
-      if(!existente || new Date(h.confirmado_at) > new Date(existente.confirmado_at)){
-        const w = cartaResolverHistorial(h);
-        porVino.set(key, {
-          id: h.vino_id, nombre: h.vino_nombre, bodega: h.bodega || '',
-          precio: w ? w.precio : undefined, varietal: w?.varietal || '',
-          _quincena: h.semana_label, confirmado_at: h.confirmado_at,
-        });
-      }
-    });
-
+    const porMes = agruparHistorialPorMes(cartaHistorialCompleto);
     const meses = Array.from(porMes.keys()).sort();
     const wb = XLSX.utils.book_new();
     meses.forEach(mes => hojaExport(Array.from(porMes.get(mes).values()), nombreMesLabel(mes), wb));
