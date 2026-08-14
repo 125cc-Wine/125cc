@@ -356,6 +356,11 @@
   .pedido-tabla td.pedido-tabla-quincena{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--madera);font-weight:500}
   .pedido-tabla tr.pedido-tabla-quincena-inicio td{border-top:2px solid var(--line-strong)}
   .pedido-tabla tr.pedido-tabla-quincena-inicio:first-child td{border-top:none}
+  .pedido-tabla-th-sort{cursor:pointer;user-select:none;transition:color .15s}
+  .pedido-tabla-th-sort:hover{color:var(--madera)}
+  .pedido-tabla-th-sort.active{color:var(--madera);font-weight:600}
+  .pedido-tabla-orden-reset{display:block;margin:0 0 10px;background:none;border:1px solid var(--line-strong);color:var(--ink-3);font-size:11px;padding:6px 12px;border-radius:var(--r-pill);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color .15s,color .15s}
+  .pedido-tabla-orden-reset:hover{border-color:var(--madera);color:var(--madera)}
 
   .carta-wine-card{background:var(--bg2);border:1px solid var(--line);border-left:4px solid transparent;border-radius:var(--r-sm);padding:9px 12px;cursor:grab;min-width:150px;max-width:220px;transition:border-color .15s,opacity .15s}
   /* El borde izquierdo (color de tramo) se pisa por style="" inline — el hover
@@ -2798,12 +2803,85 @@ async function loadPedidosTab(){
   renderPedidosTablaMeses();
 }
 
-// Tabla en vivo, misma estructura/orden/columnas que el .xlsx de "Exportar
-// todos los meses" (agruparHistorialPorMes + ordenarVinosExport +
-// filaExport, TODAS reusadas tal cual) pero como HTML en pantalla — no hay
-// botón que tocar, siempre muestra el estado actual del historial completo.
-// Separación visual entre quincenas: clase CSS en la fila (acá SÍ hay
-// estilos, a diferencia del Excel con SheetJS Community).
+// Columnas ordenables de la tabla en vivo — "Quincena" queda afuera a
+// propósito (es la jerarquía, no un criterio de orden dentro del grupo).
+// Mismas funciones (cartaPrecioNum/cartaPrecioCopa/cartaVentaBotellaCopas/
+// cartaCostoCopa/cartaRentabilidadPct) que ya usa filaExport() para el
+// Excel — nunca puede quedar un número distinto acá que allá.
+const PEDIDOS_TABLA_COLS = [
+  { key:'bodega',       label:'Bodega',                    get:v=>v.bodega||'',              num:false },
+  { key:'varietal',     label:'Varietal',                  get:v=>v.varietal||'',             num:false },
+  { key:'nombre',       label:'Vino',                       get:v=>v.nombre,                   num:false },
+  { key:'precio',       label:'Precio góndola',            get:v=>cartaPrecioNum(v),          num:true, fmt:n=>'$'+n.toLocaleString('es-AR') },
+  { key:'copa',         label:'Valor de copa',             get:v=>cartaPrecioCopa(v),         num:true, fmt:n=>'$'+n.toLocaleString('es-AR') },
+  { key:'ventaBotella', label:'Venta botella (x6 copas)',  get:v=>cartaVentaBotellaCopas(v),  num:true, fmt:n=>'$'+n.toLocaleString('es-AR') },
+  { key:'costo',        label:'Costo de copa',             get:v=>cartaCostoCopa(v),          num:true, fmt:n=>'$'+n.toLocaleString('es-AR') },
+  { key:'rentabilidad', label:'Rentabilidad (ROI)',        get:v=>cartaRentabilidadPct(v),    num:true, fmt:n=>n+'%' },
+];
+let pedidosTablaOrdenCol = null; // null = orden de siempre (bodega → varietal → nombre)
+let pedidosTablaOrdenDir = 'asc';
+
+// Click en un header de columna — mismo click de nuevo invierte el sentido,
+// click en otra columna arranca de nuevo en ascendente. Sólo cambia el
+// orden EN PANTALLA (no toca el Excel ni ningún dato real).
+function pedidosTablaSetOrden(key){
+  if(pedidosTablaOrdenCol === key) pedidosTablaOrdenDir = pedidosTablaOrdenDir === 'asc' ? 'desc' : 'asc';
+  else { pedidosTablaOrdenCol = key; pedidosTablaOrdenDir = 'asc'; }
+  renderPedidosTablaMeses();
+}
+function pedidosTablaOrdenReset(){
+  pedidosTablaOrdenCol = null;
+  renderPedidosTablaMeses();
+}
+
+// Agrupa por quincena (preservando el orden natural — "Quincena 1" antes
+// que "Quincena 2") y ordena DENTRO de cada grupo por la columna elegida
+// (o el criterio de siempre si todavía no se clickeó ningún header) — la
+// jerarquía mes → quincena nunca se toca, sólo el orden interno del bloque.
+function pedidosTablaFilasOrdenadas(vinos){
+  const porQuincena = new Map();
+  vinos.forEach(v => {
+    const q = v._quincena || '';
+    if(!porQuincena.has(q)) porQuincena.set(q, []);
+    porQuincena.get(q).push(v);
+  });
+  const col = PEDIDOS_TABLA_COLS.find(c => c.key === pedidosTablaOrdenCol);
+  const dirMul = pedidosTablaOrdenDir === 'desc' ? -1 : 1;
+  const out = [];
+  Array.from(porQuincena.keys()).sort((a,b) => a.localeCompare(b)).forEach(q => {
+    const grupo = porQuincena.get(q);
+    if(col){
+      grupo.sort((a,b) => {
+        const va = col.get(a), vb = col.get(b);
+        const cmp = col.num ? (va - vb) : String(va).localeCompare(String(vb));
+        return cmp * dirMul;
+      });
+    } else {
+      grupo.sort((a,b) =>
+        (a.bodega||'').localeCompare(b.bodega||'') ||
+        (a.varietal||'').localeCompare(b.varietal||'') ||
+        a.nombre.localeCompare(b.nombre)
+      );
+    }
+    out.push(...grupo);
+  });
+  return out;
+}
+
+function pedidosTablaThHtml(col){
+  const activo = pedidosTablaOrdenCol === col.key;
+  const flecha = activo ? (pedidosTablaOrdenDir === 'asc' ? ' ▲' : ' ▼') : '';
+  return `<th class="${col.num?'num ':''}pedido-tabla-th-sort${activo?' active':''}" onclick="pedidosTablaSetOrden('${col.key}')" title="Ordenar por ${esc(col.label)}">${esc(col.label)}${flecha}</th>`;
+}
+
+// Tabla en vivo, misma estructura/columnas que el .xlsx de "Exportar todos
+// los meses" (agruparHistorialPorMes reusada tal cual) pero como HTML en
+// pantalla — no hay botón que tocar, siempre muestra el estado actual del
+// historial completo. El orden interno de cada quincena es clickeable
+// (headers de columna); el Excel siempre exporta en el orden canónico de
+// siempre, sin importar cómo esté ordenada la tabla en pantalla en ese
+// momento — son dos vistas independientes a propósito, exportar no debería
+// depender de en qué quedó la última vez que alguien clickeó un header acá.
 function renderPedidosTablaMeses(){
   const el = document.getElementById('pedidosTablaMeses');
   if(!el) return;
@@ -2817,30 +2895,29 @@ function renderPedidosTablaMeses(){
     el.innerHTML = '<div class="carta-pool-empty">Todavía no se confirmó ninguna carta.</div>';
     return;
   }
-  el.innerHTML = meses.map(mes => {
-    const vinos = ordenarVinosExport(Array.from(porMes.get(mes).values()));
+  const ordenActivo = pedidosTablaOrdenCol
+    ? `<button type="button" class="pedido-tabla-orden-reset" onclick="pedidosTablaOrdenReset()">✕ Orden por defecto</button>`
+    : '';
+  el.innerHTML = ordenActivo + meses.map(mes => {
+    const vinos = pedidosTablaFilasOrdenadas(Array.from(porMes.get(mes).values()));
     let quincenaActual = null;
     const filas = vinos.map(v => {
       const nuevaQuincena = v._quincena !== quincenaActual;
       quincenaActual = v._quincena;
-      const [bodega, varietal, nombre, quincena, precio, copa, ventaBotella, costo, rent] = filaExport(v);
+      const celdas = PEDIDOS_TABLA_COLS.map(c => {
+        const val = c.get(v);
+        return `<td class="${c.num?'num':''}">${c.num ? c.fmt(val) : esc(val)}</td>`;
+      }).join('');
       return `<tr class="${nuevaQuincena ? 'pedido-tabla-quincena-inicio' : ''}">
-        <td class="pedido-tabla-quincena">${nuevaQuincena ? esc(quincena) : ''}</td>
-        <td>${esc(bodega)}</td>
-        <td>${esc(varietal)}</td>
-        <td>${esc(nombre)}</td>
-        <td class="num">$${precio.toLocaleString('es-AR')}</td>
-        <td class="num">$${copa.toLocaleString('es-AR')}</td>
-        <td class="num">$${ventaBotella.toLocaleString('es-AR')}</td>
-        <td class="num">$${costo.toLocaleString('es-AR')}</td>
-        <td class="num">${rent}%</td>
+        <td class="pedido-tabla-quincena">${nuevaQuincena ? esc(v._quincena) : ''}</td>
+        ${celdas}
       </tr>`;
     }).join('');
     return `<details class="pedido-tabla-mes" open>
       <summary>${esc(nombreMesLabel(mes))}</summary>
       <div class="pedido-tabla-scroll">
         <table class="pedido-tabla">
-          <thead><tr><th>Quincena</th><th>Bodega</th><th>Varietal</th><th>Vino</th><th class="num">Precio góndola</th><th class="num">Valor de copa</th><th class="num">Venta botella (x6 copas)</th><th class="num">Costo de copa</th><th class="num">Rentabilidad (ROI)</th></tr></thead>
+          <thead><tr><th>Quincena</th>${PEDIDOS_TABLA_COLS.map(pedidosTablaThHtml).join('')}</tr></thead>
           <tbody>${filas}</tbody>
         </table>
       </div>
