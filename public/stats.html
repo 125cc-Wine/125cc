@@ -366,6 +366,8 @@
      mobile (.carta-grid pasa a 1 columna ahí — pools arriba, carriles
      abajo — donde "flotar" no tendría sentido, quedaría pegado tapando
      los pools que siguen apareciendo por encima al hacer scroll). */
+  .carta-mes-promedio{font-size:13px;color:var(--ink-dark-2);margin-bottom:10px}
+  .carta-mes-promedio b{color:var(--madera);font-weight:600}
   .carta-lanes-orden{display:flex;align-items:center;gap:8px;margin-bottom:10px}
   .carta-lanes-orden label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dark-3)}
   .carta-lanes-orden select{background:var(--dark-3);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:6px 10px;color:var(--ink-dark);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer}
@@ -672,6 +674,7 @@
         </div>
       </div>
       <div>
+        <div class="carta-mes-promedio" id="cartaMesPromedio"></div>
         <div class="carta-lanes-orden">
           <label for="cartaLanesOrdenSelect">Ordenar vinos elegidos por</label>
           <select id="cartaLanesOrdenSelect" onchange="cartaSetLanesOrden(this.value)">
@@ -2948,6 +2951,16 @@ function cartaLaneResumenHtml(label, entradas){
 }
 
 function renderCartaLanes(){
+  // Promedio del mes completo (las 2 quincenas juntas) — aparte del de cada
+  // quincena, que ya se muestra en su propio header más abajo.
+  const preciosMes = cartaSemanas.flatMap(s => s.vinos.filter(Boolean).map(cartaPrecioCopa));
+  const elMesPromedio = document.getElementById('cartaMesPromedio');
+  if(elMesPromedio){
+    elMesPromedio.innerHTML = preciosMes.length
+      ? `Precio promedio de copa — ${esc(nombreMesLabel(cartaMes))} completo: <b>$${Math.round(preciosMes.reduce((a,b)=>a+b,0)/preciosMes.length).toLocaleString('es-AR')}</b>`
+      : '';
+  }
+
   document.getElementById('cartaLanes').innerHTML = cartaSemanas.map((s,si)=>{
     const filled = s.vinos.filter(Boolean).length;
     // Resumen de mezcla de precios de esta quincena — pedido de Maio, para
