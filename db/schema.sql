@@ -497,3 +497,11 @@ CREATE INDEX IF NOT EXISTS idx_carta_historial_confirmado ON carta_historial(con
 -- db/migrations/007_carta_historial_catalogo_externo.sql. ──
 ALTER TABLE carta_historial ALTER COLUMN vino_id TYPE text USING vino_id::text;
 ALTER TABLE carta_historial ADD COLUMN IF NOT EXISTS fuente text NOT NULL DEFAULT '125cc';
+
+-- Pestaña "Pedidos" (stats.html) — cuántas cajas pedirle a cada bodega,
+-- consolidando todos los meses futuros en los que aparece. La cantidad se
+-- carga a mano por vino/quincena (no hay fórmula automática a partir de
+-- copas vendidas — decisión del usuario), nullable porque la mayoría de lo
+-- ya confirmado antes de este cambio no tiene valor cargado todavía. Ver
+-- db/migrations/008_carta_historial_cajas.sql. ──
+ALTER TABLE carta_historial ADD COLUMN IF NOT EXISTS cajas int;

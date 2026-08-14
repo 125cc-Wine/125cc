@@ -30,7 +30,7 @@ async function getHistorialCarta(req, res) {
   // necesita el cálculo de qué está bloqueado en los pools.
   if (req.query.todo === '1') {
     const { rows } = await sql`
-      SELECT vino_id, vino_nombre, bodega, semana_label, semana_inicio, confirmado_at, fuente
+      SELECT vino_id, vino_nombre, bodega, semana_label, semana_inicio, confirmado_at, fuente, cajas
       FROM carta_historial
       ORDER BY semana_inicio DESC, confirmado_at DESC
     `;
@@ -41,12 +41,22 @@ async function getHistorialCarta(req, res) {
   // SQL — pasar el número solo y concatenar con '||' en Postgres mezclaría
   // int y text sin cast implícito seguro.
   const { rows } = await sql`
-    SELECT vino_id, vino_nombre, bodega, semana_label, semana_inicio, confirmado_at, fuente
+    SELECT vino_id, vino_nombre, bodega, semana_label, semana_inicio, confirmado_at, fuente, cajas
     FROM carta_historial
     WHERE confirmado_at > now() - ${MESES_BLOQUEO_CARTA + ' months'}::interval
     ORDER BY confirmado_at DESC
   `;
   return res.status(200).json({ historial: rows, mesesBloqueo: MESES_BLOQUEO_CARTA });
+}
+
+// Cantidad de cajas a pedir de ese vino en esa quincena — carga manual
+// desde la pestaña "Pedidos", sin fórmula automática. null si no se cargó
+// nada todavía (la mayoría de lo confirmado antes de este campo). Cualquier
+// valor no-numérico o negativo también cae a null en vez de guardar basura.
+function normalizarCajas(val) {
+  if (val == null || val === '') return null;
+  const n = Math.trunc(Number(val));
+  return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
 async function guardarHistorialCarta(req, res, semanas) {
@@ -88,6 +98,7 @@ async function guardarHistorialCarta(req, res, semanas) {
   const idsGuardados = [];
   const filasBorradas = []; // snapshot de lo que se borra, para poder restaurarlo con "Deshacer"
   let borrados = 0;
+  let actualizados = 0; // vinos que no cambiaron de casillero pero sí de cantidad de cajas
   await withTransaction(async (client) => {
     for (const s of semanas) {
       const idsActuales = [...new Set(
@@ -105,31 +116,47 @@ async function guardarHistorialCarta(req, res, semanas) {
             DELETE FROM carta_historial
             WHERE semana_inicio = ${s.inicio} AND semana_label = ${s.label}
               AND vino_id != ALL(${idsActuales}::text[])
-            RETURNING vino_id, vino_nombre, bodega, fuente
+            RETURNING vino_id, vino_nombre, bodega, fuente, cajas
           `
         : await client.sql`
             DELETE FROM carta_historial
             WHERE semana_inicio = ${s.inicio} AND semana_label = ${s.label}
-            RETURNING vino_id, vino_nombre, bodega, fuente
+            RETURNING vino_id, vino_nombre, bodega, fuente, cajas
           `;
       borrados += delResult.rowCount;
       delResult.rows.forEach(r => filasBorradas.push({
-        vino_id: r.vino_id, vino_nombre: r.vino_nombre, bodega: r.bodega, fuente: r.fuente,
+        vino_id: r.vino_id, vino_nombre: r.vino_nombre, bodega: r.bodega, fuente: r.fuente, cajas: r.cajas,
         semana_label: s.label, semana_inicio: s.inicio,
       }));
 
       if (!idsActuales.length) continue;
 
       const { rows: existentes } = await client.sql`
-        SELECT vino_id FROM carta_historial
+        SELECT vino_id, cajas FROM carta_historial
         WHERE semana_inicio = ${s.inicio} AND semana_label = ${s.label}
       `;
-      const yaExiste = new Set(existentes.map(r => r.vino_id));
+      const yaExiste = new Map(existentes.map(r => [r.vino_id, r.cajas]));
 
       for (const v of s.vinos) {
         if (!v || v.id == null || !v.nombre) continue;
-        if (yaExiste.has(String(v.id))) continue; // no se toca lo que no cambió
-        yaExiste.add(String(v.id)); // por si el mismo vino aparece repetido en s.vinos
+        const vid = String(v.id);
+        const cajas = normalizarCajas(v.cajas);
+
+        if (yaExiste.has(vid)) {
+          // El vino ya estaba confirmado en esta quincena — no se toca nada
+          // salvo que haya cambiado la cantidad de cajas a pedir (pestaña
+          // "Pedidos"), que sí se puede editar sin sacar y volver a poner
+          // el vino.
+          if (yaExiste.get(vid) !== cajas) {
+            await client.sql`
+              UPDATE carta_historial SET cajas = ${cajas}
+              WHERE semana_inicio = ${s.inicio} AND semana_label = ${s.label} AND vino_id = ${vid}
+            `;
+            actualizados++;
+          }
+          continue;
+        }
+        yaExiste.set(vid, cajas); // por si el mismo vino aparece repetido en s.vinos
 
         // vino_id es texto: puede ser un id numérico del Sheet de 125cc (se
         // guarda como string) o un UUID del catálogo externo de Aroma/La Vid.
@@ -137,8 +164,8 @@ async function guardarHistorialCarta(req, res, semanas) {
         // puntual después, sin tocar otras filas que compartan vino_id de
         // una confirmación anterior.
         const { rows } = await client.sql`
-          INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio, fuente)
-          VALUES (${String(v.id)}, ${v.nombre}, ${v.bodega || ''}, ${s.label}, ${s.inicio}, ${v.fuente || '125cc'})
+          INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio, fuente, cajas)
+          VALUES (${vid}, ${v.nombre}, ${v.bodega || ''}, ${s.label}, ${s.inicio}, ${v.fuente || '125cc'}, ${cajas})
           RETURNING id
         `;
         idsGuardados.push(rows[0].id);
@@ -150,9 +177,9 @@ async function guardarHistorialCarta(req, res, semanas) {
   // para que "Deshacer" pueda validar la ventana de 15 min también del lado
   // de la restauración de bajas — ver deshacerHistorialCarta.
   return res.status(200).json({
-    ok: true, vinosGuardados: idsGuardados.length, vinosBorrados: borrados, idsGuardados,
+    ok: true, vinosGuardados: idsGuardados.length, vinosBorrados: borrados, vinosActualizados: actualizados, idsGuardados,
     filasBorradas, borradoEn: new Date().toISOString(),
-    sinCambios: !idsGuardados.length && !borrados,
+    sinCambios: !idsGuardados.length && !borrados && !actualizados,
   });
 }
 
@@ -194,8 +221,8 @@ async function deshacerHistorialCarta(req, res, { ids, restaurar, borradoEn }) {
       for (const f of filas) {
         if (!f || f.vino_id == null || !f.vino_nombre || !f.semana_label || !/^\d{4}-\d{2}-\d{2}$/.test(f.semana_inicio || '')) continue;
         await client.sql`
-          INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio, fuente)
-          VALUES (${String(f.vino_id)}, ${f.vino_nombre}, ${f.bodega || ''}, ${f.semana_label}, ${f.semana_inicio}, ${f.fuente || '125cc'})
+          INSERT INTO carta_historial (vino_id, vino_nombre, bodega, semana_label, semana_inicio, fuente, cajas)
+          VALUES (${String(f.vino_id)}, ${f.vino_nombre}, ${f.bodega || ''}, ${f.semana_label}, ${f.semana_inicio}, ${f.fuente || '125cc'}, ${normalizarCajas(f.cajas)})
         `;
         filasRestauradas++;
       }

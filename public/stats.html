@@ -324,6 +324,17 @@
   .carta-pool-cards{display:flex;flex-wrap:wrap;gap:8px}
   .carta-pool-empty{font-size:12px;color:var(--ink-dark-3);padding:6px 0}
 
+  .pedido-bodega{background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-card);box-shadow:var(--shadow-dark);padding:16px;margin-bottom:14px}
+  .pedido-bodega-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--line-dark)}
+  .pedido-bodega-nombre{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--ink-dark)}
+  .pedido-bodega-total{font-size:12px;color:var(--madera);font-weight:500}
+  .pedido-vino-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+  .pedido-vino-row:last-child{border-bottom:none}
+  .pedido-vino-nombre{font-size:12px;color:var(--ink-dark);flex:1;min-width:0}
+  .pedido-vino-detalle{font-size:10px;color:var(--ink-dark-3)}
+  .pedido-vino-cajas{font-size:13px;font-weight:600;color:var(--ink-dark);flex-shrink:0;min-width:60px;text-align:right}
+  .pedido-vino-cajas.sin-cargar{font-size:10px;font-weight:400;color:#facc15}
+
   .carta-wine-card{background:var(--dark-3);border:1px solid var(--line-dark);border-left:4px solid transparent;border-radius:var(--r-sm);padding:9px 12px;cursor:grab;min-width:150px;max-width:220px;transition:border-color .15s,opacity .15s}
   /* El borde izquierdo (color de tramo) se pisa por style="" inline — el hover
      solo toca los otros 3 lados para no taparlo con --madera */
@@ -380,6 +391,10 @@
   .carta-slot-sub{font-size:10px;color:var(--ink-dark-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .carta-slot-remove{background:none;border:none;color:var(--ink-dark-3);font-size:16px;line-height:1;cursor:pointer;flex-shrink:0;padding:2px 4px}
   .carta-slot-remove:hover{color:#f87171}
+  .carta-slot-cajas{display:flex;flex-direction:column;align-items:center;flex-shrink:0;gap:2px}
+  .carta-slot-cajas label{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dark-3)}
+  .carta-slot-cajas input{width:40px;background:var(--dark-2);border:1px solid var(--line-dark);border-radius:var(--r-sm);padding:3px 4px;color:var(--ink-dark);font-size:12px;text-align:center;font-family:'DM Sans',sans-serif;outline:none}
+  .carta-slot-cajas input:focus{border-color:var(--accent)}
 
   .carta-tramo-resumen{display:flex;gap:6px;margin-bottom:10px}
   .carta-tramo-chip{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:var(--r-pill);background:var(--tc);color:#1a1a1a;font-size:11px;font-weight:700}
@@ -444,6 +459,7 @@
     <button class="dash-tab" onclick="switchTab('vinos')">Editor de Vinos</button>
     <button class="dash-tab" onclick="switchTab('bodegas')">Bodegas</button>
     <button class="dash-tab" onclick="switchTab('carta')">Calendario de Carta</button>
+    <button class="dash-tab" onclick="switchTab('pedidos')">Pedidos</button>
   </div>
 
   <!-- PANEL STATS -->
@@ -679,6 +695,20 @@
       <button class="carta-historial-toggle" onclick="toggleCartaHistorial()">Ver historial de cartas anteriores ▾</button>
       <div id="cartaHistorialView" style="display:none"></div>
     </div>
+  </div>
+
+  <!-- PANEL PEDIDOS — consolida por bodega todo lo confirmado de HOY en
+       adelante (no lo ya servido), sumando las cajas cargadas en cada
+       quincena del Calendario de Carta. La cantidad se carga a mano ahí
+       (casillero "Cajas" de cada vino elegido) — acá sólo se suma y se
+       agrupa, es una vista de sólo lectura. -->
+  <div class="dash-panel" id="panel-pedidos">
+    <div style="font-size:12px;color:var(--ink-dark-3);line-height:1.5;margin-bottom:16px">
+      Vinos confirmados de hoy en adelante, agrupados por bodega, con las cajas cargadas en el Calendario de Carta.
+      Un vino que aparece en más de un mes suma las cajas de todos — es el pedido consolidado para esa bodega.
+      Las cajas sin cargar todavía se muestran con un aviso.
+    </div>
+    <div id="pedidosView"><div class="loading">Cargando...</div></div>
   </div>
 
 </div>
@@ -1276,6 +1306,7 @@ function switchTab(tab, btnEl){
   if(tab==='vinos' && !editorLoaded) loadWinesForEditor();
   if(tab==='bodegas' && !bodegasPanelLoaded) loadBodegasTab();
   if(tab==='carta' && !cartaLoaded) loadCartaTab();
+  if(tab==='pedidos') loadPedidosTab();
 }
 
 // ══════════════════════════════
@@ -2207,6 +2238,7 @@ function nuevoPlanMes(mesISO){
         id: h.vino_id, nombre: h.vino_nombre, bodega: h.bodega || '',
         precio: w ? w.precio : undefined, fuente: h.fuente || '125cc',
         varietal: w?.varietal || '', region: w?.region || '', categoria: w?.categoria || '',
+        cajas: h.cajas ?? null,
       };
     });
   });
@@ -2633,6 +2665,90 @@ function renderCartaHistorialView(){
   }).join('');
 }
 
+// ══════════════════════════════════════════════════════════════
+// PEDIDOS — pestaña de sólo lectura: agrupa por bodega todo lo confirmado
+// de HOY en adelante (agruparHistorialPorQuincena + filtro por g.fin), y
+// dentro de cada bodega suma las cajas de cada vino a través de todos los
+// meses en los que aparece — un vino en septiembre Y noviembre da UN solo
+// total consolidado. Reusa cartaHistorialCompleto (mismo caché que "Vista
+// de historial") para no pedir el historial completo dos veces.
+// ══════════════════════════════════════════════════════════════
+function pedidosPorBodega(historial){
+  const grupos = agruparHistorialPorQuincena(historial)
+    .filter(g => g.fin >= hoyISO())
+    .sort((a,b) => a.inicio.localeCompare(b.inicio)); // cronológico, para que el detalle de cada vino no salga al revés
+  const porBodega = new Map(); // bodega -> Map(nombre normalizado -> {nombre, cajasTotal, sinCargar, detalle[]})
+  grupos.forEach(g => {
+    g.vinos.forEach(h => {
+      const bodega = h.bodega || 'Sin bodega';
+      if(!porBodega.has(bodega)) porBodega.set(bodega, new Map());
+      const vinos = porBodega.get(bodega);
+      const key = normalizarTexto(h.vino_nombre);
+      if(!vinos.has(key)) vinos.set(key, { nombre: h.vino_nombre, cajasTotal: 0, sinCargar: false, detalle: [] });
+      const entry = vinos.get(key);
+      if(h.cajas == null) entry.sinCargar = true;
+      else entry.cajasTotal += h.cajas;
+      entry.detalle.push({ mes: nombreMesLabel(g.inicio.slice(0,7)), label: g.label, cajas: h.cajas });
+    });
+  });
+  return porBodega;
+}
+
+function renderPedidosView(){
+  const el = document.getElementById('pedidosView');
+  if(!el) return;
+  if(!cartaHistorialCompleto || !cartaHistorialCompleto.length){
+    el.innerHTML = '<div class="carta-pool-empty">Todavía no se confirmó ninguna carta.</div>';
+    return;
+  }
+  const porBodega = pedidosPorBodega(cartaHistorialCompleto);
+  if(!porBodega.size){
+    el.innerHTML = '<div class="carta-pool-empty">No hay quincenas confirmadas de hoy en adelante.</div>';
+    return;
+  }
+  const bodegas = Array.from(porBodega.keys()).sort((a,b) => a.localeCompare(b));
+  el.innerHTML = bodegas.map(bodega => {
+    const vinos = Array.from(porBodega.get(bodega).values()).sort((a,b) => a.nombre.localeCompare(b.nombre));
+    const total = vinos.reduce((n,v) => n + v.cajasTotal, 0);
+    const filas = vinos.map(v => {
+      const detalleTxt = v.detalle
+        .map(d => `${d.label} ${d.mes}${d.cajas != null ? ` (${d.cajas})` : ' (sin cargar)'}`)
+        .join(' + ');
+      const cajasHtml = (v.cajasTotal || !v.sinCargar)
+        ? `<span class="pedido-vino-cajas">${v.cajasTotal} caja${v.cajasTotal===1?'':'s'}${v.sinCargar?' ⚠':''}</span>`
+        : `<span class="pedido-vino-cajas sin-cargar">⚠ sin cargar</span>`;
+      return `<div class="pedido-vino-row">
+        <span class="pedido-vino-nombre">${esc(v.nombre)}<br><span class="pedido-vino-detalle">${esc(detalleTxt)}</span></span>
+        ${cajasHtml}
+      </div>`;
+    }).join('');
+    return `<div class="pedido-bodega">
+      <div class="pedido-bodega-header">
+        <span class="pedido-bodega-nombre">${esc(bodega)}</span>
+        <span class="pedido-bodega-total">${total} caja${total===1?'':'s'}</span>
+      </div>
+      ${filas}
+    </div>`;
+  }).join('');
+}
+
+async function loadPedidosTab(){
+  const el = document.getElementById('pedidosView');
+  if(cartaHistorialCompleto === null){
+    if(el) el.innerHTML = '<div class="loading">Cargando...</div>';
+    try{
+      const res = await fetch('/api/actualizar-vino?historial=1&todo=1', {headers: adminAuthHeader()});
+      handleAuthResponse(res);
+      const data = await res.json();
+      cartaHistorialCompleto = data.historial || [];
+    } catch(e){
+      if(el) el.innerHTML = '<div class="empty-msg">Error cargando los pedidos.</div>';
+      return;
+    }
+  }
+  renderPedidosView();
+}
+
 // vino_id -> fila más reciente de carta_historial (el server ya filtra a
 // los últimos cartaMesesBloqueo, así que "está en el mapa" = "bloqueado").
 function cartaBlockedMap(){
@@ -2847,6 +2963,11 @@ function renderCartaLanes(){
           <div class="carta-slot-name">${esc(v.nombre)}</div>
           <div class="carta-slot-sub">${esc(v.bodega||'—')} · $${cartaPrecioNum(v).toLocaleString('es-AR')} · copa $${cartaPrecioCopa(v).toLocaleString('es-AR')}</div>
         </div>
+        <div class="carta-slot-cajas" title="Cajas a pedir — se usa en la pestaña Pedidos">
+          <label for="cajas-${si}-${idx}">Cajas</label>
+          <input type="number" id="cajas-${si}-${idx}" min="0" step="1" placeholder="—"
+            value="${v.cajas ?? ''}" onchange="cartaSetCajas(${si},${idx},this.value)">
+        </div>
         <button class="carta-slot-remove" onclick="cartaRemoveFromLane(${si},${idx})" title="Quitar">×</button>
       </div>`;
     };
@@ -2962,7 +3083,7 @@ function cartaPlaceWine(id, si, idx){
   // la ficha si hace falta crear un borrador en el Sheet al guardar.
   target.vinos[idx] = {
     id: w.id, nombre: w.nombre, bodega: w.bodega || '', precio: w.precio, fuente: w._fuente || '125cc',
-    varietal: w.varietal || '', region: w.region || '', categoria: w.categoria || '',
+    varietal: w.varietal || '', region: w.region || '', categoria: w.categoria || '', cajas: null,
   };
   renderCartaPools();
   renderCatalogoExterno();
@@ -2976,6 +3097,18 @@ function cartaRemoveFromLane(si, idx){
   renderCatalogoExterno();
   renderCartaManualPool();
   renderCartaLanes();
+}
+
+// Cajas a pedir de este vino en esta quincena — pestaña "Pedidos". Sólo
+// queda en memoria (cartaSemanas) hasta que se toque "Guardar carta", igual
+// que cualquier otro cambio acá; no hace falta re-renderizar el carril
+// entero por esto (nada más lo muestra todavía), así no se pierde el foco
+// del input mientras se está tipeando.
+function cartaSetCajas(si, idx, val){
+  const v = cartaSemanas[si]?.vinos[idx];
+  if(!v) return;
+  const n = val === '' ? null : Math.max(0, Math.trunc(Number(val)) || 0);
+  v.cajas = n;
 }
 
 // Pedido de Maio: guardar en cualquier momento, no solo con las 28 posiciones
