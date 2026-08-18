@@ -315,9 +315,15 @@ async function guardarBodega(token, SHEET_ID, datos) {
   const nombre = (datos.nombre || '').trim();
   if (!nombre) return { status: 400, body: { error: "El nombre de la bodega es obligatorio." } };
   const bodega_info = (datos.bodega_info || '').trim();
+  // lat/lon del mapa de la ficha (ver api/_lib/bodegas.js) — opcionales,
+  // '' si no se cargaron todavía. Se validan como número para no guardar
+  // texto suelto en columnas que después se parsean con parseFloat.
+  const coord = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : ''; };
+  const lat = coord(datos.lat);
+  const lon = coord(datos.lon);
 
   const sheetRes = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Bodegas!A1:C500`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Bodegas!A1:E500`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   if (!sheetRes.ok) return { status: 502, body: { error: "Error leyendo Bodegas.", detail: await sheetRes.text() } };
@@ -337,11 +343,11 @@ async function guardarBodega(token, SHEET_ID, datos) {
 
     const sheetRow = rowIdx + 2; // +1 header, +1 porque Sheets es 1-indexed
     const updRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Bodegas!A${sheetRow}:C${sheetRow}?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Bodegas!A${sheetRow}:E${sheetRow}?valueInputOption=USER_ENTERED`,
       {
         method:  'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ range: `Bodegas!A${sheetRow}:C${sheetRow}`, values: [[id, nombre, bodega_info]] }),
+        body:    JSON.stringify({ range: `Bodegas!A${sheetRow}:E${sheetRow}`, values: [[id, nombre, bodega_info, lat, lon]] }),
       }
     );
     if (!updRes.ok) return { status: 502, body: { error: "Error actualizando bodega.", detail: await updRes.text() } };
@@ -351,11 +357,11 @@ async function guardarBodega(token, SHEET_ID, datos) {
 
     id = dataRows.reduce((m, r) => Math.max(m, parseInt(r[0] || 0) || 0), 0) + 1;
     const appendRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Bodegas!A:C:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Bodegas!A:E:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
       {
         method:  'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ values: [[id, nombre, bodega_info]] }),
+        body:    JSON.stringify({ values: [[id, nombre, bodega_info, lat, lon]] }),
       }
     );
     if (!appendRes.ok) return { status: 502, body: { error: "Error creando bodega.", detail: await appendRes.text() } };

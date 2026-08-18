@@ -55,7 +55,7 @@ module.exports = async function handler(req, res) {
     // bodega todavía no está migrada, el vino conserva su bodega_info propia
     // como fallback — así nunca desaparece texto por no estar todavía en la
     // pestaña nueva.
-    const { porNombre: bodegaInfoPorNombre } = await leerBodegas(SHEET_ID, token);
+    const { porNombre: bodegasPorNombre } = await leerBodegas(SHEET_ID, token);
 
     // Fila 0 = encabezados, filas 1+ = datos
     const headers = rows[0].map(h => h.trim().toLowerCase()
@@ -68,6 +68,8 @@ module.exports = async function handler(req, res) {
       .map(row => {
         const obj = {};
         headers.forEach((h, i) => { obj[h] = (row[i] || "").toString().trim(); });
+
+        const bodegaCentral = bodegasPorNombre.get(normalizarBodega(obj.bodega));
 
         return {
           id:          parseInt(obj.id)  || 0,
@@ -88,7 +90,9 @@ module.exports = async function handler(req, res) {
           maridaje:    obj.maridaje
             ? obj.maridaje.split(",").map(s => s.trim()).filter(Boolean)
             : [],
-          bodega_info: bodegaInfoPorNombre.get(normalizarBodega(obj.bodega)) || obj.bodega_info || "",
+          bodega_info: bodegaCentral?.bodega_info || obj.bodega_info || "",
+          bodega_lat:  bodegaCentral?.lat ?? null,
+          bodega_lon:  bodegaCentral?.lon ?? null,
           tienda_url:  obj.tienda_url    || "",
           imagen:      obj.imagen        || "",
           perfil: {

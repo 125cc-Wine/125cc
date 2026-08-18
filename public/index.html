@@ -472,6 +472,15 @@
     .bodega-label{font-size:var(--text-kicker);letter-spacing:.01em;color:var(--madera);margin-bottom:6px;font-weight:600}
     .bodega-text{font-family:var(--font-serif);font-style:italic;font-size:17px;color:rgba(245,237,224,.85);line-height:1.6;font-weight:400}
 
+    /* Mapa de ubicación de la bodega (Leaflet + tiles IGN) — cargado lazy,
+       ver ensureLeafletLoaded() en el JS. Placeholder mismo alto que el mapa
+       real para que no salte el layout mientras Leaflet termina de cargar. */
+    .bodega-mapa-wrap{margin-top:12px}
+    .bodega-mapa{height:150px;border-radius:var(--r-sm);overflow:hidden;border:1px solid rgba(207,172,89,.25);background:var(--dark-2)}
+    .bodega-mapa .leaflet-control-attribution{font-size:9px;background:rgba(21,26,30,.7);color:rgba(245,237,224,.6)}
+    .bodega-mapa .leaflet-control-attribution a{color:rgba(245,237,224,.75)}
+    .bodega-mapa-caption{margin-top:7px;font-size:10px;color:var(--ink-dark-3)}
+
     .charc-price{
       font-family:'Cormorant Garamond',serif;
       font-size:var(--text-voice);font-weight:600;color:var(--ink);white-space:nowrap;
@@ -1613,6 +1622,7 @@ function selectWine(id){ selectWineAndShowFicha(id); }
 
 /* ── FICHA ── */
 function renderFicha(w){
+  if(bodegaMapaInstance){ bodegaMapaInstance.remove(); bodegaMapaInstance = null; } // el contenedor viejo va a quedar huérfano por el innerHTML de abajo
   if(!w){
     document.getElementById('fichaContent').innerHTML=`<div class="ficha-placeholder"><div style="font-size:var(--text-title);margin-bottom:8px">🍷</div>Tocá una copita en el mapa<br>o un vino de la carta.</div>`;
     return;
@@ -1653,7 +1663,13 @@ function renderFicha(w){
       ${datosRows?`<div class="ficha-data-list">${datosRows}</div>`:''}
       ${w.perfil?`<div class="perfil-section"><div class="perfil-title">Perfil del vino <span style="font-size:10px;color:var(--ink-3);font-weight:400">según la bodega</span></div>${perfilRows}</div>`:''}
       ${w.maridaje&&w.maridaje.length?`<div class="maridaje-section"><div class="maridaje-title">Va bien con</div><div class="maridaje-pills">${maridajePills}</div></div>`:''}
-      ${w.bodega_info?`<div class="bodega-section"><div class="bodega-label">Sobre la bodega y el terruño</div><div class="bodega-text">${esc(w.bodega_info)}</div></div>`:''}
+      ${w.bodega_info||(w.bodega_lat&&w.bodega_lon)?`<div class="bodega-section">
+        ${w.bodega_info?`<div class="bodega-label">Sobre la bodega y el terruño</div><div class="bodega-text">${esc(w.bodega_info)}</div>`:''}
+        ${w.bodega_lat&&w.bodega_lon?`<div class="bodega-mapa-wrap">
+          <div class="bodega-mapa" id="bodegaMapa"></div>
+          <div class="bodega-mapa-caption">📍 ${esc(w.bodega)} · mapa base <a href="https://www.ign.gob.ar" target="_blank" rel="noopener" style="color:inherit">IGN Argentina</a></div>
+        </div>`:''}
+      </div>`:''}
       ${w.tienda_url?`
         <a href="${esc(w.tienda_url)}" target="_blank" rel="noopener" class="comprar-btn btn-primario">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
@@ -1661,6 +1677,55 @@ function renderFicha(w){
         </a>`:''}
     </div>`;
   animatePerfilBars();
+  if(w.bodega_lat && w.bodega_lon) renderBodegaMapa(w);
+}
+
+// ── Mapa de ubicación de la bodega ──
+// Leaflet + tiles del IGN (Instituto Geográfico Nacional) en vez de un
+// iframe del visor completo de argenmap: mismo mapa base que usan ellos,
+// pero embebido liviano y con estética propia (ver .bodega-mapa). Leaflet
+// se carga lazy (nadie lo paga si no abre una ficha con bodega geocodificada
+// — importa en un menú QR de una sola sesión, sin visitas recurrentes que
+// amorticen el peso de una librería que no todos van a usar).
+let leafletLoadPromise = null;
+function ensureLeafletLoaded(){
+  if(window.L) return Promise.resolve();
+  if(leafletLoadPromise) return leafletLoadPromise;
+  leafletLoadPromise = new Promise((resolve, reject)=>{
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(css);
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return leafletLoadPromise;
+}
+
+let bodegaMapaInstance = null;
+function renderBodegaMapa(w){
+  const lat = Number(w.bodega_lat), lon = Number(w.bodega_lon);
+  const idEsperado = w.id; // evita pintar el mapa si el usuario ya cambió de ficha mientras Leaflet cargaba
+  ensureLeafletLoaded().then(()=>{
+    if(selectedId !== idEsperado) return;
+    const el = document.getElementById('bodegaMapa');
+    if(!el) return;
+    if(bodegaMapaInstance){ bodegaMapaInstance.remove(); bodegaMapaInstance = null; }
+    const mapa = L.map(el, { attributionControl:true, zoomControl:false }).setView([lat, lon], 12);
+    L.control.zoom({ position:'bottomright' }).addTo(mapa);
+    L.tileLayer('https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png', {
+      attribution: 'Mapa base <a href="https://www.ign.gob.ar" target="_blank">IGN</a> + <a href="https://www.osm.org/copyright" target="_blank">OpenStreetMap</a>',
+      minZoom: 3, maxZoom: 17,
+    }).addTo(mapa);
+    L.marker([lat, lon]).addTo(mapa).bindPopup(`<b>${esc(w.bodega)}</b>${w.region?`<br>${esc(w.region)}`:''}`);
+    bodegaMapaInstance = mapa;
+  }).catch(()=>{
+    const el = document.getElementById('bodegaMapa');
+    if(el) el.closest('.bodega-mapa-wrap')?.remove();
+  });
 }
 
 // Cascada de barras sensoriales al entrar en viewport (handoff Paso 5/10).
