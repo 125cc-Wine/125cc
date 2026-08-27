@@ -142,7 +142,7 @@
     font-weight:600;width:14px;flex-shrink:0;font-variant-numeric:tabular-nums;
   }
   .vino-foto{height:50px;width:auto;max-width:34px;object-fit:contain;flex-shrink:0}
-  .vino-foto-placeholder{height:50px;width:22px;flex-shrink:0;color:var(--roble,#C8A46A)}
+  .vino-foto-placeholder{height:50px;width:37px;flex-shrink:0;color:var(--roble,#C8A46A)}
   .vino-info{flex:1;min-width:0}
   .vino-nombre{font-size:14.5px;font-weight:700;line-height:1.2;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -334,13 +334,16 @@ let cuentaId = null;          // mesa+timestamp — se fija UNA vez por cuenta
                                // cambia el número de mesa.
 let cuentaIdMesa = null;
 
-// SVG de silueta de botella — placeholder cuando el vino no tiene
-// imagen cargada, o la imagen no llega a cargar (link roto, sin señal).
-const BOTELLA_SVG = `<svg class="vino-foto-placeholder" viewBox="0 0 24 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M9 2h6v9c2.5 2 3.5 5 3.5 8v35a3 3 0 0 1-3 3H8.5a3 3 0 0 1-3-3V19c0-3 1-6 3.5-8V2Z"
-    stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-  <path d="M9 2h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="M6 24h12" stroke="currentColor" stroke-width="1" stroke-opacity=".5"/>
+// SVG de silueta de copa — placeholder cuando el vino no tiene imagen
+// cargada, o la imagen no llega a cargar (link roto, sin señal). Misma
+// geometría de la copita de marca que ya usan el mapa/carta/Sommelier
+// en index.html (viewBox 44×60, copa+pie+base) — sin relleno, en trazo,
+// para que se lea como silueta y no compita con las fotos reales de al lado.
+const COPA_SVG = `<svg class="vino-foto-placeholder" viewBox="0 0 44 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M10 4 H34 V20 C34 30 28.5 36 22 36 C15.5 36 10 30 10 20 Z"
+    stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M22 36 V50" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M13 52 H31" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
 </svg>`;
 
 function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('es-AR'); }
@@ -435,8 +438,8 @@ function renderCuenta(){
     const unit = precioCopaNum(w.precio);
     total += unit * cant;
     const foto = w.imagen
-      ? `<img class="vino-foto" src="${escapeHtml(w.imagen)}" alt="" onerror="this.outerHTML=BOTELLA_SVG">`
-      : BOTELLA_SVG;
+      ? `<img class="vino-foto" src="${escapeHtml(w.imagen)}" alt="" onerror="this.outerHTML=COPA_SVG">`
+      : COPA_SVG;
     // región · cosecha — el Sheet hoy no trae cosecha (año); si algún día
     // se carga, se suma sola acá sin tocar el resto.
     const regionCosecha = [w.region, w.cosecha].filter(Boolean).join(' · ');
