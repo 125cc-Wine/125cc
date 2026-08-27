@@ -465,13 +465,17 @@
      usa el diálogo de impresión nativo del navegador — no depende de
      qué impresora térmica tengan ni de su tecnología de conexión
      (USB/red/bluetooth), eso se define en el sistema operativo, no acá.
-     Al imprimir se oculta todo menos #printArea. */
+     Al imprimir se oculta todo menos #printArea — con display:none, no
+     con visibility:hidden: ese ocultaba todo pero NO le sacaba el
+     espacio del layout, así que el resto de la app (paneles, plano de
+     salón, modales) seguía ocupando altura invisible, y el navegador
+     paginaba esa altura vacía igual — de ahí las hojas en blanco de
+     más al imprimir. Con display:none esa altura desaparece del todo. */
   #printArea{display:none}
   @media print{
     @page{margin:8mm}
-    body *{visibility:hidden}
-    #printArea,#printArea *{visibility:visible}
-    #printArea{display:block;position:absolute;left:0;top:0;width:100%;padding:12px;font-family:'DM Sans',sans-serif;color:#000}
+    body > *{display:none}
+    #printArea{display:block;position:static;width:100%;padding:12px;font-family:'DM Sans',sans-serif;color:#000}
     #printArea h2{font-family:'Cormorant Garamond',serif;font-size:22px;margin-bottom:2px}
     #printArea .pr-sub{font-size:11px;color:#444;margin-bottom:12px}
     #printArea table{width:100%;border-collapse:collapse;font-size:12px}
@@ -493,7 +497,6 @@
       -webkit-print-color-adjust:exact;print-color-adjust:exact;
     }
     #printArea.pr-cuenta .cta-head{text-align:center;margin-bottom:8mm}
-    #printArea.pr-cuenta .cta-kicker{font-family:'DM Sans',sans-serif;font-size:8.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--texto-secundario,#8A6B50);font-weight:600}
     #printArea.pr-cuenta .cta-brand{font-size:34px;font-weight:700;color:var(--tinto,#7A1428);line-height:1;margin:3px 0;letter-spacing:-.01em}
     #printArea.pr-cuenta .cta-loc{font-family:'DM Sans',sans-serif;font-size:8.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--texto-secundario,#8A6B50);font-weight:600}
     #printArea.pr-cuenta .cta-divider{text-align:center;border-top:1.5px double var(--roble,#C8A46A);border-bottom:1.5px double var(--roble,#C8A46A);padding:4px 0;margin-bottom:6mm}
@@ -2099,7 +2102,6 @@ async function imprimirPrecuenta(){
   printArea.classList.toggle('compacta', vinoFilas.length > 6);
   printArea.innerHTML = `
     <div class="cta-head">
-      <div class="cta-kicker">Aroma de Vid</div>
       <div class="cta-brand">125cc</div>
       <div class="cta-loc">Wine Bar · Mar del Plata</div>
     </div>
