@@ -2003,6 +2003,7 @@ async function submitPlatoForm(){
   const body = {
     nombre, categoria, precio, unidad_venta,
     costo: existente ? existente.costo : null,
+    costo_calculado: existente ? existente.costo_calculado === true : false,
     stock_actual: existente ? existente.stock_actual : null,
     stock_minimo: existente ? existente.stock_minimo : null,
     copas_por_botella: existente ? existente.copas_por_botella : 1,
@@ -2024,7 +2025,8 @@ async function toggleActivoPlato(id){
   try {
     await api('/api/pos?r=productos', { method: 'POST', body: {
       id, nombre: p.nombre, categoria: p.categoria, unidad_venta: p.unidad_venta, precio: p.precio,
-      costo: p.costo, stock_actual: p.stock_actual, stock_minimo: p.stock_minimo,
+      costo: p.costo, costo_calculado: p.costo_calculado === true,
+      stock_actual: p.stock_actual, stock_minimo: p.stock_minimo,
       copas_por_botella: p.copas_por_botella, activo: !p.activo,
     }});
     toast(p.activo ? 'Plato desactivado' : 'Plato activado', 'success');
@@ -2063,6 +2065,14 @@ async function renderPlatoDetalle(){
         </div>
         <button class="btn-primary" style="width:100%;margin-bottom:12px" onclick="recalcularCostoPlato(${p.id})">${icon('dollar-sign')} Recalcular costo desde receta</button>
       ` : ''}
+      <!-- Carga manual: para el plato que no tiene (o no necesita) receta
+           armada pero igual hay que trackearle un costo/margen. Independiente
+           de la receta — guarda directo en productos.costo y apaga
+           costo_calculado (auditoría de más abajo, productos.js). -->
+      <div class="form-row" style="margin-top:4px;margin-bottom:12px">
+        <input type="number" id="platoCostoManual_${p.id}" class="stock-input" style="width:100%" placeholder="Costo manual" min="0" step="0.01" value="${p.costo != null ? p.costo : ''}">
+        <button class="btn-outline" onclick="guardarCostoManualPlato(${p.id})">${icon('check')} Guardar costo</button>
+      </div>
 
       <div class="section-title">Receta</div>
       ${data.items.map(i => `
@@ -2075,12 +2085,29 @@ async function renderPlatoDetalle(){
         </div>`).join('') || '<div class="items-empty">Sin ingredientes cargados todavía.</div>'}
 
       <div class="form-row" style="margin-top:10px">
-        <select id="recetaInsumoSelect" class="stock-input" style="width:100%">
-          ${disponibles.length ? disponibles.map(i => `<option value="${i.id}">${escapeHtml(i.nombre)} (${escapeHtml(i.unidad)})</option>`).join('') : '<option value="">Sin insumos disponibles — cargalos en la pestaña Insumos</option>'}
+        <select id="recetaInsumoSelect" class="stock-input" style="width:100%" onchange="this.value==='__nuevo__' && toggleNuevoInsumoInline(true)">
+          ${disponibles.map(i => `<option value="${i.id}">${escapeHtml(i.nombre)} (${escapeHtml(i.unidad)})</option>`).join('')}
+          <option value="__nuevo__">+ Nuevo insumo…</option>
         </select>
         <input type="number" id="recetaCantidad" class="stock-input" style="width:100%" placeholder="Cantidad" min="0" step="0.01">
       </div>
-      <button class="btn-outline" style="width:100%" onclick="agregarRecetaItem()">${icon('plus')} Agregar ingrediente</button>
+      <button class="btn-outline" style="width:100%;margin-bottom:10px" onclick="agregarRecetaItem()">${icon('plus')} Agregar ingrediente</button>
+
+      <!-- Insumo nuevo sin salir de la receta — antes había que ir a la
+           pestaña Insumos, cargarlo ahí y volver. Crea con el mismo
+           endpoint que esa pestaña y precarga la receta con el que
+           acaba de nacer. -->
+      <div class="quick-form${disponibles.length ? '' : ' open'}" id="nuevoInsumoInline">
+        <div class="form-row">
+          <input id="nuevoInsumoNombre" class="stock-input" style="width:100%" placeholder="Nombre del insumo">
+          <input id="nuevoInsumoUnidad" class="stock-input" style="width:100%" placeholder="Unidad (kg, un, l...)">
+        </div>
+        <input type="number" id="nuevoInsumoCosto" class="stock-input" style="width:100%;margin-top:8px" placeholder="Costo por unidad (opcional)" min="0" step="0.01">
+        <div class="row-btns" style="margin-top:8px">
+          <button class="btn-outline" onclick="toggleNuevoInsumoInline(false)">Cancelar</button>
+          <button class="btn-primary" onclick="crearInsumoInline()">${icon('plus')} Crear insumo</button>
+        </div>
+      </div>
     `;
   } catch(e){ toast(e.message, 'error'); box.innerHTML = ''; }
 }
@@ -2088,6 +2115,7 @@ async function renderPlatoDetalle(){
 async function agregarRecetaItem(){
   const insumo_id = document.getElementById('recetaInsumoSelect').value;
   const cantidad = document.getElementById('recetaCantidad').value;
+  if (insumo_id === '__nuevo__') return toast('Primero creá el insumo nuevo de abajo', 'error');
   if (!insumo_id || !cantidad) return toast('Elegí un insumo y una cantidad', 'error');
   try {
     await api('/api/pos?r=receta-item', { method: 'POST', body: { producto_id: platoSeleccionado, insumo_id, cantidad } });
@@ -2113,6 +2141,62 @@ async function recalcularCostoPlato(id){
     await loadProductos();
     renderPlatoDetalle();
     renderPlatos();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// Carga manual de costo directo desde la ficha del plato — para el que
+// no tiene receta armada (o nunca la va a tener) pero igual necesita
+// margen trackeado. costo_calculado:false a propósito: a partir de acá
+// el costo ya no viene de la receta, aunque antes sí.
+async function guardarCostoManualPlato(id){
+  const p = productos.find(x => x.id === id);
+  if (!p) return;
+  const val = document.getElementById('platoCostoManual_' + id).value;
+  try {
+    await api('/api/pos?r=productos', { method: 'POST', body: {
+      id, nombre: p.nombre, categoria: p.categoria, unidad_venta: p.unidad_venta, precio: p.precio,
+      costo: val === '' ? null : val, costo_calculado: false,
+      stock_actual: p.stock_actual, stock_minimo: p.stock_minimo,
+      copas_por_botella: p.copas_por_botella, activo: p.activo,
+    }});
+    toast('Costo actualizado', 'success');
+    await loadProductos();
+    renderPlatoDetalle();
+    renderPlatos();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// Insumo nuevo sin salir de la receta (ver comentario en renderPlatoDetalle).
+function toggleNuevoInsumoInline(show){
+  const box = document.getElementById('nuevoInsumoInline');
+  if (!box) return;
+  box.classList.toggle('open', show);
+  if (!show){
+    // Si cancela, el select vuelve a la primera opción real (no se queda
+    // trabado en "+ Nuevo insumo…" sin nada seleccionable detrás).
+    const sel = document.getElementById('recetaInsumoSelect');
+    if (sel && sel.value === '__nuevo__' && sel.options.length > 1) sel.selectedIndex = 0;
+  }
+}
+async function crearInsumoInline(){
+  const nombre = document.getElementById('nuevoInsumoNombre').value.trim();
+  const unidad = document.getElementById('nuevoInsumoUnidad').value.trim();
+  const costo_unitario = document.getElementById('nuevoInsumoCosto').value;
+  if (!nombre || !unidad) return toast('Falta nombre o unidad del insumo', 'error');
+  try {
+    const data = await api('/api/pos?r=insumos', { method: 'POST', body: { nombre, unidad, costo_unitario: costo_unitario || null } });
+    toast('Insumo creado', 'success');
+    await loadInsumosData();
+    renderPlatoDetalle();
+    // Re-render deja el form cerrado y el select con el nuevo insumo
+    // disponible — lo dejamos preseleccionado para que solo falte
+    // tipear la cantidad y tocar "Agregar ingrediente".
+    setTimeout(() => {
+      const sel = document.getElementById('recetaInsumoSelect');
+      if (sel && data.insumo) sel.value = String(data.insumo.id);
+      const cant = document.getElementById('recetaCantidad');
+      if (cant) cant.focus();
+    }, 0);
   } catch(e){ toast(e.message, 'error'); }
 }
 
@@ -3765,10 +3849,16 @@ async function guardarStock(productoId){
   const stockActVal = document.getElementById('stockAct_' + productoId).value;
   const stockMinVal = document.getElementById('stockMin_' + productoId).value;
   const costoVal = document.getElementById('stockCosto_' + productoId).value;
+  // costo_calculado solo se conserva si el costo no cambió acá — si el
+  // valor tipeado difiere del que ya tenía, pasa a ser una carga manual
+  // (aunque antes viniera de "Recalcular costo desde receta").
+  const costoNuevo = costoVal === '' ? null : Number(costoVal);
+  const costoActual = p.costo == null ? null : Number(p.costo);
+  const costoCalculado = costoNuevo === costoActual ? (p.costo_calculado === true) : false;
   try {
     await api('/api/pos?r=productos', { method: 'POST', body: {
       id: productoId, nombre: p.nombre, categoria: p.categoria, unidad_venta: p.unidad_venta, precio: p.precio,
-      costo: costoVal === '' ? null : costoVal,
+      costo: costoVal === '' ? null : costoVal, costo_calculado: costoCalculado,
       stock_actual: stockActVal === '' ? null : stockActVal,
       stock_minimo: stockMinVal === '' ? null : stockMinVal,
       copas_por_botella: p.copas_por_botella,
