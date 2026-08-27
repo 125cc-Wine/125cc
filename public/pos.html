@@ -3506,6 +3506,13 @@ function renderReportes(data){
   const mg = data.margenGeneral;
   const margenPct = Number(mg.ingresos) > 0 ? Math.round((mg.margen / mg.ingresos) * 100) : 0;
   const pa = data.periodoAnterior;
+  // Ticket promedio — se arma con datos que el endpoint ya devuelve
+  // (total y cantidad de comandas), sin SQL nueva: es la métrica de
+  // hospitalidad más clásica y no estaba en ningún lado.
+  const cant = Number(data.totalGeneral.cantidad);
+  const cantAnt = Number(pa.totalGeneral.cantidad);
+  const ticketProm = cant > 0 ? Number(data.totalGeneral.total) / cant : 0;
+  const ticketPromAnt = cantAnt > 0 ? Number(pa.totalGeneral.total) / cantAnt : 0;
 
   const cajas = data.cajas.map(c => {
     const dif = Number(c.diferencia);
@@ -3534,6 +3541,11 @@ function renderReportes(data){
         <div class="stock-row-name-sub" style="margin-bottom:4px">Margen real</div>
         <div class="total-val" style="color:var(--green)">${fmtMoney(mg.margen)}</div>
         <div class="stock-row-name-sub" style="margin-top:4px">${margenPct}% ${deltaBadge(mg.margen, pa.margenGeneral.margen)}</div>
+      </div>
+      <div class="report-card">
+        <div class="stock-row-name-sub" style="margin-bottom:4px">Ticket promedio</div>
+        <div class="total-val" style="color:var(--ink)">${fmtMoney(ticketProm)}</div>
+        <div class="stock-row-name-sub" style="margin-top:4px">por comanda ${deltaBadge(ticketProm, ticketPromAnt)}</div>
       </div>
     </div>
     ${mg.unidades_sin_costo > 0 ? `<div class="stock-row-name-sub" style="margin-bottom:16px">${mg.unidades_sin_costo} unidades vendidas sin costo cargado — el margen real es mayor a lo que se ve acá.</div>` : ''}
