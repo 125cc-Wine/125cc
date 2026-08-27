@@ -8,6 +8,7 @@
 <title>125cc · POS</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/paleta.css">
 <style>
   /* Paleta propia para esta página — tema claro tipo Fudo, independiente
      de los tokens oscuros de handoff/tokens.css (esos son para el menú
@@ -478,25 +479,55 @@
     #printArea .pr-right{text-align:right}
     #printArea .pr-total{border-top:1px solid #000;font-weight:700;font-size:14px}
 
-    /* Precuenta = ticket angosto, no hoja A4 — ancho de rollo térmico de
-       80mm (72mm de área imprimible real, descontando el margen que
-       suelen dejar las impresoras de ticket). Sigue sin depender de qué
-       hardware tengan (mismo diálogo nativo de impresión de siempre):
-       en una térmica de verdad ocupa el rollo entero; en una impresora
-       A4 normal, sale una columna angosta centrada en la hoja — que es
-       justamente lo que hace que SE VEA como un ticket y no como una
-       hoja de oficina. */
-    #printArea.pr-ticket{
-      width:72mm;max-width:72mm;margin:0 auto;padding:4mm 0;
+    /* Precuenta = la pieza de diseño A5 (public/cuenta.html), ahora
+       servida directo desde "Pedir cuenta" con los datos reales de la
+       comanda — no una copia manual. No fuerza @page{size:A5} (eso
+       rompería el reporte de Finanzas, que comparte este mismo
+       #printArea): en una impresora A4 normal sale una columna A5
+       centrada en la hoja; en una térmica configurada como impresora
+       del sistema, se ajusta a lo que esa impresora reporte. Mismo
+       diálogo nativo de siempre, sin depender de qué hardware tengan. */
+    #printArea.pr-cuenta{
+      width:148mm;max-width:148mm;margin:0 auto;padding:8mm 0;
+      font-family:'Cormorant Garamond',serif;color:var(--madera-oscura,#4A3020);
+      -webkit-print-color-adjust:exact;print-color-adjust:exact;
     }
-    #printArea.pr-ticket h2{
-      font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;
-      letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-bottom:4px;
-    }
-    #printArea.pr-ticket .pr-sub{text-align:center;font-size:10px;color:#000;margin-bottom:10px}
-    #printArea.pr-ticket table{font-size:11.5px}
-    #printArea.pr-ticket td{padding:2.5px 0}
-    #printArea.pr-ticket .pr-total{border-top:1px dashed #000;padding-top:5px;font-size:13.5px}
+    #printArea.pr-cuenta .cta-head{text-align:center;margin-bottom:8mm}
+    #printArea.pr-cuenta .cta-kicker{font-family:'DM Sans',sans-serif;font-size:8.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--texto-secundario,#8A6B50);font-weight:600}
+    #printArea.pr-cuenta .cta-brand{font-size:34px;font-weight:700;color:var(--tinto,#7A1428);line-height:1;margin:3px 0;letter-spacing:-.01em}
+    #printArea.pr-cuenta .cta-loc{font-family:'DM Sans',sans-serif;font-size:8.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--texto-secundario,#8A6B50);font-weight:600}
+    #printArea.pr-cuenta .cta-divider{text-align:center;border-top:1.5px double var(--roble,#C8A46A);border-bottom:1.5px double var(--roble,#C8A46A);padding:4px 0;margin-bottom:6mm}
+    #printArea.pr-cuenta .cta-divider span{font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--texto-secundario,#8A6B50);font-weight:600}
+    #printArea.pr-cuenta .vino-row{display:flex;align-items:center;gap:8px;padding:3mm 0;border-bottom:1px solid rgba(200,164,106,.35)}
+    #printArea.pr-cuenta .vino-row:first-child{padding-top:0}
+    #printArea.pr-cuenta .vino-num{font-family:'DM Sans',sans-serif;font-size:10px;color:var(--texto-terciario,#B09070);font-weight:600;width:14px;flex-shrink:0}
+    #printArea.pr-cuenta .vino-foto{height:50px;width:auto;max-width:34px;object-fit:contain;flex-shrink:0}
+    #printArea.pr-cuenta .vino-foto-placeholder{height:50px;width:37px;flex-shrink:0;color:var(--roble,#C8A46A)}
+    #printArea.pr-cuenta .vino-info{flex:1;min-width:0}
+    #printArea.pr-cuenta .vino-nombre{font-size:14.5px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #printArea.pr-cuenta .vino-bodega{font-size:10.5px;color:var(--texto-secundario,#8A6B50);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #printArea.pr-cuenta .vino-region{font-size:9.5px;color:var(--texto-terciario,#B09070);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #printArea.pr-cuenta .vino-precio{font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:700;flex-shrink:0;text-align:right;white-space:nowrap}
+    #printArea.pr-cuenta .vino-precio .mult{font-size:10px;font-weight:500;color:var(--texto-secundario,#8A6B50)}
+    #printArea.pr-cuenta .cta-tapeos{margin-top:2mm}
+    #printArea.pr-cuenta .tapeo-item{display:flex;justify-content:space-between;gap:8px;padding:1.6mm 0;border-bottom:1px dotted var(--texto-terciario,#B09070);font-family:'DM Sans',sans-serif;font-size:12px}
+    #printArea.pr-cuenta .cta-total{margin-top:5mm;border-top:1.5px solid var(--madera-oscura,#4A3020);border-bottom:3px double var(--madera-oscura,#4A3020);padding:3mm 0;display:flex;justify-content:space-between;align-items:baseline}
+    #printArea.pr-cuenta .cta-total .label{font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;color:var(--madera-oscura,#4A3020)}
+    #printArea.pr-cuenta .cta-total .monto{font-size:26px;font-weight:700;color:var(--tinto,#7A1428)}
+    #printArea.pr-cuenta .cta-meta{display:flex;justify-content:space-between;margin-top:4mm;font-family:'DM Sans',sans-serif;font-size:9.5px;letter-spacing:.05em;color:var(--texto-secundario,#8A6B50);text-transform:uppercase;font-weight:600}
+    #printArea.pr-cuenta .cta-qr{margin-top:8mm;display:flex;align-items:center;gap:10px}
+    #printArea.pr-cuenta .cta-qr img{width:62px;height:62px;flex-shrink:0}
+    #printArea.pr-cuenta .cta-qr-fallback{width:62px;height:62px;flex-shrink:0;border:1px dashed var(--roble,#C8A46A);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;font-size:8px;color:var(--texto-terciario,#B09070);text-align:center;line-height:1.3}
+    #printArea.pr-cuenta .cta-qr-text .l1{font-size:13px;font-weight:600;color:var(--tinto,#7A1428);line-height:1.3}
+    #printArea.pr-cuenta .cta-qr-text .l2{font-size:13px;font-weight:600;color:var(--madera-oscura,#4A3020);line-height:1.3}
+    #printArea.pr-cuenta .cta-qr-text .url{font-family:'DM Sans',sans-serif;font-size:8px;color:var(--texto-terciario,#B09070);margin-top:3px;word-break:break-all}
+    #printArea.pr-cuenta .cta-frase{text-align:center;font-style:italic;font-size:11px;color:var(--texto-secundario,#8A6B50);margin-top:6mm}
+    /* Más de 6 vinos distintos: filas más chicas para seguir entrando
+       en una sola A5 (mismo criterio que cuenta.html). */
+    #printArea.pr-cuenta.compacta .vino-row{padding:2mm 0}
+    #printArea.pr-cuenta.compacta .vino-foto,#printArea.pr-cuenta.compacta .vino-foto-placeholder{height:38px}
+    #printArea.pr-cuenta.compacta .vino-nombre{font-size:13px}
+    #printArea.pr-cuenta.compacta .vino-bodega,#printArea.pr-cuenta.compacta .vino-region{font-size:9px}
   }
 </style>
 </head>
@@ -1911,40 +1942,191 @@ async function cerrarMesaSinCobrar(){
 // ── PEDIR CUENTA / PRECUENTA ──────────────────────────────────────
 // Marca la mesa en azul (estado cuenta_pedida) — vuelve a verde sola al
 // cobrar, porque comanda-cerrar.js ya libera la mesa a 'libre'. Después
-// imprime la precuenta vía el diálogo nativo del navegador: funciona en
-// cualquier dispositivo/impresora sin depender de qué hardware tengan.
+// imprime la precuenta: la pieza de diseño A5 (antes vivía aparte en
+// public/cuenta.html, cargada a mano) — ahora sale directo de acá con
+// los datos reales de la comanda, sin volver a tipear nada. Sigue
+// usando el diálogo nativo de impresión: funciona en cualquier
+// dispositivo/impresora sin depender de qué hardware tengan.
 async function pedirCuenta(){
   try {
     if (currentComanda.mesa_id){
       await api('/api/pos?r=mesa-estado', { method: 'POST', body: { id: currentComanda.mesa_id, estado: 'cuenta_pedida' } });
       await loadMesas();
     }
-    imprimirPrecuenta();
+    await imprimirPrecuenta();
   } catch(e){ toast(e.message, 'error'); }
 }
 
-function imprimirPrecuenta(){
+// Catálogo de vinos.json cacheado — el POS solo tiene el producto
+// (nombre/precio/vino_ref), la foto/varietal/región viven en el Sheet
+// público. Se carga una vez por sesión de POS.
+let vinosCatalogo = null;
+async function cargarVinosCatalogo(){
+  if (vinosCatalogo) return vinosCatalogo;
+  try {
+    const r = await fetch('/vinos.json');
+    const data = await r.json();
+    vinosCatalogo = new Map((data.vinos || []).map(v => [String(v.id), v]));
+  } catch(e){ vinosCatalogo = new Map(); } // sin catálogo, todo cae a la sección simple (nombre+precio, sin foto)
+  return vinosCatalogo;
+}
+
+// SVG de silueta de copa — misma geometría de marca que index.html
+// (mapa/carta/Sommelier). Placeholder para un vino sin foto en
+// vinos.json, o cuya foto no llega a cargar.
+const COPA_SVG = `<svg class="vino-foto-placeholder" viewBox="0 0 44 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M10 4 H34 V20 C34 30 28.5 36 22 36 C15.5 36 10 30 10 20 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M22 36 V50" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M13 52 H31" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+</svg>`;
+
+// Frases rotativas al pie — mismas 20 de public/cuenta.html, tono seco
+// de sommelier. Una nueva por cada cuenta impresa (cada comanda que se
+// cierra es "una cuenta" distinta, no una sesión de edición).
+const FRASES_CUENTA = [
+  "Esta carta no vuelve. La próxima tampoco.",
+  "Una botella son seis copas. Ni una más.",
+  "El Malbec de altura no necesita presentación. La tiene igual.",
+  "Catorce vinos. Ninguno se repite.",
+  "Lo que no se toma esta noche, se lo lleva otro.",
+  "No hay vino malo, hay copa equivocada.",
+  "El terruño no se explica. Se sirve.",
+  "Guardá la anécdota. La etiqueta ya la contó.",
+  "Brindar con lo que sobra no es brindar.",
+  "El próximo vino no va a esperar a que decidas.",
+  "Nadie pide la carta dos veces igual.",
+  "Si dudás entre dos, pedí las dos copas.",
+  "El corcho no vuelve a cerrar. Tomen en serio.",
+  "Acá no hay vino de la casa. Hay catorce casas.",
+  "La cosecha no negocia con el calendario.",
+  "Una copa bien servida no necesita comentario.",
+  "El que prueba de más, elige mejor.",
+  "No todos los tintos son iguales. Ninguno, de hecho.",
+  "El maridaje es una sugerencia, no una ley.",
+  "Esto que tomaron ya no está en la carta de mañana.",
+];
+
+// Quincena actual — el POS no tiene este dato en ningún lado (es un
+// concepto de planificación de stats.html/Calendario de Carta, sin
+// endpoint propio). Se pregunta una vez por sesión de POS y se
+// recuerda para las próximas cuentas, en vez de volver a pedirla en
+// cada mesa — las quincenas duran 14 días, no cambian a mitad de un
+// service. "Omitir" imprime sin el dato (mejor "—" que trabar el
+// service por esto).
+let quincenaActual = null;
+let quincenaResolver = null;
+function pedirQuincena(){
+  if (quincenaActual) return Promise.resolve(quincenaActual);
+  document.getElementById('quincenaInput').value = '';
+  document.getElementById('quincenaBackdrop').classList.add('open');
+  document.getElementById('quincenaDialogEl').classList.add('open');
+  setTimeout(() => document.getElementById('quincenaInput').focus(), 60);
+  return new Promise(resolve => { quincenaResolver = resolve; });
+}
+function confirmarQuincena(){
+  const val = document.getElementById('quincenaInput').value.trim();
+  document.getElementById('quincenaBackdrop').classList.remove('open');
+  document.getElementById('quincenaDialogEl').classList.remove('open');
+  if (val) quincenaActual = val;
+  if (quincenaResolver) { quincenaResolver(quincenaActual); quincenaResolver = null; }
+}
+function cancelarQuincena(){
+  document.getElementById('quincenaBackdrop').classList.remove('open');
+  document.getElementById('quincenaDialogEl').classList.remove('open');
+  if (quincenaResolver) { quincenaResolver(quincenaActual); quincenaResolver = null; }
+}
+
+async function imprimirPrecuenta(){
   const activos = currentItems.filter(i => i.estado === 'activo');
   const subtotal = activos.reduce((s,i) => s + Number(i.precio_unitario) * i.cantidad, 0);
   const total = aplicarDescuentoClient(subtotal, currentComanda.descuento_tipo, currentComanda.descuento_valor);
 
-  const filas = activos.map(it => `
-    <tr><td>${it.cantidad} × ${escapeHtml(it.nombre_snapshot)}</td><td class="pr-right">${fmtMoney(it.precio_unitario * it.cantidad)}</td></tr>`).join('');
+  const catalogo = await cargarVinosCatalogo();
+  const quincena = await pedirQuincena();
+
+  // Vinos = ítems cuyo producto tiene vino_ref con match real en
+  // vinos.json (ahí salen foto/varietal/región). Todo lo demás —
+  // platos, tapeo, o un vino_ref que no matcheó — cae a la sección
+  // simple de abajo, mismo criterio que tenía cuenta.html para tapeo.
+  const vinoFilas = [];
+  const otrasFilas = [];
+  activos.forEach(it => {
+    const prod = productos.find(p => p.id === it.producto_id);
+    const vino = prod && prod.vino_ref ? catalogo.get(String(prod.vino_ref)) : null;
+    if (vino) vinoFilas.push({ it, vino });
+    else otrasFilas.push(it);
+  });
+
+  const filasVinos = vinoFilas.map(({ it, vino }, i) => {
+    const foto = vino.imagen
+      ? `<img class="vino-foto" src="${escapeHtml(vino.imagen)}" alt="" onerror="this.outerHTML=COPA_SVG">`
+      : COPA_SVG;
+    // región · cosecha — el Sheet hoy no trae cosecha (año); se suma
+    // sola el día que se cargue, sin tocar nada más.
+    const regionCosecha = [vino.region, vino.cosecha].filter(Boolean).join(' · ');
+    return `
+      <div class="vino-row">
+        <div class="vino-num">${String(i + 1).padStart(2, '0')}</div>
+        ${foto}
+        <div class="vino-info">
+          <div class="vino-nombre">${escapeHtml(it.nombre_snapshot)}</div>
+          <div class="vino-bodega">${escapeHtml(vino.bodega || '')}${vino.varietal ? ' · ' + escapeHtml(vino.varietal) : ''}</div>
+          ${regionCosecha ? `<div class="vino-region">${escapeHtml(regionCosecha)}</div>` : ''}
+        </div>
+        <div class="vino-precio">${it.cantidad > 1 ? `<span class="mult">× ${it.cantidad}</span> ` : ''}${fmtMoney(it.precio_unitario * it.cantidad)}</div>
+      </div>`;
+  }).join('');
+
+  const filasOtras = otrasFilas.map(it => `
+    <div class="tapeo-item"><span class="tn">${it.cantidad > 1 ? it.cantidad + ' × ' : ''}${escapeHtml(it.nombre_snapshot)}</span><span class="tp">${fmtMoney(it.precio_unitario * it.cantidad)}</span></div>`).join('');
 
   const descuentoFilas = currentComanda.descuento_tipo ? `
-    <tr><td>Subtotal</td><td class="pr-right">${fmtMoney(subtotal)}</td></tr>
-    <tr><td>Descuento</td><td class="pr-right">−${currentComanda.descuento_tipo === 'porcentaje' ? currentComanda.descuento_valor + '%' : fmtMoney(currentComanda.descuento_valor)}</td></tr>` : '';
+    <div class="tapeo-item"><span class="tn">Subtotal</span><span class="tp">${fmtMoney(subtotal)}</span></div>
+    <div class="tapeo-item"><span class="tn">Descuento</span><span class="tp">−${currentComanda.descuento_tipo === 'porcentaje' ? currentComanda.descuento_valor + '%' : fmtMoney(currentComanda.descuento_valor)}</span></div>` : '';
+
+  const frase = FRASES_CUENTA[Math.floor(Math.random() * FRASES_CUENTA.length)];
+  const mesaNombre = currentComanda.mesa_nombre || 'Takeaway';
+  const d = new Date();
+  const fechaCorta = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getFullYear()).slice(-2)}`;
+  // /cuenta/{id} todavía no existe como página (TODO) — el id es el de
+  // la comanda real, ya único y estable, a diferencia de la versión
+  // manual de cuenta.html que tenía que inventarse uno con mesa+timestamp.
+  const url = `https://125cc.com.ar/cuenta/${currentComanda.id}`;
+  const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(url)}`;
 
   const printArea = document.getElementById('printArea');
-  printArea.classList.add('pr-ticket');
+  printArea.classList.add('pr-cuenta');
+  printArea.classList.toggle('compacta', vinoFilas.length > 6);
   printArea.innerHTML = `
-    <h2>125cc</h2>
-    <div class="pr-sub">${escapeHtml(currentComanda.mesa_nombre || 'Takeaway')} · ${new Date().toLocaleString('es-AR')}</div>
-    <table>
-      ${filas}
+    <div class="cta-head">
+      <div class="cta-kicker">Aroma de Vid</div>
+      <div class="cta-brand">125cc</div>
+      <div class="cta-loc">Wine Bar · Mar del Plata</div>
+    </div>
+    <div class="cta-divider"><span>Lo que tomaron esta noche</span></div>
+    ${filasVinos}
+    <div class="cta-tapeos">
+      ${filasOtras}
       ${descuentoFilas}
-      <tr class="pr-total"><td>Total</td><td class="pr-right">${fmtMoney(total)}</td></tr>
-    </table>`;
+    </div>
+    <div class="cta-total">
+      <div class="label">Total</div>
+      <div class="monto">${fmtMoney(total)}</div>
+    </div>
+    <div class="cta-meta">
+      <span>QUINCENA ${quincena ? escapeHtml(quincena) : '—'}</span>
+      <span>${fechaCorta}</span>
+      <span>${escapeHtml(mesaNombre.toUpperCase())}</span>
+    </div>
+    <div class="cta-qr">
+      <img src="${qrImgUrl}" alt="" onerror="this.outerHTML='<div class=&quot;cta-qr-fallback&quot;>QR<br>no disponible</div>'">
+      <div class="cta-qr-text">
+        <div class="l1">Puntuá lo que tomaste.</div>
+        <div class="l2">Comprá la botella.</div>
+        <div class="url">${url}</div>
+      </div>
+    </div>
+    <div class="cta-frase">"${frase}"</div>`;
   window.print();
 }
 
@@ -2651,10 +2833,10 @@ function imprimirFinanzas(){
   const filasComp = d.comparativoFijos.map(c => `
     <tr><td>${escapeHtml(c.categoria)}</td><td class="pr-right">${fmtMoney(c.presupuestado)}</td><td class="pr-right">${fmtMoney(c.real)}</td></tr>`).join('');
   // Reporte de página completa, a diferencia de la precuenta — nunca
-  // hereda .pr-ticket (por si el elemento la trae puesta de una
-  // impresión previa en la misma sesión).
+  // hereda .pr-cuenta/.compacta (por si el elemento las trae puestas
+  // de una impresión previa en la misma sesión).
   const printArea = document.getElementById('printArea');
-  printArea.classList.remove('pr-ticket');
+  printArea.classList.remove('pr-cuenta', 'compacta');
   printArea.innerHTML = `
     <h2>125cc — Estado de resultados</h2>
     <div class="pr-sub">${d.mes}</div>
@@ -4138,6 +4320,22 @@ if (sessionStorage.getItem(SESSION_KEY)) enterApp();
   <div class="quick-form-actions" style="margin-top:var(--sp-3)">
     <button class="btn-outline" style="flex:1" onclick="cancelarAbrirMesa()">Cancelar</button>
     <button class="btn-primary" style="flex:1" onclick="confirmarAbrirMesa()">Abrir mesa</button>
+  </div>
+</div>
+
+<!-- Quincena actual — se pregunta la primera vez que se imprime una
+     cuenta en la sesión (ver pedirQuincena()); el POS no tiene este
+     dato en ningún otro lado. -->
+<div class="confirm-backdrop" id="quincenaBackdrop" onclick="cancelarQuincena()"></div>
+<div class="confirm-dialog" id="quincenaDialogEl" style="width:min(92vw,320px);text-align:left">
+  <div class="section-title" style="margin-bottom:var(--sp-3)">¿Qué quincena es?</div>
+  <div class="field" style="margin-bottom:var(--sp-3)">
+    <label class="field-label" for="quincenaInput">Número de quincena</label>
+    <input type="text" id="quincenaInput" placeholder="ej: 17" onkeydown="if(event.key==='Enter') confirmarQuincena()">
+  </div>
+  <div class="quick-form-actions">
+    <button class="btn-outline" style="flex:1" onclick="cancelarQuincena()">Omitir</button>
+    <button class="btn-primary" style="flex:1" onclick="confirmarQuincena()">Confirmar</button>
   </div>
 </div>
 </body>
