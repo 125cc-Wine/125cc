@@ -465,17 +465,21 @@
      usa el diálogo de impresión nativo del navegador — no depende de
      qué impresora térmica tengan ni de su tecnología de conexión
      (USB/red/bluetooth), eso se define en el sistema operativo, no acá.
-     Al imprimir se oculta todo menos #printArea — con display:none, no
-     con visibility:hidden: ese ocultaba todo pero NO le sacaba el
-     espacio del layout, así que el resto de la app (paneles, plano de
-     salón, modales) seguía ocupando altura invisible, y el navegador
-     paginaba esa altura vacía igual — de ahí las hojas en blanco de
-     más al imprimir. Con display:none esa altura desaparece del todo. */
+     Al imprimir se oculta todo menos #printArea, con display:none (no
+     visibility:hidden — ese ocultaba todo pero no le sacaba el espacio
+     del layout, y el navegador paginaba esa altura vacía igual: las
+     hojas en blanco de antes). El !important es necesario: #app y
+     #loginScreen se muestran/ocultan con estilo INLINE puesto por JS
+     (enterApp()/logout() hacen ...style.display='block'/'none') — un
+     inline le gana a cualquier regla de hoja de estilos sin
+     !important, así que sin esto #app seguía imprimiéndose entero por
+     encima de la cuenta (bug real, ya visto: "imprime toda la página
+     como una captura de pantalla y al fondo la cuenta"). */
   #printArea{display:none}
   @media print{
     @page{margin:8mm}
-    body > *{display:none}
-    #printArea{display:block;position:static;width:100%;padding:12px;font-family:'DM Sans',sans-serif;color:#000}
+    body > *{display:none !important}
+    #printArea{display:block !important;position:static;width:100%;padding:12px;font-family:'DM Sans',sans-serif;color:#000}
     #printArea h2{font-family:'Cormorant Garamond',serif;font-size:22px;margin-bottom:2px}
     #printArea .pr-sub{font-size:11px;color:#444;margin-bottom:12px}
     #printArea table{width:100%;border-collapse:collapse;font-size:12px}
