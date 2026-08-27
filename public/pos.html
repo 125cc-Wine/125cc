@@ -467,6 +467,7 @@
      Al imprimir se oculta todo menos #printArea. */
   #printArea{display:none}
   @media print{
+    @page{margin:8mm}
     body *{visibility:hidden}
     #printArea,#printArea *{visibility:visible}
     #printArea{display:block;position:absolute;left:0;top:0;width:100%;padding:12px;font-family:'DM Sans',sans-serif;color:#000}
@@ -476,6 +477,26 @@
     #printArea td{padding:3px 0}
     #printArea .pr-right{text-align:right}
     #printArea .pr-total{border-top:1px solid #000;font-weight:700;font-size:14px}
+
+    /* Precuenta = ticket angosto, no hoja A4 — ancho de rollo térmico de
+       80mm (72mm de área imprimible real, descontando el margen que
+       suelen dejar las impresoras de ticket). Sigue sin depender de qué
+       hardware tengan (mismo diálogo nativo de impresión de siempre):
+       en una térmica de verdad ocupa el rollo entero; en una impresora
+       A4 normal, sale una columna angosta centrada en la hoja — que es
+       justamente lo que hace que SE VEA como un ticket y no como una
+       hoja de oficina. */
+    #printArea.pr-ticket{
+      width:72mm;max-width:72mm;margin:0 auto;padding:4mm 0;
+    }
+    #printArea.pr-ticket h2{
+      font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;
+      letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-bottom:4px;
+    }
+    #printArea.pr-ticket .pr-sub{text-align:center;font-size:10px;color:#000;margin-bottom:10px}
+    #printArea.pr-ticket table{font-size:11.5px}
+    #printArea.pr-ticket td{padding:2.5px 0}
+    #printArea.pr-ticket .pr-total{border-top:1px dashed #000;padding-top:5px;font-size:13.5px}
   }
 </style>
 </head>
@@ -1914,7 +1935,9 @@ function imprimirPrecuenta(){
     <tr><td>Subtotal</td><td class="pr-right">${fmtMoney(subtotal)}</td></tr>
     <tr><td>Descuento</td><td class="pr-right">−${currentComanda.descuento_tipo === 'porcentaje' ? currentComanda.descuento_valor + '%' : fmtMoney(currentComanda.descuento_valor)}</td></tr>` : '';
 
-  document.getElementById('printArea').innerHTML = `
+  const printArea = document.getElementById('printArea');
+  printArea.classList.add('pr-ticket');
+  printArea.innerHTML = `
     <h2>125cc</h2>
     <div class="pr-sub">${escapeHtml(currentComanda.mesa_nombre || 'Takeaway')} · ${new Date().toLocaleString('es-AR')}</div>
     <table>
@@ -2627,7 +2650,12 @@ function imprimirFinanzas(){
   const d = ultimoEstadoResultados;
   const filasComp = d.comparativoFijos.map(c => `
     <tr><td>${escapeHtml(c.categoria)}</td><td class="pr-right">${fmtMoney(c.presupuestado)}</td><td class="pr-right">${fmtMoney(c.real)}</td></tr>`).join('');
-  document.getElementById('printArea').innerHTML = `
+  // Reporte de página completa, a diferencia de la precuenta — nunca
+  // hereda .pr-ticket (por si el elemento la trae puesta de una
+  // impresión previa en la misma sesión).
+  const printArea = document.getElementById('printArea');
+  printArea.classList.remove('pr-ticket');
+  printArea.innerHTML = `
     <h2>125cc — Estado de resultados</h2>
     <div class="pr-sub">${d.mes}</div>
     <table>
