@@ -1,0 +1,15 @@
+/* public/paleta.css — paleta de "etiqueta de vino" para piezas impresas
+   (precuenta A5, y lo que salga después: etiquetas, tarjetas de mesa).
+   Nombres deliberadamente distintos de los tokens de tokens.css/stats.html
+   (--ink, --madera, --accent, etc.) para que este archivo se pueda
+   importar sin pisar nada de lo que ya existe — hoy solo lo consume
+   cuenta.html, index.html y stats.html lo cargan sin usarlo todavía.
+   Un solo <link> por archivo, nada de build step. */
+:root{
+  --papel:#FAF5EE;
+  --tinto:#7A1428;
+  --madera-oscura:#4A3020;
+  --roble:#C8A46A;
+  --texto-secundario:#8A6B50;
+  --texto-terciario:#B09070;
+}

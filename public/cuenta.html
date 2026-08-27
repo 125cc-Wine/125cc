@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>125cc · Cuenta de mesa</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paleta.css">
+<style>
+  /* ══════════════════════════════════════════════════════════════
+     Herramienta interna — no está en el menú de navegación a propósito.
+     Zona 1 (panel, .panel) es para armar la cuenta en pantalla. Zona 2
+     (.cuenta) es la pieza de diseño que se entrega en la mesa junto al
+     ticket fiscal — eso es lo único que sale por impresora. El panel se
+     oculta con @media print más abajo.
+     ══════════════════════════════════════════════════════════════ */
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#EDE7DA;color:#2A2118;font-family:'DM Sans',sans-serif;
+    min-height:100vh;
+  }
+  .shell{
+    display:grid;grid-template-columns:380px 1fr;gap:24px;
+    max-width:1100px;margin:0 auto;padding:28px 20px 60px;align-items:start;
+  }
+  @media(max-width:860px){ .shell{grid-template-columns:1fr} }
+
+  /* ── ZONA 1 · PANEL (solo pantalla) ─────────────────────────── */
+  .panel{
+    background:#fff;border:1px solid #DDD3C0;border-radius:14px;
+    padding:20px;position:sticky;top:20px;
+  }
+  @media(max-width:860px){ .panel{position:static} }
+  .panel h1{font-size:16px;font-weight:700;margin-bottom:2px}
+  .panel .sub{font-size:12px;color:#8A7F6C;margin-bottom:18px}
+  .panel h2{
+    font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    color:#8A7F6C;margin:18px 0 8px;
+  }
+  .panel h2:first-of-type{margin-top:0}
+  .field-row{display:flex;gap:10px;margin-bottom:4px}
+  .field{flex:1;display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:11px;color:#8A7F6C;font-weight:600}
+  .field input, .field select{
+    border:1px solid #DDD3C0;border-radius:8px;padding:9px 10px;font-size:13.5px;
+    font-family:inherit;background:#FAF7F0;color:#2A2118;outline:none;
+    transition:border-color .15s;
+  }
+  .field input:focus{border-color:#7A1428}
+
+  .wine-row{
+    display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid #EFE9DC;
+  }
+  .wine-row:last-child{border-bottom:none}
+  .wine-row .wname{flex:1;min-width:0}
+  .wine-row .wname b{display:block;font-size:12.5px;font-weight:600;line-height:1.3;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wine-row .wname span{display:block;font-size:10.5px;color:#8A7F6C;margin-top:1px}
+  .stepper{display:flex;align-items:center;gap:0;flex-shrink:0}
+  .stepper button{
+    width:26px;height:26px;border:1px solid #DDD3C0;background:#fff;color:#4A3020;
+    font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .stepper button:first-child{border-radius:6px 0 0 6px}
+  .stepper button:last-child{border-radius:0 6px 6px 0}
+  .stepper button:active{background:#F0E9D8}
+  .stepper .n{
+    width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;font-weight:700;border-top:1px solid #DDD3C0;border-bottom:1px solid #DDD3C0;
+    background:#FAF7F0;font-variant-numeric:tabular-nums;
+  }
+  .wine-row.activo{background:#FCF6E9}
+
+  .tapeo-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+  .tapeo-row input[type=text]{flex:1}
+  .tapeo-row input[type=number]{width:90px}
+  .tapeo-row .rm{
+    flex-shrink:0;width:26px;height:26px;border:none;background:none;color:#B04040;
+    cursor:pointer;font-size:16px;
+  }
+  .btn-add{
+    width:100%;padding:8px;border:1px dashed #C8A46A;border-radius:8px;background:none;
+    color:#8A6B50;font-size:12px;font-weight:600;cursor:pointer;margin-top:2px;
+  }
+  .btn-add:hover{background:#FCF6E9}
+
+  .actions{display:flex;gap:10px;margin-top:20px}
+  .btn{
+    flex:1;padding:12px;border-radius:9px;border:none;font-size:13px;font-weight:700;
+    cursor:pointer;letter-spacing:.02em;
+  }
+  .btn-primary{background:#7A1428;color:#fff}
+  .btn-primary:hover{background:#5E0F1F}
+  .btn-secondary{background:none;border:1px solid #DDD3C0;color:#5A5040}
+  .btn-secondary:hover{background:#F5F0E5}
+
+  .error-box{
+    background:#FBE9E4;border:1px solid #E0A896;color:#8A3220;border-radius:8px;
+    padding:10px 12px;font-size:12.5px;margin-bottom:14px;line-height:1.5;
+  }
+  .cargando{font-size:12.5px;color:#8A7F6C;padding:8px 4px}
+
+  /* ── ZONA 2 · LA CUENTA (preview en pantalla + lo que imprime) ── */
+  .preview-wrap{display:flex;justify-content:center;padding-top:4px}
+  .cuenta{
+    width:148mm;min-height:210mm;background:var(--papel,#FAF5EE);
+    color:var(--madera-oscura,#4A3020);font-family:'Cormorant Garamond',serif;
+    padding:11mm 10mm;box-shadow:0 8px 30px rgba(40,25,10,.18);
+    display:flex;flex-direction:column;
+  }
+  .cta-head{text-align:center;margin-bottom:8mm}
+  .cta-kicker{
+    font-family:'DM Sans',sans-serif;font-size:8.5px;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--texto-secundario,#8A6B50);font-weight:600;
+  }
+  .cta-brand{
+    font-size:34px;font-weight:700;color:var(--tinto,#7A1428);line-height:1;margin:3px 0;
+    letter-spacing:-.01em;
+  }
+  .cta-loc{
+    font-family:'DM Sans',sans-serif;font-size:8.5px;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--texto-secundario,#8A6B50);font-weight:600;
+  }
+
+  .cta-divider{
+    text-align:center;border-top:1.5px double var(--roble,#C8A46A);
+    border-bottom:1.5px double var(--roble,#C8A46A);padding:4px 0;margin-bottom:6mm;
+  }
+  .cta-divider span{
+    font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--texto-secundario,#8A6B50);font-weight:600;
+  }
+
+  .cta-vinos{flex:0 0 auto}
+  .vino-row{
+    display:flex;align-items:center;gap:8px;padding:3mm 0;
+    border-bottom:1px solid rgba(200,164,106,.35);
+  }
+  .vino-row:first-child{padding-top:0}
+  .vino-num{
+    font-family:'DM Sans',sans-serif;font-size:10px;color:var(--texto-terciario,#B09070);
+    font-weight:600;width:14px;flex-shrink:0;font-variant-numeric:tabular-nums;
+  }
+  .vino-foto{height:50px;width:auto;max-width:34px;object-fit:contain;flex-shrink:0}
+  .vino-foto-placeholder{height:50px;width:22px;flex-shrink:0;color:var(--roble,#C8A46A)}
+  .vino-info{flex:1;min-width:0}
+  .vino-nombre{font-size:14.5px;font-weight:700;line-height:1.2;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vino-bodega{font-size:10.5px;color:var(--texto-secundario,#8A6B50);margin-top:1px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vino-region{font-size:9.5px;color:var(--texto-terciario,#B09070);margin-top:1px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vino-precio{
+    font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:700;flex-shrink:0;
+    text-align:right;white-space:nowrap;
+  }
+  .vino-precio .mult{font-size:10px;font-weight:500;color:var(--texto-secundario,#8A6B50)}
+
+  /* Más de 6 vinos: filas más compactas para que siga entrando en A5. */
+  .cuenta.compacta .vino-row{padding:2mm 0}
+  .cuenta.compacta .vino-foto,.cuenta.compacta .vino-foto-placeholder{height:38px}
+  .cuenta.compacta .vino-nombre{font-size:13px}
+  .cuenta.compacta .vino-bodega,.cuenta.compacta .vino-region{font-size:9px}
+
+  .cta-tapeos{margin-top:2mm}
+  .tapeo-item{
+    display:flex;justify-content:space-between;gap:8px;padding:1.6mm 0;
+    border-bottom:1px dotted var(--texto-terciario,#B09070);
+    font-family:'DM Sans',sans-serif;font-size:12px;
+  }
+  .tapeo-item .tn{color:var(--madera-oscura,#4A3020)}
+  .tapeo-item .tp{font-weight:600;flex-shrink:0}
+
+  .cta-total{
+    margin-top:5mm;border-top:1.5px solid var(--madera-oscura,#4A3020);
+    border-bottom:3px double var(--madera-oscura,#4A3020);
+    padding:3mm 0;display:flex;justify-content:space-between;align-items:baseline;
+  }
+  .cta-total .label{
+    font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;font-weight:700;color:var(--madera-oscura,#4A3020);
+  }
+  .cta-total .monto{font-size:26px;font-weight:700;color:var(--tinto,#7A1428)}
+
+  .cta-meta{
+    display:flex;justify-content:space-between;margin-top:4mm;
+    font-family:'DM Sans',sans-serif;font-size:9.5px;letter-spacing:.05em;
+    color:var(--texto-secundario,#8A6B50);text-transform:uppercase;font-weight:600;
+  }
+
+  .cta-qr{
+    margin-top:auto;padding-top:6mm;display:flex;align-items:center;gap:10px;
+  }
+  .cta-qr img{width:62px;height:62px;flex-shrink:0;image-rendering:pixelated}
+  .cta-qr-fallback{
+    width:62px;height:62px;flex-shrink:0;border:1px dashed var(--roble,#C8A46A);
+    border-radius:4px;display:flex;align-items:center;justify-content:center;
+    font-family:'DM Sans',sans-serif;font-size:8px;color:var(--texto-terciario,#B09070);
+    text-align:center;line-height:1.3;
+  }
+  .cta-qr-text{flex:1;min-width:0}
+  .cta-qr-text .l1{font-size:13px;font-weight:600;color:var(--tinto,#7A1428);line-height:1.3}
+  .cta-qr-text .l2{font-size:13px;font-weight:600;color:var(--madera-oscura,#4A3020);line-height:1.3}
+  .cta-qr-text .url{
+    font-family:'DM Sans',sans-serif;font-size:8px;color:var(--texto-terciario,#B09070);
+    margin-top:3px;word-break:break-all;
+  }
+
+  .cta-frase{
+    text-align:center;font-style:italic;font-size:11px;
+    color:var(--texto-secundario,#8A6B50);margin-top:5mm;
+  }
+
+  /* ── IMPRESIÓN ─────────────────────────────────────────────────── */
+  @page{ size:A5; margin:0; }
+  @media print{
+    html,body{background:#fff}
+    .shell{display:block;max-width:none;padding:0;margin:0}
+    .panel{display:none}
+    .preview-wrap{padding:0;display:block}
+    .cuenta{
+      width:148mm;min-height:210mm;box-shadow:none;margin:0;padding:9mm 8mm;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ═══════════ ZONA 1 · PANEL — no se imprime ═══════════ -->
+  <div class="panel">
+    <h1>Cuenta de mesa</h1>
+    <div class="sub">Acompaña al ticket fiscal — no lo reemplaza.</div>
+
+    <div id="panelError"></div>
+
+    <h2>Datos de la mesa</h2>
+    <div class="field-row">
+      <div class="field">
+        <label for="inMesa">Mesa</label>
+        <input type="text" id="inMesa" placeholder="ej: 5" oninput="renderCuenta()">
+      </div>
+      <div class="field">
+        <label for="inQuincena">Quincena</label>
+        <input type="text" id="inQuincena" placeholder="ej: 14" oninput="renderCuenta()">
+      </div>
+    </div>
+
+    <h2>Vinos de la carta</h2>
+    <div id="listaVinos"><div class="cargando">Cargando carta…</div></div>
+
+    <h2>Tapeo</h2>
+    <div id="listaTapeos"></div>
+    <button class="btn-add" onclick="agregarTapeo()">+ Agregar ítem de tapeo</button>
+
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="limpiar()">Limpiar</button>
+      <button class="btn btn-primary" onclick="imprimir()">Imprimir cuenta</button>
+    </div>
+  </div>
+
+  <!-- ═══════════ ZONA 2 · LA CUENTA — esto es lo que se imprime ═══════════ -->
+  <div class="preview-wrap">
+    <div class="cuenta" id="cuenta">
+      <div class="cta-head">
+        <div class="cta-kicker">Aroma de Vid</div>
+        <div class="cta-brand">125cc</div>
+        <div class="cta-loc">Wine Bar · Mar del Plata</div>
+      </div>
+      <div class="cta-divider"><span>Lo que tomaron esta noche</span></div>
+
+      <div class="cta-vinos" id="ctaVinos"></div>
+      <div class="cta-tapeos" id="ctaTapeos"></div>
+
+      <div class="cta-total">
+        <div class="label">Total</div>
+        <div class="monto" id="ctaTotal">$0</div>
+      </div>
+
+      <div class="cta-meta">
+        <span id="ctaQuincena">QUINCENA —</span>
+        <span id="ctaFecha">—</span>
+        <span id="ctaMesa">MESA —</span>
+      </div>
+
+      <div class="cta-qr" id="ctaQr"></div>
+
+      <div class="cta-frase" id="ctaFrase"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="/precio.js"></script>
+<script>
+// ── Frases rotativas — tono seco de sommelier, nada motivacional.
+// Se elige una al azar por cuenta nueva (al cargar la página y al
+// tocar "Limpiar"), no en cada tecla — así no cambia bajo la mano
+// mientras se está armando la cuenta.
+const FRASES = [
+  "Esta carta no vuelve. La próxima tampoco.",
+  "Una botella son seis copas. Ni una más.",
+  "El Malbec de altura no necesita presentación. La tiene igual.",
+  "Catorce vinos. Ninguno se repite.",
+  "Lo que no se toma esta noche, se lo lleva otro.",
+  "No hay vino malo, hay copa equivocada.",
+  "El terruño no se explica. Se sirve.",
+  "Guardá la anécdota. La etiqueta ya la contó.",
+  "Brindar con lo que sobra no es brindar.",
+  "El próximo vino no va a esperar a que decidas.",
+  "Nadie pide la carta dos veces igual.",
+  "Si dudás entre dos, pedí las dos copas.",
+  "El corcho no vuelve a cerrar. Tomen en serio.",
+  "Acá no hay vino de la casa. Hay catorce casas.",
+  "La cosecha no negocia con el calendario.",
+  "Una copa bien servida no necesita comentario.",
+  "El que prueba de más, elige mejor.",
+  "No todos los tintos son iguales. Ninguno, de hecho.",
+  "El maridaje es una sugerencia, no una ley.",
+  "Esto que tomaron ya no está en la carta de mañana.",
+];
+let fraseActual = FRASES[Math.floor(Math.random() * FRASES.length)];
+
+// ── Estado ──────────────────────────────────────────────────────
+let vinos = [];               // catálogo cargado de vinos.json
+let seleccion = {};           // { [vino.id]: cantidadDeCopas }
+let tapeos = [];              // [{ nombre, precio }]
+let cuentaId = null;          // mesa+timestamp — se fija UNA vez por cuenta
+                               // (no en cada tecla, si no el QR pide una
+                               // imagen nueva por cada cambio mientras se
+                               // arma la cuenta) y se vuelve a armar si
+                               // cambia el número de mesa.
+let cuentaIdMesa = null;
+
+// SVG de silueta de botella — placeholder cuando el vino no tiene
+// imagen cargada, o la imagen no llega a cargar (link roto, sin señal).
+const BOTELLA_SVG = `<svg class="vino-foto-placeholder" viewBox="0 0 24 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M9 2h6v9c2.5 2 3.5 5 3.5 8v35a3 3 0 0 1-3 3H8.5a3 3 0 0 1-3-3V19c0-3 1-6 3.5-8V2Z"
+    stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+  <path d="M9 2h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M6 24h12" stroke="currentColor" stroke-width="1" stroke-opacity=".5"/>
+</svg>`;
+
+function fmtMoney(n){ return '$' + Math.round(n).toLocaleString('es-AR'); }
+
+// ── Carga de la carta ───────────────────────────────────────────
+async function cargarVinos(){
+  const box = document.getElementById('listaVinos');
+  const errBox = document.getElementById('panelError');
+  try {
+    const r = await fetch('/vinos.json');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    vinos = Array.isArray(data.vinos) ? data.vinos : [];
+    if (!vinos.length){
+      box.innerHTML = '<div class="cargando">La carta no tiene vinos cargados.</div>';
+      return;
+    }
+    errBox.innerHTML = '';
+    renderPanelVinos();
+  } catch(e){
+    errBox.innerHTML = `<div class="error-box">No se pudo cargar la carta (vinos.json). ${e.message ? 'Detalle: ' + escapeHtml(e.message) : ''}<br>Revisá la conexión y recargá la página — no se puede armar una cuenta sin la carta.</div>`;
+    box.innerHTML = '';
+  }
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderPanelVinos(){
+  const box = document.getElementById('listaVinos');
+  box.innerHTML = vinos.map(w => {
+    const cant = seleccion[w.id] || 0;
+    return `
+    <div class="wine-row${cant > 0 ? ' activo' : ''}">
+      <div class="wname"><b>${escapeHtml(w.nombre)}</b><span>${escapeHtml(w.bodega || '')} · ${fmtPrecio(w.precio)}</span></div>
+      <div class="stepper">
+        <button onclick="cambiarCantidad(${w.id}, -1)" aria-label="Sacar copa">−</button>
+        <div class="n">${cant}</div>
+        <button onclick="cambiarCantidad(${w.id}, 1)" aria-label="Sumar copa">+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function cambiarCantidad(id, delta){
+  const actual = seleccion[id] || 0;
+  const nueva = Math.max(0, Math.min(20, actual + delta));
+  if (nueva === 0) delete seleccion[id];
+  else seleccion[id] = nueva;
+  renderPanelVinos();
+  renderCuenta();
+}
+
+// ── Tapeo ───────────────────────────────────────────────────────
+function agregarTapeo(){
+  tapeos.push({ nombre: '', precio: '' });
+  renderPanelTapeos();
+}
+function quitarTapeo(i){
+  tapeos.splice(i, 1);
+  renderPanelTapeos();
+  renderCuenta();
+}
+function actualizarTapeo(i, campo, valor){
+  tapeos[i][campo] = valor;
+  renderCuenta();
+}
+function renderPanelTapeos(){
+  const box = document.getElementById('listaTapeos');
+  box.innerHTML = tapeos.map((t, i) => `
+    <div class="tapeo-row">
+      <input type="text" placeholder="ej: Tabla de quesos" value="${escapeHtml(t.nombre)}"
+        oninput="actualizarTapeo(${i},'nombre',this.value)">
+      <input type="number" placeholder="$" min="0" step="50" value="${t.precio}"
+        oninput="actualizarTapeo(${i},'precio',this.value)">
+      <button class="rm" onclick="quitarTapeo(${i})" aria-label="Quitar">×</button>
+    </div>`).join('');
+}
+
+// ── La cuenta (Zona 2) — misma función arma la vista previa en
+// pantalla y el contenido que sale por impresora, no hay dos caminos. ──
+function renderCuenta(){
+  const cuentaEl = document.getElementById('cuenta');
+  const seleccionados = vinos.filter(w => (seleccion[w.id] || 0) > 0);
+
+  cuentaEl.classList.toggle('compacta', seleccionados.length > 6);
+
+  let total = 0;
+  document.getElementById('ctaVinos').innerHTML = seleccionados.map((w, i) => {
+    const cant = seleccion[w.id];
+    const unit = precioCopaNum(w.precio);
+    total += unit * cant;
+    const foto = w.imagen
+      ? `<img class="vino-foto" src="${escapeHtml(w.imagen)}" alt="" onerror="this.outerHTML=BOTELLA_SVG">`
+      : BOTELLA_SVG;
+    // región · cosecha — el Sheet hoy no trae cosecha (año); si algún día
+    // se carga, se suma sola acá sin tocar el resto.
+    const regionCosecha = [w.region, w.cosecha].filter(Boolean).join(' · ');
+    return `
+      <div class="vino-row">
+        <div class="vino-num">${String(i + 1).padStart(2, '0')}</div>
+        ${foto}
+        <div class="vino-info">
+          <div class="vino-nombre">${escapeHtml(w.nombre)}</div>
+          <div class="vino-bodega">${escapeHtml(w.bodega || '')}${w.varietal ? ' · ' + escapeHtml(w.varietal) : ''}</div>
+          ${regionCosecha ? `<div class="vino-region">${escapeHtml(regionCosecha)}</div>` : ''}
+        </div>
+        <div class="vino-precio">${cant > 1 ? `<span class="mult">× ${cant}</span> ` : ''}${fmtMoney(unit * cant)}</div>
+      </div>`;
+  }).join('') || '';
+
+  const tapeosValidos = tapeos.filter(t => t.nombre.trim() && Number(t.precio) > 0);
+  document.getElementById('ctaTapeos').innerHTML = tapeosValidos.map(t => {
+    total += Number(t.precio);
+    return `<div class="tapeo-item"><span class="tn">${escapeHtml(t.nombre)}</span><span class="tp">${fmtMoney(Number(t.precio))}</span></div>`;
+  }).join('');
+
+  document.getElementById('ctaTotal').textContent = fmtMoney(total);
+
+  const mesa = document.getElementById('inMesa').value.trim();
+  const quincena = document.getElementById('inQuincena').value.trim();
+  document.getElementById('ctaMesa').textContent = 'MESA ' + (mesa || '—');
+  document.getElementById('ctaQuincena').textContent = 'QUINCENA ' + (quincena || '—');
+  document.getElementById('ctaFecha').textContent = fmtFechaCorta(new Date());
+
+  renderQR(mesa);
+  document.getElementById('ctaFrase').textContent = '“' + fraseActual + '”';
+}
+
+function fmtFechaCorta(d){
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const aa = String(d.getFullYear()).slice(-2);
+  return `${dd}.${mm}.${aa}`;
+}
+
+// TODO: /cuenta/{id} todavía no existe como página — este QR queda
+// armado y apuntando ahí para cuando se construya (puntuar el vino /
+// comprar la botella desde el celular). El id es mesa+timestamp: no hay
+// forma de reabrir la MISMA cuenta dos veces con el mismo id a propósito
+// (cada impresión es un link nuevo), así que no hace falta persistir nada
+// para que el QR sea único.
+function renderQR(mesa){
+  const box = document.getElementById('ctaQr');
+  if (!cuentaId || cuentaIdMesa !== mesa){
+    const mesaSlug = (mesa || 'mesa').toString().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'mesa';
+    cuentaId = `${mesaSlug}-${Date.now()}`;
+    cuentaIdMesa = mesa;
+  }
+  const url = `https://125cc.com.ar/cuenta/${cuentaId}`;
+  const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(url)}`;
+  box.innerHTML = `
+    <img src="${qrImgUrl}" alt="" onerror="this.outerHTML='<div class=&quot;cta-qr-fallback&quot;>QR<br>no disponible</div>'">
+    <div class="cta-qr-text">
+      <div class="l1">Puntuá lo que tomaste.</div>
+      <div class="l2">Comprá la botella.</div>
+      <div class="url">${url}</div>
+    </div>`;
+}
+
+// ── Acciones del panel ──────────────────────────────────────────
+function imprimir(){ window.print(); }
+
+function limpiar(){
+  seleccion = {};
+  tapeos = [];
+  cuentaId = null;
+  cuentaIdMesa = null;
+  document.getElementById('inMesa').value = '';
+  document.getElementById('inQuincena').value = '';
+  fraseActual = FRASES[Math.floor(Math.random() * FRASES.length)];
+  renderPanelVinos();
+  renderPanelTapeos();
+  renderCuenta();
+}
+
+cargarVinos().then(renderCuenta);
+</script>
+</body>
+</html>
