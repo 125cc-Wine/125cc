@@ -46,8 +46,9 @@
     --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:28px;
 
     /* Alto mínimo de toque recomendado para uso con el dedo en una barra
-       con poca luz (Apple HIG / Material: ~44px). */
-    --tap-min:40px;
+       con poca luz (Apple HIG: 44pt / Material: 48dp). Estaba en 40px,
+       por debajo de la guía — corregido tras la auditoría de coherencia. */
+    --tap-min:44px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   @media (prefers-reduced-motion:reduce){
@@ -138,6 +139,15 @@
      plano, siempre visible mientras no haya sesión abierta. */
   .caja-cerrada-banner{display:none;align-items:center;justify-content:center;gap:8px;background:#B45309;color:#fff;font-weight:700;font-size:var(--fs-sm);padding:10px 14px;border-radius:var(--r-md);margin-bottom:var(--sp-4);cursor:pointer;transition:filter var(--t) var(--ease)}
   .caja-cerrada-banner:hover{filter:brightness(.92)}
+  /* Global, no por panel — perder wifi no respeta en qué pantalla estás. */
+  .offline-banner{
+    display:none;position:sticky;top:0;z-index:200;
+    align-items:center;justify-content:center;gap:8px;
+    background:var(--red);color:#fff;font-weight:700;font-size:var(--fs-sm);
+    padding:10px 14px;text-align:center;
+  }
+  .offline-banner.show{display:flex}
+  .offline-banner .icon{width:16px;height:16px}
 
   /* Recuadro delimitado (borde + fondo propio), a diferencia del diseño
      anterior donde los círculos flotaban directo sobre el fondo de la
@@ -409,6 +419,10 @@
   }
   .stock-row[onclick]{cursor:pointer}
   .stock-row[onclick]:hover{background:var(--surface);box-shadow:var(--shadow);border-color:var(--line);transform:translateY(-1px)}
+  /* :hover no es confiable en touch (auditoría de coherencia) — esta fila
+     SÍ navega al tocarla (Proveedores/Clientes/Menú), necesita su propio
+     feedback inmediato, no solo el que hereda de hover. */
+  .stock-row[onclick]:active{background:var(--bg);transform:translateY(0) scale(.99);box-shadow:none}
   .stock-row.expanded{background:var(--surface);box-shadow:var(--shadow-md);border-color:rgba(122,20,40,.18)}
   .stock-row-icon{
     width:34px;height:34px;flex-shrink:0;border-radius:50%;
@@ -432,6 +446,13 @@
     flex-basis:100%;display:flex;gap:var(--sp-2);flex-wrap:wrap;
     margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--line);
   }
+  /* Pill de estado — reemplaza texto suelto coloreado (Facturación,
+     comprobantes AFIP) por el mismo lenguaje visual verde/ámbar/rojo
+     que ya usan los pines de Salón. */
+  .status-pill{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:.02em}
+  .status-pill.ok{background:rgba(90,138,42,.14);color:var(--green)}
+  .status-pill.warn{background:rgba(207,172,89,.24);color:#8A6D1F}
+  .status-pill.bad{background:rgba(122,20,40,.13);color:var(--red)}
 
   /* Toast */
   .toast{position:fixed;bottom:var(--sp-5);left:50%;transform:translateX(-50%) translateY(20px);background:var(--navbar);color:#fff;padding:var(--sp-3) var(--sp-5);border-radius:var(--r-pill);font-size:var(--fs-base);opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:200;box-shadow:var(--shadow-md)}
@@ -462,6 +483,12 @@
 <body>
 
 <div class="toast" id="toast"></div>
+
+<!-- Aviso de conexión — hace visible el modo en que hoy falla sin
+     wifi (nada se llega a guardar) en vez de dejar que el mozo toque
+     "Cobrar"/"Guardar" y no entienda por qué no pasó nada. No es modo
+     offline (no encola ni reintenta), solo avisa. -->
+<div class="offline-banner" id="offlineBanner"></div>
 
 <!-- LOGIN -->
 <div id="loginScreen">
@@ -3067,20 +3094,21 @@ function renderFacturacionAmbiente(ambiente){
 function renderFacturacion(comprobantes){
   const box = document.getElementById('facturacionLista');
   if (!comprobantes.length){ box.innerHTML = '<div class="items-empty">Sin comprobantes en este filtro.</div>'; return; }
-  box.innerHTML = comprobantes.map(c => {
+  box.innerHTML = comprobantes.map((c, i) => {
     const fecha = new Date(c.created_at).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-    const color = c.estado === 'aprobado' ? 'var(--green)' : (c.estado === 'rechazado' ? 'var(--red)' : 'var(--amber)');
+    const pillClass = c.estado === 'aprobado' ? 'ok' : (c.estado === 'rechazado' ? 'bad' : 'warn');
     const numero = c.numero ? `Nº ${String(c.punto_venta).padStart(5,'0')}-${String(c.numero).padStart(8,'0')}` : 'sin número';
     const detalle = c.estado === 'aprobado'
       ? `CAE ${c.cae}`
       : (c.motivo_error || 'Sin detalle');
-    return `<div class="stock-row" style="flex-wrap:wrap">
-      <div style="flex-basis:100%">
+    return `<div class="stock-row stock-row-prod" style="animation-delay:${i*20}ms">
+      <div class="stock-row-icon">${icon('file-text')}</div>
+      <div style="flex:1;min-width:0">
         <div class="stock-row-name">${CBTE_TIPO_LABEL[c.cbte_tipo] || 'Comprobante'} ${numero} ${c.cliente_nombre ? '· ' + escapeHtml(c.cliente_nombre) : ''}</div>
-        <div class="stock-row-name-sub">${fecha} · ${fmtMoney(c.imp_total)} · <span style="color:${color};font-weight:700">${COMPROBANTE_ESTADO_LABEL[c.estado] || c.estado}</span></div>
+        <div class="stock-row-name-sub">${fecha} · ${fmtMoney(c.imp_total)} · <span class="status-pill ${pillClass}">${COMPROBANTE_ESTADO_LABEL[c.estado] || c.estado}</span></div>
         <div class="stock-row-name-sub">${escapeHtml(detalle)}</div>
       </div>
-      ${c.estado === 'rechazado' || c.estado === 'error' ? `<button class="btn-outline" onclick="reintentarComprobanteAction(${c.id})">Reintentar</button>` : ''}
+      ${c.estado === 'rechazado' || c.estado === 'error' ? `<div class="stock-row-prod-actions"><button class="btn-outline" onclick="reintentarComprobanteAction(${c.id})">${icon('refresh-cw')} Reintentar</button></div>` : ''}
     </div>`;
   }).join('');
 }
@@ -3966,12 +3994,30 @@ const ICON_PATHS = {
   search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
   star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
   'chevron-down': '<polyline points="6 9 12 15 18 9"/>',
+  'refresh-cw': '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
 };
 function icon(name, cls){
   const paths = ICON_PATHS[name];
   if (!paths) return '';
   return `<svg class="icon${cls ? ' ' + cls : ''}" viewBox="0 0 24 24">${paths}</svg>`;
 }
+
+// Aviso de conexión (ver comentario junto al banner en el HTML). Corre
+// desde que carga la página — no depende de estar logueado, perder wifi
+// en la pantalla de login también importa.
+function updateOfflineBanner(){
+  const el = document.getElementById('offlineBanner');
+  if (!el) return;
+  if (navigator.onLine){
+    el.classList.remove('show');
+  } else {
+    el.innerHTML = `${icon('alert-triangle')} Sin conexión — nada se está guardando hasta que vuelva la señal`;
+    el.classList.add('show');
+  }
+}
+window.addEventListener('online', () => { updateOfflineBanner(); toast('Conexión recuperada', 'success'); });
+window.addEventListener('offline', updateOfflineBanner);
+updateOfflineBanner();
 
 // ── HELPERS ───────────────────────────────────────────────────────
 // Jornada comercial (auditoría v2, A4): turno único de noche, corte a
