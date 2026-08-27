@@ -13,28 +13,27 @@
      de los tokens oscuros de handoff/tokens.css (esos son para el menú
      de clientes; este es un panel de trabajo de piso). */
   :root{
-    /* Paleta 125cc — valores tomados directo del :root real de
-       public/index.html (lo que corre en 125cc.com.ar), no de memoria.
-       Se mantienen los NOMBRES de variable existentes (--green/--red/
-       --blue/--amber/etc.) para no tocar cada punto donde se usan; solo
-       cambian los valores. Mapeo: --navbar/--navbar-2 = --dark/--dark-2
-       reales (superficie oscura del sitio, no un marrón madera), --green
-       = --blanco (tipo de vino, libre), --red = --tinto/--accent
-       (ocupada), --blue = azul real para "cuenta pedida" (pedido
-       explícito: verde=libre, rojo=ocupada, azul=pidieron la cuenta,
-       vuelve a verde al cobrar — no hay un azul en la paleta de marca,
-       se usa uno neutro que no compite con los cálidos), --amber =
-       --madera (roble, selección), --black = --ink (nunca #000 puro). */
-    --bg:#FAF5EE; --surface:#FFFFFF; --ink:#151A1E; --ink-2:#384551; --ink-3:#60758A;
-    --line:rgba(69,84,99,.15);
-    --navbar:#2A333C; --navbar-2:#323D48;
-    --green:#5A8A2A; --red:#7A1428; --blue:#3D6FA6; --amber:#CFAC59;
-    --accent:#7A1428; --accent-2:#9B2035; --accent-dk:#5E0F1F;
-    --accent-grad:linear-gradient(135deg,#7A1428,#9B2035);
-    --black:#151A1E;
+    /* Paleta "Turno Noche" — dirección elegida tras comparar 3 propuestas
+       (2026-08-27). Reemplaza la paleta clara anterior; no es un modo
+       oscuro alternativo ni hay toggle — es la identidad del POS ahora,
+       pensada para un local que abre de noche. Se mantienen los NOMBRES
+       de variable existentes (--green/--red/--blue/--amber/etc.) para no
+       tocar cada punto donde se usan; cambian los valores. Mapeo sigue
+       igual: --green=libre, --red=ocupada (y accent — el vino como
+       "urgente" ya era la lectura intencional en la paleta clara, se
+       conserva), --blue=cuenta pedida, --amber=selección/gold, --black
+       para el botón más oscuro de los tres niveles (nunca #000 puro). */
+    --bg:#14181D; --surface:#1E252D; --surface-2:#262F39;
+    --ink:#F1ECE2; --ink-2:#A8B3BE; --ink-3:#7E8994;
+    --line:rgba(217,188,122,.14);
+    --navbar:#10131A; --navbar-2:#171C22;
+    --green:#7FBE63; --red:#D2607A; --blue:#6FA0D6; --amber:#D9BC7A;
+    --accent:#C4506B; --accent-2:#E27E93; --accent-dk:#8B3550;
+    --accent-grad:linear-gradient(135deg,#B8425A,#D2607A);
+    --black:#0A0C0F;
     --r-sm:10px; --r-md:16px; --r-lg:22px; --r-pill:999px;
-    --shadow:0 2px 6px rgba(20,20,25,.07), 0 1px 2px rgba(20,20,25,.05);
-    --shadow-md:0 10px 28px rgba(20,20,25,.13), 0 2px 8px rgba(20,20,25,.07);
+    --shadow:0 2px 8px rgba(0,0,0,.28), 0 1px 2px rgba(0,0,0,.2);
+    --shadow-md:0 12px 32px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.25);
     --ease:cubic-bezier(.22,1,.36,1); --t:150ms;
 
     /* Escala tipográfica — 7 pasos en vez de los ~18 tamaños sueltos que
@@ -169,7 +168,7 @@
        ninguna referencia de "esto es un piso". Suave a propósito: los
        pines ya tienen borde+sombra fuerte, no compite con la lectura. */
     background:
-      radial-gradient(circle at 1px 1px, rgba(69,84,99,.09) 1px, transparent 0) 0 0/22px 22px,
+      radial-gradient(circle at 1px 1px, rgba(217,188,122,.12) 1px, transparent 0) 0 0/22px 22px,
       var(--surface);
   }
   .salon-hint{padding:var(--sp-6) var(--sp-4);color:var(--ink-3);font-size:var(--fs-sm);line-height:1.6;text-align:center;pointer-events:none}
@@ -184,7 +183,7 @@
   .salon-editing .salon-pin{cursor:grab}
   .salon-editing .salon-pin:active{cursor:grabbing}
   .salon-pin-dotwrap{position:relative;width:54px;margin:0 auto}
-  .salon-pin-dot{width:54px;height:54px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-md);box-shadow:0 2px 8px rgba(20,20,25,.2);border:2px solid rgba(255,255,255,.8);transition:outline .12s,transform var(--t) var(--ease)}
+  .salon-pin-dot{width:54px;height:54px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-md);box-shadow:0 2px 8px rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.8);transition:outline .12s,transform var(--t) var(--ease)}
   .salon-pin:not(.dragging):active .salon-pin-dot{transform:scale(.92)}
   .salon-pin.ocupada .salon-pin-dot{background:var(--red)}
   .salon-pin.cuenta_pedida .salon-pin-dot{background:var(--blue)}
@@ -204,8 +203,8 @@
      color ahí confundiría los dos estados). */
   .salon-pin.aviso .salon-pin-dot{animation:pinAviso 1.4s ease-in-out infinite}
   @keyframes pinAviso{
-    0%,100%{box-shadow:0 2px 8px rgba(20,20,25,.2),0 0 0 0 rgba(207,172,89,.65)}
-    50%{box-shadow:0 2px 8px rgba(20,20,25,.2),0 0 0 7px rgba(207,172,89,0)}
+    0%,100%{box-shadow:0 2px 8px rgba(0,0,0,.35),0 0 0 0 rgba(217,188,122,.65)}
+    50%{box-shadow:0 2px 8px rgba(0,0,0,.35),0 0 0 7px rgba(217,188,122,0)}
   }
 
   .row-btns{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-5);flex-wrap:wrap}
@@ -219,9 +218,9 @@
   .btn-outline{background:var(--surface);border:1px solid var(--line);color:var(--ink-2);font-weight:500;transition:border-color var(--t) var(--ease),color var(--t) var(--ease),transform var(--t) var(--ease),box-shadow var(--t) var(--ease)}
   .btn-outline:hover{border-color:var(--ink-3);color:var(--ink);box-shadow:var(--shadow)}
   .btn-outline:active{transform:scale(.97)}
-  .btn-primary{background:var(--accent-grad);color:#fff;transition:transform var(--t) var(--ease),filter var(--t) var(--ease),box-shadow var(--t) var(--ease);box-shadow:0 2px 8px rgba(122,20,40,.25)}
+  .btn-primary{background:var(--accent-grad);color:#fff;transition:transform var(--t) var(--ease),filter var(--t) var(--ease),box-shadow var(--t) var(--ease);box-shadow:0 2px 8px rgba(196,80,107,.3)}
   .btn-primary:active{transform:scale(.97)}
-  .btn-primary:hover{filter:brightness(.92);box-shadow:0 4px 14px rgba(122,20,40,.32)}
+  .btn-primary:hover{filter:brightness(1.1);box-shadow:0 4px 14px rgba(196,80,107,.4)}
   /* Un botón deshabilitado por JS (ej. importarVinos() mientras corre) no
      se veía distinto de uno habilitado — sin feedback de que el click no
      hace nada. opacity sobre el color existente en vez de un segundo set
@@ -263,13 +262,13 @@
      modo de cerrar el panel (pantalla completa, no hay "afuera" del
      backdrop para tocar). */
   .stock-panel-header .close-btn{background:var(--line);color:var(--ink-2)}
-  .stock-panel-header .close-btn:hover{background:rgba(69,84,99,.28);color:var(--ink)}
+  .stock-panel-header .close-btn:hover{background:rgba(241,236,226,.14);color:var(--ink)}
   /* Fila de cliente en la comanda — visible apenas se abre la mesa
      (feedback real: "cargar el cliente al abrir mesa sería ideal"),
      nunca bloquea nada, solo un atajo siempre a la vista. */
   .cliente-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);padding:10px var(--sp-5);border-bottom:1px solid var(--line);cursor:pointer;font-size:var(--fs-sm);color:var(--ink-2)}
   .cliente-row-action{color:var(--accent);font-weight:600;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.03em}
-  .cliente-frecuente-badge{background:rgba(207,172,89,.16);color:#8A6D1E;padding:10px var(--sp-5);font-size:var(--fs-xs);font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2)}
+  .cliente-frecuente-badge{background:rgba(217,188,122,.16);color:var(--amber);padding:10px var(--sp-5);font-size:var(--fs-xs);font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2)}
   .cliente-frecuente-badge button{background:var(--amber);color:#fff;border:none;border-radius:var(--r-sm);padding:6px 10px;font-size:var(--fs-xs);font-weight:700;cursor:pointer}
   /* Ambiente AFIP — nunca un detalle chico: si dice HOMOLOGACIÓN, los
      comprobantes que se emiten NO valen fiscalmente, tiene que ser
@@ -423,12 +422,12 @@
      SÍ navega al tocarla (Proveedores/Clientes/Menú), necesita su propio
      feedback inmediato, no solo el que hereda de hover. */
   .stock-row[onclick]:active{background:var(--bg);transform:translateY(0) scale(.99);box-shadow:none}
-  .stock-row.expanded{background:var(--surface);box-shadow:var(--shadow-md);border-color:rgba(122,20,40,.18)}
+  .stock-row.expanded{background:var(--surface);box-shadow:var(--shadow-md);border-color:rgba(196,80,107,.28)}
   .stock-row-icon{
     width:34px;height:34px;flex-shrink:0;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(135deg,rgba(207,172,89,.2),rgba(122,20,40,.08));
-    color:var(--accent-dk);transition:transform var(--t) var(--ease);
+    background:linear-gradient(135deg,rgba(217,188,122,.22),rgba(196,80,107,.14));
+    color:var(--amber);transition:transform var(--t) var(--ease);
   }
   .stock-row-icon .icon{width:15px;height:15px}
   .stock-row.expanded .stock-row-icon{transform:scale(1.08)}
@@ -450,9 +449,9 @@
      comprobantes AFIP) por el mismo lenguaje visual verde/ámbar/rojo
      que ya usan los pines de Salón. */
   .status-pill{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:.02em}
-  .status-pill.ok{background:rgba(90,138,42,.14);color:var(--green)}
-  .status-pill.warn{background:rgba(207,172,89,.24);color:#8A6D1F}
-  .status-pill.bad{background:rgba(122,20,40,.13);color:var(--red)}
+  .status-pill.ok{background:rgba(127,190,99,.16);color:var(--green)}
+  .status-pill.warn{background:rgba(217,188,122,.22);color:var(--amber)}
+  .status-pill.bad{background:rgba(210,96,122,.16);color:var(--red)}
 
   /* Toast */
   .toast{position:fixed;bottom:var(--sp-5);left:50%;transform:translateX(-50%) translateY(20px);background:var(--navbar);color:#fff;padding:var(--sp-3) var(--sp-5);border-radius:var(--r-pill);font-size:var(--fs-base);opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;z-index:200;box-shadow:var(--shadow-md)}
@@ -3381,7 +3380,7 @@ function dibujarGraficoBarras(canvasEl, serie){
   const usableH = h - padBottom - padTop;
   const barGap = Math.max(2, Math.min(6, 300 / serie.length));
   const barW = (w / serie.length) - barGap;
-  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#7A1428';
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#C4506B';
 
   serie.forEach((d, i) => {
     const barH = (d.total / max) * usableH;
@@ -3406,7 +3405,7 @@ function dibujarGraficoBarras(canvasEl, serie){
     ctx.globalAlpha = 1;
   });
 
-  ctx.strokeStyle = 'rgba(69,84,99,.25)';
+  ctx.strokeStyle = 'rgba(241,236,226,.16)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(0, padTop + usableH + 0.5);
@@ -3414,7 +3413,7 @@ function dibujarGraficoBarras(canvasEl, serie){
   ctx.stroke();
 
   const cadaN = Math.max(1, Math.ceil(serie.length / 8));
-  ctx.fillStyle = 'rgba(69,84,99,.75)';
+  ctx.fillStyle = 'rgba(241,236,226,.62)';
   ctx.font = '10px DM Sans, sans-serif';
   ctx.textAlign = 'center';
   serie.forEach((d, i) => {
@@ -3445,8 +3444,8 @@ function dibujarGraficoBarrasCentradas(canvasEl, serie){
   const barGap = Math.max(4, Math.min(10, 300 / serie.length));
   const barW = (w / serie.length) - barGap;
   const styles = getComputedStyle(document.documentElement);
-  const green = styles.getPropertyValue('--green').trim() || '#5A8A2A';
-  const red = styles.getPropertyValue('--red').trim() || '#7A1428';
+  const green = styles.getPropertyValue('--green').trim() || '#7FBE63';
+  const red = styles.getPropertyValue('--red').trim() || '#D2607A';
 
   serie.forEach((d, i) => {
     const barH = (Math.abs(d.valor) / maxAbs) * (usableH / 2);
@@ -3458,14 +3457,14 @@ function dibujarGraficoBarrasCentradas(canvasEl, serie){
     ctx.globalAlpha = 1;
   });
 
-  ctx.strokeStyle = 'rgba(69,84,99,.3)';
+  ctx.strokeStyle = 'rgba(241,236,226,.2)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(0, mid + 0.5);
   ctx.lineTo(w, mid + 0.5);
   ctx.stroke();
 
-  ctx.fillStyle = 'rgba(69,84,99,.75)';
+  ctx.fillStyle = 'rgba(241,236,226,.62)';
   ctx.font = '10px DM Sans, sans-serif';
   ctx.textAlign = 'center';
   serie.forEach((d, i) => {
@@ -3488,7 +3487,7 @@ function renderReportes(data){
   ultimoReporte = data;
   const box = document.getElementById('reportesContent');
   const alerta = alertasMargen.length
-    ? `<div style="background:rgba(196,120,90,.14);color:var(--red);padding:10px 12px;border-radius:var(--r-sm);margin-bottom:16px;font-weight:600;font-size:var(--fs-sm);display:flex;align-items:center;gap:8px">
+    ? `<div style="background:rgba(210,96,122,.16);color:var(--red);padding:10px 12px;border-radius:var(--r-sm);margin-bottom:16px;font-weight:600;font-size:var(--fs-sm);display:flex;align-items:center;gap:8px">
         ${icon('alert-triangle')} ${alertasMargen.length} producto${alertasMargen.length===1?'':'s'} con margen bajo o negativo — revisalo en el panel Stock.
       </div>` : '';
   const porMedio = data.totalesPorMedio.map(m => `
