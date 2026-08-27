@@ -19,8 +19,14 @@ productos separados** que comparten deploy:
    caja, cocina/barra), uso diario del personal en un local real, un solo
    archivo HTML+CSS+JS de ~3600 líneas. **Este es el foco de la revisión.**
 
-El POS está en uso real (no es una maqueta) — el local ya lo usa para
-mesas, comandas, cobro y caja del día a día.
+⚠️ **Corrección (27/08/2026): el POS todavía NO está en uso real.** Se está
+armando/iterando antes de lanzarlo — no hay staff usándolo hoy, no hay caja
+real en juego. Esto cambia el nivel de cautela apropiado para trabajar
+sobre este archivo: no hace falta branch-first obligatorio ni pedir que se
+pruebe antes de mergear a main por temor a romper un service real, porque
+todavía no hay ningún service real corriendo sobre esto. (El resto de este
+documento, incluida la frase de abajo, quedó escrito cuando se pensaba
+lanzarlo pronto — no se reescribió para no perder el detalle técnico.)
 
 ## Arquitectura técnica
 
