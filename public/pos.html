@@ -501,12 +501,14 @@
 
     /* Precuenta = la pieza de diseño A5 (public/cuenta.html), ahora
        servida directo desde "Pedir cuenta" con los datos reales de la
-       comanda — no una copia manual. No fuerza @page{size:A5} (eso
-       rompería el reporte de Finanzas, que comparte este mismo
-       #printArea): en una impresora A4 normal sale una columna A5
-       centrada en la hoja; en una térmica configurada como impresora
-       del sistema, se ajusta a lo que esa impresora reporte. Mismo
-       diálogo nativo de siempre, sin depender de qué hardware tengan. */
+       comanda — no una copia manual. El tamaño de página real (A5,
+       @page{size:A5}) se fuerza vía JS con un <style> aparte
+       (#printPageStyle, ver imprimirPrecuenta()/imprimirFinanzas() más
+       abajo), NO acá con un @page fijo — este mismo #printArea se
+       reusa para el reporte de Finanzas, que necesita quedarse en el
+       tamaño de página normal (A4/lo que tenga configurado el
+       navegador). Mismo diálogo nativo de impresión de siempre, sin
+       depender de qué hardware tengan. */
     /* Marca de agua de fondo (marca de copa de vino, PNG transparente) —
        background directo en el elemento real, SIN ::before ni z-index
        negativo (versión anterior). El motor de impresión de algunos
@@ -526,10 +528,16 @@
        (.compacta con más de 6) — un offset fijo se podía salir del
        área visible en una cuenta corta. */
     #printArea.pr-cuenta{
-      width:148mm;max-width:148mm;margin:0 auto;padding:8mm 0;
+      /* width:100% + box-sizing (no un ancho fijo en mm con margin:0
+         auto) — antes esto centraba una columna de 148mm sobre una
+         hoja A4 más ancha, y el margen izquierdo/derecho salía gratis
+         del sobrante. Ahora que @page fuerza A5 real (148mm de ancho
+         total), no hay sobrante que centrar: el padding de acá mismo
+         es el único margen, por eso pasa a ser horizontal Y vertical. */
+      width:100%;box-sizing:border-box;padding:10mm 8mm;
       font-family:'Cormorant Garamond',serif;color:var(--madera-oscura,#4A3020);
       background:url('/marca-vino.png') no-repeat center center;
-      background-size:130mm auto;
+      background-size:120mm auto;
       -webkit-print-color-adjust:exact;print-color-adjust:exact;
     }
     #printArea.pr-cuenta .cta-head{text-align:center;margin-bottom:8mm}
@@ -569,6 +577,14 @@
     #printArea.pr-cuenta.compacta .vino-bodega,#printArea.pr-cuenta.compacta .vino-region{font-size:9px}
   }
 </style>
+<!-- @page es un at-rule aparte, no anidable dentro de @media print de
+     forma condicional por elemento — así que el tamaño de página real
+     se controla desde JS llenando este <style> antes de imprimir
+     (imprimirPrecuenta(): A5 real; imprimirFinanzas(): lo vacía, esa
+     vista se queda con el tamaño normal del navegador). Va DESPUÉS del
+     <style> principal a propósito: en @page, la regla que aparece más
+     tarde en el documento gana sobre @page{margin:8mm} de arriba. -->
+<style id="printPageStyle"></style>
 </head>
 <body>
 
@@ -2194,16 +2210,21 @@ async function imprimirPrecuenta(){
     </div>
     <div class="cta-frase">"${frase}"</div>`;
 
-  // La marca de agua de fondo es background-image de CSS (::before), no
-  // una <img> — no tiene un evento "load" propio que esperar acá. Pedirla
-  // con Image() la deja en caché del navegador con la MISMA url que usa
-  // el CSS, así el ::before la encuentra ya bajada al pintar, en vez de
+  // La marca de agua de fondo es background-image de CSS, no una <img>
+  // — no tiene un evento "load" propio que esperar acá. Pedirla con
+  // Image() la deja en caché del navegador con la MISMA url que usa el
+  // CSS, así el background la encuentra ya bajada al pintar, en vez de
   // competir por red con las fotos de vino y el QR en el momento justo
   // de imprimir.
   const fondoImg = new Image();
   fondoImg.src = '/marca-vino.png';
   const imgs = [fondoImg, ...printArea.querySelectorAll('img')];
   await esperarImagenes(imgs, 1500);
+
+  // Tamaño de página real A5 — ver comentario de #printPageStyle en el
+  // <head>. Solo para esta vista: imprimirFinanzas() lo vacía antes de
+  // imprimir, para no forzarle A5 a un reporte pensado para A4.
+  document.getElementById('printPageStyle').textContent = '@page{size:A5;margin:0}';
   window.print();
 }
 
@@ -2910,10 +2931,12 @@ function imprimirFinanzas(){
   const filasComp = d.comparativoFijos.map(c => `
     <tr><td>${escapeHtml(c.categoria)}</td><td class="pr-right">${fmtMoney(c.presupuestado)}</td><td class="pr-right">${fmtMoney(c.real)}</td></tr>`).join('');
   // Reporte de página completa, a diferencia de la precuenta — nunca
-  // hereda .pr-cuenta/.compacta (por si el elemento las trae puestas
-  // de una impresión previa en la misma sesión).
+  // hereda .pr-cuenta/.compacta ni el tamaño A5 forzado (por si
+  // quedaron puestos de una impresión de cuenta previa en la misma
+  // sesión): tamaño de página normal del navegador (A4 típicamente).
   const printArea = document.getElementById('printArea');
   printArea.classList.remove('pr-cuenta', 'compacta');
+  document.getElementById('printPageStyle').textContent = '';
   printArea.innerHTML = `
     <h2>125cc — Estado de resultados</h2>
     <div class="pr-sub">${d.mes}</div>
