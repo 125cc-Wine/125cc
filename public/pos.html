@@ -1996,14 +1996,21 @@ async function pedirCuenta(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
-// Catálogo de vinos.json cacheado — el POS solo tiene el producto
-// (nombre/precio/vino_ref), la foto/varietal/región viven en el Sheet
-// público. Se carga una vez por sesión de POS.
+// Catálogo de vinos — el POS solo tiene el producto (nombre/precio/
+// vino_ref), la foto/varietal/región viven en el Sheet. Se carga una
+// vez por sesión de POS desde /api/obtener-vinos (el Sheet en vivo,
+// mismo endpoint que ya usa productos-import.js y el menú público),
+// NUNCA desde /vinos.json — ese archivo es un snapshot estático
+// commiteado al repo hace semanas (quedó pisado en el último "guardar
+// vinos.json" manual), no se actualiza solo con cada edición del
+// Sheet. Usarlo acá hacía que cualquier vino cargado/editado después
+// de ese commit imprimiera la cuenta sin foto (bug real: Kaiken Ultra
+// Chardonnay tenía foto en el Sheet pero no en el snapshot viejo).
 let vinosCatalogo = null;
 async function cargarVinosCatalogo(){
   if (vinosCatalogo) return vinosCatalogo;
   try {
-    const r = await fetch('/vinos.json');
+    const r = await fetch('/api/obtener-vinos');
     const data = await r.json();
     vinosCatalogo = new Map((data.vinos || []).map(v => [String(v.id), v]));
   } catch(e){ vinosCatalogo = new Map(); } // sin catálogo, todo cae a la sección simple (nombre+precio, sin foto)
