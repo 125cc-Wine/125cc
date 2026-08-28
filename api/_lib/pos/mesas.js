@@ -7,10 +7,20 @@ const { sql } = require('../db');
 // abierta_at/cuenta_pedida_at: para el aviso de "hace cuánto" en el
 // pin del plano (auditoría, hallazgo 1.3) — "una mesa en azul hace
 // doce minutos es el problema más caro del turno".
+//
+// platos_listos: señal de vuelta al salón (handoff/
+// ANALISIS-POS-SISTEMA-COMPLETO.md, feedback tras el hallazgo 1) —
+// cuántos ítems de la comanda abierta de esta mesa cocina ya marcó
+// 'listo' y el mozo todavía no confirmó 'entregado'. Subquery
+// correlacionada (no un JOIN + GROUP BY) porque la cardinalidad es
+// chica (pocos ítems 'listo' a la vez) y evita duplicar filas de mesas
+// por cada ítem listo.
 async function listMesas(req, res) {
   const { rows } = await sql`
     SELECT m.id, m.nombre, m.capacidad, m.estado, m.pos_x, m.pos_y,
-           c.id AS comanda_id, c.abierta_at, c.cuenta_pedida_at
+           c.id AS comanda_id, c.abierta_at, c.cuenta_pedida_at,
+           (SELECT COUNT(*) FROM comanda_items ci
+            WHERE ci.comanda_id = c.id AND ci.estado='activo' AND ci.estado_cocina='listo') AS platos_listos
     FROM mesas m
     LEFT JOIN comandas c ON c.mesa_id = m.id AND c.estado = 'abierta'
     WHERE m.activo = true

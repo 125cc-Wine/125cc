@@ -538,3 +538,11 @@ INSERT INTO pos_config (clave, valor) VALUES ('food_cost_alerta_pct', '32')
 ALTER TABLE comanda_items ADD COLUMN IF NOT EXISTS estado_cocina text
   CHECK (estado_cocina IN ('pendiente', 'listo'));
 CREATE INDEX IF NOT EXISTS idx_comanda_items_cocina ON comanda_items(estado_cocina) WHERE estado_cocina = 'pendiente';
+
+-- Señal de vuelta al salón: 'entregado' como tercer estado — cocina
+-- marca 'listo', el mozo lo ve (pin de mesa + panel de comanda) y
+-- confirma 'entregado' al servirlo, recién ahí se apaga la señal. Ver
+-- db/migrations/011_cocina_entregado.sql. ──
+ALTER TABLE comanda_items DROP CONSTRAINT IF EXISTS comanda_items_estado_cocina_check;
+ALTER TABLE comanda_items ADD CONSTRAINT comanda_items_estado_cocina_check
+  CHECK (estado_cocina IN ('pendiente', 'listo', 'entregado'));

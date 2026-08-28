@@ -17,7 +17,7 @@ async function getComanda(req, res) {
   if (!comandaRows.length) return res.status(404).json({ error: "Comanda no encontrada." });
 
   const { rows: items } = await sql`
-    SELECT id, producto_id, nombre_snapshot, precio_unitario, cantidad, estado, created_at
+    SELECT id, producto_id, nombre_snapshot, precio_unitario, cantidad, estado, estado_cocina, created_at
     FROM comanda_items WHERE comanda_id = ${id} ORDER BY created_at`;
 
   return res.status(200).json({ comanda: comandaRows[0], items });

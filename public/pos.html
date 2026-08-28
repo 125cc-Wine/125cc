@@ -211,6 +211,18 @@
     0%,100%{box-shadow:0 2px 8px rgba(0,0,0,.35),0 0 0 0 rgba(217,188,122,.65)}
     50%{box-shadow:0 2px 8px rgba(0,0,0,.35),0 0 0 7px rgba(217,188,122,0)}
   }
+  /* Señal de vuelta al salón (handoff/ANALISIS-POS-SISTEMA-COMPLETO.md,
+     feedback tras "no hay comanda de cocina"): cocina marcó algo
+     'listo' y el mozo todavía no lo confirmó 'entregado' — badge verde
+     arriba a la izquierda del pin (el de capacidad ya ocupa
+     abajo-derecha), con el mismo pulso que el aviso de cuenta pedida
+     para que se note sin tener que abrir cada mesa. */
+  .salon-pin-listo{position:absolute;top:-2px;left:-2px;background:var(--green);color:#fff;border-radius:50%;width:19px;height:19px;display:flex;align-items:center;justify-content:center;border:1px solid var(--surface);animation:pinListo 1.4s ease-in-out infinite}
+  .salon-pin-listo .icon{width:11px;height:11px;stroke-width:3}
+  @keyframes pinListo{
+    0%,100%{box-shadow:0 0 0 0 rgba(127,190,99,.65)}
+    50%{box-shadow:0 0 0 6px rgba(127,190,99,0)}
+  }
 
   .row-btns{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-5);flex-wrap:wrap}
   /* Los tres botones comparten el mismo padding vertical y min-height, así
@@ -299,6 +311,13 @@
   .item-name{font-size:var(--fs-base);color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .item-price{font-size:var(--fs-base);font-weight:700;color:var(--ink);flex-shrink:0}
   .item-remove{background:none;border:none;color:var(--ink-3);font-size:16px;cursor:pointer;padding:var(--sp-2);margin:calc(var(--sp-2) * -1);flex-shrink:0;border-radius:var(--r-sm);transition:color var(--t) var(--ease)}
+  /* Señal de cocina por ítem — ver renderItems(). */
+  .item-cocina-tag{display:flex;align-items:center;gap:4px;font-size:var(--fs-2xs);font-weight:700;margin-top:2px}
+  .item-cocina-tag.pendiente{color:var(--ink-3)}
+  .item-cocina-tag.pendiente .icon{width:12px;height:12px}
+  .item-cocina-tag.listo{color:var(--green)}
+  .item-cocina-tag.listo .icon{width:12px;height:12px}
+  .item-cocina-tag.listo button{background:var(--green);color:#fff;border:none;border-radius:20px;padding:2px 10px;font-size:var(--fs-2xs);font-weight:700;margin-left:2px;cursor:pointer}
   .item-remove:hover{color:var(--red)}
   .items-empty{padding:var(--sp-6) var(--sp-3);text-align:center;color:var(--ink-3);font-size:var(--fs-sm);line-height:1.6}
 
@@ -1397,6 +1416,7 @@ function renderSalonPlano(){
       <div class="salon-pin-dotwrap">
         <div class="salon-pin-dot">${mesaAbbrev(m.nombre)}</div>
         ${m.capacidad ? `<div class="salon-pin-badge">${m.capacidad}</div>` : ''}
+        ${Number(m.platos_listos) > 0 ? `<div class="salon-pin-listo" title="${m.platos_listos} plato${m.platos_listos==1?'':'s'} listo${m.platos_listos==1?'':'s'} para servir">${icon('check')}</div>` : ''}
         ${editingSalon ? `<div class="salon-pin-delete" title="Eliminar mesa">${icon('x')}</div>` : ''}
       </div>
       <div class="salon-pin-label">${escapeHtml(m.nombre)}</div>
@@ -1678,17 +1698,33 @@ function renderItems(){
   const activos = currentItems.filter(i => i.estado === 'activo');
   if (!activos.length){ box.innerHTML = '<div class="items-empty">Todavía no se agregó nada.</div>'; }
   else {
-    box.innerHTML = activos.map(it => `
+    // Señal de cocina por ítem (handoff/ANALISIS-POS-SISTEMA-COMPLETO.md,
+    // feedback tras el hallazgo 1) — "en cocina" mientras está
+    // 'pendiente', "Listo · Entregar" cuando cocina lo terminó (botón
+    // que confirma 'entregado' y apaga la señal en el pin de mesa
+    // también). Nada para NULL (vino, no aplica) ni 'entregado' (ya se
+    // sirvió, no hace falta seguir mostrándolo).
+    box.innerHTML = activos.map(it => {
+      const cocinaTag = it.estado_cocina === 'pendiente'
+        ? `<div class="item-cocina-tag pendiente">${icon('clipboard-list')} En cocina</div>`
+        : it.estado_cocina === 'listo'
+        ? `<div class="item-cocina-tag listo">${icon('check')} Listo <button onclick="entregarItem(${it.id})">Entregar</button></div>`
+        : '';
+      return `
       <div class="item-row">
         <div class="qty-stepper">
           <button class="qty-btn" onclick="restarItem(${it.id})">−</button>
           <div class="qty-val">${it.cantidad}</div>
           <button class="qty-btn" onclick="agregarProducto(${it.producto_id})">+</button>
         </div>
-        <div class="item-name" title="${escapeHtml(it.nombre_snapshot)}">${escapeHtml(it.nombre_snapshot)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="item-name" title="${escapeHtml(it.nombre_snapshot)}">${escapeHtml(it.nombre_snapshot)}</div>
+          ${cocinaTag}
+        </div>
         <div class="item-price">${fmtMoney(it.precio_unitario * it.cantidad)}</div>
         <button class="item-remove" onclick="anularItem(${it.id})" title="Quitar">${icon('x')}</button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
   const subtotal = activos.reduce((s,i) => s + Number(i.precio_unitario) * i.cantidad, 0);
   const total = aplicarDescuentoClient(subtotal, currentComanda.descuento_tipo, currentComanda.descuento_valor);
@@ -1860,6 +1896,18 @@ async function anularItem(itemId){
   try {
     await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'anular', item_id: itemId, registrado_por: staff } });
     await Promise.all([refreshComanda(), refreshStockBadges()]);
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// Confirma que un ítem que cocina marcó 'listo' ya se llevó a la mesa
+// (handoff/ANALISIS-POS-SISTEMA-COMPLETO.md, feedback tras el hallazgo
+// 1 — "darle a listo no le da una señal al salón"). Refresca mesas
+// también: platos_listos se calcula en vivo desde comanda_items, así
+// que apaga el badge del pin apenas se confirma.
+async function entregarItem(itemId){
+  try {
+    await api('/api/pos?r=comanda-item', { method: 'POST', body: { comanda_id: currentComanda.id, accion: 'entregar', item_id: itemId } });
+    await Promise.all([refreshComanda(), loadMesas()]);
   } catch(e){ toast(e.message, 'error'); }
 }
 

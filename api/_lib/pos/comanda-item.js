@@ -26,7 +26,7 @@
 // comanda (comanda-cerrar.js sí lockea comandas) y el ítem terminaba
 // entrando en una comanda ya cobrada, con el stock descontado sin que
 // nadie pagara esa venta.
-const { withTransaction } = require('../db');
+const { withTransaction, sql } = require('../db');
 const { consumoStock, ajustarStockInsumosPorReceta } = require('./stock-unidades');
 
 // Tolerancia para el chequeo de "hay stock": 1/6 no es representable
@@ -48,6 +48,22 @@ async function lockearComandaAbierta(client, comandaId) {
 async function comandaItem(req, res) {
   const { comanda_id, accion, registrado_por, motivo } = req.body || {};
   if (!comanda_id) return res.status(400).json({ error: "Falta comanda_id." });
+
+  // Entregar: el mozo confirma que ya llevó a la mesa un ítem que
+  // cocina marcó 'listo' — recién ahí se apaga la señal (pin de mesa +
+  // panel de comanda). Sin este paso "listo" quedaría prendido para
+  // siempre una vez servido. No toca stock ni comanda_items.cantidad,
+  // solo el estado de cocina.
+  if (accion === 'entregar') {
+    const { item_id } = req.body || {};
+    if (!item_id) return res.status(400).json({ error: "Falta item_id." });
+    const { rows } = await sql`
+      UPDATE comanda_items SET estado_cocina='entregado'
+      WHERE id=${item_id} AND comanda_id=${comanda_id} AND estado_cocina='listo'
+      RETURNING id, estado_cocina`;
+    if (!rows.length) return res.status(404).json({ error: "Ítem no encontrado o no está listo todavía." });
+    return res.status(200).json({ item: rows[0] });
+  }
 
   // Anular: saca la línea entera y restaura todo el stock de esa línea.
   // anulado_at/anulado_por se capturan siempre (sin fricción nueva, el
@@ -164,12 +180,12 @@ async function comandaItem(req, res) {
 
       if (existentes.length) {
         // Comanda de cocina (handoff/ANALISIS-POS-SISTEMA-COMPLETO.md,
-        // hallazgo 1): si esta línea ya estaba marcada 'listo' y ahora se
-        // pide más, vuelve a 'pendiente' — hay una unidad nueva sin
-        // preparar todavía. NULL (vino) no se toca, sigue NULL.
+        // hallazgo 1): si esta línea ya estaba 'listo' o 'entregado' y
+        // ahora se pide más, vuelve a 'pendiente' — hay una unidad nueva
+        // sin preparar todavía. NULL (vino) no se toca, sigue NULL.
         const { rows } = await client.sql`
           UPDATE comanda_items SET cantidad = cantidad + 1,
-            estado_cocina = CASE WHEN estado_cocina = 'listo' THEN 'pendiente' ELSE estado_cocina END
+            estado_cocina = CASE WHEN estado_cocina IN ('listo','entregado') THEN 'pendiente' ELSE estado_cocina END
           WHERE id=${existentes[0].id}
           RETURNING id, producto_id, nombre_snapshot, precio_unitario, cantidad, estado, estado_cocina`;
         return rows[0];
