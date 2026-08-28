@@ -9,6 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="/manifest.json">
 <link rel="stylesheet" href="/paleta.css">
+<!-- Precarga la marca de agua de la cuenta impresa (ver imprimirPrecuenta
+     más abajo) — así ya está en caché para la primera "Pedir cuenta" del
+     turno, no solo para las siguientes. -->
+<link rel="preload" as="image" href="/marca-vino.png">
 <style>
   /* Paleta propia para esta página — tema claro tipo Fudo, independiente
      de los tokens oscuros de handoff/tokens.css (esos son para el menú
@@ -2076,6 +2080,27 @@ function cancelarQuincena(){
   if (quincenaResolver) { quincenaResolver(quincenaActual); quincenaResolver = null; }
 }
 
+// Espera a que terminen de cargar las <img> de la cuenta (fotos de
+// vino y QR, ambas de red) antes de imprimir — antes se llamaba
+// window.print() apenas se seteaba el innerHTML, así que si una foto
+// o el QR todavía no habían bajado, el navegador imprimía el snapshot
+// sin ellos: "a veces aparece la foto, a veces no" dependía pura y
+// exclusivamente de qué tan rápido llegó cada imagen en esa impresión
+// puntual. Timeout de 1.5s como red de seguridad — si algo se cuelga
+// (ej. el servicio de QR caído) igual se imprime, sin trabar al mozo
+// esperando una imagen que nunca va a llegar.
+function esperarImagenes(imgs, timeoutMs){
+  const pendientes = imgs.filter(img => img && !img.complete);
+  if (!pendientes.length) return Promise.resolve();
+  return Promise.race([
+    Promise.all(pendientes.map(img => new Promise((res) => {
+      img.addEventListener('load', res, { once: true });
+      img.addEventListener('error', res, { once: true });
+    }))),
+    new Promise((res) => setTimeout(res, timeoutMs)),
+  ]);
+}
+
 async function imprimirPrecuenta(){
   const activos = currentItems.filter(i => i.estado === 'activo');
   const subtotal = activos.reduce((s,i) => s + Number(i.precio_unitario) * i.cantidad, 0);
@@ -2166,6 +2191,17 @@ async function imprimirPrecuenta(){
       </div>
     </div>
     <div class="cta-frase">"${frase}"</div>`;
+
+  // La marca de agua de fondo es background-image de CSS (::before), no
+  // una <img> — no tiene un evento "load" propio que esperar acá. Pedirla
+  // con Image() la deja en caché del navegador con la MISMA url que usa
+  // el CSS, así el ::before la encuentra ya bajada al pintar, en vez de
+  // competir por red con las fotos de vino y el QR en el momento justo
+  // de imprimir.
+  const fondoImg = new Image();
+  fondoImg.src = '/marca-vino.png';
+  const imgs = [fondoImg, ...printArea.querySelectorAll('img')];
+  await esperarImagenes(imgs, 1500);
   window.print();
 }
 
