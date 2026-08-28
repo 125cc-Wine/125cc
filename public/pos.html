@@ -507,34 +507,29 @@
        centrada en la hoja; en una térmica configurada como impresora
        del sistema, se ajusta a lo que esa impresora reporte. Mismo
        diálogo nativo de siempre, sin depender de qué hardware tengan. */
+    /* Marca de agua de fondo (marca de copa de vino, PNG transparente) —
+       background directo en el elemento real, SIN ::before ni z-index
+       negativo (versión anterior). El motor de impresión de algunos
+       navegadores directamente descarta del render contenido con
+       z-index negativo en vez de solo pintarlo detrás — por eso no
+       aparecía aunque "Gráficos de fondo" estuviera tildado. Un
+       background-image en el elemento ya pinta detrás de sus hijos por
+       las reglas normales de pintura CSS (el contenido en flujo normal
+       siempre va arriba del fondo de su propio contenedor), sin
+       necesitar ningún truco de stacking.
+       La opacidad NO es CSS (opacity acá desvanecería el texto
+       también) — el PNG ya viene pre-desvanecido (~16% de alpha,
+       script one-off con sharp) para que sea una textura tenue, no una
+       ilustración, sin gastar tinta de más en una impresora casera.
+       Centrado (no un offset fijo en mm): la altura real de
+       #printArea.pr-cuenta depende de cuántos vinos tenga la comanda
+       (.compacta con más de 6) — un offset fijo se podía salir del
+       área visible en una cuenta corta. */
     #printArea.pr-cuenta{
-      position:relative;z-index:0;
       width:148mm;max-width:148mm;margin:0 auto;padding:8mm 0;
       font-family:'Cormorant Garamond',serif;color:var(--madera-oscura,#4A3020);
-      -webkit-print-color-adjust:exact;print-color-adjust:exact;
-    }
-    /* Marca de agua de fondo (marcas de copa de vino, PNG transparente) —
-       ::before absoluto detrás de todo el contenido (z-index:-1, contenido
-       por el stacking context que arma position+z-index de arriba), muy
-       tenue (opacity:.07) para no competir con el texto ni gastar tinta de
-       más en una impresora casera — es una textura, no una ilustración.
-       Centrada (no un offset fijo en mm) porque la altura real de
-       #printArea.pr-cuenta depende de cuántos vinos tenga la comanda
-       (.compacta con más de 6) — un offset fijo se salía del área
-       visible en una cuenta corta. print-color-adjust repetido acá (no
-       solo en el padre): Blink no siempre hereda esa propiedad hacia el
-       background de contenido generado (::before), y sin ella algunos
-       navegadores ocultan el fondo en preview/impresión aunque esté
-       tildado "Gráficos de fondo". Esa opción del diálogo de impresión
-       (destildada por default en Chrome/Edge) sigue siendo necesaria
-       igual — sin ella NINGÚN background-image imprime, sea cual sea
-       este CSS. */
-    #printArea.pr-cuenta::before{
-      content:'';
-      position:absolute;inset:0;z-index:-1;
       background:url('/marca-vino.png') no-repeat center center;
       background-size:130mm auto;
-      opacity:.07;
       -webkit-print-color-adjust:exact;print-color-adjust:exact;
     }
     #printArea.pr-cuenta .cta-head{text-align:center;margin-bottom:8mm}
