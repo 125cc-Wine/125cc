@@ -2443,12 +2443,14 @@ async function renderPlatoDetalle(){
 
       <div class="section-title">Receta</div>
       ${data.items.map(i => `
-        <div class="stock-row">
-          <div style="flex:1">
+        <div class="stock-row" style="flex-wrap:wrap">
+          <div style="flex:1;min-width:120px">
             <div class="stock-row-name">${escapeHtml(i.insumo_nombre)}</div>
-            <div class="stock-row-name-sub">${fmtStock(i.cantidad)} ${escapeHtml(i.unidad)} × ${i.costo_unitario != null ? fmtMoney(i.costo_unitario) : 'sin costo'}${i.costo_unitario != null ? ' = ' + fmtMoney(i.cantidad * i.costo_unitario) : ''}</div>
+            <div class="stock-row-name-sub">${escapeHtml(i.unidad)} × ${i.costo_unitario != null ? fmtMoney(i.costo_unitario) : 'sin costo'}${i.costo_unitario != null ? ' = ' + fmtMoney(i.cantidad * i.costo_unitario) : ''}</div>
           </div>
-          <button class="btn-outline" onclick="eliminarRecetaItem(${i.id})">${icon('trash')}</button>
+          <input type="number" class="stock-input" id="recCant_${i.id}" value="${i.cantidad}" min="0" step="0.01" style="width:80px">
+          <button class="btn-outline" onclick="guardarCantidadRecetaItem(${i.id},${i.insumo_id})" title="Guardar cantidad">${icon('check')}</button>
+          <button class="btn-outline" onclick="eliminarRecetaItem(${i.id})" title="Quitar ingrediente">${icon('trash')}</button>
         </div>`).join('') || '<div class="items-empty">Sin ingredientes cargados todavía.</div>'}
 
       <div class="form-row" style="margin-top:10px">
@@ -2487,6 +2489,22 @@ async function agregarRecetaItem(){
   try {
     await api('/api/pos?r=receta-item', { method: 'POST', body: { producto_id: platoSeleccionado, insumo_id, cantidad } });
     toast('Ingrediente agregado', 'success');
+    renderPlatoDetalle();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// Editar la cantidad de un ingrediente YA cargado en la receta — antes
+// la única fila de acciones era "eliminar", así que un cambio de
+// cantidad (la receta real cambió, o se estaba corrigiendo un error de
+// carga) obligaba a borrar el ingrediente entero y volver a agregarlo
+// de cero. El backend ya soportaba el UPDATE por id (upsertRecetaItem
+// en receta.js) — faltaba nada más que esta UI.
+async function guardarCantidadRecetaItem(id, insumo_id){
+  const cantidad = document.getElementById('recCant_' + id).value;
+  if (!cantidad) return toast('Cantidad inválida', 'error');
+  try {
+    await api('/api/pos?r=receta-item', { method: 'POST', body: { id, producto_id: platoSeleccionado, insumo_id, cantidad } });
+    toast('Cantidad actualizada', 'success');
     renderPlatoDetalle();
   } catch(e){ toast(e.message, 'error'); }
 }
