@@ -149,7 +149,28 @@ que después hubo que revertir.
 - Food cost % agregado / alertas (punto 6).
 - Yield, sub-recetas, variance teórico vs. real.
 
-## Próximo paso
+## Estado — implementado 28/08/2026 (Tier 1+2+3 completo)
 
-Este documento es el análisis pedido — todavía no se tocó código. Falta
-decidir con el dueño qué tier construir ahora.
+Todo lo de arriba está construido, desplegado y probado end-to-end
+contra producción (no solo en local):
+
+- **Tier 1**: `stock-unidades.js` (`ajustarStockInsumosPorReceta`) +
+  `comanda-item.js` — vender/restar/anular un plato con receta ahora
+  descuenta/restituye el stock de sus insumos en la misma transacción.
+- **Tier 2**: migración `009_costeo_insumos.sql` — `insumos.unidad` con
+  lista fija (`g/kg/ml/l/unidad/paquete`), `insumos.factor_receta` para
+  la conversión compra↔receta (`receta.js` ya lo aplica en
+  `getReceta`/`recalcularCostoReceta`). `proveedor-producto.js` +
+  panel Proveedores ahora vinculan también insumos, con "aplicar costo"
+  1:1 (sin dividir — `costo_unitario` ya es por unidad de compra).
+- **Tier 3**: `stock_movimientos` acepta `insumo_id` además de
+  `producto_id` (mermas/conteo con historial, botones en el panel
+  Insumos) + `getResumenInsumos` (franja de cifras). `food-cost.js`
+  nuevo (`food-cost:GET`) — food cost % agregado del período con
+  alerta configurable (`pos_config.food_cost_alerta_pct`, default 32%),
+  mostrado en el panel Reportes.
+
+De paso, la migración 009 destapó un bug real en `db/migrate.js`: el
+separador de sentencias por `;` no entendía comentarios SQL, así que un
+`;` dentro de un comentario cortaba el archivo a la mitad — corregido
+(saca líneas de comentario antes de separar).

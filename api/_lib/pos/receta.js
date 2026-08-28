@@ -8,8 +8,13 @@ const { sql } = require('../db');
 async function getReceta(req, res) {
   const productoId = req.query.producto_id;
   if (!productoId) return res.status(400).json({ error: "Falta producto_id." });
+  // costo_unitario es por unidad de COMPRA; ri.cantidad está en unidad de
+  // RECETA — costo_receta_unitario (costo_unitario / factor_receta) es lo
+  // que hay que multiplicar por ri.cantidad para el costo real de la
+  // línea, ver comentario de insumos.js.
   const { rows } = await sql`
-    SELECT ri.id, ri.insumo_id, i.nombre AS insumo_nombre, i.unidad, i.costo_unitario, ri.cantidad
+    SELECT ri.id, ri.insumo_id, i.nombre AS insumo_nombre, i.unidad, i.costo_unitario,
+      i.factor_receta, i.costo_unitario / i.factor_receta AS costo_receta_unitario, ri.cantidad
     FROM receta_items ri
     JOIN insumos i ON i.id = ri.insumo_id
     WHERE ri.producto_id = ${productoId}
@@ -56,16 +61,21 @@ async function upsertRecetaItem(req, res) {
   return res.status(201).json({ item: rows[0] });
 }
 
-// Recalcula productos.costo = SUM(cantidad * costo_unitario) de la
+// Recalcula productos.costo = SUM(cantidad * costo_receta_unitario) de la
 // receta y marca costo_calculado=true. Rechaza si falta algún insumo
 // con costo_unitario cargado (no queremos un costo parcial silencioso).
+// costo_receta_unitario = costo_unitario / factor_receta — costo_unitario
+// es por unidad de COMPRA, ri.cantidad está en unidad de RECETA (ver
+// insumos.js); sin dividir por factor_receta, un insumo con conversión
+// (ej. se compra por kg, la receta pide gramos) infla el costo calculado
+// hasta 1000x.
 async function recalcularCostoReceta(req, res) {
   const productoId = req.query.producto_id || (req.body && req.body.producto_id);
   if (!productoId) return res.status(400).json({ error: "Falta producto_id." });
 
   const { rows } = await sql`
     SELECT
-      SUM(ri.cantidad * i.costo_unitario) AS costo_total,
+      SUM(ri.cantidad * i.costo_unitario / i.factor_receta) AS costo_total,
       COUNT(*) AS items,
       SUM(CASE WHEN i.costo_unitario IS NULL THEN 1 ELSE 0 END) AS insumos_sin_costo
     FROM receta_items ri

@@ -761,6 +761,7 @@
 
         <div id="menuInsumos" style="display:none">
           <p class="stock-row-name-sub" style="margin:-2px 0 10px">Insumos: la materia prima que compone un plato (ej. "queso de cabra", "aceite de oliva") — se cargan una vez y se reutilizan en varias recetas.</p>
+          <div id="insumosResumen"></div>
           <div class="row-btns" style="margin-bottom:8px">
             <button class="btn-outline" onclick="toggleInsumoForm()"><svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Insumo</button>
           </div>
@@ -768,17 +769,56 @@
             <div class="section-title">Nuevo insumo</div>
             <div class="form-row">
               <div class="field"><label class="field-label" for="insumoNombre">Nombre<span class="req">*</span></label><input type="text" id="insumoNombre" placeholder="ej: Queso de cabra" maxlength="120"></div>
-              <div class="field"><label class="field-label" for="insumoUnidad">Unidad<span class="req">*</span></label><input type="text" id="insumoUnidad" placeholder="ej: g, ml, unidad, kg" maxlength="20"></div>
+              <div class="field"><label class="field-label" for="insumoUnidad">Unidad de compra<span class="req">*</span></label><select id="insumoUnidad" class="stock-input" style="width:100%;min-height:var(--tap-min)">
+                <option value="g">g</option><option value="kg">kg</option><option value="ml">ml</option>
+                <option value="l">l</option><option value="unidad">unidad</option><option value="paquete">paquete</option>
+              </select></div>
             </div>
             <div class="form-row">
-              <div class="field"><label class="field-label" for="insumoCosto">Costo por unidad</label><input type="number" id="insumoCosto" placeholder="ej: 12.50" min="0" step="0.01"></div>
-              <div class="field"><label class="field-label" for="insumoStock">Stock actual</label><input type="number" id="insumoStock" placeholder="opcional" min="0" step="0.01"></div>
+              <div class="field"><label class="field-label" for="insumoCosto">Costo por unidad de compra</label><input type="number" id="insumoCosto" placeholder="ej: 12.50" min="0" step="0.01"></div>
+              <div class="field"><label class="field-label" for="insumoStock">Stock actual (en unidad de compra)</label><input type="number" id="insumoStock" placeholder="opcional" min="0" step="0.01"></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label class="field-label" for="insumoFactor">Cuántas unidades de receta hay en 1 unidad de compra</label><input type="number" id="insumoFactor" placeholder="ej: 1000 si compra por kg y la receta usa gramos" min="0.000001" step="any" value="1"></div>
             </div>
             <div class="quick-form-actions">
               <button class="btn-primary" onclick="submitInsumoForm()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Guardar</button>
               <button class="btn-outline" onclick="toggleInsumoForm()">Cancelar</button>
             </div>
           </div>
+
+          <!-- Merma/conteo de insumos (Tier 3, hallazgo 4 del análisis de
+               costeo) — mismo patrón que mermaForm/conteoForm del panel
+               Stock, duplicado acá con ids propios porque viven en
+               modales distintos (no se puede compartir el mismo nodo del
+               DOM entre dos paneles). -->
+          <div class="quick-form" id="insumoMermaForm">
+            <div class="section-title" id="insumoMermaFormTitle">Registrar merma</div>
+            <div class="form-row">
+              <div class="field"><label class="field-label" for="insumoMermaCantidad">Cantidad (unidad de compra)<span class="req">*</span></label><input type="number" id="insumoMermaCantidad" placeholder="ej: 2" min="0" step="any"></div>
+              <div class="field"><label class="field-label" for="insumoMermaMotivo">Motivo</label><select id="insumoMermaMotivo" class="stock-input" style="width:100%;min-height:var(--tap-min)">
+                <option value="rotura">Rotura</option>
+                <option value="vencimiento">Vencimiento</option>
+                <option value="robo">Robo</option>
+                <option value="otro">Otro</option>
+              </select></div>
+            </div>
+            <div class="quick-form-actions">
+              <button class="btn-primary" onclick="confirmarMermaInsumo()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Registrar</button>
+              <button class="btn-outline" onclick="cerrarFormsInsumo()">Cancelar</button>
+            </div>
+          </div>
+          <div class="quick-form" id="insumoConteoForm">
+            <div class="section-title" id="insumoConteoFormTitle">Conteo físico</div>
+            <div class="form-row">
+              <div class="field"><label class="field-label" for="insumoConteoCantidad">Cantidad contada (unidad de compra)<span class="req">*</span></label><input type="number" id="insumoConteoCantidad" placeholder="ej: 4" min="0" step="any"></div>
+            </div>
+            <div class="quick-form-actions">
+              <button class="btn-primary" onclick="confirmarConteoInsumo()"><svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Registrar</button>
+              <button class="btn-outline" onclick="cerrarFormsInsumo()">Cancelar</button>
+            </div>
+          </div>
+
           <div id="insumosList"><div class="items-empty">Cargando...</div></div>
         </div>
       </div>
@@ -2412,7 +2452,10 @@ async function renderPlatoDetalle(){
     if (!insumos.length) await loadInsumosData();
     const vinculados = new Set(data.items.map(i => i.insumo_id));
     const disponibles = insumos.filter(i => i.activo && !vinculados.has(i.id));
-    const costoReceta = data.items.reduce((acc, i) => acc + Number(i.cantidad) * Number(i.costo_unitario || 0), 0);
+    // costo_receta_unitario (no costo_unitario) — ya viene dividido por
+    // factor_receta desde el backend (ver receta.js): costo_unitario es
+    // por unidad de COMPRA, i.cantidad está en unidad de RECETA.
+    const costoReceta = data.items.reduce((acc, i) => acc + Number(i.cantidad) * Number(i.costo_receta_unitario || 0), 0);
     const margenPct = Number(p.precio) > 0 && p.costo != null ? Math.round(((Number(p.precio) - Number(p.costo)) / Number(p.precio)) * 1000) / 10 : null;
     const desactualizado = data.items.length > 0 && (p.costo == null || Math.abs(costoReceta - Number(p.costo)) > 0.01);
 
@@ -2446,7 +2489,7 @@ async function renderPlatoDetalle(){
         <div class="stock-row" style="flex-wrap:wrap">
           <div style="flex:1;min-width:120px">
             <div class="stock-row-name">${escapeHtml(i.insumo_nombre)}</div>
-            <div class="stock-row-name-sub">${escapeHtml(i.unidad)} × ${i.costo_unitario != null ? fmtMoney(i.costo_unitario) : 'sin costo'}${i.costo_unitario != null ? ' = ' + fmtMoney(i.cantidad * i.costo_unitario) : ''}</div>
+            <div class="stock-row-name-sub">${unidadRecetaLabel(i.unidad, i.factor_receta)} × ${i.costo_receta_unitario != null ? fmtMoney(i.costo_receta_unitario) : 'sin costo'}${i.costo_receta_unitario != null ? ' = ' + fmtMoney(i.cantidad * i.costo_receta_unitario) : ''}</div>
           </div>
           <input type="number" class="stock-input" id="recCant_${i.id}" value="${i.cantidad}" min="0" step="0.01" style="width:80px">
           <button class="btn-outline" onclick="guardarCantidadRecetaItem(${i.id},${i.insumo_id})" title="Guardar cantidad">${icon('check')}</button>
@@ -2455,7 +2498,7 @@ async function renderPlatoDetalle(){
 
       <div class="form-row" style="margin-top:10px">
         <select id="recetaInsumoSelect" class="stock-input" style="width:100%" onchange="this.value==='__nuevo__' && toggleNuevoInsumoInline(true)">
-          ${disponibles.map(i => `<option value="${i.id}">${escapeHtml(i.nombre)} (${escapeHtml(i.unidad)})</option>`).join('')}
+          ${disponibles.map(i => `<option value="${i.id}">${escapeHtml(i.nombre)} (${unidadRecetaLabel(i.unidad, i.factor_receta)})</option>`).join('')}
           <option value="__nuevo__">+ Nuevo insumo…</option>
         </select>
         <input type="number" id="recetaCantidad" class="stock-input" style="width:100%" placeholder="Cantidad" min="0" step="0.01">
@@ -2469,9 +2512,12 @@ async function renderPlatoDetalle(){
       <div class="quick-form${disponibles.length ? '' : ' open'}" id="nuevoInsumoInline">
         <div class="form-row">
           <input id="nuevoInsumoNombre" class="stock-input" style="width:100%" placeholder="Nombre del insumo">
-          <input id="nuevoInsumoUnidad" class="stock-input" style="width:100%" placeholder="Unidad (kg, un, l...)">
+          <select id="nuevoInsumoUnidad" class="stock-input" style="width:100%">
+            ${UNIDADES_INSUMO.map(u => `<option value="${u}">${u}</option>`).join('')}
+          </select>
         </div>
-        <input type="number" id="nuevoInsumoCosto" class="stock-input" style="width:100%;margin-top:8px" placeholder="Costo por unidad (opcional)" min="0" step="0.01">
+        <input type="number" id="nuevoInsumoCosto" class="stock-input" style="width:100%;margin-top:8px" placeholder="Costo por unidad de compra (opcional)" min="0" step="0.01">
+        <input type="number" id="nuevoInsumoFactor" class="stock-input" style="width:100%;margin-top:8px" placeholder="Unidades de receta por unidad de compra (default 1)" min="0.000001" step="any">
         <div class="row-btns" style="margin-top:8px">
           <button class="btn-outline" onclick="toggleNuevoInsumoInline(false)">Cancelar</button>
           <button class="btn-primary" onclick="crearInsumoInline()">${icon('plus')} Crear insumo</button>
@@ -2565,11 +2611,12 @@ function toggleNuevoInsumoInline(show){
 }
 async function crearInsumoInline(){
   const nombre = document.getElementById('nuevoInsumoNombre').value.trim();
-  const unidad = document.getElementById('nuevoInsumoUnidad').value.trim();
+  const unidad = document.getElementById('nuevoInsumoUnidad').value;
   const costo_unitario = document.getElementById('nuevoInsumoCosto').value;
+  const factor_receta = document.getElementById('nuevoInsumoFactor').value;
   if (!nombre || !unidad) return toast('Falta nombre o unidad del insumo', 'error');
   try {
-    const data = await api('/api/pos?r=insumos', { method: 'POST', body: { nombre, unidad, costo_unitario: costo_unitario || null } });
+    const data = await api('/api/pos?r=insumos', { method: 'POST', body: { nombre, unidad, costo_unitario: costo_unitario || null, factor_receta: factor_receta || 1 } });
     toast('Insumo creado', 'success');
     await loadInsumosData();
     renderPlatoDetalle();
@@ -2586,6 +2633,23 @@ async function crearInsumoInline(){
 }
 
 // ── INSUMOS ───────────────────────────────────────────────────────
+const UNIDADES_INSUMO = ['g', 'kg', 'ml', 'l', 'unidad', 'paquete'];
+
+// Etiqueta de la unidad de RECETA a partir de la unidad de COMPRA +
+// factor_receta — no hay una columna separada para el nombre de la
+// unidad chica (ver insumos.js), así que para los pares conocidos
+// (kg→g, l→ml, con su factor típico de 1000) se infiere el nombre;
+// para cualquier otro factor no estándar se muestra el factor tal cual,
+// sin inventar un nombre de unidad que puede no corresponder.
+function unidadRecetaLabel(unidadCompra, factorReceta){
+  const factor = Number(factorReceta);
+  if (!factor || factor === 1) return unidadCompra;
+  const PARES = { kg: ['g', 1000], l: ['ml', 1000] };
+  const par = PARES[unidadCompra];
+  if (par && par[1] === factor) return par[0];
+  return `1/${factor} ${unidadCompra}`;
+}
+
 async function loadInsumosData(){
   try {
     const data = await api('/api/pos?r=insumos&activo=all');
@@ -2596,6 +2660,35 @@ async function loadInsumosData(){
 async function loadInsumos(){
   await loadInsumosData();
   renderInsumos();
+  loadResumenInsumos();
+}
+
+// Franja de cifras del panel Insumos (Tier 3, hallazgo 4 del análisis de
+// costeo) — mismo patrón (report-grid/report-card) que renderResumenStock.
+async function loadResumenInsumos(){
+  const box = document.getElementById('insumosResumen');
+  try {
+    const data = await api('/api/pos?r=insumos-resumen');
+    const ultimoConteo = data.ultimoConteo
+      ? new Date(data.ultimoConteo).toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit' })
+      : 'nunca';
+    box.innerHTML = `
+      <div class="report-grid" style="margin-bottom:var(--sp-4)">
+        <div class="report-card">
+          <div class="stock-row-name-sub" style="margin-bottom:4px">Valorizado a costo</div>
+          <div class="total-val" style="color:var(--ink)">${fmtMoney(data.valorizado)}</div>
+        </div>
+        <div class="report-card">
+          <div class="stock-row-name-sub" style="margin-bottom:4px">Mermas del mes</div>
+          <div class="total-val" style="color:var(--ink)">${fmtMoney(data.mermasValor)}</div>
+          <div class="stock-row-name-sub" style="margin-top:4px">${data.mermasCantidad} registro${data.mermasCantidad==1?'':'s'}</div>
+        </div>
+        <div class="report-card">
+          <div class="stock-row-name-sub" style="margin-bottom:4px">Último conteo</div>
+          <div class="total-val" style="color:var(--ink);font-size:var(--fs-lg)">${ultimoConteo}</div>
+        </div>
+      </div>`;
+  } catch(e){ box.innerHTML = ''; }
 }
 
 function renderInsumos(){
@@ -2607,10 +2700,15 @@ function renderInsumos(){
         <input type="text" class="stock-input" id="insNombre_${i.id}" value="${escapeHtml(i.nombre)}" placeholder="Nombre" style="flex:1;font-weight:600" maxlength="120">
         ${i.activo ? '' : '<span style="color:var(--ink-3);font-size:var(--fs-xs);flex-shrink:0">(inactivo)</span>'}
       </div>
-      <input type="text" class="stock-input" id="insUnidad_${i.id}" value="${escapeHtml(i.unidad)}" placeholder="Unidad" style="width:70px" maxlength="20">
+      <select class="stock-input" id="insUnidad_${i.id}" style="width:80px">
+        ${UNIDADES_INSUMO.map(u => `<option value="${u}" ${u===i.unidad?'selected':''}>${u}</option>`).join('')}
+      </select>
       <input type="number" class="stock-input" id="insCosto_${i.id}" value="${i.costo_unitario != null ? i.costo_unitario : ''}" placeholder="Costo/unidad" min="0" step="0.01">
       <input type="number" class="stock-input" id="insStock_${i.id}" value="${i.stock_actual != null ? i.stock_actual : ''}" placeholder="Stock" min="0" step="0.01">
+      <input type="number" class="stock-input" id="insFactor_${i.id}" value="${i.factor_receta != null ? i.factor_receta : 1}" placeholder="Factor receta" min="0.000001" step="any" title="Cuántas unidades de receta hay en 1 unidad de compra">
       <button class="btn-outline" onclick="guardarInsumo(${i.id})">${icon('check')} Guardar</button>
+      <button class="btn-outline" style="font-size:10.5px;padding:6px 10px;min-height:auto" onclick="abrirMermaInsumo(${i.id})">${icon('trash')} Merma</button>
+      <button class="btn-outline" style="font-size:10.5px;padding:6px 10px;min-height:auto" onclick="abrirConteoInsumo(${i.id})">${icon('clipboard-list')} Contar</button>
       <button class="btn-outline" onclick="toggleActivoInsumo(${i.id})">${i.activo ? icon('ban') : icon('check')}</button>
     </div>`).join('');
 }
@@ -2621,16 +2719,17 @@ function toggleInsumoForm(){
 
 async function submitInsumoForm(){
   const nombre = document.getElementById('insumoNombre').value.trim();
-  const unidad = document.getElementById('insumoUnidad').value.trim();
+  const unidad = document.getElementById('insumoUnidad').value;
   const costo_unitario = document.getElementById('insumoCosto').value;
   const stock_actual = document.getElementById('insumoStock').value;
+  const factor_receta = document.getElementById('insumoFactor').value;
   if (!nombre || !unidad) return toast('Falta nombre o unidad', 'error');
   try {
-    await api('/api/pos?r=insumos', { method: 'POST', body: { nombre, unidad, costo_unitario: costo_unitario || null, stock_actual: stock_actual || null } });
+    await api('/api/pos?r=insumos', { method: 'POST', body: { nombre, unidad, costo_unitario: costo_unitario || null, stock_actual: stock_actual || null, factor_receta: factor_receta || 1 } });
     document.getElementById('insumoNombre').value = '';
-    document.getElementById('insumoUnidad').value = '';
     document.getElementById('insumoCosto').value = '';
     document.getElementById('insumoStock').value = '';
+    document.getElementById('insumoFactor').value = '1';
     toggleInsumoForm();
     toast('Insumo creado', 'success');
     await loadInsumos();
@@ -2644,12 +2743,13 @@ async function guardarInsumo(id){
   // tocar costo/stock, el nombre y la unidad quedaban fijos desde que
   // se creaba el insumo — sin forma de corregir un typo o renombrarlo).
   const nombre = document.getElementById('insNombre_' + id).value.trim();
-  const unidad = document.getElementById('insUnidad_' + id).value.trim();
+  const unidad = document.getElementById('insUnidad_' + id).value;
   const costo = document.getElementById('insCosto_' + id).value;
   const stock = document.getElementById('insStock_' + id).value;
+  const factor = document.getElementById('insFactor_' + id).value;
   if (!nombre || !unidad) return toast('Falta nombre o unidad', 'error');
   try {
-    await api('/api/pos?r=insumos', { method: 'POST', body: { id, nombre, unidad, costo_unitario: costo || null, stock_actual: stock || null, activo: i.activo } });
+    await api('/api/pos?r=insumos', { method: 'POST', body: { id, nombre, unidad, costo_unitario: costo || null, stock_actual: stock || null, factor_receta: factor || 1, activo: i.activo } });
     toast('Insumo actualizado', 'success');
     await loadInsumos();
     if (platoSeleccionado) renderPlatoDetalle();
@@ -2660,8 +2760,62 @@ async function toggleActivoInsumo(id){
   const i = insumos.find(x => x.id === id);
   if (!i) return;
   try {
-    await api('/api/pos?r=insumos', { method: 'POST', body: { id, nombre: i.nombre, unidad: i.unidad, costo_unitario: i.costo_unitario, stock_actual: i.stock_actual, activo: !i.activo } });
+    await api('/api/pos?r=insumos', { method: 'POST', body: { id, nombre: i.nombre, unidad: i.unidad, costo_unitario: i.costo_unitario, stock_actual: i.stock_actual, factor_receta: i.factor_receta, activo: !i.activo } });
     toast(i.activo ? 'Insumo desactivado' : 'Insumo activado', 'success');
+    await loadInsumos();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+// ── MERMA / CONTEO DE INSUMOS (Tier 3, hallazgo 4) ─────────────────
+let insumoAjusteId = null;
+
+function cerrarFormsInsumo(){
+  document.getElementById('insumoMermaForm').classList.remove('open');
+  document.getElementById('insumoConteoForm').classList.remove('open');
+  insumoAjusteId = null;
+}
+
+function abrirMermaInsumo(id){
+  cerrarFormsInsumo();
+  const i = insumos.find(x => x.id === id);
+  if (!i) return;
+  insumoAjusteId = id;
+  document.getElementById('insumoMermaFormTitle').textContent = `Merma — ${i.nombre}${i.stock_actual != null ? ` (stock actual: ${fmtStock(i.stock_actual)} ${i.unidad})` : ''}`;
+  document.getElementById('insumoMermaCantidad').value = '';
+  document.getElementById('insumoMermaForm').classList.add('open');
+}
+
+async function confirmarMermaInsumo(){
+  const cantidad = document.getElementById('insumoMermaCantidad').value;
+  const motivo = document.getElementById('insumoMermaMotivo').value;
+  if (!cantidad) return toast('Falta la cantidad', 'error');
+  const staff = sessionStorage.getItem(STAFF_KEY);
+  try {
+    await api('/api/pos?r=stock-merma', { method: 'POST', body: { insumo_id: insumoAjusteId, cantidad, motivo, registrado_por: staff } });
+    toast('Merma registrada', 'success');
+    cerrarFormsInsumo();
+    await loadInsumos();
+  } catch(e){ toast(e.message, 'error'); }
+}
+
+function abrirConteoInsumo(id){
+  cerrarFormsInsumo();
+  const i = insumos.find(x => x.id === id);
+  if (!i) return;
+  insumoAjusteId = id;
+  document.getElementById('insumoConteoFormTitle').textContent = `Conteo físico — ${i.nombre}${i.stock_actual != null ? ` (sistema dice: ${fmtStock(i.stock_actual)} ${i.unidad})` : ' (sin trackear todavía)'}`;
+  document.getElementById('insumoConteoCantidad').value = fmtStock(i.stock_actual);
+  document.getElementById('insumoConteoForm').classList.add('open');
+}
+
+async function confirmarConteoInsumo(){
+  const cantidad = document.getElementById('insumoConteoCantidad').value;
+  if (cantidad === '') return toast('Falta la cantidad contada', 'error');
+  const staff = sessionStorage.getItem(STAFF_KEY);
+  try {
+    await api('/api/pos?r=stock-conteo', { method: 'POST', body: { insumo_id: insumoAjusteId, cantidad_contada: cantidad, registrado_por: staff } });
+    toast('Conteo registrado', 'success');
+    cerrarFormsInsumo();
     await loadInsumos();
   } catch(e){ toast(e.message, 'error'); }
 }
@@ -2717,14 +2871,34 @@ function seleccionarProveedor(id){
   renderProveedores();
 }
 
+// Costeo de insumos (handoff/ANALISIS-COSTEO-INSUMOS.md), Tier 2,
+// hallazgo 5: un proveedor puede vincularse a un producto (vino) O a un
+// insumo — provTipoVinculo controla cuál de los dos selects/costos se
+// usa al vincular uno nuevo. Cada fila ya trae ambos ids
+// (producto_id/insumo_id, uno de los dos null) desde
+// listProveedorProductos, así que las filas ya cargadas no dependen de
+// este estado.
+let provTipoVinculo = 'producto';
+
+function setProvTipoVinculo(tipo){
+  provTipoVinculo = tipo;
+  document.getElementById('provTipoProducto').classList.toggle('active', tipo === 'producto');
+  document.getElementById('provTipoInsumo').classList.toggle('active', tipo === 'insumo');
+  document.getElementById('provProductoSelect').style.display = tipo === 'producto' ? '' : 'none';
+  document.getElementById('provInsumoSelect').style.display = tipo === 'insumo' ? '' : 'none';
+}
+
 async function renderProveedorDetalle(){
   const box = document.getElementById('proveedorDetalle');
   box.innerHTML = '<div class="items-empty">Cargando...</div>';
   try {
     const data = await api('/api/pos?r=proveedor-producto&proveedor_id=' + proveedorSeleccionado);
     if (!productos.length) await loadProductos();
-    const vinculados = new Set(data.items.map(i => i.producto_id));
-    const disponibles = productos.filter(p => !vinculados.has(p.id));
+    if (!insumos.length) await loadInsumosData();
+    const vinculadosProd = new Set(data.items.filter(i => i.tipo === 'producto').map(i => i.producto_id));
+    const vinculadosIns = new Set(data.items.filter(i => i.tipo === 'insumo').map(i => i.insumo_id));
+    const disponiblesProd = productos.filter(p => !vinculadosProd.has(p.id));
+    const disponiblesIns = insumos.filter(i => i.activo && !vinculadosIns.has(i.id));
     // Delta contra el costo cargado (auditoría, sección 02 — "¿a quién
     // le compro esto y cuándo me subió el precio?"): el endpoint de
     // aplicar-como-costo ya existía, faltaba mostrar EN LA FILA cuándo
@@ -2733,7 +2907,10 @@ async function renderProveedorDetalle(){
     box.innerHTML = `
       <div class="section-title" style="margin-top:12px">Precios de compra</div>
       ${data.items.map(i => {
-        const actual = i.costo_actual != null ? Number(i.costo_actual) : null;
+        const esInsumo = i.tipo === 'insumo';
+        const entId = esInsumo ? i.insumo_id : i.producto_id;
+        const nombre = esInsumo ? i.insumo_nombre : i.producto_nombre;
+        const actual = (esInsumo ? i.insumo_costo_actual : i.costo_actual) != null ? Number(esInsumo ? i.insumo_costo_actual : i.costo_actual) : null;
         const compra = Number(i.precio_compra);
         let delta = '';
         if (actual != null && actual > 0) {
@@ -2744,18 +2921,25 @@ async function renderProveedorDetalle(){
         return `
         <div class="stock-row" style="flex-wrap:wrap">
           <div style="flex-basis:100%">
-            <div class="stock-row-name">${escapeHtml(i.producto_nombre)}</div>
+            <div class="stock-row-name">${escapeHtml(nombre)}${esInsumo ? ' <span class="stock-row-name-sub">(insumo)</span>' : ''}</div>
             <div class="stock-row-name-sub">costo actual: ${actual != null ? fmtMoney(actual) : 'sin cargar'}${delta}</div>
           </div>
-          <input type="number" class="stock-input" id="pcompra_${i.producto_id}" value="${i.precio_compra}" min="0" step="0.01">
-          <button class="btn-outline" onclick="guardarPrecioCompra(${i.producto_id})">${icon('check')} Guardar</button>
-          <button class="btn-primary" onclick="aplicarComoCosto(${i.producto_id})">${icon('dollar-sign')} Aplicar como costo</button>
+          <input type="number" class="stock-input" id="pcompra_${esInsumo?'i':'p'}${entId}" value="${i.precio_compra}" min="0" step="0.01">
+          <button class="btn-outline" onclick="guardarPrecioCompra(${entId},'${i.tipo}')">${icon('check')} Guardar</button>
+          <button class="btn-primary" onclick="aplicarComoCosto(${entId},'${i.tipo}')">${icon('dollar-sign')} Aplicar como costo</button>
         </div>`;
-      }).join('') || '<div class="items-empty">Sin productos vinculados todavía.</div>'}
-      <div class="section-title" style="margin-top:12px">Vincular producto</div>
+      }).join('') || '<div class="items-empty">Sin productos o insumos vinculados todavía.</div>'}
+      <div class="section-title" style="margin-top:12px">Vincular producto o insumo</div>
+      <div class="row-btns" style="margin-bottom:8px">
+        <button class="cat-chip active" id="provTipoProducto" onclick="setProvTipoVinculo('producto')">Producto</button>
+        <button class="cat-chip" id="provTipoInsumo" onclick="setProvTipoVinculo('insumo')">Insumo</button>
+      </div>
       <div class="form-row">
         <select id="provProductoSelect" class="stock-input" style="width:100%">
-          ${disponibles.length ? disponibles.map(p => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`).join('') : '<option value="">Sin productos disponibles</option>'}
+          ${disponiblesProd.length ? disponiblesProd.map(p => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`).join('') : '<option value="">Sin productos disponibles</option>'}
+        </select>
+        <select id="provInsumoSelect" class="stock-input" style="width:100%;display:none">
+          ${disponiblesIns.length ? disponiblesIns.map(i => `<option value="${i.id}">${escapeHtml(i.nombre)}</option>`).join('') : '<option value="">Sin insumos disponibles</option>'}
         </select>
         <input type="number" id="provPrecioNuevo" class="stock-input" style="width:100%" placeholder="Precio de compra" min="0" step="0.01">
       </div>
@@ -2764,10 +2948,12 @@ async function renderProveedorDetalle(){
   } catch(e){ toast(e.message, 'error'); }
 }
 
-async function guardarPrecioCompra(productoId){
-  const precio = document.getElementById('pcompra_' + productoId).value;
+async function guardarPrecioCompra(id, tipo){
+  const precio = document.getElementById('pcompra_' + (tipo === 'insumo' ? 'i' : 'p') + id).value;
+  const body = { proveedor_id: proveedorSeleccionado, precio_compra: precio };
+  if (tipo === 'insumo') body.insumo_id = id; else body.producto_id = id;
   try {
-    await api('/api/pos?r=proveedor-producto', { method: 'POST', body: { proveedor_id: proveedorSeleccionado, producto_id: productoId, precio_compra: precio } });
+    await api('/api/pos?r=proveedor-producto', { method: 'POST', body });
     toast('Precio guardado', 'success');
     renderProveedorDetalle();
   } catch(e){ toast(e.message, 'error'); }
@@ -2776,31 +2962,45 @@ async function guardarPrecioCompra(productoId){
 // Confirma ANTES de aplicar si el nuevo costo deja el producto con
 // margen bajo — mismo criterio que las alertas de Fase 1, calculado acá
 // mismo con lo que ya está en pantalla, sin depender de otro request.
-async function aplicarComoCosto(productoId){
-  const precioCompra = Number(document.getElementById('pcompra_' + productoId).value);
-  const producto = productos.find(p => p.id === productoId);
-  if (producto && Number(producto.precio) > 0){
-    const margenPct = Math.round(((Number(producto.precio) - precioCompra) / Number(producto.precio)) * 1000) / 10;
-    if (margenPct < 30){
-      const ok = await confirmDialog(`Con este costo el margen queda en ${margenPct}%. ¿Aplicar igual?`);
-      if (!ok) return;
+// Para un insumo no hay margen que calcular (no tiene precio de venta
+// propio), así que se aplica directo sin ese chequeo.
+async function aplicarComoCosto(id, tipo){
+  if (tipo === 'producto') {
+    const precioCompra = Number(document.getElementById('pcompra_p' + id).value);
+    const producto = productos.find(p => p.id === id);
+    if (producto && Number(producto.precio) > 0){
+      const margenPct = Math.round(((Number(producto.precio) - precioCompra) / Number(producto.precio)) * 1000) / 10;
+      if (margenPct < 30){
+        const ok = await confirmDialog(`Con este costo el margen queda en ${margenPct}%. ¿Aplicar igual?`);
+        if (!ok) return;
+      }
     }
   }
+  const body = { proveedor_id: proveedorSeleccionado };
+  if (tipo === 'insumo') body.insumo_id = id; else body.producto_id = id;
   try {
-    await api('/api/pos?r=proveedor-aplicar-costo', { method: 'POST', body: { proveedor_id: proveedorSeleccionado, producto_id: productoId } });
+    await api('/api/pos?r=proveedor-aplicar-costo', { method: 'POST', body });
     toast('Costo aplicado', 'success');
-    await loadProductos();
+    if (tipo === 'insumo') await loadInsumosData(); else await loadProductos();
     renderProveedorDetalle();
   } catch(e){ toast(e.message, 'error'); }
 }
 
 async function vincularProducto(){
-  const productoId = document.getElementById('provProductoSelect').value;
   const precio = document.getElementById('provPrecioNuevo').value;
-  if (!productoId || !precio) return toast('Elegí un producto y un precio', 'error');
+  const body = { proveedor_id: proveedorSeleccionado, precio_compra: precio };
+  if (provTipoVinculo === 'insumo') {
+    const insumoId = document.getElementById('provInsumoSelect').value;
+    if (!insumoId || !precio) return toast('Elegí un insumo y un precio', 'error');
+    body.insumo_id = insumoId;
+  } else {
+    const productoId = document.getElementById('provProductoSelect').value;
+    if (!productoId || !precio) return toast('Elegí un producto y un precio', 'error');
+    body.producto_id = productoId;
+  }
   try {
-    await api('/api/pos?r=proveedor-producto', { method: 'POST', body: { proveedor_id: proveedorSeleccionado, producto_id: productoId, precio_compra: precio } });
-    toast('Producto vinculado', 'success');
+    await api('/api/pos?r=proveedor-producto', { method: 'POST', body });
+    toast(provTipoVinculo === 'insumo' ? 'Insumo vinculado' : 'Producto vinculado', 'success');
     document.getElementById('provPrecioNuevo').value = '';
     renderProveedorDetalle();
   } catch(e){ toast(e.message, 'error'); }
@@ -3640,7 +3840,13 @@ async function loadReportes(){
   box.innerHTML = '<div class="items-empty">Cargando...</div>';
   try {
     const data = await api('/api/pos?r=reportes&dias=' + reportesDias);
-    renderReportes(data);
+    // Food cost % (Tier 3, hallazgo 6 del análisis de costeo) — pedido
+    // aparte porque es un endpoint propio (food-cost.js), no parte del
+    // reporte general; si falla no bloquea el resto del panel (mismo
+    // criterio que cargarAlertasMargen).
+    let foodCost = null;
+    try { foodCost = await api('/api/pos?r=food-cost&dias=' + reportesDias); } catch(e){}
+    renderReportes(data, foodCost);
   } catch(e){ toast(e.message, 'error'); }
 }
 
@@ -3818,7 +4024,7 @@ window.addEventListener('resize', () => {
   }
 });
 
-function renderReportes(data){
+function renderReportes(data, foodCost){
   ultimoReporte = data;
   const box = document.getElementById('reportesContent');
   const alerta = alertasMargen.length
@@ -3863,6 +4069,24 @@ function renderReportes(data){
     return `<div class="stock-row"><div class="stock-row-name">${a.cantidad} × ${escapeHtml(a.nombre_snapshot)} <span class="stock-row-name-sub">comanda #${a.comanda_id} · ${fecha}${a.anulado_por ? ' · ' + escapeHtml(a.anulado_por) : ''}</span></div><div>${fmtMoney(a.precio_unitario * a.cantidad)}</div></div>`;
   }).join('') || '<div class="items-empty">Sin anulaciones.</div>';
 
+  // Food cost % (Tier 3, hallazgo 6 del análisis de costeo) — costo de
+  // venta de los platos con receta real (costo_calculado=true) sobre sus
+  // ingresos. Banda sana de referencia 28-32%; alerta si supera el
+  // umbral configurable (pos_config.food_cost_alerta_pct).
+  const foodCostCard = foodCost && foodCost.foodCostPct != null ? `
+    <div class="report-card">
+      <div class="section-title">Food cost</div>
+      <div class="total-val" style="color:${foodCost.alerta ? 'var(--red)' : 'var(--green)'}">${foodCost.foodCostPct}%</div>
+      <div class="stock-row-name-sub" style="margin-top:4px">costo ${fmtMoney(foodCost.costo)} sobre ${fmtMoney(foodCost.ingresos)} de comida vendida${foodCost.alerta ? ` — por encima del ${foodCost.umbral}%` : ''}</div>
+      ${foodCost.porPlato.length ? foodCost.porPlato.slice(0, 5).map(p => `
+        <div class="stock-row" style="padding:4px 0"><div class="stock-row-name-sub">${escapeHtml(p.nombre_snapshot)}</div><div class="stock-row-name-sub">${fmtMoney(p.costo)} / ${fmtMoney(p.ingresos)}</div></div>
+      `).join('') : ''}
+    </div>` : (foodCost ? `
+    <div class="report-card">
+      <div class="section-title">Food cost</div>
+      <div class="items-empty">Sin platos con receta vendidos en el período.</div>
+    </div>` : '');
+
   box.innerHTML = `
     ${alerta}
     <div class="report-grid" style="margin-bottom:var(--sp-4)">
@@ -3903,6 +4127,7 @@ function renderReportes(data){
         <div class="section-title">Productos más rentables</div>
         ${topMargen}
       </div>
+      ${foodCostCard}
       <div class="report-card">
         <div class="section-title">Cierres de caja (diferencia)</div>
         ${cajas}

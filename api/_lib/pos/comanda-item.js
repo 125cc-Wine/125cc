@@ -27,7 +27,7 @@
 // entrando en una comanda ya cobrada, con el stock descontado sin que
 // nadie pagara esa venta.
 const { withTransaction } = require('../db');
-const { consumoStock } = require('./stock-unidades');
+const { consumoStock, ajustarStockInsumosPorReceta } = require('./stock-unidades');
 
 // Tolerancia para el chequeo de "hay stock": 1/6 no es representable
 // exacto en decimal, así que restar esa fracción muchas veces (una
@@ -74,6 +74,10 @@ async function comandaItem(req, res) {
         await client.sql`
           UPDATE productos SET stock_actual = stock_actual + ${restituir}
           WHERE id=${itemRows[0].producto_id} AND stock_actual IS NOT NULL`;
+        // Costeo de insumos, Tier 1: restituye el stock de los insumos de
+        // la receta por TODA la cantidad anulada (delta negativo = se
+        // devuelve al stock, ver stock-unidades.js).
+        await ajustarStockInsumosPorReceta(client, itemRows[0].producto_id, -itemRows[0].cantidad);
       });
       return res.status(200).json({ ok: true });
     } catch (err) {
@@ -110,6 +114,8 @@ async function comandaItem(req, res) {
         await client.sql`
           UPDATE productos SET stock_actual = stock_actual + ${restituir}
           WHERE id=${itemRows[0].producto_id} AND stock_actual IS NOT NULL`;
+        // Costeo de insumos, Tier 1: restituye 1 unidad vendida menos.
+        await ajustarStockInsumosPorReceta(client, itemRows[0].producto_id, -1);
       });
       return res.status(200).json({ ok: true });
     } catch (err) {
@@ -143,6 +149,14 @@ async function comandaItem(req, res) {
         }
         await client.sql`UPDATE productos SET stock_actual = stock_actual - ${consumo} WHERE id=${producto_id}`;
       }
+      // Costeo de insumos, Tier 1: se vendió 1 unidad más — descuenta el
+      // stock de cada insumo de la receta (si el producto no tiene
+      // receta, ajustarStockInsumosPorReceta no encuentra filas y no
+      // hace nada). Nunca bloquea la venta por falta de stock de un
+      // insumo (a diferencia del stock del producto arriba) — mismo
+      // criterio permisivo que ya usan las mermas: es un número
+      // informativo para saber qué reponer, no un candado de venta.
+      await ajustarStockInsumosPorReceta(client, producto_id, 1);
 
       const { rows: existentes } = await client.sql`
         SELECT id, cantidad FROM comanda_items

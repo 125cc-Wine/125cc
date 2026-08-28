@@ -43,7 +43,16 @@ async function main() {
   }
 
   for (const archivo of pendientes) {
-    const contenido = fs.readFileSync(path.join(dir, archivo), 'utf8');
+    const original = fs.readFileSync(path.join(dir, archivo), 'utf8');
+    // Sacar líneas de comentario ANTES de separar por ';' — el split de
+    // abajo es ingenuo (no entiende comentarios SQL), así que un ';'
+    // dentro de una línea "-- explicación..." partía el archivo a la
+    // mitad con un syntax error (pasó de verdad armando la migración
+    // 009: "unidad de COMPRA (litro, kilo...);" en un comentario cortó
+    // la sentencia siguiente). Sacar toda línea que empiece con '--'
+    // (con espacio inicial opcional) antes de tocar el ';' evita la clase
+    // entera de bug sin tener que auditar cada comentario a mano.
+    const contenido = original.split('\n').filter((l) => !/^\s*--/.test(l)).join('\n');
     // Separado por ';' — el driver no soporta multi-statement en una
     // sola query, cada sentencia se manda por separado dentro de la
     // misma transacción.

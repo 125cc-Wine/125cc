@@ -505,3 +505,28 @@ ALTER TABLE carta_historial ADD COLUMN IF NOT EXISTS fuente text NOT NULL DEFAUL
 -- ya confirmado antes de este cambio no tiene valor cargado todavía. Ver
 -- db/migrations/008_carta_historial_cajas.sql. ──
 ALTER TABLE carta_historial ADD COLUMN IF NOT EXISTS cajas int;
+
+-- ── Costeo de insumos (handoff/ANALISIS-COSTEO-INSUMOS.md) — Tier 2 y
+-- base de Tier 3. Unidad de insumo pasa de texto libre (causó un dato mal
+-- cargado real: "Mondiolita" con unidad="25") a lista fija, y se agrega
+-- el mismo patrón de conversión compra↔receta que ya existía para vinos
+-- (productos.copas_por_botella) — costo_unitario sigue siendo SIEMPRE por
+-- unidad de COMPRA, factor_receta dice cuántas unidades de RECETA hay en
+-- 1 unidad de compra, default 1 = sin conversión. stock_movimientos
+-- (mermas/conteo) pasa a poder referenciar un insumo además de un
+-- producto — exactamente uno de los dos por fila (num_nonnulls). Ver
+-- db/migrations/009_costeo_insumos.sql. ──
+UPDATE insumos SET unidad = 'unidad' WHERE unidad NOT IN ('g','kg','ml','l','unidad','paquete');
+ALTER TABLE insumos DROP CONSTRAINT IF EXISTS insumos_unidad_check;
+ALTER TABLE insumos ADD CONSTRAINT insumos_unidad_check CHECK (unidad IN ('g','kg','ml','l','unidad','paquete'));
+ALTER TABLE insumos ADD COLUMN IF NOT EXISTS factor_receta numeric NOT NULL DEFAULT 1 CHECK (factor_receta > 0);
+
+ALTER TABLE stock_movimientos ALTER COLUMN producto_id DROP NOT NULL;
+ALTER TABLE stock_movimientos ADD COLUMN IF NOT EXISTS insumo_id int REFERENCES insumos(id);
+ALTER TABLE stock_movimientos DROP CONSTRAINT IF EXISTS stock_movimientos_uno_de_los_dos;
+ALTER TABLE stock_movimientos ADD CONSTRAINT stock_movimientos_uno_de_los_dos
+  CHECK (num_nonnulls(producto_id, insumo_id) = 1);
+CREATE INDEX IF NOT EXISTS idx_stock_movimientos_insumo ON stock_movimientos(insumo_id);
+
+INSERT INTO pos_config (clave, valor) VALUES ('food_cost_alerta_pct', '32')
+  ON CONFLICT (clave) DO NOTHING;
