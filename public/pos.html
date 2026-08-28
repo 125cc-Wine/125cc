@@ -2603,10 +2603,11 @@ function renderInsumos(){
   if (!insumos.length){ box.innerHTML = '<div class="items-empty">Todavía no hay insumos cargados. Usá "+ Insumo".</div>'; return; }
   box.innerHTML = insumos.map(i => `
     <div class="stock-row" style="flex-wrap:wrap">
-      <div style="flex-basis:100%">
-        <div class="stock-row-name">${escapeHtml(i.nombre)}${i.activo ? '' : ' <span style="color:var(--ink-3)">(inactivo)</span>'}</div>
-        <div class="stock-row-name-sub">unidad: ${escapeHtml(i.unidad)}${i.stock_actual != null ? ' · stock: ' + fmtStock(i.stock_actual) : ''}</div>
+      <div style="flex-basis:100%;display:flex;gap:8px;align-items:center">
+        <input type="text" class="stock-input" id="insNombre_${i.id}" value="${escapeHtml(i.nombre)}" placeholder="Nombre" style="flex:1;font-weight:600" maxlength="120">
+        ${i.activo ? '' : '<span style="color:var(--ink-3);font-size:var(--fs-xs);flex-shrink:0">(inactivo)</span>'}
       </div>
+      <input type="text" class="stock-input" id="insUnidad_${i.id}" value="${escapeHtml(i.unidad)}" placeholder="Unidad" style="width:70px" maxlength="20">
       <input type="number" class="stock-input" id="insCosto_${i.id}" value="${i.costo_unitario != null ? i.costo_unitario : ''}" placeholder="Costo/unidad" min="0" step="0.01">
       <input type="number" class="stock-input" id="insStock_${i.id}" value="${i.stock_actual != null ? i.stock_actual : ''}" placeholder="Stock" min="0" step="0.01">
       <button class="btn-outline" onclick="guardarInsumo(${i.id})">${icon('check')} Guardar</button>
@@ -2639,10 +2640,16 @@ async function submitInsumoForm(){
 async function guardarInsumo(id){
   const i = insumos.find(x => x.id === id);
   if (!i) return;
+  // nombre/unidad ahora también son editables acá (antes solo se podía
+  // tocar costo/stock, el nombre y la unidad quedaban fijos desde que
+  // se creaba el insumo — sin forma de corregir un typo o renombrarlo).
+  const nombre = document.getElementById('insNombre_' + id).value.trim();
+  const unidad = document.getElementById('insUnidad_' + id).value.trim();
   const costo = document.getElementById('insCosto_' + id).value;
   const stock = document.getElementById('insStock_' + id).value;
+  if (!nombre || !unidad) return toast('Falta nombre o unidad', 'error');
   try {
-    await api('/api/pos?r=insumos', { method: 'POST', body: { id, nombre: i.nombre, unidad: i.unidad, costo_unitario: costo || null, stock_actual: stock || null, activo: i.activo } });
+    await api('/api/pos?r=insumos', { method: 'POST', body: { id, nombre, unidad, costo_unitario: costo || null, stock_actual: stock || null, activo: i.activo } });
     toast('Insumo actualizado', 'success');
     await loadInsumos();
     if (platoSeleccionado) renderPlatoDetalle();
