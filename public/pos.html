@@ -496,9 +496,22 @@
        del sistema, se ajusta a lo que esa impresora reporte. Mismo
        diálogo nativo de siempre, sin depender de qué hardware tengan. */
     #printArea.pr-cuenta{
+      position:relative;z-index:0;
       width:148mm;max-width:148mm;margin:0 auto;padding:8mm 0;
       font-family:'Cormorant Garamond',serif;color:var(--madera-oscura,#4A3020);
       -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    }
+    /* Marca de agua de fondo (marcas de copa de vino, PNG transparente) —
+       ::before absoluto detrás de todo el contenido (z-index:-1, contenido
+       por el stacking context que arma position+z-index de arriba), muy
+       tenue (opacity:.07) para no competir con el texto ni gastar tinta de
+       más en una impresora casera — es una textura, no una ilustración. */
+    #printArea.pr-cuenta::before{
+      content:'';
+      position:absolute;inset:0;z-index:-1;
+      background:url('/marca-vino.png') no-repeat 50% 62mm;
+      background-size:130mm auto;
+      opacity:.07;
     }
     #printArea.pr-cuenta .cta-head{text-align:center;margin-bottom:8mm}
     #printArea.pr-cuenta .cta-brand{font-size:34px;font-weight:700;color:var(--tinto,#7A1428);line-height:1;margin:3px 0;letter-spacing:-.01em}
