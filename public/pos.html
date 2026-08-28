@@ -478,6 +478,14 @@
   #printArea{display:none}
   @media print{
     @page{margin:8mm}
+    /* El body de la app es oscuro (background:var(--bg), #14181D — tema
+       dark de toda la UI). Nunca importó para impresión mientras
+       "Gráficos de fondo" estuviera destildado (el navegador no
+       imprimía ningún background igual) — apenas se tilda esa opción
+       (necesaria para que se vea el fondo de pr-cuenta más abajo), sin
+       este override se imprime la hoja entera negra detrás de
+       #printArea. */
+    body{background:#fff !important}
     body > *{display:none !important}
     #printArea{display:block !important;position:static;width:100%;padding:12px;font-family:'DM Sans',sans-serif;color:#000}
     #printArea h2{font-family:'Cormorant Garamond',serif;font-size:22px;margin-bottom:2px}
