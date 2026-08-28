@@ -121,6 +121,7 @@ module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
 
   const r = req.query.r;
+  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'sin-ip';
 
   // Login: no pasa por requirePos porque ES el chequeo de auth.
   if (r === 'auth') {
@@ -130,7 +131,6 @@ module.exports = async function handler(req, res) {
     const POS_PASSWORD = process.env.POS_PASSWORD;
     if (!POS_PASSWORD) return res.status(500).json({ error: "POS_PASSWORD no configurada." });
     if (!password) return res.status(400).json({ error: "Falta password." });
-    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'sin-ip';
     if (!loginPermitido(ip)) {
       return res.status(429).json({ error: "Demasiados intentos. Esperá unos minutos." });
     }
@@ -142,7 +142,21 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ ok: false, error: "Contraseña incorrecta." });
   }
 
-  if (!requirePos(req, res)) return; // ya respondió 401/500
+  // Mismo throttle que /auth, aplicado acá también (antes solo /auth
+  // contaba intentos: un ataque de fuerza bruta podía saltearse el
+  // bloqueo entero probando el password directo contra cualquier otro
+  // recurso, ej. mesas:GET, con cada 401 confirmando igual si acertó).
+  // Cualquier request sin Bearer válido cuenta para el mismo contador
+  // por IP, sea vía /auth o vía cualquier otro recurso.
+  if (!loginPermitido(ip)) {
+    return res.status(429).json({ error: "Demasiados intentos. Esperá unos minutos." });
+  }
+  const auth = requirePos(req, res);
+  if (!auth.ok) {
+    if (auth.reason === 'bad_token') loginFallo(ip); // solo cuenta un password errado, no un 500 de config
+    return;
+  }
+  intentosLogin.delete(ip);
 
   const getFn = ROUTES[`${r}:${req.method}`];
   if (!getFn) return res.status(404).json({ error: `Recurso no encontrado: ${r}` });

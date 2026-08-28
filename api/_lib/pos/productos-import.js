@@ -48,6 +48,7 @@ async function importVinos(req, res) {
   }
 
   let creados = 0, actualizados = 0, omitidos = 0;
+  const vinoRefsEnCarta = [];
 
   for (const v of vinos) {
     const botella = parseFloat(v.precio);
@@ -56,12 +57,17 @@ async function importVinos(req, res) {
 
     const categoria = TIPO_A_CATEGORIA[v.tipo] || 'otros';
     const vinoRef = String(v.id);
+    vinoRefsEnCarta.push(vinoRef);
 
     const { rows: existentes } = await sql`SELECT id FROM productos WHERE vino_ref = ${vinoRef}`;
     if (existentes.length) {
+      // activo=true acá también (no solo en el INSERT): un vino puede
+      // volver a la carta en una rotación futura después de haber sido
+      // desactivado más abajo — sin esto quedaba con precio/nombre al
+      // día pero invisible en el picker de la comanda.
       await sql`
         UPDATE productos SET nombre=${v.nombre}, categoria=${categoria}, unidad_venta='copa',
-          precio=${precio}, updated_at=now()
+          precio=${precio}, activo=true, updated_at=now()
         WHERE id=${existentes[0].id}`;
       actualizados++;
     } else {
@@ -72,7 +78,22 @@ async function importVinos(req, res) {
     }
   }
 
-  return res.status(200).json({ ok: true, creados, actualizados, omitidos, total: vinos.length });
+  // Rotación de carta (14 días, catálogo completo se recambia): un
+  // producto con vino_ref que YA NO vino en este batch se cayó de la
+  // carta actual — antes quedaba activo=true para siempre (nunca había
+  // ningún camino que lo desactivara, ni acá ni en la UI, que solo
+  // tiene toggle de activo para platos del Menú) y se acumulaba en el
+  // picker "Adicionar" de la comanda con el precio congelado de la
+  // última vez que estuvo en carta. `vino_ref IS NOT NULL` para no
+  // tocar nunca productos del Menú (platos), que no tienen vino_ref.
+  const desactivados = vinoRefsEnCarta.length
+    ? await sql`
+        UPDATE productos SET activo=false, updated_at=now()
+        WHERE vino_ref IS NOT NULL AND activo=true AND NOT (vino_ref = ANY(${vinoRefsEnCarta}))
+        RETURNING id`
+    : { rows: [] };
+
+  return res.status(200).json({ ok: true, creados, actualizados, omitidos, desactivados: desactivados.rows.length, total: vinos.length });
 }
 
 module.exports = { importVinos };

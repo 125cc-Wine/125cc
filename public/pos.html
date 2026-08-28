@@ -3426,7 +3426,7 @@ async function importarVinos(){
   btn.textContent = 'Importando...';
   try {
     const data = await api('/api/pos?r=productos-import', { method: 'POST' });
-    toast(`Importados: ${data.creados} nuevos, ${data.actualizados} actualizados`, 'success');
+    toast(`Importados: ${data.creados} nuevos, ${data.actualizados} actualizados, ${data.desactivados} fuera de carta`, 'success');
     await loadProductos();
     renderProductos();
   } catch(e){ toast(e.message, 'error'); }

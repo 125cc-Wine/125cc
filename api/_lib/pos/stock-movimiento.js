@@ -110,8 +110,17 @@ async function getResumenStock(req, res) {
     FROM productos
     WHERE activo=true AND stock_actual IS NOT NULL AND stock_minimo IS NOT NULL AND stock_actual <= stock_minimo`;
 
+  // sm.cantidad de una merma está en unidades de COMPRA (botellas, mismo
+  // criterio que stock_actual — registrarMerma resta directo de ahí);
+  // p.costo está en unidades de VENTA (copa, si unidad_venta='copa').
+  // Mismo ajuste que valorRows arriba (auditoría v2, A2) — sin esto, la
+  // merma de un vino por copa se valorizaba dividida por copas_por_botella
+  // (ej: una botella rota de $6000 se reportaba como ~$1000).
   const { rows: mermasRows } = await sql`
-    SELECT COALESCE(SUM(ABS(sm.cantidad) * COALESCE(p.costo,0)), 0) AS valor_mermado, COUNT(*) AS cantidad
+    SELECT COALESCE(SUM(
+      ABS(sm.cantidad) * COALESCE(p.costo,0) *
+      CASE WHEN p.unidad_venta = 'copa' THEN COALESCE(p.copas_por_botella, 6) ELSE 1 END
+    ), 0) AS valor_mermado, COUNT(*) AS cantidad
     FROM stock_movimientos sm JOIN productos p ON p.id = sm.producto_id
     WHERE sm.tipo='merma' AND sm.created_at >= ${inicioMes.toISOString()}`;
 
