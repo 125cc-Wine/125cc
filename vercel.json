@@ -27,6 +27,8 @@
     { "src": "/pos.html", "dest": "/pos.html" },
     { "src": "/cuenta",      "dest": "/cuenta.html" },
     { "src": "/cuenta.html", "dest": "/cuenta.html" },
+    { "src": "/cocina",      "dest": "/cocina.html" },
+    { "src": "/cocina.html", "dest": "/cocina.html" },
     { "src": "/vinos.json", "dest": "/vinos.json" },
     { "src": "/(.*\\.(?:js|css|png|jpg|svg|ico|json|woff2?))", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/index.html" }

@@ -137,7 +137,7 @@ async function comandaItem(req, res) {
       await lockearComandaAbierta(client, comanda_id);
 
       const { rows: prodRows } = await client.sql`
-        SELECT nombre, precio, costo, stock_actual, unidad_venta, copas_por_botella
+        SELECT nombre, precio, costo, stock_actual, unidad_venta, copas_por_botella, vino_ref
         FROM productos WHERE id=${producto_id} FOR UPDATE`;
       if (!prodRows.length) throw Object.assign(new Error('no_producto'), { code: 'no_producto' });
       const producto = prodRows[0];
@@ -163,10 +163,15 @@ async function comandaItem(req, res) {
         WHERE comanda_id=${comanda_id} AND producto_id=${producto_id} AND estado='activo'`;
 
       if (existentes.length) {
+        // Comanda de cocina (handoff/ANALISIS-POS-SISTEMA-COMPLETO.md,
+        // hallazgo 1): si esta línea ya estaba marcada 'listo' y ahora se
+        // pide más, vuelve a 'pendiente' — hay una unidad nueva sin
+        // preparar todavía. NULL (vino) no se toca, sigue NULL.
         const { rows } = await client.sql`
-          UPDATE comanda_items SET cantidad = cantidad + 1
+          UPDATE comanda_items SET cantidad = cantidad + 1,
+            estado_cocina = CASE WHEN estado_cocina = 'listo' THEN 'pendiente' ELSE estado_cocina END
           WHERE id=${existentes[0].id}
-          RETURNING id, producto_id, nombre_snapshot, precio_unitario, cantidad, estado`;
+          RETURNING id, producto_id, nombre_snapshot, precio_unitario, cantidad, estado, estado_cocina`;
         return rows[0];
       }
       // costo_snapshot (auditoría v2, C6): congela el costo al momento
@@ -175,10 +180,15 @@ async function comandaItem(req, res) {
       // el costo de HOY cada vez que se corre el reporte, y aplicar un
       // precio de proveedor nuevo reescribe hacia atrás el margen de
       // meses que ya se reportaron.
+      //
+      // estado_cocina: 'pendiente' para comida (sin vino_ref, ver
+      // esVino() en pos.html), NULL para vino — un vino se sirve en el
+      // momento, no pasa por una cola de preparación de cocina/barra.
+      const estadoCocinaInicial = producto.vino_ref != null ? null : 'pendiente';
       const { rows } = await client.sql`
-        INSERT INTO comanda_items (comanda_id, producto_id, nombre_snapshot, precio_unitario, costo_snapshot, cantidad)
-        VALUES (${comanda_id}, ${producto_id}, ${producto.nombre}, ${producto.precio}, ${producto.costo}, 1)
-        RETURNING id, producto_id, nombre_snapshot, precio_unitario, cantidad, estado`;
+        INSERT INTO comanda_items (comanda_id, producto_id, nombre_snapshot, precio_unitario, costo_snapshot, cantidad, estado_cocina)
+        VALUES (${comanda_id}, ${producto_id}, ${producto.nombre}, ${producto.precio}, ${producto.costo}, 1, ${estadoCocinaInicial})
+        RETURNING id, producto_id, nombre_snapshot, precio_unitario, cantidad, estado, estado_cocina`;
       return rows[0];
     });
     return res.status(201).json({ item });

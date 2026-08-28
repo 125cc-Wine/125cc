@@ -530,3 +530,11 @@ CREATE INDEX IF NOT EXISTS idx_stock_movimientos_insumo ON stock_movimientos(ins
 
 INSERT INTO pos_config (clave, valor) VALUES ('food_cost_alerta_pct', '32')
   ON CONFLICT (clave) DO NOTHING;
+
+-- ── Comanda de cocina/barra (handoff/ANALISIS-POS-SISTEMA-COMPLETO.md,
+-- hallazgo 1). estado_cocina vive en comanda_items — NULL = no aplica
+-- (vino, se sirve en el momento); 'pendiente'/'listo' para comida
+-- (productos sin vino_ref). Ver db/migrations/010_comanda_cocina.sql. ──
+ALTER TABLE comanda_items ADD COLUMN IF NOT EXISTS estado_cocina text
+  CHECK (estado_cocina IN ('pendiente', 'listo'));
+CREATE INDEX IF NOT EXISTS idx_comanda_items_cocina ON comanda_items(estado_cocina) WHERE estado_cocina = 'pendiente';
