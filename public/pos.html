@@ -310,7 +310,15 @@
   .qty-val{font-size:var(--fs-base);font-weight:700;color:var(--ink);width:20px;text-align:center;flex-shrink:0}
   .item-name{font-size:var(--fs-base);color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* Número de copa por línea — ver numeroCopa() en renderItems(). */
-  .item-numero{color:var(--accent);font-weight:700;margin-right:5px}
+  /* Ficha circular en vez de solo texto — se escanea más rápido en una
+     lista larga o en la grilla del picker que un prefijo de color. */
+  .item-numero{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:19px;height:19px;border-radius:50%;
+    background:var(--accent);color:#fff;
+    font-size:11px;font-weight:700;line-height:1;
+    margin-right:6px;vertical-align:-3px;
+  }
   .item-price{font-size:var(--fs-base);font-weight:700;color:var(--ink);flex-shrink:0}
   .item-remove{background:none;border:none;color:var(--ink-3);font-size:16px;cursor:pointer;padding:var(--sp-2);margin:calc(var(--sp-2) * -1);flex-shrink:0;border-radius:var(--r-sm);transition:color var(--t) var(--ease)}
   /* Señal de cocina por ítem — ver renderItems(). */
@@ -568,7 +576,16 @@
     #printArea.pr-cuenta .cta-divider span{font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--texto-secundario,#8A6B50);font-weight:600}
     #printArea.pr-cuenta .vino-row{display:flex;align-items:center;gap:8px;padding:3mm 0;border-bottom:1px solid rgba(200,164,106,.35)}
     #printArea.pr-cuenta .vino-row:first-child{padding-top:0}
-    #printArea.pr-cuenta .vino-num{font-family:'DM Sans',sans-serif;font-size:10px;color:var(--texto-terciario,#B09070);font-weight:600;width:14px;flex-shrink:0}
+    /* Medallón en vez de un número suelto — mismo anillo roble que ya
+       usan los separadores de la pieza (cta-divider), así el número que
+       el mozo ya usó para pedir la copa en la barra se ve como parte
+       del diseño, no como un dato de sistema pegado al costado. */
+    #printArea.pr-cuenta .vino-num{
+      font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;
+      color:var(--tinto,#7A1428);width:20px;height:20px;flex-shrink:0;
+      border:1.2px solid var(--roble,#C8A46A);border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+    }
     #printArea.pr-cuenta .vino-foto{height:50px;width:auto;max-width:34px;object-fit:contain;flex-shrink:0}
     #printArea.pr-cuenta .vino-foto-placeholder{height:50px;width:37px;flex-shrink:0;color:var(--roble,#C8A46A)}
     #printArea.pr-cuenta .vino-info{flex:1;min-width:0}
@@ -1723,7 +1740,7 @@ function renderItems(){
       // ver numeroCopa()): identifica qué copa es cada vino al llevar
       // varias a la mesa.
       const num = numeroCopa(it.producto_id);
-      const numeroTag = num != null ? `<span class="item-numero" title="Copa #${num}">#${num}</span>` : '';
+      const numeroTag = num != null ? `<span class="item-numero" title="Copa #${num}">${num}</span>` : '';
       return `
       <div class="item-row">
         <div class="qty-stepper">
@@ -2279,7 +2296,7 @@ async function imprimirPrecuenta(){
     const numeroMostrado = vino.numero != null ? vino.numero : (i + 1);
     return `
       <div class="vino-row">
-        <div class="vino-num">${String(numeroMostrado).padStart(2, '0')}</div>
+        <div class="vino-num">${numeroMostrado}</div>
         ${foto}
         <div class="vino-info">
           <div class="vino-nombre">${escapeHtml(it.nombre_snapshot)}</div>
@@ -3823,7 +3840,7 @@ function renderProductos(){
     // comanda ya armada: es el picker donde el mozo elige qué agregar,
     // antes de servir la copa.
     const num = numeroCopa(p.id);
-    const numeroTag = num != null ? `<span class="item-numero">#${num}</span>` : '';
+    const numeroTag = num != null ? `<span class="item-numero" title="Copa #${num}">${num}</span>` : '';
     return `
     <div class="prod-card ${sinStock ? 'sin-stock' : ''}" onclick="agregarProducto(${p.id})">
       <div class="prod-name" title="${escapeHtml(p.nombre)}">${numeroTag}${escapeHtml(p.nombre)}</div>
