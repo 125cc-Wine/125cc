@@ -309,6 +309,8 @@
   .qty-btn:active{transform:scale(.9);background:var(--accent);color:#fff;border-color:var(--accent)}
   .qty-val{font-size:var(--fs-base);font-weight:700;color:var(--ink);width:20px;text-align:center;flex-shrink:0}
   .item-name{font-size:var(--fs-base);color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* Número de copa por línea — ver numeroCopa() en renderItems(). */
+  .item-numero{color:var(--accent);font-weight:700;margin-right:5px}
   .item-price{font-size:var(--fs-base);font-weight:700;color:var(--ink);flex-shrink:0}
   .item-remove{background:none;border:none;color:var(--ink-3);font-size:16px;cursor:pointer;padding:var(--sp-2);margin:calc(var(--sp-2) * -1);flex-shrink:0;border-radius:var(--r-sm);transition:color var(--t) var(--ease)}
   /* Señal de cocina por ítem — ver renderItems(). */
@@ -1274,6 +1276,13 @@ function enterApp(){
   loadMesas();
   loadCaja(); // también deja cajaAbierta seteado para el banner y el flujo de cobro
   iniciarAutorrefrescoPlano();
+  // Precarga del catálogo de vinos (número de copa, ver numeroCopa() más
+  // abajo) — se dispara acá y no se espera: para cuando el mozo abra una
+  // comanda ya va a estar en caché casi siempre, y si todavía no llegó,
+  // el próximo render de la comanda (hay varios por minuto) ya lo
+  // encuentra listo. Mismo criterio "best effort" que ya tenía este
+  // caché para imprimirPrecuenta().
+  cargarVinosCatalogo();
 }
 
 // Con 1-2 mozos en celu/tablet, el plano de un dispositivo no reflejaba
@@ -1710,6 +1719,11 @@ function renderItems(){
         : it.estado_cocina === 'listo'
         ? `<div class="item-cocina-tag listo">${icon('check')} Listo <button onclick="entregarItem(${it.id})">Entregar</button></div>`
         : '';
+      // Número de copa (mismo campo que index.html y la cuenta impresa —
+      // ver numeroCopa()): identifica qué copa es cada vino al llevar
+      // varias a la mesa.
+      const num = numeroCopa(it.producto_id);
+      const numeroTag = num != null ? `<span class="item-numero" title="Copa #${num}">#${num}</span>` : '';
       return `
       <div class="item-row">
         <div class="qty-stepper">
@@ -1718,7 +1732,7 @@ function renderItems(){
           <button class="qty-btn" onclick="agregarProducto(${it.producto_id})">+</button>
         </div>
         <div style="flex:1;min-width:0">
-          <div class="item-name" title="${escapeHtml(it.nombre_snapshot)}">${escapeHtml(it.nombre_snapshot)}</div>
+          <div class="item-name" title="${escapeHtml(it.nombre_snapshot)}">${numeroTag}${escapeHtml(it.nombre_snapshot)}</div>
           ${cocinaTag}
         </div>
         <div class="item-price">${fmtMoney(it.precio_unitario * it.cantidad)}</div>
@@ -2125,6 +2139,22 @@ async function cargarVinosCatalogo(){
   return vinosCatalogo;
 }
 
+// Número de copa de un producto (1..N, mismo campo que index.html y la
+// cuenta impresa leen de /api/obtener-vinos — ver el comentario ahí) —
+// null si el catálogo todavía no cargó, el producto no es vino, o el
+// vino vinculado no está "listo para el menú" (sin ficha completa no
+// tiene número, ver vinoListoParaMenu). Sincrónica a propósito: se llama
+// desde renderItems(), que se dispara muchas veces por minuto y no
+// puede volverse async solo por esto — cargarVinosCatalogo() ya se
+// disparó en enterApp(), acá solo se lee el caché si ya llegó.
+function numeroCopa(productoId){
+  if (!vinosCatalogo) return null;
+  const prod = productos.find(p => p.id === productoId);
+  if (!prod || prod.vino_ref == null) return null;
+  const vino = vinosCatalogo.get(String(prod.vino_ref));
+  return vino ? vino.numero : null;
+}
+
 // SVG de silueta de copa — misma geometría de marca que index.html
 // (mapa/carta/Sommelier). Placeholder para un vino sin foto en
 // vinos.json, o cuya foto no llega a cargar.
@@ -2239,9 +2269,17 @@ async function imprimirPrecuenta(){
     // región · cosecha — el Sheet hoy no trae cosecha (año); se suma
     // sola el día que se cargue, sin tocar nada más.
     const regionCosecha = [vino.region, vino.cosecha].filter(Boolean).join(' · ');
+    // Número de copa fijo del vino (mismo campo que el menú del cliente
+    // y el panel del POS leen de /api/obtener-vinos) — antes acá se
+    // numeraba por orden DENTRO de esta cuenta (01, 02...), que no tenía
+    // nada que ver con el número que el mozo ya usó para pedir la copa
+    // en la barra. Si el vino matcheó por id pero no está "listo para
+    // el menú" (numero null — sin ficha completa), cae al orden viejo
+    // como respaldo, no queda un número en blanco.
+    const numeroMostrado = vino.numero != null ? vino.numero : (i + 1);
     return `
       <div class="vino-row">
-        <div class="vino-num">${String(i + 1).padStart(2, '0')}</div>
+        <div class="vino-num">${String(numeroMostrado).padStart(2, '0')}</div>
         ${foto}
         <div class="vino-info">
           <div class="vino-nombre">${escapeHtml(it.nombre_snapshot)}</div>

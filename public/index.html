@@ -375,6 +375,15 @@
       border-radius:var(--r-sm);object-fit:contain;
       background:rgba(240,228,204,.55);border:1px solid var(--line);
     }
+    /* Número de copa — para que el mozo identifique qué copa es cada
+       vino al llevar varias a la mesa, y para que el cliente pueda
+       pedir "el 7" directo. Mismo número en el panel del POS y en la
+       cuenta impresa (viaja como w.numero desde /api/obtener-vinos). */
+    .wc-numero{
+      flex-shrink:0;width:26px;height:26px;margin-top:1px;border-radius:50%;
+      background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;
+      font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;
+    }
     .wc-info{flex:1;min-width:0;overflow:hidden}
     .wc-name{font-size:var(--text-data);font-weight:500;color:var(--ink);letter-spacing:.01em;
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1276,7 +1285,7 @@ function buildMap(){
       ${copitaSVG(color, {size:22})}
       <div class="pin-zoom-label">${esc(w.nombre.split(' ')[0])}</div>
       <div class="pin-tooltip${belowClass}" id="tip-${w.id}">
-        <div class="pt-name">${esc(w.nombre)}</div>
+        <div class="pt-name">${w.numero != null ? `<span style="color:var(--accent)">#${w.numero}</span> · ` : ''}${esc(w.nombre)}</div>
         <div class="pt-price">${fmtPrecio(w.precio)} · ${esc(TYPE_LABEL[w.tipo]||w.tipo)}</div>
       </div>`;
 
@@ -1640,6 +1649,7 @@ function renderWineList(){
       ? `<img class="wc-thumb" src="${esc(w.imagen)}" alt="" loading="lazy" onerror="this.remove()">`
       : '';
     return `<div class="wine-card${isActive?' active':''}" onclick="selectWine(${w.id})">
+      ${w.numero != null ? `<div class="wc-numero">${w.numero}</div>` : ''}
       ${copitaSVG(color,{size:22,state:isActive?'selected':'filled',selected:isActive})}
       ${thumb}
       <div class="wc-info"><div class="wc-name">${esc(w.nombre)}</div><div class="wc-sub">${esc(w.bodega)} · ${esc(TYPE_LABEL[w.tipo]||w.tipo)}${favoritos.has(w.nombre)?' <span style="color:var(--accent);font-weight:600">· ★ Favorito del bar</span>':''}</div></div>
@@ -1693,7 +1703,10 @@ function renderFicha(w){
     <div class="ficha-card">
       <div class="ficha-hero">
         <div class="ficha-hero-top">
-          ${copitaSVG(color,{size:26})}
+          <div style="display:inline-flex;align-items:center;gap:8px">
+            ${copitaSVG(color,{size:26})}
+            ${w.numero != null ? `<div class="wc-numero" style="width:30px;height:30px;font-size:16px">${w.numero}</div>` : ''}
+          </div>
           ${favoritos.has(w.nombre) ? '<div style="display:inline-flex;align-items:center;gap:4px;font-size:var(--text-kicker);font-weight:600;color:var(--accent)">★ Favorito del bar</div>' : ''}
         </div>
         <div class="fi-label">Ficha técnica</div>

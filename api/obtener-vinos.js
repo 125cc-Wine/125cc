@@ -103,6 +103,28 @@ module.exports = async function handler(req, res) {
         };
       });
 
+    // Número de copa (1..N) — para que el mozo pueda llevar varias copas
+    // a la mesa e identificar cuál es cuál sin preguntar, y para que el
+    // cliente pueda pedir "el 7" directamente. Se calcula ACÁ, una sola
+    // vez del lado del servidor, y viaja en cada vino — index.html
+    // (menú), pos.html (panel de comanda) y la cuenta impresa lo leen
+    // del mismo campo, así nunca queda un mismo vino numerado distinto
+    // en dos lugares.
+    //
+    // Espejo de vinoListoParaMenu() en index.html: solo se numeran los
+    // vinos con ficha completa (nota+imagen+maridaje) — son los que
+    // realmente están en la carta hoy, no los borradores de meses
+    // futuros que el Calendario de Carta pre-completa con anticipación.
+    // Duplicado a propósito (mismo criterio que precioCopa() en
+    // productos-import.js): index.html corre en el browser del cliente,
+    // sin build step, no hay módulo compartido posible. Si se toca un
+    // lado, tocar el otro.
+    let numeroSiguiente = 1;
+    vinos.forEach((v) => {
+      const listo = v.nota && v.imagen && Array.isArray(v.maridaje) && v.maridaje.length > 0;
+      v.numero = listo ? numeroSiguiente++ : null;
+    });
+
     return res.status(200).json({ vinos });
 
   } catch (err) {
