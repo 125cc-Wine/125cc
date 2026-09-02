@@ -379,26 +379,24 @@
        vino al llevar varias a la mesa, y para que el cliente pueda
        pedir "el 7" directo. Mismo número en el panel del POS y en la
        cuenta impresa (viaja como w.numero desde /api/obtener-vinos).
-       Medallón de varias capas (no un círculo plano): rosetón radiado
-       detrás (::before, conic-gradient) evocando una medalla/sello de
-       vino, cara con degradé sutil para dar volumen, anillo definido y
-       sombra con relieve — el número del tipo (color heredado de la
-       copita) queda como una pieza de diseño, no un dato de sistema. */
+       Máximo contraste a propósito (relleno sólido + número blanco) —
+       la vuelta anterior (rosetón + cara clara) quedó más "objeto de
+       diseño" que número legible, y el número tiene que ganarle a
+       cualquier otra idea de diseño: es el dato que el mozo necesita
+       leer de un vistazo con varias copas en la mano. El volumen viene
+       de sombras en capas (relieve arriba/abajo + sombra de caída),
+       ninguna de las cuales tapa el texto — a diferencia de un patrón
+       de fondo, un box-shadow nunca se pinta encima del contenido. */
     .wc-numero{
-      position:relative;flex-shrink:0;width:28px;height:28px;margin-top:1px;
-      border-radius:50%;
-      background:radial-gradient(circle at 33% 28%, #FFFEFB 0%, #FFF9EE 55%, #FAF0DC 100%);
-      border:1.5px solid var(--numero-color,var(--accent));
+      flex-shrink:0;width:26px;height:26px;margin-top:1px;border-radius:50%;
+      background:var(--numero-color,var(--accent));color:#fff;
       display:flex;align-items:center;justify-content:center;
-      font-family:'Cormorant Garamond',serif;font-weight:700;font-size:14px;
-      color:var(--numero-color,var(--accent));
-      box-shadow:0 2px 5px rgba(74,48,32,.22), inset 0 1px 1.5px rgba(255,255,255,.95);
-      z-index:1;
-    }
-    .wc-numero::before{
-      content:'';position:absolute;inset:-4px;border-radius:50%;
-      background:repeating-conic-gradient(from 0deg, var(--numero-color,var(--accent)) 0deg 4deg, transparent 4deg 15deg);
-      opacity:.38;z-index:-1;
+      font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;
+      border:1.5px solid rgba(255,255,255,.9);
+      box-shadow:
+        0 2px 5px rgba(74,48,32,.35),
+        inset 0 1.5px 2px rgba(255,255,255,.45),
+        inset 0 -2px 3px rgba(0,0,0,.18);
     }
     .wc-info{flex:1;min-width:0;overflow:hidden}
     .wc-name{font-size:var(--text-data);font-weight:500;color:var(--ink);letter-spacing:.01em;
