@@ -391,6 +391,13 @@
       flex-shrink:0;width:26px;height:26px;margin-top:1px;border-radius:50%;
       background:var(--numero-color,var(--accent));color:#fff;
       display:flex;align-items:center;justify-content:center;
+      /* line-height:1 a propósito — sin esto, el interlineado propio de
+         Cormorant Garamond (pensado para párrafos, no para un dígito
+         solo) hace que flex centre la CAJA de línea, no el dígito, y
+         éste queda visiblemente corrido hacia arriba dentro del
+         círculo. padding-top nudge fino: el número de esta fuente
+         igual no queda ópticamente centrado en su propia línea. */
+      line-height:1;padding-top:1px;
       font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;
       border:1.5px solid rgba(255,255,255,.9);
       box-shadow:
@@ -1406,6 +1413,7 @@ function showMapPreview(w, leftPct, topPct){
     <div class="map-preview-inner">
       <div class="mpv-header">
         ${copitaSVG(color,{size:18})}
+        ${w.numero != null ? `<div class="wc-numero" style="--numero-color:${color}">${w.numero}</div>` : ''}
         <div>
           <div class="mpv-name">${esc(w.nombre)}</div>
           <div class="mpv-bodega">${esc(w.bodega)}</div>
