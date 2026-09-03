@@ -1193,12 +1193,18 @@ function fetchFavoritos(){
 // (admin) crea automáticamente al planificar meses futuros (para poder
 // completarles nota/maridaje/imagen con anticipación, antes de que ese mes
 // arranque). Sin este filtro, el menú público mostraba esos borradores
-// mezclados con el menú real — mismo criterio que ya usa el checklist de
-// "ficha completa" del admin (cartaFichaFaltante en stats.html): sin nota,
-// sin imagen o sin maridaje, no se considera listo para mostrarle a un
-// cliente todavía.
+// mezclados con el menú real.
+//
+// w.numero (no nota/imagen/maridaje sueltos) es la señal — se calcula UNA
+// sola vez en el servidor (api/obtener-vinos.js) y ya combina ficha
+// completa CON pertenecer a la quincena vigente del Calendario de Carta
+// (antes esto se recalculaba acá con los 3 campos sueltos, sin saber qué
+// quincena era hoy — un vino de una quincena vieja se quedaba mostrándose
+// para siempre mientras el nuevo no estuviera listo, que fue exactamente
+// el bug real del 03/09/2026: "la quincena ya cambió pero el menú no").
+// No duplicar el chequeo acá de nuevo — un solo lugar de verdad.
 function vinoListoParaMenu(w){
-  return !!(w && w.nota && w.nota.trim() && w.imagen && w.imagen.trim() && Array.isArray(w.maridaje) && w.maridaje.length);
+  return !!(w && w.numero != null);
 }
 function filtrarVinosListos(vinos){
   return (vinos||[]).filter(vinoListoParaMenu);

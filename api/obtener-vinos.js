@@ -3,6 +3,22 @@
 
 const { getReadOnlyToken } = require('./_lib/google-auth');
 const { normalizarBodega, leerBodegas } = require('./_lib/bodegas');
+const { sql } = require('./_lib/db');
+
+// Quincena vigente hoy, en hora de Buenos Aires — mismo esquema de cortes
+// fijos (1–15 / 16–fin de mes) que datosQuincena()/cartaQuincenaDeFecha()
+// en stats.html, reimplementado acá porque este archivo corre en el
+// servidor y esas viven en el browser del admin (mismo criterio de
+// duplicación ya usado con precioCopa()/vinoListoParaMenu — sin build
+// step no hay módulo compartido posible entre los dos).
+function normalizarTexto(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function quincenaVigenteInicio() {
+  const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }); // YYYY-MM-DD
+  const [anio, mes, dia] = hoy.split('-');
+  return `${anio}-${mes}-${Number(dia) <= 15 ? '01' : '16'}`;
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -103,26 +119,49 @@ module.exports = async function handler(req, res) {
         };
       });
 
-    // Número de copa (1..N) — para que el mozo pueda llevar varias copas
-    // a la mesa e identificar cuál es cuál sin preguntar, y para que el
-    // cliente pueda pedir "el 7" directamente. Se calcula ACÁ, una sola
-    // vez del lado del servidor, y viaja en cada vino — index.html
-    // (menú), pos.html (panel de comanda) y la cuenta impresa lo leen
-    // del mismo campo, así nunca queda un mismo vino numerado distinto
-    // en dos lugares.
+    // Número de copa (1..N) — ES la señal única de "este vino está en la
+    // carta hoy": index.html, pos.html y la cuenta impresa lo muestran
+    // como número, y ADEMÁS index.html usa numero!=null para decidir si
+    // el vino aparece en el menú (ver vinoListoParaMenu()) — antes esa
+    // decisión se tomaba dos veces, acá y de nuevo en el browser
+    // (duplicado con el mismo riesgo de drift que ya se documentaba acá
+    // mismo), sin que ninguna de las dos supiera qué quincena es hoy.
     //
-    // Espejo de vinoListoParaMenu() en index.html: solo se numeran los
-    // vinos con ficha completa (nota+imagen+maridaje) — son los que
-    // realmente están en la carta hoy, no los borradores de meses
-    // futuros que el Calendario de Carta pre-completa con anticipación.
-    // Duplicado a propósito (mismo criterio que precioCopa() en
-    // productos-import.js): index.html corre en el browser del cliente,
-    // sin build step, no hay módulo compartido posible. Si se toca un
-    // lado, tocar el otro.
+    // "Debería ser automático junto al cambio de quincena" (pedido
+    // real, 03/09/2026): un vino cuenta para la carta de HOY si el
+    // Calendario de Carta lo confirmó para la quincena vigente
+    // (carta_historial.semana_inicio) — match por nombre normalizado,
+    // no por id (el id de carta_historial puede ser el UUID del
+    // catálogo externo, distinto del id numérico que este vino tiene
+    // acá en el Sheet; guardarCarta() en stats.html ya resuelve ese
+    // mismo cruce por nombre al crear el borrador). Decisión explícita
+    // del dueño: si llega el día del cambio y la ficha nueva no está
+    // lista, el vino viejo se saca igual — el nuevo aparece con lo que
+    // tenga (nombre/precio/tipo siempre están; nota/foto/maridaje se
+    // muestran si existen — el resto de este archivo y de index.html ya
+    // toleraba cada campo faltante por separado, acá solo se deja de
+    // exigir los TRES juntos para poder aparecer). No se vuelve a
+    // mostrar la quincena anterior mientras la nueva se completa, que
+    // era el bug real reportado.
+    //
+    // Salvedad: si el Calendario de Carta directamente no tiene NADA
+    // confirmado para la quincena vigente (nunca se planificó, no es el
+    // caso de "está incompleta" sino "no existe registro"), cae a la
+    // regla vieja (solo completitud) — evita un menú en blanco total
+    // por no haber usado la herramienta esa quincena, que es peor que
+    // mostrar la carta anterior sin actualizar.
+    const inicioQuincena = quincenaVigenteInicio();
+    const { rows: confirmadosRows } = await sql`
+      SELECT DISTINCT vino_nombre FROM carta_historial WHERE semana_inicio = ${inicioQuincena}::date`;
+    const confirmadosHoy = new Set(confirmadosRows.map((r) => normalizarTexto(r.vino_nombre)));
+    const huboPlanificacion = confirmadosHoy.size > 0;
+
     let numeroSiguiente = 1;
     vinos.forEach((v) => {
-      const listo = v.nota && v.imagen && Array.isArray(v.maridaje) && v.maridaje.length > 0;
-      v.numero = listo ? numeroSiguiente++ : null;
+      const enCartaVigente = huboPlanificacion
+        ? confirmadosHoy.has(normalizarTexto(v.nombre))
+        : (v.nota && v.imagen && Array.isArray(v.maridaje) && v.maridaje.length > 0); // salvedad: sin planificación, solo completitud
+      v.numero = enCartaVigente ? numeroSiguiente++ : null;
     });
 
     return res.status(200).json({ vinos });
