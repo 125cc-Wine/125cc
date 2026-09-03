@@ -29,25 +29,33 @@ de "elegí por sensación → confirmá con el detalle" repetido para cada vino.
 
 Cada vino trae, entre otros campos:
 
-- `x`, `y` — posición en el mapa cartesiano. **Se cargan a mano** desde el
-  admin (`api/actualizar-mapa.js`), no se derivan de otro campo. Rango
-  aproximado -60..60 en ambos ejes; conversión a pantalla en
-  `index.html` (`left = 50 + x*0.4`, `top = 50 - y*0.36`).
-- `perfil_cuerpo`, `perfil_frescura`, `perfil_taninos` (escala 1–5) — usados
-  para las barras sensoriales de la ficha, **no** para calcular `x`/`y`.
+- `perfil_cuerpo`, `perfil_frescura`, `perfil_taninos` (escala 1–5, cargados
+  a mano en el Sheet) — fuente única tanto de las barras sensoriales de la
+  ficha como de la posición en el mapa. **Ya no hay columnas `x`/`y` que
+  cargar**: `api/obtener-vinos.js` (`posicionDesdePerfil()`) las calcula en
+  cada lectura —
+  `x = (3-frescura)*50` (Fresco -100..Complejo +100),
+  `y = ((cuerpo+taninos)/2 - 3)*50` (Suave -100..Potente +100) — y las
+  manda ya resueltas en el JSON; `index.html` solo convierte a pantalla
+  (`left = 50 + x*0.4`, `top = 50 - y*0.36`). Cargar `perfil_*` de un vino
+  nuevo ya lo posiciona bien — no hace falta ningún paso manual aparte.
+  `api/actualizar-mapa.js` (columnas F/G del Sheet, panel "editor de mapa"
+  en `stats.html`) quedó **obsoleto**: sigue escribiendo, pero nada la lee
+  más — no confiar en ese panel para mover un vino, y si se retoma, primero
+  decidir si se borra o se re-conecta a `perfil_*`.
 - `tipo` (Tinto/Blanco/Rosado/Naranja), `varietal`, `region`, `altitud`,
   `suelo`, `crianza`, `temperatura`, `nota`, `maridaje[]`, `bodega_info`,
   `precio`, `imagen`.
 
-⚠️ **Pendiente de revisar (no resuelto, no tocar sin conversarlo primero):**
-al cruzar `x`/`y` con `perfil_*` en el catálogo actual, el eje vertical
-(Potente/Suave) se parece más a "es tinto vs. es blanco/rosado" que a
-intensidad real. Ejemplos: `Alta Vista Estate Pinot Noir` y `Kamala Pinot
-Noir` tienen `perfil_cuerpo=2` y `perfil_taninos=2` (livianos) pero están
-cargados con `y` positivo (lado Potente), mientras que todos los blancos/
-rosados caen en `y` negativo sin excepción. Como `x`/`y` se cargan a mano,
-puede ser simplemente que no se recalibraron con `perfil_*` al ponerlos.
-Antes de tocar el mapa o los ejes, conversarlo — no es un bug de código.
+✅ **Resuelto (era el hallazgo pendiente de antes):** el eje Potente/Suave
+se parecía a "es tinto vs. es blanco/rosado" porque `x`/`y` se cargaban a
+mano sin relación real con `perfil_*` — se podían desincronizar sin que
+nada lo notara. Ejemplo real que lo confirmó: `Alta Vista Estate Pinot
+Noir` y `Kamala Pinot Noir`, livianos según su propio `perfil_cuerpo`/
+`perfil_taninos` (=2), quedaban del lado Potente solo por ser tintos.
+Con la derivación automática (03/09/2026) ya no puede volver a pasar:
+la posición SIEMPRE sale de `perfil_*`, no hay un segundo valor cargado
+a mano que se pueda desalinear.
 
 ## Reglas de negocio que no se ven en el código
 
