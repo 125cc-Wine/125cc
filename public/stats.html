@@ -1072,11 +1072,20 @@ function toggleOpinion(id){
 }
 
 // ── EDITOR DE MAPA ────────────────────────────────────────────────
+// "el mapa muestra los +100 vinos cargados, cuando solo deberia
+// mostrar los de la quincena correspondiente" — /api/obtener-vinos
+// devuelve TODO el Sheet (borradores de otras quincenas, meses
+// futuros pre-cargados por el Calendario de Carta, etc.), acá se
+// filtra a los que numero!=null — el mismo campo que ya decide qué
+// vino está en la carta VIGENTE hoy en el menú público y en pos.html
+// (ver el comentario grande en api/obtener-vinos.js). Posicionar en
+// el mapa cartesiano solo tiene sentido para los vinos que un cliente
+// puede llegar a ver ahora mismo.
 async function loadWinesForMap(){
   try{
     const res = await fetch('/api/obtener-vinos');
     const data = await res.json();
-    wines = data.vinos || [];
+    wines = (data.vinos || []).filter(w => w.numero != null);
     renderMapPins();
     renderMapWineList();
   }catch(e){
