@@ -247,6 +247,17 @@ async function getCatalogoExterno(req, res) {
   }
   const headers = { apikey: VINOTECA_SUPABASE_ANON_KEY, Authorization: `Bearer ${VINOTECA_SUPABASE_ANON_KEY}` };
 
+  // DEBUG TEMPORAL (28c02cc — sacar apenas se confirme el esquema real):
+  // para saber si `productos` en Supabase ya tiene foto/link de compra
+  // sin arriesgar romper el select real de abajo con un nombre de
+  // columna que no exista (PostgREST tira 400 si pedís una columna
+  // inexistente con select= explícito).
+  if (req.query.debug === '1') {
+    const rDebug = await fetch(`${VINOTECA_SUPABASE_URL}/rest/v1/productos?select=*&limit=1`, { headers });
+    const bodyDebug = await rDebug.text();
+    return res.status(200).json({ debug: true, status: rDebug.status, body: bodyDebug });
+  }
+
   // Solo activos, excluye categoria='Otro' (vermouth/destilados/accesorios —
   // no es vino). Sin filtro de stock: Maio pidió verlos igual aunque no
   // tengan stock cargado en este momento. Trae las dos empresas juntas (no
