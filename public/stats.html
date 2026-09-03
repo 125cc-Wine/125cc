@@ -376,9 +376,13 @@
   .carta-wine-card-remove{background:none;border:none;color:var(--ink-3);font-size:14px;line-height:1;cursor:pointer;flex-shrink:0;padding:0 2px}
   .carta-wine-card-remove:hover{color:var(--danger)}
   .carta-wine-card-dupflag{color:var(--warning);margin-right:3px}
-  .carta-wine-card.blocked{opacity:.35;cursor:not-allowed;background:var(--surface)}
+  /* .6 (no .35 como antes) — con el texto de bloqueo visible en la
+     tarjeta (carta-wine-card-blockedinfo) tiene que quedar legible, no
+     solo "se ve que está apagada". */
+  .carta-wine-card.blocked{opacity:.6;cursor:not-allowed;background:var(--surface)}
   .carta-wine-card.blocked:hover{border-top-color:var(--line);border-right-color:var(--line);border-bottom-color:var(--line)}
   .carta-wine-card.used{display:none}
+  .carta-wine-card-blockedinfo{font-size:10.5px;font-weight:700;color:var(--warning);margin-top:3px;line-height:1.3}
 
   .carta-manual-form{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
   .carta-manual-input{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 12px;color:var(--ink);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;flex:1;min-width:110px}
@@ -2307,9 +2311,95 @@ function planDelMes(mesISO){
 
 let cartaSemanas = planDelMes(cartaMes); // referencia al plan del mes actualmente visible
 
+// ── Borrador local (localStorage) ────────────────────────────────────────
+// "si se pierde 1 quincena por un error de guardado sea caotico" — hasta
+// acá, todo lo que se iba armando (arrastrar vinos, tildar cajas) vivía
+// SOLO en cartaSemanas, en memoria del browser, sin ningún rastro hasta
+// tocar "Guardar carta". Una pestaña cerrada por error, el navegador que
+// se cuelga, wifi que corta justo al guardar, o simplemente irse sin
+// acordarse de guardar — y las 14+14 elecciones (buscar, comparar precios,
+// balancear tramos) se pierden enteras, hay que rehacerlas de cero.
+//
+// Un borrador por mes en localStorage, actualizado en cada cambio
+// (cartaPlaceWine/cartaRemoveFromLane/cartaSetCajas) — es una copia de
+// seguridad, no un guardado real: carta_historial (vía "Guardar carta")
+// sigue siendo la única fuente de verdad confirmada, esto es solo para no
+// perder el trabajo en curso si algo interrumpe la sesión.
+function cartaDraftKey(mesISO){ return '125cc_carta_draft_' + mesISO; }
+
+function cartaGuardarBorradorLocal(){
+  try{
+    localStorage.setItem(cartaDraftKey(cartaMes), JSON.stringify({
+      guardadoEn: new Date().toISOString(),
+      semanas: cartaSemanas.map(s => ({ label: s.label, inicio: s.inicio, vinos: s.vinos })),
+    }));
+  } catch(e){ /* localStorage lleno/deshabilitado (modo privado, etc.) — no bloquea nada, es solo la red de seguridad */ }
+}
+
+// Compara solo lo que importa para decidir si hay algo "sin guardar" de
+// verdad (qué vino está en qué casillero, y sus cajas) — ignora precio/
+// varietal/etc., que pueden variar de una hidratación a otra sin ser un
+// cambio real del usuario.
+function cartaFirmaSemanas(semanas){
+  return JSON.stringify(semanas.map(s => s.vinos.map(v => v ? { id: String(v.id), cajas: v.cajas ?? null } : null)));
+}
+
+// Se llama una vez, al entrar a la pestaña (loadCartaTab), DESPUÉS de
+// hidratar cartaSemanas desde carta_historial — si hay un borrador local
+// para este mes y difiere de lo ya confirmado en el server, lo restaura y
+// avisa. Si el borrador coincide con lo ya confirmado (no hay nada
+// pendiente de verdad), lo descarta en silencio en vez de dejarlo dando
+// vueltas para siempre.
+function cartaRestaurarBorradorLocal(){
+  let raw;
+  try{ raw = localStorage.getItem(cartaDraftKey(cartaMes)); } catch(e){ return; }
+  if(!raw) return;
+  let draft;
+  try{ draft = JSON.parse(raw); } catch(e){ return; }
+  if(!draft || !Array.isArray(draft.semanas) || draft.semanas.length !== cartaSemanas.length) return;
+
+  if(cartaFirmaSemanas(draft.semanas) === cartaFirmaSemanas(cartaSemanas)){
+    try{ localStorage.removeItem(cartaDraftKey(cartaMes)); } catch(e){}
+    return;
+  }
+
+  cartaSemanas.forEach((s, i) => { s.vinos = draft.semanas[i].vinos; });
+  const fecha = new Date(draft.guardadoEn).toLocaleString('es-AR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  showToast(`Se restauraron cambios sin guardar de tu última sesión (${fecha}) — revisalos y confirmá "Guardar carta" cuando estén listos`, 'success');
+}
+
+function cartaBorrarBorradorLocal(mesISO){
+  try{ localStorage.removeItem(cartaDraftKey(mesISO ?? cartaMes)); } catch(e){}
+}
+
+// Red de seguridad extra: si hay CUALQUIER borrador local sin confirmar
+// (no solo el del mes que se está mirando ahora mismo — puede haber
+// quedado uno de otro mes de esta misma sesión) y se intenta cerrar/
+// recargar la pestaña, el navegador pregunta antes de perderlo — además
+// del autoguardado, para el caso de "me olvidé de guardar" y no solo "se
+// colgó todo".
+window.addEventListener('beforeunload', (e) => {
+  let hayBorrador = false;
+  try{
+    for(let i = 0; i < localStorage.length; i++){
+      if(localStorage.key(i)?.startsWith('125cc_carta_draft_')){ hayBorrador = true; break; }
+    }
+  } catch(err){ return; }
+  if(!hayBorrador) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
 function cartaSetMes(val){
   cartaMes = val;
+  // Primera vez que se visita este mes EN ESTA SESIÓN (todavía no tiene
+  // plan en memoria) — recién ahí puede haber un borrador local de una
+  // sesión anterior esperando. Si ya se visitó antes (hay plan en
+  // memoria), lo que hay en cartaPlanesPorMes YA es lo más nuevo — no
+  // pisarlo con un borrador viejo.
+  const primeraVezEsteMes = !cartaPlanesPorMes[cartaMes];
   cartaSemanas = planDelMes(cartaMes);
+  if(primeraVezEsteMes) cartaRestaurarBorradorLocal();
   renderCartaPools();       // el estado "usado" depende de cartaSemanas, que acaba de cambiar
   renderCatalogoExterno();
   renderCartaManualPool();
@@ -2448,9 +2538,14 @@ async function loadCartaTab(){
     // El plan del mes actual (cartaSemanas) se armó vacío al cargar el script,
     // antes de tener cartaHistorial — recién ahora hay datos para hidratarlo.
     // Seguro reconstruirlo acá: loadCartaTab() es el punto de entrada de la
-    // pestaña, todavía no pudo haber ningún cambio sin guardar que perder.
+    // pestaña dentro de ESTA sesión, todavía no pudo haber ningún cambio sin
+    // guardar EN MEMORIA que perder — pero SÍ puede haber un borrador en
+    // localStorage de una sesión anterior (pestaña cerrada sin guardar,
+    // navegador que se colgó) — cartaRestaurarBorradorLocal() lo revisa
+    // apenas se hidrata desde el server.
     cartaPlanesPorMes = {};
     cartaSemanas = planDelMes(cartaMes);
+    cartaRestaurarBorradorLocal();
 
     computeCartaDuplicados();
     renderCartaTramoLegend();
@@ -3002,6 +3097,14 @@ function cartaWineCardHtml(w, usedIds, blocked){
     : dup ? `⚠ Posible duplicado — ${dup.motivo}`
     : tramo.label;
   const dupBadge = dup ? `<span class="carta-wine-card-dupflag" title="⚠ Posible duplicado — ${esc(dup.motivo)}">⚠</span>` : '';
+  // Info de bloqueo VISIBLE en la tarjeta, no solo en el title al pasar el
+  // mouse — pedido real: "los vinos que estan ya puestos o que no se
+  // puedan seleccionar digan en que quincena estan puestas". En celular
+  // (donde se arma la carta tan seguido como en desktop) un title de hover
+  // no sirve para nada — con esto se ve de un vistazo sin tocar la tarjeta.
+  const blockedInfo = isBlocked
+    ? `<div class="carta-wine-card-blockedinfo">🔒 ${esc(bh.semana_label)} de ${esc(nombreMesLabel(String(bh.semana_inicio).slice(0,7)))} · libre desde ${fmtFechaAR(cartaFechaDisponible(bh.confirmado_at))}</div>`
+    : '';
   // Solo los vinos cargados a mano se pueden borrar de la lista — los de
   // 125cc/catálogo externo viven en su fuente, no tiene sentido "borrarlos" acá.
   const removeBtn = w._fuente === 'manual'
@@ -3016,6 +3119,7 @@ function cartaWineCardHtml(w, usedIds, blocked){
     </div>
     <div class="carta-wine-card-sub">${esc(w.bodega||'—')} · $${cartaPrecioNum(w).toLocaleString('es-AR')}</div>
     <div class="carta-wine-card-copa">Copa: $${cartaPrecioCopa(w).toLocaleString('es-AR')}</div>
+    ${blockedInfo}
   </div>`;
 }
 
@@ -3037,13 +3141,22 @@ function renderCartaPools(){
   const blocked = cartaBlockedMap();
   const usedNombres = new Set(cartaSemanas.flatMap(s => s.vinos.filter(Boolean)).map(v => normalizarTexto(v.nombre)));
   const enEstaCarta = cartaWines.filter(w => usedNombres.has(normalizarTexto(w.nombre)));
-  // Le pasamos a cartaWineCardHtml un set de ids armado desde enEstaCarta (no
-  // cartaUsedIds() por el mismo motivo de arriba) — así el estilo "ya
-  // puesto" de la tarjeta es correcto para TODAS, catálogo externo incluido.
-  const usedIdsCards = new Set(enEstaCarta.map(w => String(w.id)));
+  // BUG real encontrado 03/09/2026: acá se armaba un set de ids con los
+  // mismos vinos que se estaban por renderizar (enEstaCarta), así que
+  // isUsed daba SIEMPRE true para cada tarjeta de este panel — y
+  // .carta-wine-card.used{display:none} las escondía TODAS. "Mi carta
+  // 125cc" (el resumen de lo ya elegido) quedaba invisible: el contador
+  // "N elegidos" del header mostraba el número correcto, pero abajo no
+  // había ninguna tarjeta a la vista. Acá cada vino YA está elegido por
+  // definición (es un resumen, no un picker) — no tiene sentido aplicarle
+  // el estilo "ocultar por estar usado", que es para los pickers de abajo
+  // (Catálogo Externo, cargados a mano). Set() vacío: nunca se oculta
+  // nada acá, solo el bloqueo (poco probable pero posible que un vino
+  // puesto este mes también choque con otra confirmación en la ventana
+  // de 12 meses) sigue funcionando igual.
   document.getElementById('cartaPools').innerHTML = CARTA_TRAMOS.map(tramo=>{
     const winesTramo = enEstaCarta.filter(w => tramoDeVino(w).id === tramo.id);
-    const cards = winesTramo.map(w => cartaWineCardHtml(w, usedIdsCards, blocked)).join('');
+    const cards = winesTramo.map(w => cartaWineCardHtml(w, new Set(), blocked)).join('');
     return `<div class="carta-pool-segment">
       <div class="carta-pool-header">
         <span class="carta-pool-title">${tramo.label}</span>
@@ -3331,6 +3444,7 @@ function cartaPlaceWine(id, si, idx){
   renderCatalogoExterno();
   renderCartaManualPool();
   renderCartaLanes();
+  cartaGuardarBorradorLocal();
 }
 
 function cartaRemoveFromLane(si, idx){
@@ -3339,18 +3453,21 @@ function cartaRemoveFromLane(si, idx){
   renderCatalogoExterno();
   renderCartaManualPool();
   renderCartaLanes();
+  cartaGuardarBorradorLocal();
 }
 
 // Cajas a pedir de este vino en esta quincena — pestaña "Pedidos". Sólo
 // queda en memoria (cartaSemanas) hasta que se toque "Guardar carta", igual
 // que cualquier otro cambio acá; no hace falta re-renderizar el carril
 // entero por esto (nada más lo muestra todavía), así no se pierde el foco
-// del input mientras se está tipeando.
+// del input mientras se está tipeando. Sí se manda al borrador local — una
+// caja tipeada también es trabajo que no se quiere perder.
 function cartaSetCajas(si, idx, val){
   const v = cartaSemanas[si]?.vinos[idx];
   if(!v) return;
   const n = val === '' ? null : Math.max(0, Math.trunc(Number(val)) || 0);
   v.cajas = n;
+  cartaGuardarBorradorLocal();
 }
 
 // Pedido de Maio: guardar en cualquier momento, no solo con las 28 posiciones
@@ -3665,6 +3782,10 @@ async function guardarCarta(){
       // se pisaba con un plan en blanco, antes de que llegara este fetch).
       delete cartaPlanesPorMes[cartaMes];
       cartaSemanas = planDelMes(cartaMes);
+      // El server ya es la fuente de verdad de nuevo — el borrador local
+      // de este mes queda redundante (y si se lo dejara, la próxima vez
+      // que se abra la pestaña "restauraría" algo que ya está guardado).
+      cartaBorrarBorradorLocal();
 
       computeCartaDuplicados();
       renderCartaPools();
