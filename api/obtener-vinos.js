@@ -5,6 +5,38 @@ const { getReadOnlyToken } = require('./_lib/google-auth');
 const { normalizarBodega, leerBodegas } = require('./_lib/bodegas');
 const { sql } = require('./_lib/db');
 
+// Posición en el mapa cartesiano — DERIVADA de perfil_cuerpo/perfil_taninos
+// (eje Y, Suave↔Potente) y perfil_frescura (eje X, Fresco↔Complejo), ya no
+// cargada a mano. Resuelve el hallazgo que quedó pendiente en CLAUDE.md:
+// x/y vivían en columnas propias del Sheet, cargadas a mano sin ninguna
+// relación real con perfil_* — el eje Potente/Suave terminaba pareciéndose
+// más a "es tinto vs. es blanco/rosado" (así se habían cargado a mano) que
+// a intensidad real. Ejemplo real que disparó el hallazgo: Alta Vista
+// Estate Pinot Noir y Kamala Pinot Noir, livianos según su propio
+// perfil_cuerpo/perfil_taninos (=2), quedaban del lado Potente solo por
+// ser tintos — con esta fórmula van a caer del lado Suave, que es lo que
+// su propia ficha técnica dice.
+//
+// Y (Suave -100 .. Potente +100) = promedio(cuerpo, taninos) escalado —
+//   cuerpo y taninos son los dos campos que más hablan de "cuánto pesa"
+//   un vino en boca, sin importar el color.
+// X (Fresco -100 .. Complejo +100) = frescura invertida y escalada — más
+//   frescura (más ácido, más liviano de tomar) cae del lado Fresco; menos
+//   frescura (más estructura, menos vivo) cae del lado Complejo. Es la
+//   única lectura posible con los 3 campos que hoy tiene perfil_* —
+//   ninguno mide "complejidad" de forma directa.
+// Escala: perfil_* es 1-5 con centro en 3; (valor-3)*50 lleva 1→-100 y
+// 5→+100, igual que el rango que ya esperaba el mapa (-100..100).
+function posicionDesdePerfil(cuerpo, frescura, taninos) {
+  // (3-frescura), no -(frescura-3): mismo valor, pero evita el -0 de JS
+  // cuando frescura=3 (Math.round(-(3-3)*50) da "-0", que se ve raro en
+  // el JSON aunque valga lo mismo que 0).
+  return {
+    x: Math.round((3 - frescura) * 50),
+    y: Math.round(((cuerpo + taninos) / 2 - 3) * 50),
+  };
+}
+
 // Quincena vigente hoy, en hora de Buenos Aires — mismo esquema de cortes
 // fijos (1–15 / 16–fin de mes) que datosQuincena()/cartaQuincenaDeFecha()
 // en stats.html, reimplementado acá porque este archivo corre en el
@@ -87,6 +119,13 @@ module.exports = async function handler(req, res) {
 
         const bodegaCentral = bodegasPorNombre.get(normalizarBodega(obj.bodega));
 
+        const perfil = {
+          cuerpo:   parseInt(obj.perfil_cuerpo)   || 3,
+          frescura: parseInt(obj.perfil_frescura) || 3,
+          taninos:  parseInt(obj.perfil_taninos)  || 3,
+        };
+        const posicion = posicionDesdePerfil(perfil.cuerpo, perfil.frescura, perfil.taninos);
+
         return {
           id:          parseInt(obj.id)  || 0,
           nombre:      obj.nombre        || "",
@@ -94,8 +133,8 @@ module.exports = async function handler(req, res) {
           precio:      obj.precio        || "",
           copa:        obj.copa          || "125 cc",
           tipo:        obj.tipo          || "Tinto",
-          x:           parseFloat(obj.x) || 0,
-          y:           parseFloat(obj.y) || 0,
+          x:           posicion.x,
+          y:           posicion.y,
           varietal:    obj.varietal      || "",
           region:      obj.region        || "",
           altitud:     obj.altitud       || "",
@@ -111,11 +150,7 @@ module.exports = async function handler(req, res) {
           bodega_lon:  bodegaCentral?.lon ?? null,
           tienda_url:  obj.tienda_url    || "",
           imagen:      obj.imagen        || "",
-          perfil: {
-            cuerpo:   parseInt(obj.perfil_cuerpo)   || 3,
-            frescura: parseInt(obj.perfil_frescura) || 3,
-            taninos:  parseInt(obj.perfil_taninos)  || 3,
-          },
+          perfil,
         };
       });
 
