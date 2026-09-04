@@ -187,85 +187,6 @@
   .empty-msg{text-align:center;padding:32px 16px;color:var(--ink-3);font-size:13px;line-height:1.6}
 
   /* ══════════════════════════
-     EDITOR DE MAPA
-  ══════════════════════════ */
-  .map-editor-wrap{display:grid;grid-template-columns:1fr 220px;gap:16px;align-items:start}
-  @media(max-width:700px){.map-editor-wrap{grid-template-columns:1fr}}
-
-  .map-stage{
-    background:linear-gradient(145deg,#F0E8DC,#E8DDD0,#EDE4D8);
-    border-radius:var(--r-card);aspect-ratio:1/.8;position:relative;
-    overflow:hidden;border:1px solid rgba(60,40,20,.1);
-    box-shadow:0 4px 20px rgba(33,45,55,.15);
-    touch-action:none;
-  }
-  .map-axis-h{position:absolute;top:50%;left:5%;right:5%;height:.5px;background:rgba(80,55,35,.2);pointer-events:none}
-  .map-axis-v{position:absolute;left:50%;top:5%;bottom:5%;width:.5px;background:rgba(80,55,35,.2);pointer-events:none}
-  .map-ax-lbl{position:absolute;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(80,60,40,.45);pointer-events:none;font-weight:500;font-family:'DM Sans',sans-serif}
-  .map-wmark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;letter-spacing:.4em;text-transform:uppercase;color:rgba(100,75,50,.05);font-weight:700;pointer-events:none}
-
-  /* Pin draggable */
-  .map-pin{
-    position:absolute;transform:translate(-50%,-50%);
-    cursor:grab;z-index:5;
-    transition:filter .15s;
-    user-select:none;-webkit-user-select:none;
-  }
-  .map-pin:active{cursor:grabbing;z-index:20;filter:drop-shadow(0 4px 10px rgba(33,45,55,.35))}
-  .map-pin.selected-pin svg path{stroke:var(--madera);stroke-width:1.5}
-  .map-pin-label{
-    position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);
-    background:rgba(28,25,23,.92);color:var(--ink);
-    font-size:10px;padding:4px 8px;border-radius:6px;
-    white-space:nowrap;pointer-events:none;
-    border:1px solid rgba(196,160,90,.2);
-    opacity:0;transition:opacity .15s;
-  }
-  .map-pin:hover .map-pin-label{opacity:1}
-  .map-pin.below-mid .map-pin-label{bottom:auto;top:calc(100% + 4px)}
-
-  /* Panel lateral */
-  .map-sidebar{display:flex;flex-direction:column;gap:10px}
-  .map-info-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow-1);padding:14px}
-  .map-info-title{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
-  .map-selected-name{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:4px;min-height:20px}
-  .map-selected-coords{font-size:12px;color:var(--ink-3);font-family:monospace;margin-bottom:12px;min-height:16px}
-  .map-coord-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
-  .map-coord-input{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;color:var(--ink);font-size:13px;font-family:monospace;outline:none;width:100%;text-align:center}
-  .map-coord-input:focus{border-color:var(--accent)}
-  .map-coord-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3);text-align:center;margin-top:3px}
-
-  .map-save-btn{
-    width:100%;background:var(--madera-dk);border:none;border-radius:var(--r-pill);
-    padding:12px;color:var(--ink);font-size:11px;font-weight:500;
-    font-family:'DM Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;
-    cursor:pointer;transition:opacity var(--t-feedback) var(--ease);
-  }
-  .map-save-btn:hover{opacity:.85}
-  .map-save-btn:disabled{opacity:.4;cursor:not-allowed}
-
-  .map-save-all-btn{
-    width:100%;background:var(--accent-grad);border:none;border-radius:var(--r-pill);
-    padding:13px;color:#fff;font-size:12px;font-weight:500;
-    font-family:'DM Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;
-    cursor:pointer;transition:transform var(--t-feedback) var(--ease);margin-top:4px;
-    box-shadow:0 4px 20px rgba(155,32,53,.3);
-  }
-  .map-save-all-btn:active{transform:scale(.98)}
-
-  .map-wine-list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow-1);overflow:hidden}
-  .map-wine-item{
-    padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--line);
-    display:flex;align-items:center;gap:8px;transition:background .1s;
-  }
-  .map-wine-item:last-child{border-bottom:none}
-  .map-wine-item:hover{background:var(--bg2)}
-  .map-wine-item.active-item{background:rgba(122,20,40,.15);border-left:2px solid var(--accent)}
-  .map-wine-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-  .map-wine-item-name{font-size:12px;color:var(--ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .map-wine-item-num{font-size:10px;color:var(--ink-3);flex-shrink:0}
-
-  /* ══════════════════════════
      CALENDARIO DE CARTA
   ══════════════════════════ */
   .carta-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
@@ -491,7 +412,6 @@
   <!-- TABS -->
   <div class="dash-tabs">
     <button class="dash-tab active" onclick="switchTab('stats')">Estadísticas</button>
-    <button class="dash-tab" onclick="switchTab('mapa')">Editor de Mapa</button>
     <button class="dash-tab" onclick="switchTab('vinos')">Editor de Vinos</button>
     <button class="dash-tab" onclick="switchTab('bodegas')">Bodegas</button>
     <button class="dash-tab" onclick="switchTab('carta')">Calendario de Carta</button>
@@ -532,68 +452,6 @@
 
     <div class="section-title" style="margin-top:24px">Vinos sin catas todavía</div>
     <div id="sinCatasList"><div class="loading">Cargando...</div></div>
-  </div>
-
-  <!-- PANEL EDITOR DE MAPA -->
-  <div class="dash-panel" id="panel-mapa">
-    <div class="section-title" style="margin-bottom:16px">
-      Arrastrá las copitas para reposicionar cada vino en el mapa
-    </div>
-    <div class="map-editor-wrap">
-
-      <!-- MAPA -->
-      <div>
-        <div class="map-stage" id="mapStage">
-          <div class="map-axis-h"></div>
-          <div class="map-axis-v"></div>
-          <div class="map-wmark">WINE BAR · 125CC</div>
-          <div class="map-ax-lbl" style="top:3%;left:50%;transform:translateX(-50%)">Potente</div>
-          <div class="map-ax-lbl" style="bottom:2%;left:50%;transform:translateX(-50%)">Suave</div>
-          <div class="map-ax-lbl" style="left:2%;top:48%;transform:translateY(-140%)">Fresco</div>
-          <div class="map-ax-lbl" style="right:1%;top:48%;transform:translateY(-140%)">Complejo</div>
-          <div id="mapPins"></div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:var(--ink-3);text-align:center;font-weight:300">
-          Los ejes van de −100 a +100. Centro = 0,0 · con un vino seleccionado, las flechas del teclado ajustan ±1 (Shift ±5)
-        </div>
-      </div>
-
-      <!-- SIDEBAR -->
-      <div class="map-sidebar">
-        <!-- Info vino seleccionado -->
-        <div class="map-info-box">
-          <div class="map-info-title">Vino seleccionado</div>
-          <div class="map-selected-name" id="selName">—</div>
-          <div class="map-selected-coords" id="selCoords">x: — · y: —</div>
-          <div class="map-coord-inputs">
-            <div>
-              <input class="map-coord-input" id="inputX" type="number" min="-100" max="100"
-                placeholder="X" oninput="updateFromInput()">
-              <div class="map-coord-label">← Fresco / Complejo →</div>
-            </div>
-            <div>
-              <input class="map-coord-input" id="inputY" type="number" min="-100" max="100"
-                placeholder="Y" oninput="updateFromInput()">
-              <div class="map-coord-label">↑ Potente / Suave ↓</div>
-            </div>
-          </div>
-          <button class="map-save-btn" id="saveSingleBtn" onclick="saveSingle()" disabled>
-            Guardar este vino
-          </button>
-        </div>
-
-        <!-- Guardar todos -->
-        <button class="map-save-all-btn" onclick="saveAll()">
-          ✦ Guardar todos los cambios
-        </button>
-
-        <!-- Lista de vinos -->
-        <div class="map-info-title" style="margin-top:4px">Vinos en carta</div>
-        <div class="map-wine-list" id="mapWineList">
-          <div class="loading" style="padding:20px 0">Cargando vinos...</div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- PANEL EDITOR DE VINOS -->
@@ -771,10 +629,6 @@ const TYPE_COLOR = {
 };
 const ATTR_COLOR = {Acidez:"#1a7fd4",Cuerpo:"#c8463a",Taninos:"#b06010",Visual:"#c8a018",Gusto:"#c03070"};
 
-let wines = [];
-let selectedWineId = null;
-let pendingChanges = {}; // {id: {x, y}}
-
 // Estado del panel Estadísticas — se guarda la respuesta cruda de /api/stats
 // para poder recalcular el ranking por rango de fecha sin volver a pedirle
 // nada al backend (todo el filtrado corre sobre datos ya en memoria).
@@ -800,7 +654,6 @@ async function tryLogin(){
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('dashboard').style.display='block';
       loadStats();
-      loadWinesForMap();
     } else {
       document.getElementById('loginError').style.display='block';
       document.getElementById('passInput').value='';
@@ -819,7 +672,7 @@ function logout(){
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('passInput').value='';
 }
-// Header a incluir en cada request de escritura al admin (actualizar-vino, actualizar-mapa)
+// Header a incluir en cada request de escritura al admin (actualizar-vino, etc.)
 function adminAuthHeader(){
   return { 'Authorization': 'Bearer ' + (sessionStorage.getItem(SESSION_KEY) || '') };
 }
@@ -850,7 +703,7 @@ function fechaHoraTsClient(fecha, hora){
 
 async function loadStats(){
   try{
-    // /api/obtener-vinos también lo pide loadWinesForMap(), pero acá lo
+    // /api/obtener-vinos también lo pide loadWinesForEditor(), pero acá lo
     // volvemos a pedir en paralelo para no depender del orden en que el
     // usuario visita los tabs (evita "vinos sin catas" vacío por carrera).
     const [statsRes, vinosRes] = await Promise.all([
@@ -1071,266 +924,12 @@ function toggleOpinion(id){
   if(btn) btn.textContent = open ? 'Ocultar ▴' : 'Ver cata ▾';
 }
 
-// ── EDITOR DE MAPA ────────────────────────────────────────────────
-// "el mapa muestra los +100 vinos cargados, cuando solo deberia
-// mostrar los de la quincena correspondiente" — /api/obtener-vinos
-// devuelve TODO el Sheet (borradores de otras quincenas, meses
-// futuros pre-cargados por el Calendario de Carta, etc.), acá se
-// filtra a los que numero!=null — el mismo campo que ya decide qué
-// vino está en la carta VIGENTE hoy en el menú público y en pos.html
-// (ver el comentario grande en api/obtener-vinos.js). Posicionar en
-// el mapa cartesiano solo tiene sentido para los vinos que un cliente
-// puede llegar a ver ahora mismo.
-async function loadWinesForMap(){
-  try{
-    const res = await fetch('/api/obtener-vinos');
-    const data = await res.json();
-    wines = (data.vinos || []).filter(w => w.numero != null);
-    renderMapPins();
-    renderMapWineList();
-  }catch(e){
-    document.getElementById('mapWineList').innerHTML=
-      '<div class="loading">Error cargando vinos</div>';
-  }
-}
-
-function copaSVG(color, size, num){
-  const w=size, h=Math.round(size*1.4);
-  const numEl = num!=null
-    ? `<text x="10" y="10.5" text-anchor="middle" font-size="5.5" font-weight="700" fill="rgba(255,255,255,0.95)" font-family="sans-serif">${num}</text>`
-    : '';
-  return `<svg width="${w}" height="${h}" viewBox="0 0 20 30" fill="none">
-    <path d="M7 2 C7 2 5.5 6 5.5 8.5 C5.5 11.5 7.2 13.5 9.5 14.2 L9.5 22 L7.5 22 L7 24 L13 24 L12.5 22 L10.5 22 L10.5 14.2 C12.8 13.5 14.5 11.5 14.5 8.5 C14.5 6 13 2 13 2 Z"
-      fill="${color}" stroke="rgba(255,255,255,0.45)" stroke-width="0.6"/>
-    ${numEl}
-  </svg>`;
-}
-
-function renderMapPins(){
-  const stage = document.getElementById('mapStage');
-  const container = document.getElementById('mapPins');
-  container.innerHTML = '';
-
-  wines.forEach((w, idx) => {
-    const coords = pendingChanges[w.id] || {x: parseFloat(w.x)||0, y: parseFloat(w.y)||0};
-    const color = TYPE_COLOR[w.tipo] || '#888';
-    const num = idx + 1;
-
-    // Convert x,y (-100 to 100) to percentage (5% to 95%)
-    const px = mapToPercent(coords.x);
-    const py = mapToPercent(-coords.y); // Y invertido: positivo = arriba
-
-    const pin = document.createElement('div');
-    pin.className = 'map-pin' + (w.id===selectedWineId?' selected-pin':'');
-    pin.id = 'pin-'+w.id;
-    pin.style.left = px+'%';
-    pin.style.top = py+'%';
-    if(py > 50) pin.classList.add('below-mid');
-
-    pin.innerHTML = `
-      <div class="map-pin-label">${num}. ${esc(w.nombre)}</div>
-      ${copaSVG(color, 28, num)}
-    `;
-
-    // Click to select
-    pin.addEventListener('click', e => { e.stopPropagation(); selectWine(w.id); });
-
-    // Drag & drop
-    makeDraggable(pin, w.id);
-
-    container.appendChild(pin);
-  });
-}
-
-function mapToPercent(val){
-  // val: -100 to 100 → 5% to 95%
-  return 5 + ((val + 100) / 200) * 90;
-}
-function percentToMap(pct){
-  // pct: 0-100 → -100 to 100
-  return Math.round(((pct - 5) / 90) * 200 - 100);
-}
-
-function makeDraggable(pin, wineId){
-  let dragging = false;
-  let startX, startY, startLeft, startTop;
-  const stage = document.getElementById('mapStage');
-
-  function onStart(e){
-    e.preventDefault();
-    dragging = true;
-    selectWine(wineId);
-    const pt = e.touches ? e.touches[0] : e;
-    startX = pt.clientX;
-    startY = pt.clientY;
-    startLeft = parseFloat(pin.style.left);
-    startTop  = parseFloat(pin.style.top);
-    pin.style.zIndex = 20;
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onEnd);
-    document.addEventListener('touchmove', onMove, {passive:false});
-    document.addEventListener('touchend', onEnd);
-  }
-
-  function onMove(e){
-    if(!dragging) return;
-    e.preventDefault();
-    const pt = e.touches ? e.touches[0] : e;
-    const rect = stage.getBoundingClientRect();
-    const dx = ((pt.clientX - startX) / rect.width) * 100;
-    const dy = ((pt.clientY - startY) / rect.height) * 100;
-    let newLeft = Math.max(2, Math.min(98, startLeft + dx));
-    let newTop  = Math.max(2, Math.min(98, startTop  + dy));
-    pin.style.left = newLeft+'%';
-    pin.style.top  = newTop+'%';
-
-    // Update coords
-    const mapX = percentToMap(newLeft);
-    const mapY = -percentToMap(newTop); // invertir Y
-    const clamped = {x: Math.max(-100,Math.min(100,mapX)), y: Math.max(-100,Math.min(100,mapY))};
-    pendingChanges[wineId] = clamped;
-    updateSidebar(wineId, clamped);
-    if(newTop > 50) pin.classList.add('below-mid');
-    else pin.classList.remove('below-mid');
-  }
-
-  function onEnd(){
-    if(!dragging) return;
-    dragging = false;
-    pin.style.zIndex = 5;
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onEnd);
-    document.removeEventListener('touchmove', onMove);
-    document.removeEventListener('touchend', onEnd);
-  }
-
-  pin.addEventListener('mousedown', onStart);
-  pin.addEventListener('touchstart', onStart, {passive:false});
-}
-
-function selectWine(id){
-  selectedWineId = id;
-  // Update pin styling
-  document.querySelectorAll('.map-pin').forEach(p=>p.classList.remove('selected-pin'));
-  const pin = document.getElementById('pin-'+id);
-  if(pin) pin.classList.add('selected-pin');
-  // Update list
-  document.querySelectorAll('.map-wine-item').forEach(el=>{
-    el.classList.toggle('active-item', el.dataset.id==id);
-  });
-  const w = wines.find(w=>w.id===id);
-  const coords = pendingChanges[id] || {x:parseFloat(w.x)||0, y:parseFloat(w.y)||0};
-  updateSidebar(id, coords);
-  document.getElementById('saveSingleBtn').disabled = false;
-}
-
-function updateSidebar(id, coords){
-  const w = wines.find(w=>w.id===id);
-  if(!w) return;
-  document.getElementById('selName').textContent = w.nombre;
-  document.getElementById('selCoords').textContent = `x: ${coords.x} · y: ${coords.y}`;
-  document.getElementById('inputX').value = coords.x;
-  document.getElementById('inputY').value = coords.y;
-}
-
-function updateFromInput(){
-  if(!selectedWineId) return;
-  const x = Math.max(-100, Math.min(100, parseInt(document.getElementById('inputX').value)||0));
-  const y = Math.max(-100, Math.min(100, parseInt(document.getElementById('inputY').value)||0));
-  pendingChanges[selectedWineId] = {x, y};
-  document.getElementById('selCoords').textContent = `x: ${x} · y: ${y}`;
-  // Move pin
-  const pin = document.getElementById('pin-'+selectedWineId);
-  if(pin){
-    pin.style.left = mapToPercent(x)+'%';
-    pin.style.top  = mapToPercent(-y)+'%';
-  }
-}
-
-// Ajuste fino con teclado: con un vino seleccionado en el tab Mapa, las
-// flechas mueven ±1 (Shift ±5) sin necesitar arrastrar con precisión.
-document.addEventListener('keydown', function(e){
-  if(!selectedWineId) return;
-  const panelMapa = document.getElementById('panel-mapa');
-  if(!panelMapa || !panelMapa.classList.contains('active')) return;
-  const tag = (document.activeElement && document.activeElement.tagName) || '';
-  if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return; // no interferir con los inputs X/Y
-  const deltas = { ArrowLeft:[-1,0], ArrowRight:[1,0], ArrowUp:[0,1], ArrowDown:[0,-1] };
-  const delta = deltas[e.key];
-  if(!delta) return;
-  e.preventDefault();
-  const w = wines.find(w=>w.id===selectedWineId);
-  if(!w) return;
-  const step = e.shiftKey ? 5 : 1;
-  const current = pendingChanges[selectedWineId] || {x:parseFloat(w.x)||0, y:parseFloat(w.y)||0};
-  const x = Math.max(-100, Math.min(100, current.x + delta[0]*step));
-  const y = Math.max(-100, Math.min(100, current.y + delta[1]*step));
-  const clamped = {x, y};
-  pendingChanges[selectedWineId] = clamped;
-  updateSidebar(selectedWineId, clamped);
-  const pin = document.getElementById('pin-'+selectedWineId);
-  if(pin){
-    const py = mapToPercent(-y);
-    pin.style.left = mapToPercent(x)+'%';
-    pin.style.top  = py+'%';
-    pin.classList.toggle('below-mid', py > 50);
-  }
-  document.getElementById('saveSingleBtn').disabled = false;
-});
-
-function renderMapWineList(){
-  document.getElementById('mapWineList').innerHTML = wines.map((w,i)=>`
-    <div class="map-wine-item${w.id===selectedWineId?' active-item':''}"
-      data-id="${w.id}" onclick="selectWine(${w.id})">
-      <div class="map-wine-dot" style="background:${TYPE_COLOR[w.tipo]||'#888'}"></div>
-      <div class="map-wine-item-name">${esc(w.nombre)}</div>
-      <div class="map-wine-item-num">${i+1}</div>
-    </div>`).join('');
-}
-
-// ── GUARDAR EN SHEET ──────────────────────────────────────────────
-async function saveSingle(){
-  if(!selectedWineId) return;
-  const w = wines.find(w=>w.id===selectedWineId);
-  const coords = pendingChanges[selectedWineId];
-  if(!w || !coords){ showToast('Nada que guardar','error'); return; }
-  await saveCoords([{id:w.id, nombre:w.nombre, x:coords.x, y:coords.y}]);
-}
-
-async function saveAll(){
-  const changes = Object.entries(pendingChanges).map(([id,c])=>{
-    const w = wines.find(w=>w.id==id);
-    return w ? {id:w.id, nombre:w.nombre, x:c.x, y:c.y} : null;
-  }).filter(Boolean);
-  if(!changes.length){ showToast('No hay cambios pendientes','error'); return; }
-  await saveCoords(changes);
-}
-
-async function saveCoords(changes){
-  showToast('Guardando...');
-  try{
-    const res = await fetch('/api/actualizar-mapa', {
-      method:'POST',
-      headers:{'Content-Type':'application/json', ...adminAuthHeader()},
-      body: JSON.stringify({cambios: changes})
-    });
-    handleAuthResponse(res);
-    const data = await res.json();
-    if(data.ok){
-      showToast(`✓ ${changes.length===1?'Posición guardada':'Todos los cambios guardados'}`, 'success');
-      // Update local wines array
-      changes.forEach(c=>{
-        const w = wines.find(w=>w.id===c.id);
-        if(w){ w.x=c.x; w.y=c.y; }
-        delete pendingChanges[c.id];
-      });
-    } else {
-      showToast('Error al guardar: '+( data.error||''), 'error');
-    }
-  }catch(e){
-    showToast('Error de conexión','error');
-  }
-}
+// El "editor de mapa" (arrastrar copitas a mano) se sacó del admin el
+// 04/09/2026: desde que api/obtener-vinos.js deriva x/y de perfil_cuerpo/
+// frescura/taninos (ver CLAUDE.md), esas coordenadas cargadas a mano ya no
+// las lee nadie — el panel seguía "funcionando" pero no tenía ningún efecto
+// real en el mapa que ve el cliente. Para reposicionar un vino ahora se
+// edita su perfil_cuerpo/frescura/taninos en el Editor de Vinos.
 
 // ── TOAST ─────────────────────────────────────────────────────────
 let toastTimer;
@@ -1355,8 +954,7 @@ function switchTab(tab, btnEl){
   document.querySelectorAll('.dash-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
   (btnEl || event.target).classList.add('active');
-  if(tab==='stats' && wines.length===0) loadStats();
-  if(tab==='mapa' && wines.length===0) loadWinesForMap();
+  if(tab==='stats' && !statsRaw) loadStats();
   if(tab==='vinos' && !editorLoaded) loadWinesForEditor();
   if(tab==='bodegas' && !bodegasPanelLoaded) loadBodegasTab();
   if(tab==='carta' && !cartaLoaded) loadCartaTab();
@@ -1536,16 +1134,6 @@ async function deleteBodega(id){
   }catch(e){
     showToast('Error de conexión','error');
   }
-}
-
-// Salto directo desde el Editor de Vinos al Editor de Mapa con el vino ya seleccionado —
-// evita tener que volver a buscarlo a mano en la lista del mapa.
-async function posicionarEnMapa(id){
-  await loadWinesForMap(); // siempre refresca para reflejar ediciones recientes del vino
-  const mapaBtn = document.querySelector('.dash-tab[onclick*="mapa"]');
-  switchTab('mapa', mapaBtn);
-  selectWine(id);
-  document.getElementById('selName')?.scrollIntoView?.({block:'nearest'});
 }
 
 async function loadWinesForEditor(){
@@ -1763,22 +1351,6 @@ function renderWineForm(w, isNew=false){
       </div>
     </div>
 
-    <div class="form-section">Posición en el mapa</div>
-    <div class="form-row">
-      <div>
-        <label class="form-label">Eje X (−100 Fresco → +100 Complejo)</label>
-        <input class="form-input" id="ef-x" type="number" min="-100" max="100" value="${w.x||0}">
-      </div>
-      <div>
-        <label class="form-label">Eje Y (−100 Suave → +100 Potente)</label>
-        <input class="form-input" id="ef-y" type="number" min="-100" max="100" value="${w.y||0}">
-      </div>
-    </div>
-    ${!isNew ? `
-    <button type="button" class="map-save-all-btn" style="margin-bottom:16px" onclick="posicionarEnMapa(${w.id})">
-      📍 Ver / ajustar arrastrando en el mapa
-    </button>` : ''}
-
     <div class="form-actions">
       <button class="btn-save" onclick="saveWine(${w.id}, ${isNew})">
         ${isNew ? '✦ Crear vino' : '✦ Guardar cambios'}
@@ -1925,8 +1497,6 @@ function getFormData(id, isNew){
     maridaje:    maridaje,
     img:         document.getElementById('ef-img').value.trim(),
     imagen:      document.getElementById('ef-img').value.trim(),
-    x:           parseFloat(document.getElementById('ef-x').value)||0,
-    y:           parseFloat(document.getElementById('ef-y').value)||0,
   };
 }
 
@@ -1936,7 +1506,7 @@ function computeWineChecklist(vals){
     { ok: !!vals.imagen,                              label: 'Imagen de la botella' },
     { ok: vals.nota.length >= 15,                      label: 'Nota de cata / descripción' },
     { ok: !!(vals.varietal && vals.region),            label: 'Varietal y región' },
-    { ok: (vals.x!==0 || vals.y!==0),                  label: 'Posición en el mapa (todavía en 0,0)' },
+    { ok: (vals.cuerpo!==3 || vals.frescura!==3 || vals.taninos!==3), label: 'Perfil sensorial (todavía en el default, cae al centro del mapa)' },
     { ok: vals.maridaje.length>0,                      label: 'Al menos un maridaje asignado' },
   ];
   const pending = checks.filter(c=>!c.ok);
@@ -1955,8 +1525,9 @@ function readChecklistVals(){
     nota:     val('ef-nota'),
     varietal: val('ef-varietal'),
     region:   val('ef-region'),
-    x:        parseFloat(val('ef-x'))||0,
-    y:        parseFloat(val('ef-y'))||0,
+    cuerpo:   parseInt(val('ef-cuerpo'))||3,
+    frescura: parseInt(val('ef-frescura'))||3,
+    taninos:  parseInt(val('ef-taninos'))||3,
     maridaje: [...document.querySelectorAll('#wineEditForm input[type=checkbox]:checked')].map(c=>c.value),
   };
 }
@@ -3816,7 +3387,6 @@ if(sessionStorage.getItem(SESSION_KEY)==='1'){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('dashboard').style.display='block';
   loadStats();
-  loadWinesForMap();
 }
 </script>
 </body>

@@ -575,8 +575,6 @@ module.exports = async function handler(req, res) {
       set('precio',        w.precio);
       set('copa',          w.copa || '125 cc');
       set('tipo',          w.tipo);
-      set('x',             w.x ?? 0);
-      set('y',             w.y ?? 0);
       set('varietal',      w.varietal);
       set('region',        w.region);
       set('altitud',       w.altitud);

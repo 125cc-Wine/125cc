@@ -39,10 +39,11 @@ Cada vino trae, entre otros campos:
   manda ya resueltas en el JSON; `index.html` solo convierte a pantalla
   (`left = 50 + x*0.4`, `top = 50 - y*0.36`). Cargar `perfil_*` de un vino
   nuevo ya lo posiciona bien — no hace falta ningún paso manual aparte.
-  `api/actualizar-mapa.js` (columnas F/G del Sheet, panel "editor de mapa"
-  en `stats.html`) quedó **obsoleto**: sigue escribiendo, pero nada la lee
-  más — no confiar en ese panel para mover un vino, y si se retoma, primero
-  decidir si se borra o se re-conecta a `perfil_*`.
+  El panel "editor de mapa" de `stats.html` (arrastrar copitas a mano) y
+  `api/actualizar-mapa.js` se **sacaron del admin** (04/09/2026) por quedar
+  sin efecto real — para reposicionar un vino se edita su
+  `perfil_cuerpo`/`perfil_frescura`/`perfil_taninos` en el Editor de Vinos,
+  no hay un paso de mapa aparte.
 - `tipo` (Tinto/Blanco/Rosado/Naranja), `varietal`, `region`, `altitud`,
   `suelo`, `crianza`, `temperatura`, `nota`, `maridaje[]`, `bodega_info`,
   `precio`, `imagen`.
