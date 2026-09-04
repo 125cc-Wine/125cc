@@ -15,7 +15,20 @@
 // imagen vacía a propósito — un placeholder roto en el menú es peor que
 // no tener foto (cae al ícono de copita, ya previsto en el diseño).
 //
+// ⚠️ Las URLs de `imagen` acá son las de la tienda TAL CUAL — fotos de
+// estudio con fondo blanco liso. Escribirlas directo al Sheet (como hace
+// este script) NO pasa por el recorte de fondo automático de
+// api/extraer-imagen.js/api/_lib/quitar-fondo.js — ese recorte sólo corre
+// cuando el admin usa el botón "Traer del link de la tienda" en el Editor
+// de Vinos. Bug real (04/09/2026): correr solo este script reintrodujo el
+// recuadro blanco detrás de la botella para los 11 vinos con imagen. Después
+// de correr este script (o cualquier otro que pegue `imagen` directo al
+// Sheet), correr siempre scripts/recortar-fondo-vinos.js para recortar el
+// fondo y re-hostear en Blob — es idempotente, salta lo que ya está en
+// blob.vercel-storage.com.
+//
 // Uso: node scripts/enlazar-catalogo-externo.js [--dry-run]
+// Después: node scripts/recortar-fondo-vinos.js
 
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env.local') });
 const { getReadWriteToken } = require('../api/_lib/google-auth');
