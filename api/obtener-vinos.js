@@ -179,15 +179,27 @@ module.exports = async function handler(req, res) {
     // mostrar la quincena anterior mientras la nueva se completa, que
     // era el bug real reportado.
     //
-    // Salvedad: si el Calendario de Carta directamente no tiene NADA
-    // confirmado para la quincena vigente (nunca se planificó, no es el
-    // caso de "está incompleta" sino "no existe registro"), cae a la
-    // regla vieja (solo completitud) — evita un menú en blanco total
-    // por no haber usado la herramienta esa quincena, que es peor que
-    // mostrar la carta anterior sin actualizar.
+    // Si la quincena vigente no tiene NADA confirmado (nunca se planificó,
+    // o el calendario se corrió — pasó el 23/09/2026 cuando el bar no abrió
+    // en septiembre y todo se movió un mes), se usa la PRÓXIMA quincena
+    // planificada; si tampoco hay, la última anterior. Antes caía directo
+    // a "solo completitud" y mostraba ~80 vinos juntos de todas las
+    // quincenas. Esa regla vieja queda solo para un calendario vacío.
     const inicioQuincena = quincenaVigenteInicio();
     const { rows: confirmadosRows } = await sql`
-      SELECT DISTINCT vino_nombre FROM carta_historial WHERE semana_inicio = ${inicioQuincena}::date`;
+      WITH elegida AS (
+        SELECT semana_inicio FROM carta_historial
+        GROUP BY semana_inicio
+        ORDER BY
+          CASE WHEN semana_inicio = ${inicioQuincena}::date THEN 0
+               WHEN semana_inicio > ${inicioQuincena}::date THEN 1
+               ELSE 2 END,
+          CASE WHEN semana_inicio >= ${inicioQuincena}::date THEN semana_inicio END ASC,
+          semana_inicio DESC
+        LIMIT 1
+      )
+      SELECT DISTINCT vino_nombre FROM carta_historial
+      WHERE semana_inicio = (SELECT semana_inicio FROM elegida)`;
     const confirmadosHoy = new Set(confirmadosRows.map((r) => normalizarTexto(r.vino_nombre)));
     const huboPlanificacion = confirmadosHoy.size > 0;
 
