@@ -27,13 +27,42 @@ const { sql } = require('./_lib/db');
 //   ninguno mide "complejidad" de forma directa.
 // Escala: perfil_* es 1-5 con centro en 3; (valor-3)*50 lleva 1→-100 y
 // 5→+100, igual que el rango que ya esperaba el mapa (-100..100).
-function posicionDesdePerfil(cuerpo, frescura, taninos) {
-  // (3-frescura), no -(frescura-3): mismo valor, pero evita el -0 de JS
-  // cuando frescura=3 (Math.round(-(3-3)*50) da "-0", que se ve raro en
-  // el JSON aunque valga lo mismo que 0).
+// Meses efectivos de madera a partir del texto libre de `crianza` ("12 meses
+// en roble francés (30% nuevo)", "20% del vino 10 meses en barricas", "Sin
+// crianza en madera", "8 a 10 meses…"). null = no hay dato. Ánfora, lías,
+// orujos o acero sin mención de roble cuentan como 0 meses de madera.
+function maderaDesdeCrianza(crianza) {
+  const t = normalizarTexto(crianza);
+  if (!t) return null;
+  if (/sin (crianza en )?madera|sin madera/.test(t)) return { meses: 0, nuevo: false };
+  if (!/roble|barric|madera|duela|foudre|tonel/.test(t)) return { meses: 0, nuevo: false };
+  const m = t.match(/(\d+)\s*(?:a\s*(\d+)\s*)?mes/);
+  let meses = m ? (m[2] ? (Number(m[1]) + Number(m[2])) / 2 : Number(m[1])) : (/parcial/.test(t) ? 3 : 6);
+  // "20% del vino…", "25% en roble…": solo esa fracción pasó por madera.
+  // Los % entre paréntesis ("(80%) y americano (20%)", "30% nuevo") no.
+  const f = t.match(/^(\d+)\s*%/) || t.match(/(\d+)\s*%\s*(?:del vino|en roble|en barric)/);
+  if (f) meses *= Number(f[1]) / 100;
+  return { meses, nuevo: /nuev/.test(t) };
+}
+
+// x: Fresco (-100) ↔ Complejo (+100). Antes salía solo de frescura (1–5),
+// o sea 5 columnas posibles — en una quincena típica la mitad de los vinos
+// caía en la columna del medio (x=0), un Petit Verdot de 16 meses en
+// barrica nueva al lado de un Merlot de entrada. Ahora combina frescura,
+// tiempo en madera (de `crianza`) y taninos, y da una posición continua.
+// Sin dato de crianza, la madera se estima por los taninos.
+// y: Suave (-100) ↔ Potente (+100), sin cambios: promedio de cuerpo y
+// taninos. El sommelier de index.html usa `y`, no `x`.
+function posicionDesdePerfil(cuerpo, frescura, taninos, crianza) {
+  const md = maderaDesdeCrianza(crianza);
+  const madera = md == null
+    ? (taninos - 3) * 0.25
+    : Math.max(-0.5, Math.min(1, md.meses / 12 - 0.5 + (md.nuevo ? 0.15 : 0)));
+  const x = ((3 - frescura) * 0.6 + madera * 0.8 + (taninos - 3) * 0.3) * 50;
+  // `+ 0` evita el -0 de JS (se ve raro en el JSON aunque valga 0).
   return {
-    x: Math.round((3 - frescura) * 50),
-    y: Math.round(((cuerpo + taninos) / 2 - 3) * 50),
+    x: Math.round(Math.max(-95, Math.min(95, x))) + 0,
+    y: Math.round(((cuerpo + taninos) / 2 - 3) * 50) + 0,
   };
 }
 
@@ -124,7 +153,7 @@ module.exports = async function handler(req, res) {
           frescura: parseInt(obj.perfil_frescura) || 3,
           taninos:  parseInt(obj.perfil_taninos)  || 3,
         };
-        const posicion = posicionDesdePerfil(perfil.cuerpo, perfil.frescura, perfil.taninos);
+        const posicion = posicionDesdePerfil(perfil.cuerpo, perfil.frescura, perfil.taninos, obj.crianza);
 
         return {
           id:          parseInt(obj.id)  || 0,

@@ -34,11 +34,17 @@ Cada vino trae, entre otros campos:
   ficha como de la posición en el mapa. **Ya no hay columnas `x`/`y` que
   cargar**: `api/obtener-vinos.js` (`posicionDesdePerfil()`) las calcula en
   cada lectura —
-  `x = (3-frescura)*50` (Fresco -100..Complejo +100),
+  `x` (Fresco -100..Complejo +100) = `((3-frescura)*0.6 + madera*0.8 +
+  (taninos-3)*0.3)*50`, donde `madera` sale de los meses en roble que
+  `maderaDesdeCrianza()` lee del texto libre de `crianza` (sin dato →
+  se estima por taninos). Hasta el 24/09/2026 era solo `(3-frescura)*50`:
+  5 columnas posibles y media quincena apilada en x=0.
   `y = ((cuerpo+taninos)/2 - 3)*50` (Suave -100..Potente +100) — y las
   manda ya resueltas en el JSON; `index.html` solo convierte a pantalla
-  (`left = 50 + x*0.4`, `top = 50 - y*0.36`). Cargar `perfil_*` de un vino
-  nuevo ya lo posiciona bien — no hace falta ningún paso manual aparte.
+  (`left = 50 + x*0.4`, `top = 50 - y*0.36`) y `separarPines()` aparta
+  las copitas que quedan a menos de 8% entre sí. Cargar `perfil_*` y
+  `crianza` de un vino nuevo ya lo posiciona bien — no hace falta ningún
+  paso manual aparte.
   El panel "editor de mapa" de `stats.html` (arrastrar copitas a mano) y
   `api/actualizar-mapa.js` se **sacaron del admin** (04/09/2026) por quedar
   sin efecto real — para reposicionar un vino se edita su

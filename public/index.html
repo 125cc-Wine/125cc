@@ -1293,6 +1293,33 @@ fetch('./vinos.json').then(r=>r.json()).then(config=>{
 let pinElements  = {}; // wine id → DOM element
 let pinPositions = {}; // wine id → { w, left, top, num }
 
+// Dos vinos de perfil parecido pueden caer casi en el mismo punto y la
+// copita de uno tapa a la otra. Relajación simple: los pares a menos de
+// MIN (en % del mapa) se empujan en direcciones opuestas hasta separarse.
+// Es determinística (mismo orden de vinos → mismo resultado) y solo mueve
+// lo necesario, así que la posición sigue diciendo la verdad del perfil.
+function separarPines(pos){
+  const MIN = 8;
+  for(let it = 0; it < 40; it++){
+    let movido = false;
+    for(let i = 0; i < pos.length; i++){
+      for(let j = i + 1; j < pos.length; j++){
+        const a = pos[i], b = pos[j];
+        let dx = b.left - a.left, dy = b.top - a.top, d = Math.hypot(dx, dy);
+        if(d >= MIN) continue;
+        if(d < 0.01){ const ang = j * 2.39996; dx = Math.cos(ang); dy = Math.sin(ang); d = 1; } // mismo punto: ángulo áureo
+        const empuje = (MIN - d) / 2, ux = dx / d, uy = dy / d;
+        a.left -= ux * empuje; a.top -= uy * empuje;
+        b.left += ux * empuje; b.top += uy * empuje;
+        movido = true;
+      }
+    }
+    pos.forEach(p => { p.left = Math.min(96, Math.max(4, p.left)); p.top = Math.min(96, Math.max(4, p.top)); });
+    if(!movido) break;
+  }
+  return pos;
+}
+
 function buildMap(){
   const c = document.getElementById('mapDots');
   c.innerHTML = '';
@@ -1301,8 +1328,9 @@ function buildMap(){
   const old = document.getElementById('mapPreview');
   if(old) old.remove();
 
-  wines.forEach((w) => {
-    const left = 50 + w.x * 0.4, top = 50 - w.y * 0.36;
+  const posiciones = separarPines(wines.map(w => ({ left: 50 + w.x * 0.4, top: 50 - w.y * 0.36 })));
+  wines.forEach((w, i) => {
+    const { left, top } = posiciones[i];
     const color = TYPE_COLOR[w.tipo] || '#888';
     const pin   = document.createElement('div');
     pin.className = 'wine-pin';
