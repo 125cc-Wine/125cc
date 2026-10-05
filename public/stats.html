@@ -233,8 +233,14 @@
   .carta-undo-btn{background:none;border:1px solid var(--line-strong);color:var(--ink-2);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:6px 14px;border-radius:var(--r-pill);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
   .carta-undo-btn:hover{border-color:var(--danger);color:var(--danger)}
 
-  .carta-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  /* La columna del tablero (derecha) es más ancha que la de los pools: ahí
+     tienen que entrar Quincena 1 y 2 lado a lado, una fila por vino. */
+  .carta-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:16px;align-items:start}
   @media(max-width:900px){.carta-grid{grid-template-columns:1fr}}
+  /* stretch: el sticky de .carta-lanes sólo puede viajar dentro de esta
+     columna — con align-items:start la columna medía lo mismo que el
+     tablero y el tablero se iba de pantalla al bajar por los pools. */
+  .carta-board{align-self:stretch;min-width:0}
 
   .carta-pools{display:flex;flex-direction:column;gap:12px}
   .carta-pools-section-title{font-size:var(--text-kicker);letter-spacing:var(--kicker-tracking);text-transform:uppercase;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
@@ -328,32 +334,48 @@
   .carta-lane-bodegas{font-size:11px;color:var(--ink-3);line-height:1.6;margin:8px 0 2px;padding-top:8px;border-top:1px solid var(--line)}
   .carta-lane-bodegas b{color:var(--ink-2);font-weight:500}
   .carta-lane-bodegas .repetida{color:var(--warning)}
-  .carta-lanes{display:flex;flex-direction:column;gap:16px;position:sticky;top:76px;max-height:calc(100vh - 168px);overflow-y:auto;padding-right:4px}
+  /* Quincena 1 y 2 lado a lado (antes una debajo de la otra: la Q1 sola
+     ocupaba todo el alto visible y la Q2 quedaba escondida detrás del
+     scroll interno). auto-fit las apila solas si la columna no da para
+     dos de 300px (pantallas chicas / mobile). */
+  .carta-lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;align-items:start;position:sticky;top:76px;max-height:calc(100vh - 168px);overflow-y:auto;padding-right:4px}
   @media(max-width:900px){.carta-lanes{position:static;max-height:none;overflow-y:visible;padding-right:0}}
-  .carta-lane{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow-1);padding:14px}
+  .carta-lane{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow-1);padding:12px;min-width:0}
   .carta-lane.drop-hover{border-color:var(--madera)}
-  .carta-lane-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+  .carta-lane-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
   .carta-lane-title{font-family:var(--font-serif);font-weight:600;font-size:17px;color:var(--ink)}
-  .carta-lane-count{font-size:11px;color:var(--ink-3)}
+  .carta-lane-count{font-size:13px;font-weight:600;color:var(--ink-3);white-space:nowrap}
   .carta-lane-count.complete{color:var(--success)}
-  .carta-lane-promedio{font-size:12px;color:var(--ink-2);margin:8px 0 10px}
+  .carta-lane-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .carta-lane-promedio{font-size:12px;color:var(--ink-2)}
   .carta-lane-promedio b{color:var(--madera);font-weight:600}
-  .carta-slots{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-  @media(max-width:520px){.carta-slots{grid-template-columns:1fr}}
-  .carta-slot{border-radius:var(--r-sm);padding:9px 12px;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:6px}
-  .carta-slot.empty{border:1px dashed var(--line-strong);color:var(--ink-3);font-size:11px}
+  .carta-slots{display:flex;flex-direction:column;gap:3px}
+  .carta-slot{border-radius:var(--r-sm);padding:4px 6px 4px 9px;min-height:38px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .carta-slot.empty{border:1px dashed var(--line-strong);color:var(--ink-3);font-size:11px;min-height:30px}
   .carta-slot.filled{background:var(--bg2);border:1px solid var(--madera-dk);border-left:4px solid var(--madera-dk)}
   .carta-slot-info{min-width:0;flex:1}
-  .carta-slot-name{font-size:12px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .carta-slot-name{font-size:12px;font-weight:500;color:var(--ink);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
   .carta-slot-sub{font-size:10px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .carta-slot-remove{background:none;border:none;color:var(--ink-3);font-size:16px;line-height:1;cursor:pointer;flex-shrink:0;padding:2px 4px}
   .carta-slot-remove:hover{color:var(--danger)}
-  .carta-slot-cajas{display:flex;flex-direction:column;align-items:center;flex-shrink:0;gap:2px}
-  .carta-slot-cajas label{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
-  .carta-slot-cajas input{width:40px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:3px 4px;color:var(--ink);font-size:12px;text-align:center;font-family:'DM Sans',sans-serif;outline:none}
+  .carta-slot-cajas{flex-shrink:0}
+  .carta-slot-cajas input{width:52px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:3px 4px;color:var(--ink);font-size:12px;text-align:center;font-family:'DM Sans',sans-serif;outline:none}
   .carta-slot-cajas input:focus{border-color:var(--accent)}
 
-  .carta-tramo-resumen{display:flex;gap:6px;margin-bottom:10px}
+  .carta-tramo-resumen{display:flex;gap:4px}
+  /* Stock en gestion-vinoteca (catálogo Aroma/La Vid) de cada vino elegido */
+  .carta-stock{flex-shrink:0;font-size:10px;font-weight:600;padding:2px 7px;border-radius:var(--r-pill);white-space:nowrap;background:color-mix(in srgb,var(--success) 16%,transparent);color:var(--success)}
+  .carta-stock.bajo{background:color-mix(in srgb,var(--warning) 18%,transparent);color:var(--warning)}
+  .carta-stock.cero{background:color-mix(in srgb,var(--danger) 16%,transparent);color:var(--danger)}
+  .carta-stock.na{background:none;color:var(--ink-3);font-weight:400}
+  .carta-lane-sinstock{font-size:11px;font-weight:600;color:var(--danger);margin-bottom:6px}
+  .carta-lane-resumen{margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-size:12px}
+  .carta-lane-resumen > summary{cursor:pointer;list-style:none;color:var(--ink-3);font-size:11px}
+  .carta-lane-resumen > summary::-webkit-details-marker{display:none}
+  .carta-lane-resumen > summary::before{content:'▸ ';color:var(--madera)}
+  .carta-lane-resumen[open] > summary::before{content:'▾ '}
+  .carta-lane-resumen > summary:hover{color:var(--ink)}
+  .carta-lane-resumen .carta-lane-bodegas:first-of-type{border-top:none}
   .carta-tramo-chip{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:var(--r-pill);background:var(--tc);color:#1a1a1a;font-size:11px;font-weight:700}
 
   .carta-tramo-legend{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:16px;font-size:11px;color:var(--ink-3)}
@@ -563,7 +585,7 @@
           <div class="loading">Cargando catálogo...</div>
         </div>
       </div>
-      <div>
+      <div class="carta-board">
         <div class="carta-mes-promedio" id="cartaMesPromedio"></div>
         <div class="carta-lanes-orden">
           <label for="cartaLanesOrdenSelect">Ordenar vinos elegidos por</label>
@@ -2820,6 +2842,12 @@ function cartaDiffVsVivo(s){
 // Cambia el orden EN PANTALLA de los vinos elegidos dentro de cada
 // quincena — no mueve nada de casillero (cartaSemanas/el guardado siguen
 // intactos), sólo cambia cómo se listan. Puramente cosmético/de revisión.
+// Qué plegables de resumen (por quincena) están abiertos — renderCartaLanes
+// rehace todo el HTML en cada cambio y sin esto se cerrarían solos.
+const cartaResumenAbierto = new Set();
+function cartaToggleResumen(si, abierto){
+  if(abierto) cartaResumenAbierto.add(si); else cartaResumenAbierto.delete(si);
+}
 function cartaSetLanesOrden(val){
   cartaLanesOrden = val;
   renderCartaLanes();
@@ -2859,6 +2887,40 @@ function cartaLaneResumenHtml(label, entradas){
   return `<div class="carta-lane-bodegas">${label} (${entradas.length} distinta${entradas.length===1?'':'s'}): ${items}</div>`;
 }
 
+// Stock en gestion-vinoteca (catálogo Aroma/La Vid) de un vino elegido.
+// Busca por id, por gemelo_id (el catálogo llega dedupeado a UNA de las 2
+// filas gemelas Aroma/La Vid y el vino pudo confirmarse con el id de la
+// otra) y por último por nombre normalizado (vinos del Sheet o cargados a
+// mano que también existan en el catálogo). undefined = no está en el
+// catálogo (ej. un vino cargado a mano) → se muestra "—".
+let cartaStockIdxSrc = null, cartaStockIdx = null;
+function cartaStockDe(v){
+  if(cartaStockIdxSrc !== catalogoExterno){
+    const porId = new Map(), porNombre = new Map();
+    catalogoExterno.forEach(w => {
+      porId.set(String(w.id), w.stock);
+      if(w.gemelo_id) porId.set(String(w.gemelo_id), w.stock);
+      porNombre.set(normalizarTexto(w.nombre), w.stock);
+    });
+    cartaStockIdx = { porId, porNombre };
+    cartaStockIdxSrc = catalogoExterno;
+  }
+  const { porId, porNombre } = cartaStockIdx;
+  if(porId.has(String(v.id))) return porId.get(String(v.id));
+  return porNombre.get(normalizarTexto(v.nombre));
+}
+function cartaSinStock(v){
+  const st = cartaStockDe(v);
+  return st !== undefined && !(Number(st) > 0);
+}
+function cartaStockBadgeHtml(v){
+  const st = cartaStockDe(v);
+  if(st === undefined) return `<span class="carta-stock na" title="No está en el catálogo de gestion-vinoteca">stock —</span>`;
+  const n = Number(st) || 0;
+  const cls = n <= 0 ? ' cero' : n < 6 ? ' bajo' : '';
+  return `<span class="carta-stock${cls}" title="Stock actual en gestion-vinoteca (Aroma/La Vid)">${n <= 0 ? 'sin stock' : `${n} u.`}</span>`;
+}
+
 function renderCartaLanes(){
   // Promedio del mes completo (las 2 quincenas juntas) — aparte del de cada
   // quincena, que ya se muestra en su propio header más abajo.
@@ -2883,13 +2945,13 @@ function renderCartaLanes(){
       const tramo = tramoDeVino(v);
       return `<div class="carta-slot filled" style="border-left-color:${tramo.color}" title="${esc(tramo.label)}"
                   ondragover="cartaSlotDragOver(event)" ondrop="cartaSlotDrop(event,${si},${idx})">
-        <div class="carta-slot-info">
+        <div class="carta-slot-info" title="${esc(v.nombre)} — ${esc(v.bodega||'—')}">
           <div class="carta-slot-name">${esc(v.nombre)}</div>
           <div class="carta-slot-sub">${esc(v.bodega||'—')} · $${cartaPrecioNum(v).toLocaleString('es-AR')} · copa $${cartaPrecioCopa(v).toLocaleString('es-AR')}</div>
         </div>
+        ${cartaStockBadgeHtml(v)}
         <div class="carta-slot-cajas" title="Cajas a pedir — se usa en la pestaña Pedidos">
-          <label for="cajas-${si}-${idx}">Cajas</label>
-          <input type="number" id="cajas-${si}-${idx}" min="0" step="1" placeholder="—"
+          <input type="number" id="cajas-${si}-${idx}" min="0" step="1" placeholder="cajas" aria-label="Cajas a pedir"
             value="${v.cajas ?? ''}" onchange="cartaSetCajas(${si},${idx},this.value)">
         </div>
         <button class="carta-slot-remove" onclick="cartaRemoveFromLane(${si},${idx})" title="Quitar">×</button>
@@ -2922,25 +2984,40 @@ function renderCartaLanes(){
     const preciosCopa = s.vinos.filter(Boolean).map(cartaPrecioCopa);
     const promedioCopa = preciosCopa.length ? Math.round(preciosCopa.reduce((a,b)=>a+b,0) / preciosCopa.length) : 0;
     const promedioCopaHtml = filled
-      ? `<div class="carta-lane-promedio">Precio promedio de copa: <b>$${promedioCopa.toLocaleString('es-AR')}</b></div>`
+      ? `<div class="carta-lane-promedio">Copa promedio: <b>$${promedioCopa.toLocaleString('es-AR')}</b></div>`
+      : '<div></div>';
+    const sinStock = s.vinos.filter(v => v && cartaSinStock(v)).length;
+    const sinStockHtml = sinStock
+      ? `<div class="carta-lane-sinstock">⚠ ${sinStock} vino${sinStock===1?'':'s'} sin stock en gestion-vinoteca</div>`
       : '';
 
     // Pedido de Maio: ver al lado de lo que estás planificando qué cambia
     // respecto a lo que hoy está en vivo en el Sheet. Solo tiene sentido
     // mostrarlo si ya hay algo cargado en la quincena.
-    let diffHtml = '';
+    let diffHtml = '', diffResumen = '';
     if(filled){
       const { salen, entran } = cartaDiffVsVivo(s);
       if(salen.length || entran.length){
-        diffHtml = `<details class="carta-diff">
-          <summary>Diferencia vs. carta en vivo — ${salen.length} sale${salen.length===1?'':'n'}, ${entran.length} entra${entran.length===1?'':'n'}</summary>
+        diffResumen = ` · vs. en vivo: ${entran.length} entra${entran.length===1?'':'n'}, ${salen.length} sale${salen.length===1?'':'n'}`;
+        diffHtml = `<div class="carta-diff">
           ${entran.length ? `<div class="carta-diff-label carta-diff-entran">Entran</div><ul class="carta-diff-list">${entran.map(v=>`<li>+ ${esc(v.nombre)} <span class="carta-banner-item-bodega">· ${esc(v.bodega||'—')}</span></li>`).join('')}</ul>` : ''}
           ${salen.length ? `<div class="carta-diff-label carta-diff-salen">Salen</div><ul class="carta-diff-list">${salen.map(w=>`<li>− ${esc(w.nombre)} <span class="carta-banner-item-bodega">· ${esc(w.bodega||'—')}</span></li>`).join('')}</ul>` : ''}
-        </details>`;
+        </div>`;
       } else {
-        diffHtml = `<div class="carta-diff-igual">Sin diferencias con la carta en vivo</div>`;
+        diffResumen = ' · igual a la carta en vivo';
       }
     }
+    // Bodegas / varietales / diferencia vs. en vivo, plegados: abiertos
+    // empujaban la lista de vinos fuera de la pantalla. El summary ya dice
+    // lo esencial (cuántas distintas) sin tener que abrirlo.
+    const nBodegas = cartaLaneResumenCampo(s.vinos.filter(Boolean), 'bodega').length;
+    const nVarietales = cartaLaneResumenCampo(s.vinos.filter(Boolean), 'varietal').length;
+    const resumenHtml = filled
+      ? `<details class="carta-lane-resumen"${cartaResumenAbierto.has(si)?' open':''} ontoggle="cartaToggleResumen(${si},this.open)">
+          <summary>${nBodegas} bodega${nBodegas===1?'':'s'} · ${nVarietales} varietal${nVarietales===1?'':'es'}${diffResumen}</summary>
+          ${bodegasHtml}${varietalesHtml}${diffHtml}
+        </details>`
+      : '';
 
     return `<div class="carta-lane" ondragover="cartaLaneDragOver(event)" ondragleave="cartaLaneDragLeave(event)" ondrop="cartaSlotDrop(event,${si},null)">
       <div class="carta-lane-header">
@@ -2950,12 +3027,13 @@ function renderCartaLanes(){
         </div>
         <span class="carta-lane-count${filled===14?' complete':''}">${filled}/14</span>
       </div>
-      ${promedioCopaHtml}
-      <div class="carta-tramo-resumen">${tramoResumen}</div>
+      <div class="carta-lane-meta">
+        ${promedioCopaHtml}
+        <div class="carta-tramo-resumen">${tramoResumen}</div>
+      </div>
+      ${sinStockHtml}
       <div class="carta-slots">${slots}</div>
-      ${bodegasHtml}
-      ${varietalesHtml}
-      ${diffHtml}
+      ${resumenHtml}
     </div>`;
   }).join('');
   updateCartaSaveBtn();

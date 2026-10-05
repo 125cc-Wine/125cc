@@ -259,9 +259,13 @@ async function getCatalogoExterno(req, res) {
     // borrador en el Sheet al confirmar la carta (93%/85% de los vinos
     // activos los tienen cargados en gestion-vinoteca2). categoria viaja
     // para mapear el `tipo` de 125cc al crear ese borrador. stock viaja
-    // para la alerta de "elegiste un vino sin stock en el distribuidor".
+    // para la alerta de "elegiste un vino sin stock en el distribuidor" y
+    // para mostrar el stock de cada vino elegido en las quincenas.
+    // gemelo_id viaja porque el dedup de abajo se queda con UNA de las dos
+    // filas gemelas (Aroma/La Vid) — un vino confirmado con el id de la
+    // otra fila tiene que poder encontrarse igual por ese id.
     const url = `${VINOTECA_SUPABASE_URL}/rest/v1/productos`
-      + `?select=id,nombre,bodega,precio_venta,empresa,varietal,region,categoria,stock`
+      + `?select=id,nombre,bodega,precio_venta,empresa,varietal,region,categoria,stock,gemelo_id`
       + `&activo=eq.true&categoria=neq.Otro`
       + `&order=bodega.asc,nombre.asc&limit=${PAGE}&offset=${offset}`;
     const r = await fetch(url, { headers });
@@ -293,7 +297,7 @@ async function getCatalogoExterno(req, res) {
     .map(p => ({
       id: p.id, nombre: p.nombre, bodega: p.bodega || 'Sin bodega', precio: p.precio_venta || 0,
       varietal: p.varietal || '', region: p.region || '', categoria: p.categoria || '',
-      stock: p.stock ?? null,
+      stock: p.stock ?? null, gemelo_id: p.gemelo_id || null,
     }))
     .sort((a, b) => a.bodega.localeCompare(b.bodega) || a.nombre.localeCompare(b.nombre));
 
