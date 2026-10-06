@@ -385,6 +385,14 @@
   .carta-stock.falta{background:color-mix(in srgb,var(--danger) 10%,transparent);color:var(--danger)}
   .carta-stock.na{background:none;color:var(--ink-3);font-weight:400}
   .carta-lane-sinstock{font-size:11px;font-weight:600;color:var(--danger);margin-bottom:6px}
+  /* Pedido al depósito (gestion-vinoteca) de cada quincena */
+  .carta-pedido{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--ink-2)}
+  .carta-pedido-estado b{color:var(--ink);font-weight:600}
+  .carta-pedido-estado.ok b{color:var(--success)}
+  .carta-pedido-hint{font-size:11px;color:var(--ink-3)}
+  .carta-pedido-btn{background:var(--madera-dk);border:none;border-radius:var(--r-pill);padding:7px 14px;color:var(--ink);font-size:11px;font-weight:500;letter-spacing:.04em;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap}
+  .carta-pedido-btn:hover{opacity:.85}
+  .carta-pedido-btn:disabled{opacity:.45;cursor:not-allowed}
   .carta-lane-resumen{margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-size:12px}
   .carta-lane-resumen > summary{cursor:pointer;list-style:none;color:var(--ink-3);font-size:11px}
   .carta-lane-resumen > summary::-webkit-details-marker{display:none}
@@ -2175,6 +2183,7 @@ async function loadCartaTab(){
     renderCartaLanes();
     renderCartaBanner();
     renderCartaAlertas();
+    cartaCargarPedidos();
   } catch(e){
     document.getElementById('cartaPools').innerHTML = '<div class="empty-msg">Error cargando el calendario de carta.</div>';
   }
@@ -2958,6 +2967,101 @@ function cartaDiffVsAnterior(si){
 // Cambia el orden EN PANTALLA de los vinos elegidos dentro de cada
 // quincena — no mueve nada de casillero (cartaSemanas/el guardado siguen
 // intactos), sólo cambia cómo se listan. Puramente cosmético/de revisión.
+// ── Pedido al depósito (gestion-vinoteca) ───────────────────────────────
+// Las cajas de cada quincena salen del stock de La Vid: desde acá se manda
+// el pedido y queda pendiente en gestión, donde se procesa como venta o
+// consignación (recién ahí se mueve el stock). Se arma con lo GUARDADO
+// (carta_historial), por eso pide guardar antes si hay cambios en pantalla.
+let cartaPedidosDeposito = {};   // inicio de quincena → { numero, estado, como, comprobante, total }
+let cartaPedidosConfigurado = true;
+async function cartaCargarPedidos(){
+  try{
+    const r = await fetch('/api/actualizar-vino?pedidosDeposito=1', {headers: adminAuthHeader()});
+    handleAuthResponse(r);
+    const d = await r.json();
+    cartaPedidosDeposito = d.pedidos || {};
+    cartaPedidosConfigurado = d.configurado !== false;
+  } catch(e){ /* sin gestión: la pestaña sigue andando, solo no muestra estado */ }
+  renderCartaLanes();
+}
+// ¿La quincena en pantalla difiere de lo guardado (vinos o cajas)?
+function cartaQuincenaSinGuardar(si){
+  const s = cartaSemanas[si];
+  const clave = (id, cajas) => `${id}|${Number(cajas) > 0 ? Number(cajas) : 0}`;
+  const enPantalla = s.vinos.filter(Boolean).map(v => clave(v.id, v.cajas)).sort().join(',');
+  const porVino = new Map();
+  cartaHistorial.filter(h => String(h.semana_inicio).slice(0,10) === s.inicio).forEach(h => {
+    const prev = porVino.get(String(h.vino_id));
+    if(!prev || new Date(h.confirmado_at) > new Date(prev.confirmado_at)) porVino.set(String(h.vino_id), h);
+  });
+  const guardado = Array.from(porVino.values()).map(h => clave(h.vino_id, h.cajas)).sort().join(',');
+  return enPantalla !== guardado;
+}
+function cartaPedidoHtml(si){
+  const s = cartaSemanas[si];
+  const filled = s.vinos.filter(Boolean).length;
+  if(!filled || !cartaPedidosConfigurado) return '';
+  const p = cartaPedidosDeposito[s.inicio];
+  const conCajas = s.vinos.filter(v => v && Number(v.cajas) > 0).length;
+
+  let estado = '';
+  if(p){
+    const como = p.como === 'consignacion' ? 'en consignación' : p.como === 'venta' ? 'como venta' : '';
+    const txt = p.estado === 'pendiente' ? 'pendiente de procesar en gestion-vinoteca'
+      : p.estado === 'entregado' ? `entregado ✓${como ? ` (${como}${p.comprobante ? ` ${esc(p.comprobante)}` : ''})` : ''}`
+      : `procesado ${como}${p.comprobante ? ` · ${esc(p.comprobante)}` : ''}`;
+    estado = `<span class="carta-pedido-estado${p.estado === 'pendiente' ? '' : ' ok'}">📦 Pedido <b>${esc(p.numero)}</b> · ${txt}</span>`;
+  }
+  if(p && p.estado !== 'pendiente') return `<div class="carta-pedido" id="carta-pedido-${si}">${estado}</div>`;
+
+  const sinGuardar = cartaQuincenaSinGuardar(si);
+  const hint = !conCajas ? 'Cargá las cajas de cada vino para armar el pedido'
+    : sinGuardar ? 'Guardá la carta antes de mandar el pedido'
+    : `${conCajas} vino${conCajas===1?'':'s'} con cajas${conCajas < filled ? ` (${filled - conCajas} sin cajas no van)` : ''}`;
+  return `<div class="carta-pedido" id="carta-pedido-${si}">
+    ${estado || `<span class="carta-pedido-hint">${hint}</span>`}
+    <button type="button" class="carta-pedido-btn" onclick="cartaEnviarPedido(${si},this)" ${(!conCajas || sinGuardar) ? 'disabled' : ''}
+      title="${esc(p ? hint : 'Queda pendiente en gestion-vinoteca (La Vid); ahí se elige venta o consignación')}">${p ? '↻ Actualizar pedido' : '📦 Pedir al depósito'}</button>
+  </div>`;
+}
+async function cartaEnviarPedido(si, btn){
+  const s = cartaSemanas[si];
+  const label = `${s.label} de ${nombreMesLabel(cartaMes).split(' ')[0].toLowerCase()}`;
+  const enviar = async (dry_run) => {
+    const r = await fetch('/api/actualizar-vino', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...adminAuthHeader() },
+      body: JSON.stringify({ pedidoDeposito: { inicio: s.inicio, label, dry_run } }),
+    });
+    handleAuthResponse(r);
+    return r.json();
+  };
+  if(btn){ btn.disabled = true; btn.textContent = 'Calculando…'; }
+  try{
+    const prev = await enviar(true);
+    if(prev.error){ showToast(prev.error, 'error'); return; }
+    const botellas = prev.items.reduce((n, i) => n + i.cantidad, 0);
+    const lineas = [
+      `Pedido al depósito (La Vid) — ${label}`,
+      `${prev.items.length} vinos · ${botellas} botellas · total $${Math.round(prev.total).toLocaleString('es-AR')}`,
+      prev.omitidos?.length ? `\nNo están en el catálogo de La Vid (no van): ${prev.omitidos.join(', ')}` : '',
+      prev.sinCajas?.length ? `\nSin cajas cargadas (no van): ${prev.sinCajas.join(', ')}` : '',
+      `\nQueda pendiente en gestion-vinoteca; ahí se elige si sale como venta o consignación.`,
+      cartaPedidosDeposito[s.inicio] ? `Reemplaza los ítems del pedido ${cartaPedidosDeposito[s.inicio].numero}.` : '',
+    ].filter(Boolean);
+    if(!confirm(lineas.join('\n'))) return;
+    if(btn) btn.textContent = 'Enviando…';
+    const res = await enviar(false);
+    if(res.error){ showToast(res.error, 'error'); return; }
+    showToast(`Pedido ${res.pedido.numero} ${res.actualizado ? 'actualizado' : 'enviado'} a gestion-vinoteca`, 'success');
+    await cartaCargarPedidos();
+  } catch(e){
+    showToast('No se pudo enviar el pedido', 'error');
+  } finally {
+    if(btn && btn.isConnected){ btn.disabled = false; btn.textContent = cartaPedidosDeposito[s.inicio] ? '↻ Actualizar pedido' : '📦 Pedir al depósito'; }
+  }
+}
+
 // Qué plegables de resumen (por quincena) están abiertos — renderCartaLanes
 // rehace todo el HTML en cada cambio y sin esto se cerrarían solos.
 const cartaResumenAbierto = new Set();
@@ -3172,6 +3276,7 @@ function renderCartaLanes(){
       </div>
       ${sinStockHtml}
       <div class="carta-slots">${slots}</div>
+      ${cartaPedidoHtml(si)}
       ${resumenHtml}
     </div>`;
   }).join('');
@@ -3265,6 +3370,10 @@ function cartaSetCajas(si, idx, val){
   const n = val === '' ? null : Math.max(0, Math.trunc(Number(val)) || 0);
   v.cajas = n;
   cartaGuardarBorradorLocal();
+  // Solo el bloque del pedido (y no todo el tablero, para no perder el
+  // foco al pasar de un campo de cajas al siguiente).
+  const bloque = document.getElementById(`carta-pedido-${si}`);
+  if(bloque) bloque.outerHTML = cartaPedidoHtml(si);
 }
 
 // Pedido de Maio: guardar en cualquier momento, no solo con las 28 posiciones

@@ -304,6 +304,68 @@ async function getCatalogoExterno(req, res) {
   return res.status(200).json({ catalogo });
 }
 
+// Pedido al depósito (gestion-vinoteca2) de una quincena — las cajas de cada
+// vino salen del stock de La Vid. Se arma con lo CONFIRMADO en
+// carta_historial (no con lo que haya sin guardar en pantalla), 1 caja =
+// BOTELLAS_POR_CAJA, y se manda a /api/pedidos/125cc de gestión, que deja un
+// pedido pendiente (o actualiza el de esa quincena si sigue pendiente). Ahí
+// se decide si sale como venta o consignación, y recién ahí se mueve stock.
+// dry_run: gestión solo calcula precios/total, no escribe nada.
+const BOTELLAS_POR_CAJA = 6;
+function gestionConfig() {
+  const url = (process.env.GESTION_URL || '').replace(/\/+$/, '');
+  const token = process.env.GESTION_125CC_TOKEN;
+  return url && token ? { url, token } : null;
+}
+
+async function pedidoDeposito(req, res, datos) {
+  const cfg = gestionConfig();
+  if (!cfg) return res.status(500).json({ error: "Falta configurar GESTION_URL / GESTION_125CC_TOKEN en Vercel." });
+  const inicio = String(datos?.inicio || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(inicio)) return res.status(400).json({ error: "Falta la quincena." });
+
+  const { rows } = await sql`
+    SELECT DISTINCT ON (vino_id) vino_id, vino_nombre, semana_label, cajas
+    FROM carta_historial
+    WHERE semana_inicio = ${inicio}
+    ORDER BY vino_id, confirmado_at DESC
+  `;
+  if (!rows.length) return res.status(400).json({ error: "Esa quincena no tiene vinos confirmados." });
+  const conCajas = rows.filter(r => Number(r.cajas) > 0);
+  const sinCajas = rows.filter(r => !(Number(r.cajas) > 0)).map(r => r.vino_nombre);
+  if (!conCajas.length) return res.status(400).json({ error: "Ningún vino de esa quincena tiene cajas cargadas.", sinCajas });
+
+  const r = await fetch(`${cfg.url}/api/pedidos/125cc`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.token}` },
+    body: JSON.stringify({
+      inicio,
+      label: String(datos?.label || rows[0].semana_label || '').slice(0, 80),
+      dry_run: datos?.dry_run === true,
+      items: conCajas.map(v => ({ vino_id: v.vino_id, nombre: v.vino_nombre, cantidad: Number(v.cajas) * BOTELLAS_POR_CAJA })),
+    }),
+  });
+  const body = await r.json().catch(() => ({ error: `gestion-vinoteca respondió ${r.status}` }));
+  return res.status(r.status).json({ ...body, sinCajas });
+}
+
+// Estado de los pedidos al depósito por quincena (para mostrarlo en cada
+// quincena del Calendario). Si gestión no está configurada o no responde,
+// devuelve vacío — no bloquea el resto de la pestaña.
+async function getPedidosDeposito(req, res) {
+  const cfg = gestionConfig();
+  if (!cfg) return res.status(200).json({ pedidos: {}, configurado: false });
+  try {
+    const desde = String(req.query.desde || '').match(/^\d{4}-\d{2}-\d{2}$/) ? req.query.desde : '2000-01-01';
+    const r = await fetch(`${cfg.url}/api/pedidos/125cc?desde=${desde}`, { headers: { Authorization: `Bearer ${cfg.token}` } });
+    if (!r.ok) return res.status(200).json({ pedidos: {}, configurado: true, error: `gestion-vinoteca respondió ${r.status}` });
+    const body = await r.json();
+    return res.status(200).json({ pedidos: body.pedidos || {}, configurado: true });
+  } catch (e) {
+    return res.status(200).json({ pedidos: {}, configurado: true, error: e.message });
+  }
+}
+
 // Catálogo centralizado de bodegas (pestaña "Bodegas") — lo usa el panel
 // nuevo del admin. Antes cada vino tenía su propio texto "sobre la bodega y
 // el terruño" repetido en cada fila (mismo dato copiado 2-3 veces por
@@ -477,6 +539,7 @@ module.exports = async function handler(req, res) {
     try {
       if (req.query.historial === '1') return await getHistorialCarta(req, res);
       if (req.query.catalogo === '1')  return await getCatalogoExterno(req, res);
+      if (req.query.pedidosDeposito === '1') return await getPedidosDeposito(req, res);
       return res.status(404).json({ error: "Recurso no encontrado." });
     } catch (err) {
       console.error("actualizar-vino (GET) error:", err);
@@ -489,6 +552,15 @@ module.exports = async function handler(req, res) {
       return await guardarHistorialCarta(req, res, req.body.semanas);
     } catch (err) {
       console.error("actualizar-vino (historial POST) error:", err);
+      return res.status(500).json({ error: "Error interno.", detail: err.message });
+    }
+  }
+
+  if (req.body && req.body.pedidoDeposito) {
+    try {
+      return await pedidoDeposito(req, res, req.body.pedidoDeposito);
+    } catch (err) {
+      console.error("actualizar-vino (pedido depósito) error:", err);
       return res.status(500).json({ error: "Error interno.", detail: err.message });
     }
   }
