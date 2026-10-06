@@ -29,11 +29,11 @@ que no pasa por ningún sistema.
 - **Carta en vivo:** muestra los 14 vinos de la Q1 de octubre. ✅
 - **Vinos por quincena:** la Q1 de noviembre tiene **11 de 14** y la Q1 de
   diciembre **13 de 14**. Si no se completan, la carta sale con menos vinos.
-- **Stock en gestion-vinoteca:**
-  - Q1 de octubre (en vivo): 3 sin stock.
-  - **Q2 de octubre (arranca el 16/10): 6 sin stock.** Sur de los Andes
-    Rosé, Reinero Reserva Blend, Lorca Opalo Syrah, Uruco Merlot, Latente
-    Malbec Cuarto Surco, Zolo Black Cabernet Franc.
+- **Stock en gestion-vinoteca** (en vivo, se mueve día a día):
+  - El 05/10: 3 sin stock en la Q1 de octubre y 6 en la Q2.
+  - El 06/10 ya había bajado a 1 en la Q1 (Alta Vista Alizarine) y 2 en la
+    **Q2, que arranca el 16/10** (Uruco Merlot, Zolo Black Cabernet Franc).
+  - Desde el 06/10 el banner del Calendario avisa esto solo (ver abajo).
 - **Cajas:** **0 de 80** vinos planificados tienen cajas cargadas, así que la
   pestaña Pedidos no tiene nada que consolidar.
 - **125cc no existe en gestion-vinoteca:** no hay cliente, pedido, venta ni
@@ -78,10 +78,12 @@ Contando hacia atrás desde el día de arranque (1 o 16):
 
 ## Qué haría primero
 
-1. **Ya:** resolver los 6 vinos sin stock de la Q2 de octubre (arranca en
-   10 días) y completar los huecos de noviembre y diciembre.
-2. **Alerta de stock en el banner de la próxima quincena** ("3 vinos sin
-   stock — arranca en 10 días"). Es chico y aprovecha lo que ya está hecho.
+1. **Ya:** resolver los vinos sin stock de la Q2 de octubre (arranca el
+   16/10) y completar los huecos de noviembre y diciembre.
+2. ✅ **Hecho (06/10): aviso de stock en el banner** para la quincena en
+   curso y la siguiente. Avisa los vinos sin stock y los que no cubren las
+   cajas pedidas (1 caja = 6 u.), se pone en rojo a 10 días del arranque y
+   relee el stock en vivo al volver a la pestaña o con "Actualizar stock".
 3. **Pedido interno 125cc generado desde el Calendario.** Es lo que cierra
    el hueco del paso 5: las cajas pasan a tener sentido, el stock de la
    vinoteca queda bien y queda un "recibido" por quincena. Necesita definir

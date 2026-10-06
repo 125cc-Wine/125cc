@@ -210,6 +210,21 @@
   .carta-banner-item{font-size:12px;color:var(--ink-3)}
   .carta-banner-item.ok{color:var(--ink)}
   .carta-banner-item-bodega{color:var(--ink-3)}
+  .carta-banner-item .carta-stock{margin-left:4px}
+  /* Aviso de stock (gestion-vinoteca) de la quincena vigente y la próxima */
+  .carta-stockaviso{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+  .carta-stockaviso-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--ink-3)}
+  .carta-stockaviso-refresh{background:none;border:1px solid var(--line-strong);color:var(--ink-2);font-size:11px;padding:4px 12px;border-radius:var(--r-pill);cursor:pointer;font-family:'DM Sans',sans-serif}
+  .carta-stockaviso-refresh:hover{border-color:var(--madera);color:var(--madera)}
+  .carta-stockaviso-refresh:disabled{opacity:.5;cursor:wait}
+  .carta-stockaviso-q{border-radius:var(--r-sm);padding:10px 12px;font-size:12px;border:1px solid var(--line)}
+  .carta-stockaviso-q.critico{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.4)}
+  .carta-stockaviso-q.aviso{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.45)}
+  .carta-stockaviso-q.ok{color:var(--success)}
+  .carta-stockaviso-titulo{font-weight:600;color:var(--ink)}
+  .carta-stockaviso-q.critico .carta-stockaviso-titulo{color:var(--danger)}
+  .carta-stockaviso-q.ok .carta-stockaviso-titulo{color:var(--success)}
+  .carta-stockaviso-lista{list-style:none;margin-top:6px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 16px;color:var(--ink-2)}
 
   .carta-historial-section{margin-top:24px}
   .carta-historial-toggle{background:none;border:1px solid var(--line-strong);color:var(--ink-2);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:10px 18px;border-radius:var(--r-pill);cursor:pointer;font-family:'DM Sans',sans-serif;transition:border-color var(--t-feedback) var(--ease),color var(--t-feedback) var(--ease)}
@@ -367,6 +382,7 @@
   .carta-stock{flex-shrink:0;font-size:10px;font-weight:600;padding:2px 7px;border-radius:var(--r-pill);white-space:nowrap;background:color-mix(in srgb,var(--success) 16%,transparent);color:var(--success)}
   .carta-stock.bajo{background:color-mix(in srgb,var(--warning) 18%,transparent);color:var(--warning)}
   .carta-stock.cero{background:color-mix(in srgb,var(--danger) 16%,transparent);color:var(--danger)}
+  .carta-stock.falta{background:color-mix(in srgb,var(--danger) 10%,transparent);color:var(--danger)}
   .carta-stock.na{background:none;color:var(--ink-3);font-weight:400}
   .carta-lane-sinstock{font-size:11px;font-weight:600;color:var(--danger);margin-bottom:6px}
   .carta-lane-resumen{margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-size:12px}
@@ -980,6 +996,7 @@ function switchTab(tab, btnEl){
   if(tab==='vinos' && !editorLoaded) loadWinesForEditor();
   if(tab==='bodegas' && !bodegasPanelLoaded) loadBodegasTab();
   if(tab==='carta' && !cartaLoaded) loadCartaTab();
+  else if(tab==='carta') cartaRefrescarStock(); // stock en vivo: se relee cada vez que se vuelve a la pestaña
   if(tab==='pedidos') loadPedidosTab();
 }
 
@@ -2135,6 +2152,7 @@ async function loadCartaTab(){
     cartaHistorial = histData.historial || [];
     cartaMesesBloqueo = histData.mesesBloqueo || 12;
     catalogoExterno = (catData.catalogo || []).map(w => ({...w, _fuente: 'catalogo_externo'}));
+    cartaStockAt = new Date();
     if(catData.error) showToast('Catálogo Aroma/La Vid: ' + catData.error, 'error');
 
     // El plan del mes actual (cartaSemanas) se armó vacío al cargar el script,
@@ -2289,7 +2307,7 @@ function renderCartaBanner(){
       const completo = !!enSheet && faltantes.length === 0;
       if(completo) listas++;
       const detalle = !enSheet ? 'no está cargado en el Sheet' : faltantes.length ? `falta: ${faltantes.join(', ')}` : 'ficha completa';
-      return `<li class="carta-banner-item${completo?' ok':''}" title="${esc(detalle)}">${completo?'✓':'⏳'} ${esc(h.vino_nombre)} <span class="carta-banner-item-bodega">· ${esc(h.bodega||'—')}</span></li>`;
+      return `<li class="carta-banner-item${completo?' ok':''}" title="${esc(detalle)}">${completo?'✓':'⏳'} ${esc(h.vino_nombre)} <span class="carta-banner-item-bodega">· ${esc(h.bodega||'—')}</span>${cartaStockBadgeHtml({ id: h.vino_id, nombre: h.vino_nombre }, h.cajas)}</li>`;
     }).join('');
 
   el.style.display = '';
@@ -2297,7 +2315,84 @@ function renderCartaBanner(){
     <div class="carta-banner-title">${esc(info.label)} de ${esc(nombreMesLabel(info.inicio.slice(0,7)))} — ${cuando}</div>
     <div class="carta-banner-sub">${listas} de ${info.vinos.length} vinos ya tienen ficha completa en el Sheet</div>
     <ul class="carta-banner-checklist">${items}</ul>
+    ${cartaStockAvisoHtml()}
   `;
+}
+
+// Aviso de stock para la quincena en curso y la siguiente — las cajas
+// salen del stock EN VIVO de gestion-vinoteca, así que lo que importa es
+// enterarse con tiempo de comprar o cambiar el vino. Usa lo CONFIRMADO
+// (carta_historial, con sus cajas guardadas), no lo que se esté editando
+// sin guardar en el tablero.
+const DIAS_AVISO_STOCK = 10; // a partir de acá, una quincena con faltantes pasa a crítico
+let cartaStockAt = null;     // cuándo se leyó el stock (para mostrar "stock de las HH:MM")
+function cartaStockAvisoHtml(){
+  if(!catalogoExterno.length) return '';
+  const hoy = hoyISO();
+  const grupos = agruparHistorialPorQuincena(cartaHistorial);
+  const actual = cartaQuincenaDeFecha(hoy);
+  const sig = cartaSiguienteQuincena(hoy);
+  const bloques = [actual, sig].map(q => {
+    const g = grupos.find(g => g.inicio === q.inicio);
+    if(!g) return '';
+    const porVino = new Map();
+    g.vinos.forEach(h => porVino.set(String(h.vino_id), h)); // carta_historial puede repetir filas
+    const vinos = Array.from(porVino.values());
+    const problemas = vinos
+      .map(h => ({ h, e: cartaEstadoStock({ id: h.vino_id, nombre: h.vino_nombre }, h.cajas) }))
+      .filter(x => x.e.problema);
+    const enCurso = q.inicio <= hoy;
+    const dias = diasEntreISO(hoy, q.inicio);
+    const cuando = enCurso ? 'en curso' : `arranca en ${dias} día${dias===1?'':'s'}`;
+    const nombre = `${esc(g.label)} de ${esc(nombreMesLabel(g.inicio.slice(0,7)).split(' ')[0].toLowerCase())}`;
+    if(!problemas.length){
+      return `<div class="carta-stockaviso-q ok"><span class="carta-stockaviso-titulo">✓ ${nombre} (${cuando}):</span> los ${vinos.length} vinos tienen stock en gestion-vinoteca</div>`;
+    }
+    const nivel = (enCurso || dias <= DIAS_AVISO_STOCK) ? 'critico' : 'aviso';
+    const nCero = problemas.filter(x => x.e.estado === 'cero').length;
+    const nFalta = problemas.length - nCero;
+    const resumen = [nCero ? `${nCero} sin stock` : '', nFalta ? `${nFalta} con menos stock que las cajas pedidas` : ''].filter(Boolean).join(', ');
+    const lista = problemas
+      .sort((a,b) => a.h.vino_nombre.localeCompare(b.h.vino_nombre))
+      .map(({h}) => `<li>${esc(h.vino_nombre)} ${cartaStockBadgeHtml({ id: h.vino_id, nombre: h.vino_nombre }, h.cajas)}</li>`).join('');
+    return `<div class="carta-stockaviso-q ${nivel}">
+      <span class="carta-stockaviso-titulo">⚠ ${nombre} (${cuando}): ${resumen}</span>
+      <ul class="carta-stockaviso-lista">${lista}</ul>
+    </div>`;
+  }).filter(Boolean);
+  if(!bloques.length) return '';
+  const hora = cartaStockAt ? cartaStockAt.toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit', hour12:false}) : '';
+  return `<div class="carta-stockaviso">
+    <div class="carta-stockaviso-head">
+      <span>Stock en vivo de gestion-vinoteca${hora ? ` · leído a las ${hora}` : ''} · 1 caja = ${BOTELLAS_POR_CAJA} u.</span>
+      <button type="button" class="carta-stockaviso-refresh" onclick="cartaRefrescarStock(this)">↻ Actualizar stock</button>
+    </div>
+    ${bloques.join('')}
+  </div>`;
+}
+
+// Vuelve a leer el catálogo (stock incluido) sin recargar la página ni
+// tocar el plan en pantalla. Se llama con el botón del aviso y cada vez
+// que se vuelve a la pestaña — el stock de gestion-vinoteca se mueve todo
+// el día con las ventas de la vinoteca y la web.
+async function cartaRefrescarStock(btn){
+  if(btn){ btn.disabled = true; btn.textContent = 'Actualizando…'; }
+  try{
+    const r = await fetch('/api/actualizar-vino?catalogo=1', {headers: adminAuthHeader()});
+    handleAuthResponse(r);
+    const catData = await r.json();
+    if(catData.error){ showToast('Catálogo Aroma/La Vid: ' + catData.error, 'error'); return; }
+    catalogoExterno = (catData.catalogo || []).map(w => ({...w, _fuente: 'catalogo_externo'}));
+    cartaStockAt = new Date();
+    computeCartaDuplicados();
+    renderCatalogoExterno();
+    renderCartaLanes();
+    renderCartaBanner();
+  } catch(e){
+    showToast('No se pudo actualizar el stock', 'error');
+  } finally {
+    if(btn && btn.isConnected){ btn.disabled = false; btn.textContent = '↻ Actualizar stock'; }
+  }
 }
 
 // ── Deshacer el último guardado ──────────────────────────────────────────
@@ -2930,16 +3025,31 @@ function cartaStockDe(v){
   if(porId.has(String(v.id))) return porId.get(String(v.id));
   return porNombre.get(normalizarTexto(v.nombre));
 }
-function cartaSinStock(v){
+// Las cajas de cada vino salen del stock de gestion-vinoteca, así que el
+// stock "alcanza" sólo si cubre cajas × BOTELLAS_POR_CAJA. Sin cajas
+// cargadas no hay contra qué comparar: alcanza con que haya al menos una
+// botella (menos de una caja se marca como "bajo", sólo informativo).
+const BOTELLAS_POR_CAJA = 6;
+// estado: 'na' (no está en el catálogo) | 'cero' | 'falta' (no cubre las
+// cajas) | 'bajo' | 'ok'. `problema` = lo que tiene que avisarse.
+function cartaEstadoStock(v, cajas){
   const st = cartaStockDe(v);
-  return st !== undefined && !(Number(st) > 0);
+  if(st === undefined) return { estado: 'na', problema: false };
+  const stock = Math.max(0, Number(st) || 0);
+  const nCajas = Number(cajas) > 0 ? Number(cajas) : 0;
+  const necesita = nCajas * BOTELLAS_POR_CAJA;
+  if(stock <= 0)              return { estado: 'cero',  stock, necesita, problema: true };
+  if(necesita && stock < necesita) return { estado: 'falta', stock, necesita, problema: true };
+  if(!necesita && stock < BOTELLAS_POR_CAJA) return { estado: 'bajo', stock, necesita, problema: false };
+  return { estado: 'ok', stock, necesita, problema: false };
 }
-function cartaStockBadgeHtml(v){
-  const st = cartaStockDe(v);
-  if(st === undefined) return `<span class="carta-stock na" title="No está en el catálogo de gestion-vinoteca">stock —</span>`;
-  const n = Number(st) || 0;
-  const cls = n <= 0 ? ' cero' : n < 6 ? ' bajo' : '';
-  return `<span class="carta-stock${cls}" title="Stock actual en gestion-vinoteca (Aroma/La Vid)">${n <= 0 ? 'sin stock' : `${n} u.`}</span>`;
+function cartaStockBadgeHtml(v, cajas){
+  const e = cartaEstadoStock(v, cajas);
+  if(e.estado === 'na') return `<span class="carta-stock na" title="No está en el catálogo de gestion-vinoteca">stock —</span>`;
+  if(e.estado === 'cero') return `<span class="carta-stock cero" title="Sin stock en gestion-vinoteca (Aroma/La Vid)">sin stock</span>`;
+  if(e.estado === 'falta') return `<span class="carta-stock falta" title="Stock en gestion-vinoteca: ${e.stock} u. — las ${cajas} caja${Number(cajas)===1?'':'s'} pedidas son ${e.necesita} u.">${e.stock}/${e.necesita} u.</span>`;
+  const titulo = e.necesita ? `Stock en gestion-vinoteca: ${e.stock} u. — cubre las ${e.necesita} u. de las cajas pedidas` : 'Stock actual en gestion-vinoteca (Aroma/La Vid)';
+  return `<span class="carta-stock${e.estado==='bajo'?' bajo':''}" title="${titulo}">${e.stock} u.</span>`;
 }
 
 function renderCartaLanes(){
@@ -2970,7 +3080,7 @@ function renderCartaLanes(){
           <div class="carta-slot-name">${esc(v.nombre)}</div>
           <div class="carta-slot-sub">${esc(v.bodega||'—')} · $${cartaPrecioNum(v).toLocaleString('es-AR')} · copa $${cartaPrecioCopa(v).toLocaleString('es-AR')}</div>
         </div>
-        ${cartaStockBadgeHtml(v)}
+        ${cartaStockBadgeHtml(v, v.cajas)}
         <div class="carta-slot-cajas" title="Cajas a pedir — se usa en la pestaña Pedidos">
           <input type="number" id="cajas-${si}-${idx}" min="0" step="1" placeholder="cajas" aria-label="Cajas a pedir"
             value="${v.cajas ?? ''}" onchange="cartaSetCajas(${si},${idx},this.value)">
@@ -3007,9 +3117,15 @@ function renderCartaLanes(){
     const promedioCopaHtml = filled
       ? `<div class="carta-lane-promedio">Copa promedio: <b>$${promedioCopa.toLocaleString('es-AR')}</b></div>`
       : '<div></div>';
-    const sinStock = s.vinos.filter(v => v && cartaSinStock(v)).length;
-    const sinStockHtml = sinStock
-      ? `<div class="carta-lane-sinstock">⚠ ${sinStock} vino${sinStock===1?'':'s'} sin stock en gestion-vinoteca</div>`
+    const estados = s.vinos.filter(Boolean).map(v => cartaEstadoStock(v, v.cajas));
+    const nCero = estados.filter(e => e.estado === 'cero').length;
+    const nFalta = estados.filter(e => e.estado === 'falta').length;
+    const partesStock = [
+      nCero ? `${nCero} sin stock` : '',
+      nFalta ? `${nFalta} no cubre${nFalta===1?'':'n'} las cajas` : '',
+    ].filter(Boolean);
+    const sinStockHtml = partesStock.length
+      ? `<div class="carta-lane-sinstock">⚠ ${partesStock.join(' · ')} en gestion-vinoteca</div>`
       : '';
 
     // Pedido de Maio: ver al lado de lo que estás planificando qué cambia
