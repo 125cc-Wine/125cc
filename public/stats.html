@@ -3134,6 +3134,9 @@ function cartaStockDe(v){
 // cargadas no hay contra qué comparar: alcanza con que haya al menos una
 // botella (menos de una caja se marca como "bajo", sólo informativo).
 const BOTELLAS_POR_CAJA = 6;
+// Cajas con las que arranca cada vino que se suma a una quincena (2 × 6 =
+// 12 botellas) — se puede cambiar a mano en el casillero.
+const CAJAS_DEFAULT = 2;
 // estado: 'na' (no está en el catálogo) | 'cero' | 'falta' (no cubre las
 // cajas) | 'bajo' | 'ok'. `problema` = lo que tiene que avisarse.
 function cartaEstadoStock(v, cajas){
@@ -3324,9 +3327,10 @@ function cartaPlaceWine(id, si, idx){
   if(!w) return;
   if(cartaBlockedFor(cartaBlockedMap(), w)){ showToast('Ese vino está bloqueado por la regla de no-repetición', 'error'); return; }
 
+  let cajasPrevias = null; // si se mueve de una quincena a otra, conserva sus cajas
   cartaSemanas.forEach(s=>{
     const i = s.vinos.findIndex(v=>v && String(v.id)===String(id));
-    if(i>=0) s.vinos[i] = null;
+    if(i>=0){ cajasPrevias = s.vinos[i].cajas ?? null; s.vinos[i] = null; }
   });
 
   const target = cartaSemanas[si];
@@ -3340,7 +3344,7 @@ function cartaPlaceWine(id, si, idx){
   // la ficha si hace falta crear un borrador en el Sheet al guardar.
   target.vinos[idx] = {
     id: w.id, nombre: w.nombre, bodega: w.bodega || '', precio: w.precio, fuente: w._fuente || '125cc',
-    varietal: w.varietal || '', region: w.region || '', categoria: w.categoria || '', cajas: null,
+    varietal: w.varietal || '', region: w.region || '', categoria: w.categoria || '', cajas: cajasPrevias ?? CAJAS_DEFAULT,
   };
   renderCartaPools();
   renderCatalogoExterno();
