@@ -1758,7 +1758,7 @@ function hoyISO(){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 // Normalización compartida (minúscula, sin acentos, sin espacios de sobra)
-// — la usan el banner, el diff contra la carta en vivo y la detección de
+// — la usan el banner, el diff contra la quincena anterior y la detección de
 // duplicados para comparar nombres entre el Sheet, el catálogo externo y
 // el historial sin que un acento o una mayúscula de diferencia rompa el match.
 function normalizarTexto(s){
@@ -2827,16 +2827,37 @@ function renderCatalogoExterno(){
   }).join('');
 }
 
-// Diferencia entre lo que está HOY en el Sheet en vivo (cartaWines — en
-// 125cc el Sheet completo ES la carta actual, no hay un flag "activo"
-// aparte) y lo que se está armando en esta quincena — match por nombre
-// normalizado, porque los ids de las 3 fuentes no coinciden entre sí.
-function cartaDiffVsVivo(s){
-  const enPlan = new Set(s.vinos.filter(Boolean).map(v => normalizarTexto(v.nombre)));
-  const enVivo = new Set(cartaWines.map(w => normalizarTexto(w.nombre)));
-  const salen  = cartaWines.filter(w => !enPlan.has(normalizarTexto(w.nombre)));
-  const entran = s.vinos.filter(Boolean).filter(v => !enVivo.has(normalizarTexto(v.nombre)));
-  return { salen, entran };
+// Qué cambia cuando arranca esta quincena respecto de la ANTERIOR: Q2 se
+// compara con la Q1 del mismo mes (tal como está en pantalla, aunque no se
+// haya guardado), Q1 con la Q2 del mes anterior. Antes comparaba contra el
+// Sheet entero (cartaWines), que además de la carta en vivo tiene los
+// borradores de todas las quincenas futuras — daba siempre "0 entran, ~87
+// salen". Match por nombre normalizado (los ids de las 3 fuentes no
+// coinciden entre sí).
+//
+// El mes anterior se lee de cartaPlanesPorMes si ya se visitó (puede tener
+// cambios sin guardar); si no, se arma desde el historial SIN guardarlo en
+// cartaPlanesPorMes — guardarlo ahí haría que cartaSetMes crea que ese mes
+// ya se visitó y se saltee restaurar su borrador local.
+function cartaQuincenaAnterior(si){
+  if(si === 1) return { q: cartaSemanas[0], label: 'Quincena 1' };
+  const [anio, mes] = cartaMes.split('-').map(Number);
+  const mesPrev = toISOMonth(new Date(anio, mes - 2, 1));
+  const plan = cartaPlanesPorMes[mesPrev] || nuevoPlanMes(mesPrev);
+  return { q: plan[1], label: `Q2 de ${nombreMesLabel(mesPrev).split(' ')[0].toLowerCase()}` };
+}
+function cartaDiffVsAnterior(si){
+  const actual = cartaSemanas[si].vinos.filter(Boolean);
+  const { q, label } = cartaQuincenaAnterior(si);
+  const anterior = q.vinos.filter(Boolean);
+  const enActual   = new Set(actual.map(v => normalizarTexto(v.nombre)));
+  const enAnterior = new Set(anterior.map(v => normalizarTexto(v.nombre)));
+  return {
+    label,
+    vacia: !anterior.length,
+    entran: actual.filter(v => !enAnterior.has(normalizarTexto(v.nombre))),
+    salen:  anterior.filter(v => !enActual.has(normalizarTexto(v.nombre))),
+  };
 }
 
 // Cambia el orden EN PANTALLA de los vinos elegidos dentro de cada
@@ -2992,22 +3013,24 @@ function renderCartaLanes(){
       : '';
 
     // Pedido de Maio: ver al lado de lo que estás planificando qué cambia
-    // respecto a lo que hoy está en vivo en el Sheet. Solo tiene sentido
-    // mostrarlo si ya hay algo cargado en la quincena.
+    // respecto de la quincena anterior (ver cartaDiffVsAnterior). Solo
+    // tiene sentido mostrarlo si ya hay algo cargado en la quincena.
     let diffHtml = '', diffResumen = '';
     if(filled){
-      const { salen, entran } = cartaDiffVsVivo(s);
-      if(salen.length || entran.length){
-        diffResumen = ` · vs. en vivo: ${entran.length} entra${entran.length===1?'':'n'}, ${salen.length} sale${salen.length===1?'':'n'}`;
+      const { label, vacia, salen, entran } = cartaDiffVsAnterior(si);
+      if(vacia){
+        diffResumen = ` · ${label} sin cargar`;
+      } else if(salen.length || entran.length){
+        diffResumen = ` · vs. ${label}: ${entran.length} entra${entran.length===1?'':'n'}, ${salen.length} sale${salen.length===1?'':'n'}`;
         diffHtml = `<div class="carta-diff">
           ${entran.length ? `<div class="carta-diff-label carta-diff-entran">Entran</div><ul class="carta-diff-list">${entran.map(v=>`<li>+ ${esc(v.nombre)} <span class="carta-banner-item-bodega">· ${esc(v.bodega||'—')}</span></li>`).join('')}</ul>` : ''}
           ${salen.length ? `<div class="carta-diff-label carta-diff-salen">Salen</div><ul class="carta-diff-list">${salen.map(w=>`<li>− ${esc(w.nombre)} <span class="carta-banner-item-bodega">· ${esc(w.bodega||'—')}</span></li>`).join('')}</ul>` : ''}
         </div>`;
       } else {
-        diffResumen = ' · igual a la carta en vivo';
+        diffResumen = ` · igual a ${label}`;
       }
     }
-    // Bodegas / varietales / diferencia vs. en vivo, plegados: abiertos
+    // Bodegas / varietales / diferencia vs. la anterior, plegados: abiertos
     // empujaban la lista de vinos fuera de la pantalla. El summary ya dice
     // lo esencial (cuántas distintas) sin tener que abrirlo.
     const nBodegas = cartaLaneResumenCampo(s.vinos.filter(Boolean), 'bodega').length;
