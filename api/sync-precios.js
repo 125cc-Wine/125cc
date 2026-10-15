@@ -106,6 +106,12 @@ async function leerPrecioDeTienda(url) {
   try { target = new URL(url); } catch { return null; }
   if (!/^https?:$/.test(target.protocol) || isBlockedHost(target.hostname)) return null;
 
+  // Tiendas WooCommerce (aromadevid.com.ar): el JSON-LD de la ficha trae el
+  // precio con rebaja cuando el producto está en oferta, y la carta tiene
+  // que mostrar el precio de lista. La Store API pública sí lo separa.
+  const regular = await leerPrecioRegularWoo(target);
+  if (regular != null) return regular;
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
@@ -117,6 +123,37 @@ async function leerPrecioDeTienda(url) {
     if (!pageRes.ok) return null;
     const html = await pageRes.text();
     return extraerPrecio(html);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+// Precio de lista (regular_price) vía /wp-json/wc/store/v1/products?slug=…, con
+// el slug = último tramo de la URL del producto. null si la tienda no es
+// WooCommerce o no encuentra el producto → se sigue con el HTML.
+async function leerPrecioRegularWoo(target) {
+  const slug = target.pathname.split('/').filter(Boolean).pop();
+  if (!slug) return null;
+  const api = `${target.origin}/wp-json/wc/store/v1/products?slug=${encodeURIComponent(slug)}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const r = await fetch(api, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; 125ccBot/1.0; +https://www.125cc.com.ar)" },
+      redirect: "error",
+      signal: controller.signal,
+    });
+    if (!r.ok) return null;
+    const lista = await r.json();
+    const p = Array.isArray(lista) ? lista.find(x => x.slug === slug) : null;
+    const precios = p?.prices;
+    if (!precios) return null;
+    const crudo = parseFloat(precios.regular_price || precios.price);
+    if (isNaN(crudo) || crudo <= 0) return null;
+    return crudo / Math.pow(10, precios.currency_minor_unit || 0);
+  } catch {
+    return null;
   } finally {
     clearTimeout(timeout);
   }
