@@ -1,0 +1,1228 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>125cc Carta y Cuaderno</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+<style>
+/* Layout: una columna de celular (máx. 520 px), barra inferior fija con tres destinos y una hoja que sube para la ficha y la cata. Noche por defecto: el bar está en penumbra. */
+:root{
+  color-scheme: dark;
+  --bg:#171B1F; --surface:#21272D; --surface-2:#2B333A; --line:#323B43; --line-strong:#47525C;
+  --ink:#F3ECE2; --ink-soft:#ABA59B; --ink-faint:#7C776F;
+  --tinto:#A8324A; --on-tinto:#FFF6F0; --oak:#C8A46A; --oak-ink:#1B1712; --danger:#C2463F;
+  --map:#24211D; --map-line:#3A342D; --map-label:#9C8559;
+  --paper:#D9CDB7; --paper-ink:#2B241F; --paper-soft:#685C51; --paper-rule:#C9BBA2; --paper-margin:#A4404C;
+  --glass-edge:#E9E1D3; --bottle-edge:#5A656F; --spot:#38414A;
+  --scrim:rgba(6,8,10,.62); --shadow:rgba(0,0,0,.38);
+  --display:'Cormorant Garamond','Iowan Old Style',Georgia,serif;
+  --ui:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --ease:cubic-bezier(.22,.8,.24,1); --nav-h:66px;
+}
+:root[data-theme="light"]{
+  color-scheme: light;
+  --bg:#F5EFE5; --surface:#FFFBF4; --surface-2:#EDE4D5; --line:#E2D7C5; --line-strong:#CDBFA8;
+  --ink:#2A2420; --ink-soft:#685E55; --ink-faint:#958A7F;
+  --tinto:#7A1428; --on-tinto:#FFF6F0; --oak:#97743A; --oak-ink:#FFF8EE; --danger:#A2302A;
+  --map:#EFE4D1; --map-line:#D9CAB0; --map-label:#8C7444;
+  --paper:#FFFDF8; --paper-ink:#2A2420; --paper-soft:#7A6E63; --paper-rule:#EDE4D4; --paper-margin:#C47880;
+  --glass-edge:#4A3F37; --bottle-edge:#BBAE97; --spot:#F8F1E5;
+  --scrim:rgba(42,30,24,.42); --shadow:rgba(60,40,20,.16);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.5 var(--ui);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:25;background:var(--bg)}
+body.locked{overflow:hidden}
+button,input,textarea{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--oak);outline-offset:2px}
+p{margin:0}
+
+.app{max-width:520px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(var(--nav-h) + 40px + env(safe-area-inset-bottom,0px))}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;margin-inline:-16px;padding:12px 16px 10px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--bg)}
+.brand{display:flex;align-items:center;gap:10px}
+.wm{font:600 30px/1 var(--display);letter-spacing:-.01em}
+.wm em{font-style:italic;font-weight:500;color:var(--oak)}
+.pill{font:600 10px/1 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);border:1px solid var(--line-strong);border-radius:999px;padding:5px 8px}
+.icon-btn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--ink-soft)}
+.icon-btn:hover{background:var(--surface)}
+.icon-btn svg{width:20px;height:20px}
+
+.eyebrow{font:600 11px/1.3 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--oak)}
+.h1{margin:2px 0 0;font:600 38px/1.04 var(--display);text-wrap:balance}
+.h2{margin:4px 0 0;font:600 30px/1.08 var(--display);text-wrap:balance}
+.h3{margin:2px 0 0;font:600 25px/1.12 var(--display);text-wrap:balance}
+.sub{margin-top:6px;color:var(--ink-soft);font-size:14px}
+.center{text-align:center}
+.view{padding-top:6px;animation:in .35s var(--ease)}
+@keyframes in{from{opacity:.35;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Carta */
+.carta-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:4px 0 14px}
+.carta-count{text-align:right;font:600 15px/1.3 var(--ui)}
+.carta-count span{display:block;font-weight:400;font-size:12.5px;color:var(--ink-soft)}
+.mapcard{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:8px}
+.map{position:relative;width:100%;max-width:100%;aspect-ratio:1/.8;border-radius:16px;background:var(--map);overflow:hidden;touch-action:pan-y}
+.map.big{aspect-ratio:1/1.1}
+.map .ax{position:absolute;background:var(--map-line)}
+.map .ax-x{left:5%;right:5%;top:50%;height:1px}
+.map .ax-y{top:7%;bottom:7%;left:50%;width:1px}
+.map .lb{position:absolute;font:600 9.5px/1 var(--ui);letter-spacing:.16em;color:var(--map-label);text-transform:uppercase;pointer-events:none}
+.lb-t{top:9px;left:50%;transform:translateX(-50%)}
+.lb-b{bottom:9px;left:50%;transform:translateX(-50%)}
+.lb-l{left:9px;top:50%;transform:translateY(-150%)}
+.lb-r{right:9px;top:50%;transform:translateY(-150%)}
+.pin{position:absolute;width:34px;height:40px;margin:-21px 0 0 -17px;display:grid;place-items:center;border-radius:10px;transition:transform .25s var(--ease),opacity .25s}
+.pin .copita{width:24px;height:30px;filter:drop-shadow(0 2px 3px var(--shadow))}
+.pin:hover,.pin:focus-visible{transform:scale(1.18);z-index:2}
+.pin.dim{opacity:.2}
+.pin .sb{position:absolute;top:-4px;right:-9px;min-width:19px;height:14px;padding:0 3px;border-radius:999px;background:var(--oak);color:var(--oak-ink);font:700 9px/14px var(--ui);text-align:center}
+.zona{position:absolute;width:30%;aspect-ratio:1;border-radius:50%;border:1.5px dashed var(--oak);transform:translate(-50%,-50%);pointer-events:none}
+.zona span{position:absolute;top:-17px;left:50%;transform:translateX(-50%);white-space:nowrap;font:700 9.5px/1 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--oak)}
+.map-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 6px 0;font-size:12.5px;color:var(--ink-faint)}
+.link{color:var(--oak);font-weight:600;font-size:13px;padding:8px 2px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:14px 16px 4px;margin-inline:-16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line-strong);font-size:13.5px;font-weight:500;color:var(--ink-soft)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.chip .dot{width:8px;height:8px;border-radius:50%}
+.winelist{list-style:none;margin:6px 0 0;padding:0}
+.row{width:100%;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 2px;border-bottom:1px solid var(--line);text-align:left}
+.row:hover .row-name{color:var(--oak)}
+.num{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font:700 14px/1 var(--ui)}
+.row-main{min-width:0}
+.row-name{display:block;font-weight:500;font-size:15.5px;line-height:1.28;text-wrap:balance}
+.row-meta{display:block;margin-top:2px;font-size:12.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-side{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.row-price{font:700 19px/1 var(--display);font-variant-numeric:tabular-nums}
+.row-sub{font-size:11.5px;color:var(--ink-faint)}
+.row-tag{font-size:11.5px;font-weight:600;color:var(--oak);white-space:nowrap}
+.empty-row{padding:20px 4px;color:var(--ink-soft)}
+.proto-note{margin-top:22px;font-size:12px;line-height:1.5;color:var(--ink-faint)}
+
+/* Barra inferior */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.nav-in{max-width:520px;margin:0 auto;height:var(--nav-h);display:grid;grid-template-columns:repeat(3,1fr)}
+.nav button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:500 11.5px/1 var(--ui);color:var(--ink-faint)}
+.nav button svg{width:22px;height:22px}
+.nav button[aria-current="page"]{color:var(--ink)}
+.nav .nav-c .ring{width:48px;height:48px;margin-top:-20px;border-radius:50%;display:grid;place-items:center;background:var(--tinto);color:var(--on-tinto);box-shadow:0 6px 18px var(--shadow)}
+.nav .nav-c[aria-current="page"] .ring{outline:2px solid var(--oak);outline-offset:3px}
+.badge{position:absolute;top:8px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--oak);color:var(--oak-ink);font:700 10.5px/18px var(--ui);text-align:center}
+
+/* Hoja */
+.scrim{position:fixed;inset:0;z-index:40;background:var(--scrim);opacity:0;transition:opacity .32s}
+.scrim.open{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:560px;margin:0 auto;max-height:calc(100% - 24px - env(safe-area-inset-top,0px));display:flex;flex-direction:column;background:var(--surface);border-radius:26px 26px 0 0;box-shadow:0 -12px 40px var(--shadow);transform:translateY(104%);transition:transform .38s var(--ease);outline:none}
+.sheet.open{transform:none}
+.sheet-grab{flex:none;position:relative;height:34px;display:grid;place-items:center;cursor:grab;touch-action:none}
+.sheet-grab span{width:42px;height:5px;border-radius:3px;background:var(--line-strong)}
+.sheet-x{position:absolute;top:4px;right:max(10px,env(safe-area-inset-right,0px))}
+.sheet-body{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:0 max(20px,env(safe-area-inset-right,0px)) 24px max(20px,env(safe-area-inset-left,0px))}
+.sheet-foot{flex:none;display:flex;gap:10px;padding:12px max(20px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));border-top:1px solid var(--line);background:var(--surface)}
+.sheet-foot:empty{display:none}
+.sheet-foot .confirm{flex:1;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.sheet-foot .confirm p{flex:1 1 100%;font-size:13.5px;color:var(--ink-soft)}
+
+.btn{height:50px;padding:0 18px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:15px;transition:transform .15s,opacity .2s}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.38;cursor:not-allowed}
+.btn-primary{flex:1;background:var(--tinto);color:var(--on-tinto)}
+.btn-ghost{flex:0 0 auto;border:1px solid var(--line-strong);color:var(--ink)}
+.btn-danger{flex:1;background:var(--danger);color:var(--on-tinto)}
+.btn.sm{height:40px;padding:0 14px;border-radius:12px;font-size:13.5px}
+.btn.wide{width:100%}
+
+/* Página del vino */
+.ficha-hero{display:grid;grid-template-columns:minmax(0,1fr) 88px;gap:12px;align-items:end;padding:16px 14px 16px 18px;border-radius:20px;background:radial-gradient(circle at 82% 78%,var(--spot),transparent 62%),var(--surface-2)}
+.fh-bottle{height:188px;display:flex;justify-content:center;align-items:flex-end}
+.bottle{height:100%;width:auto;overflow:visible}
+.bottle .edge{fill:none;stroke:var(--bottle-edge);stroke-width:.8}
+.fh-bodega{margin-top:4px;color:var(--ink-soft);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase}
+.fh-price{margin-top:14px;color:var(--ink-soft);font-size:13px}
+.fh-price strong{margin-right:4px;font:700 27px/1 var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.mine{width:100%;display:flex;gap:12px;align-items:center;margin-top:12px;padding:10px 14px;border-radius:14px;border:1px solid var(--line-strong);font-size:13px;color:var(--ink-soft);text-align:left}
+.mine strong{color:var(--ink);font-weight:600}
+.mine-score{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--oak);color:var(--oak-ink);font:700 17px/1 var(--display)}
+.nota-somm{margin:22px 0 0}
+.nota-somm blockquote{margin:6px 0 0;font:italic 500 21px/1.36 var(--display);text-wrap:pretty}
+.block{margin-top:22px}
+.block-t{margin:0 0 9px;font:600 11.5px/1.3 var(--ui);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-soft)}
+.block-t span{font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink-faint)}
+.perf{display:grid;grid-template-columns:80px auto;gap:9px 12px;align-items:center;font-size:13.5px}
+.dots{display:inline-flex;gap:5px}
+.dots i{width:24px;height:8px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line-strong)}
+.dots i.on{background:var(--tinto);border-color:var(--tinto)}
+.dots.oak i.on{background:var(--oak);border-color:var(--oak)}
+.facts{margin:0}
+.facts div{display:grid;grid-template-columns:98px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.facts dt{font-size:13px;color:var(--ink-soft)}
+.facts dd{margin:0;font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;background:var(--surface-2);font-size:13px}
+.bodega p{color:var(--ink-soft);font-size:14px;line-height:1.55}
+.ask{display:flex;gap:10px;align-items:flex-start;margin-top:22px;padding:12px 14px;border-radius:14px;border:1px dashed var(--oak);font-size:14px}
+.ask svg{flex:none;width:20px;height:20px;margin-top:1px;color:var(--oak)}
+.tienda{display:inline-block;margin:16px 0 2px;color:var(--oak);font-size:13.5px;font-weight:600;text-decoration:none}
+.legend-map{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12.5px;color:var(--ink-soft)}
+.legend-map i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+
+/* Anotar */
+.q{margin-top:22px}
+.q-t{display:block;margin:0 0 10px;font-weight:600;font-size:15px}
+.q-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.optional{margin-left:4px;font-weight:400;font-size:12.5px;color:var(--ink-faint)}
+.imp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.imp-b{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px 12px;border-radius:16px;border:1px solid var(--line-strong);font-size:13px;font-weight:500;color:var(--ink-soft);text-align:center}
+.imp-b svg{width:30px;height:38px}
+.imp-b[aria-pressed="true"]{border-color:var(--oak);background:var(--surface-2);color:var(--ink)}
+.imp-b[aria-pressed="true"] svg{color:var(--oak)}
+.score-read{display:flex;align-items:baseline;gap:8px}
+.score-m{font:700 30px/1 var(--display);font-variant-numeric:tabular-nums}
+.score-desc{font-size:13px;font-weight:600;color:var(--oak)}
+.range{-webkit-appearance:none;appearance:none;width:100%;height:34px;margin:0;background:transparent;cursor:pointer}
+.range::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:linear-gradient(to right,var(--tinto) 0 var(--p),var(--surface-2) var(--p) 100%);border:1px solid var(--line-strong)}
+.range::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-11px;border-radius:50%;background:var(--oak);border:3px solid var(--surface);box-shadow:0 2px 8px var(--shadow)}
+.range::-moz-range-track{height:8px;border-radius:4px;background:var(--surface-2)}
+.range::-moz-range-progress{height:8px;border-radius:4px;background:var(--tinto)}
+.range::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--oak);border:3px solid var(--surface)}
+.range-l{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-faint)}
+.tag-b{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line-strong);font-size:13.5px}
+.tag-b::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--fc)}
+.tag-b[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+textarea{display:block;width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line-strong);background:var(--surface-2);resize:vertical;font:italic 500 18px/1.4 var(--display);color:var(--ink)}
+textarea::placeholder{color:var(--ink-faint)}
+.cc-head{display:grid;grid-template-columns:84px minmax(0,1fr);gap:14px;align-items:center}
+.vaso{display:block;width:84px;height:auto}
+.vaso-liq{transition:transform .7s var(--ease),fill .4s}
+.cc-wine{margin-top:4px;font-size:13px;color:var(--ink-soft)}
+.hint{margin-top:16px;padding-left:12px;border-left:2px solid var(--oak);font-size:13.5px;color:var(--ink-soft)}
+.swatches{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.sw{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border-radius:14px;border:1px solid var(--line);font-size:12px;color:var(--ink-soft);text-align:center}
+.sw i{width:34px;height:34px;border-radius:50%;box-shadow:inset 0 -6px 10px rgba(0,0,0,.22)}
+.sw-otro{background:conic-gradient(#8E1B2E,#E2CF7E,#E8939A,#D9822B,#8E1B2E)}
+.sw[aria-pressed="true"]{border-color:var(--oak);background:var(--surface-2);color:var(--ink)}
+.scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.scale button{height:38px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line)}
+.scale button.fill{background:color-mix(in srgb,var(--tinto) 42%,var(--surface-2));border-color:transparent}
+.scale button.on{background:var(--tinto);border-color:var(--tinto)}
+.scale-l{display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--ink-faint)}
+.seg3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.seg3 button{height:44px;border-radius:12px;border:1px solid var(--line-strong);font-weight:500;text-align:center}
+.seg3 button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.need{margin-top:16px;font-size:13px;color:var(--ink-faint)}
+.wheel{display:block;width:min(100%,300px);height:auto;margin:10px auto 0}
+.wheel .seg{cursor:pointer;outline:none;transition:transform .22s var(--ease)}
+.wheel .seg:focus-visible path{stroke:var(--oak);stroke-width:3}
+.fam-box{margin-top:12px;min-height:40px}
+.fam-empty{text-align:center;font-size:13px;color:var(--ink-faint)}
+.muted{font-size:13px;color:var(--ink-faint)}
+.score-hero{display:flex;flex-direction:column;align-items:center;margin:20px 0 4px}
+.score-xl{font:700 78px/1 var(--display);font-variant-numeric:tabular-nums}
+
+/* Revelado */
+.saved-head{display:flex;gap:14px;align-items:center;margin:2px 0 16px}
+.saved-head .check{flex:none;width:44px;height:44px;color:var(--oak)}
+.check path{stroke-dasharray:40;animation:draw2 .6s .1s var(--ease) backwards}
+@keyframes draw2{from{stroke-dashoffset:40}}
+.rev-top{display:grid;grid-template-columns:100px minmax(0,1fr);gap:14px;align-items:center}
+.rev-score{position:relative;width:100px;height:88px;display:grid;place-items:center;color:var(--tinto)}
+.rev-score .hand,.pg-score .hand{position:absolute;inset:0;width:100%;height:100%}
+.rev-n{position:relative;font:700 40px/1 var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.hand path{stroke-dasharray:240;animation:draw 1s .15s var(--ease) backwards}
+@keyframes draw{from{stroke-dashoffset:240}}
+.reveal-h{margin-bottom:10px;font-size:15px}
+.tag.t-match{background:var(--oak);color:var(--oak-ink);font-weight:600}
+.tag.t-fam{background:transparent;border:1px solid var(--oak)}
+.tag.t-miss{background:transparent;border:1px dashed var(--line-strong);color:var(--ink-soft)}
+.legend-s{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:11.5px;color:var(--ink-faint)}
+.lg{display:inline-block;width:10px;height:10px;margin-right:5px;border-radius:50%;vertical-align:-1px}
+.lg.t-match{background:var(--oak)}
+.lg.t-fam{border:1px solid var(--oak)}
+.lg.t-miss{border:1px dashed var(--ink-faint)}
+.pc-row{display:grid;grid-template-columns:78px auto;gap:6px 12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.pc-k{grid-row:span 2;align-self:center;font-size:13.5px}
+.pc-v{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--ink-faint)}
+.pc-l{width:46px}
+.cmp-line{font-size:14px}
+
+/* Hoja de cuaderno */
+.page{position:relative;display:block;width:100%;padding:16px 76px 14px 46px;border-radius:4px 14px 14px 4px;color:var(--paper-ink);text-align:left;background-color:var(--paper);background-image:repeating-linear-gradient(to bottom,transparent 0 27px,var(--paper-rule) 27px 28px);background-position:0 14px;box-shadow:0 10px 26px var(--shadow)}
+.page::before{content:"";position:absolute;top:0;bottom:0;left:32px;width:1.5px;background:var(--paper-margin);opacity:.75}
+.page::after{content:"";position:absolute;left:11px;top:18px;width:9px;height:9px;border-radius:50%;background:var(--bg);box-shadow:0 30px 0 var(--bg),0 60px 0 var(--bg)}
+.page-btn{cursor:pointer;transition:transform .22s var(--ease)}
+.page-btn:hover{transform:translateY(-2px) rotate(-.3deg)}
+.pg-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.pg-date{font:600 10.5px/1.4 var(--ui);letter-spacing:.12em;text-transform:uppercase;color:var(--paper-soft)}
+.pg-ej{padding:3px 5px;border:1.5px solid currentColor;border-radius:4px;font:700 9.5px/1 var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--paper-margin);transform:rotate(-3deg)}
+.pg-name{margin:6px 0 0;font:600 23px/1.12 var(--display);text-wrap:balance}
+.pg-meta{margin-top:3px;font-size:12.5px;color:var(--paper-soft)}
+.pg-score{position:absolute;top:12px;right:10px;width:62px;height:56px;display:grid;place-items:center;color:var(--paper-margin)}
+.pg-score span{position:relative;font:700 25px/1 var(--display);color:var(--paper-ink);font-variant-numeric:tabular-nums}
+.pg-row{display:flex;gap:12px;align-items:center;margin-top:12px}
+.pg-row:empty{display:none}
+.blot{flex:none;width:44px;height:40px}
+.blot svg{display:block;width:100%;height:100%}
+.stamps{display:flex;flex-wrap:wrap;gap:6px}
+.stamp{display:inline-block;padding:2px 7px;border:1.5px solid var(--fc);border-radius:3px;color:var(--fc);font:700 10.5px/1.5 var(--ui);letter-spacing:.08em;text-transform:uppercase;transform:rotate(var(--rot))}
+.pg-nota{margin-top:10px;font:italic 500 18px/28px var(--display)}
+.pg-foot{margin-top:10px;font-size:11.5px;color:var(--paper-soft)}
+.pages{display:grid;gap:14px}
+
+/* Cuaderno */
+.cu-head{margin:4px 0 0}
+.cu-stats{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:13px;color:var(--ink-soft)}
+.cu-stats strong{margin-right:3px;font:700 21px/1 var(--display);color:var(--ink)}
+.cu-sec{margin-top:28px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+.sec-h .block-t{margin:0}
+.sec-s{font-size:12px;color:var(--ink-faint)}
+.mail{margin-top:18px;padding:16px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
+.mail-t{font:600 21px/1.2 var(--display)}
+.mail-s{margin:4px 0 12px;font-size:13.5px;color:var(--ink-soft)}
+.mail-row{display:flex;gap:8px}
+.mail-row .btn{flex:0 0 auto}
+.mail-row input{flex:1;min-width:0;height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--ink)}
+.mail-err{margin-top:8px;font-size:12.5px;color:var(--danger)}
+.saved-mail{margin-top:16px;font-size:13px;color:var(--ink-soft)}
+.noche{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:16px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
+.noche-d{margin-top:2px;font:600 20px/1.2 var(--display)}
+.noche-copas{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:16px}
+.nc{display:flex;flex-direction:column;align-items:center;gap:3px}
+.nc .copita{width:26px;height:32px}
+.nc b{font:700 16px/1 var(--display)}
+.paladar-f{margin-top:10px;font:italic 500 19px/1.35 var(--display)}
+.sellos{display:flex;flex-wrap:wrap;gap:12px}
+.sello{position:relative;width:86px;height:86px;display:grid;place-items:center;color:var(--ink-faint);transform:rotate(var(--rot))}
+.sello svg{position:absolute;inset:0;width:100%;height:100%}
+.sello.on{color:var(--tinto)}
+.sello-t{position:relative;max-width:60px;font:700 9.5px/1.25 var(--ui);letter-spacing:.08em;text-transform:uppercase;text-align:center}
+.cu-foot{margin-top:30px;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.cu-foot .link{font-size:13px}
+.muted-l{color:var(--ink-faint)}
+.row-btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.empty{padding:36px 12px 10px;text-align:center;color:var(--ink-soft)}
+.empty svg{display:block;width:120px;height:auto;margin:0 auto 14px;color:var(--oak)}
+.empty-t{margin-bottom:6px;font:600 25px/1.2 var(--display);color:var(--ink)}
+.empty p{max-width:36ch;margin-inline:auto}
+.empty .btn{margin-top:18px}
+
+/* ¿Qué tomo? */
+.qt-intro{padding:22px 4px 0;text-align:center}
+.qt-intro svg{display:block;width:92px;height:auto;margin:0 auto 12px}
+.qt-intro .sub{max-width:34ch;margin:8px auto 22px}
+.qt-note{margin-top:14px;font-size:13px;color:var(--ink-faint)}
+.qt-prog{display:flex;align-items:center;gap:6px;margin:10px 0 4px}
+.qt-prog i{flex:1;height:3px;border-radius:2px;background:var(--line-strong)}
+.qt-prog i.on{background:var(--oak)}
+.qt-prog span{margin-left:8px;font-size:12px;color:var(--ink-faint);white-space:nowrap}
+.back{display:inline-block;margin-top:6px}
+.back-sp{height:14px}
+.opts{display:grid;gap:10px;margin-top:18px}
+.opt{position:relative;display:flex;flex-direction:column;gap:2px;padding:16px 46px 16px 18px;border-radius:18px;background:var(--surface);border:1px solid var(--line);text-align:left;transition:border-color .2s}
+.opt:hover,.opt[aria-pressed="true"]{border-color:var(--oak)}
+.opt-t{font:600 21px/1.2 var(--display)}
+.opt-s{font-size:13px;color:var(--ink-soft)}
+.opt-go{position:absolute;right:18px;top:50%;transform:translateY(-50%);color:var(--oak)}
+.opt-go svg{width:18px;height:18px;display:block}
+.recs{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:12px}
+.rec{width:100%;display:grid;grid-template-columns:26px minmax(0,1fr) 40px;gap:12px;align-items:center;padding:14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);text-align:left}
+.rec:hover{border-color:var(--oak)}
+.rec-rank{font:600 22px/1 var(--ui);color:var(--oak);text-align:center}
+.rec-main{min-width:0}
+.rec-name{display:block;font:600 20px/1.15 var(--display)}
+.rec-why{display:block;margin-top:4px;font-size:13.5px}
+.rec-meta{display:block;margin-top:4px;font-size:12px;color:var(--ink-soft)}
+.rec-b{height:84px;display:flex;justify-content:center}
+.thinking{display:flex;flex-direction:column;align-items:center;gap:14px;padding:70px 0;color:var(--ink-soft)}
+.thinking svg{width:60px;height:auto;animation:swirl 1.1s ease-in-out infinite;transform-origin:50% 90%}
+@keyframes swirl{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+
+/* Tarjeta para llevar */
+.story-wrap{display:flex;justify-content:center;margin:16px 0 10px}
+.story-ph{width:min(62vw,260px);aspect-ratio:9/16;max-width:100%;display:grid;place-items:center;border-radius:16px;background:var(--surface-2);color:var(--ink-faint);font-size:13px}
+.story-img{width:min(62vw,260px);height:auto;border-radius:16px;box-shadow:0 10px 30px var(--shadow)}
+
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom,0px));z-index:60;max-width:min(90%,420px);padding:10px 16px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:13.5px;font-weight:500;opacity:0;pointer-events:none;transform:translate(-50%,12px);transition:opacity .25s,transform .25s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><span class="wm">125<em>cc</em></span><span class="pill">Prototipo</span></div>
+    <button class="icon-btn" id="theme-btn" data-act="theme" aria-label="Pasar a modo día"></button>
+  </header>
+  <main>
+    <section id="view-carta" class="view" aria-label="Carta"></section>
+    <section id="view-que-tomo" class="view" aria-label="¿Qué tomo?" hidden></section>
+    <section id="view-cuaderno" class="view" aria-label="Mi cuaderno" hidden></section>
+  </main>
+</div>
+
+<nav class="nav" aria-label="Secciones">
+  <div class="nav-in">
+    <button data-act="view" data-v="carta" id="nav-carta">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>
+      Carta
+    </button>
+    <button data-act="view" data-v="que-tomo" class="nav-c" id="nav-que-tomo">
+      <span class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10c0 5.5-2.2 8.5-5 8.5S7 8.5 7 3z"/><path d="M12 11.5V19M8.5 21h7"/></svg></span>
+      ¿Qué tomo?
+    </button>
+    <button data-act="view" data-v="cuaderno" id="nav-cuaderno">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M12.5 8h3.5M12.5 12h3.5"/></svg>
+      Mi cuaderno
+      <span class="badge" id="badge" hidden></span>
+    </button>
+  </div>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="scrim" id="scrim" data-act="cerrar" hidden></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1" hidden>
+  <div class="sheet-grab" id="sheet-grab"><span></span><button class="icon-btn sheet-x" data-act="cerrar" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body" id="sheet-body"></div>
+  <div class="sheet-foot" id="sheet-foot"></div>
+</section>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- Carta de la quincena (datos reales de la app, 22 de octubre de 2026) ---------- */
+/* aromas_somm y color_somm: campos nuevos del plan, completados como ejemplo a partir de cada nota de cata. */
+const WINES = [
+  {id:35,n:1,nombre:"Kaiken Ultra Pinot Noir",bodega:"Kaiken",tipo:"Tinto",copa:7000,x:-38,y:-50,varietal:"Pinot Noir",region:"Añelo, Neuquén, Patagonia",altitud:"396 msnm",suelo:"Aluvial, con predominio de piedras y arena",crianza:"8 meses en barricas de segundo y tercer uso",temperatura:"15–16°C",nota:"Pinot Noir patagónico de Kaiken, el primero de la bodega con uvas de Neuquén. Muy frutado y fresco, con taninos delicados y un final elegante y prolongado.",maridaje:["pescados grasos","sushi","sopas","quesos"],bodega_info:"Kaiken elabora con uvas de Altamira y Vistalba, dos terruños complementarios que aportan fruta y estructura.",tienda:"https://www.aromadevid.com.ar/producto/kaiken-ultra-pinot-noir/",perfil:{cuerpo:2,frescura:4,taninos:2},aromas_somm:["cereza","frambuesa"],color_somm:null},
+  {id:36,n:2,nombre:"Sur de los Andes Rosé",bodega:"Sur de los Andes",tipo:"Rosado",copa:4500,x:-95,y:-50,varietal:"Malbec · Syrah",region:"Luján de Cuyo y Valle de Uco",altitud:"950–1.150 msnm",suelo:"",crianza:"Sin crianza en madera",temperatura:"8–10°C",nota:"Rosado de Malbec y Syrah de Pablo Durigutti — salmón pálido con reflejos acerados, ananá maduro y un toque herbáceo. Entrada sedosa, acidez marcada y un dulzor apenas insinuado.",maridaje:["ensaladas","mariscos","sushi","pastas frías","quesos frescos","aperitivos"],bodega_info:"Sur de los Andes es la bodega de Guillermo Banfi, fundada en 2005 y con bodega propia desde 2019 en Las Compuertas, Luján de Cuyo. Con asesoría de Pablo Durigutti, elabora en concreto, acero, barrica y ánforas.",tienda:"https://www.aromadevid.com.ar/producto/sur-de-los-andes-rose/",perfil:{cuerpo:3,frescura:5,taninos:1},aromas_somm:["ananá","hierbas frescas"],color_somm:"Salmón"},
+  {id:38,n:3,nombre:"Alta Vista Estate Premium Cabernet Franc",bodega:"Alta Vista",tipo:"Tinto",copa:4500,x:35,y:50,varietal:"Cabernet Franc",region:"Valle de Uco",altitud:"",suelo:"",crianza:"12 meses en roble francés",temperatura:"",nota:"Cabernet Franc de Valle de Uco con estructura sólida — hierbas, frutos rojos y un toque de pimienta. Taninos firmes que dan una persistencia larga, con potencial de guarda de hasta 7 años.",maridaje:["carnes asadas","carnes condimentadas","quesos","embutidos"],bodega_info:"Alta Vista elabora en distintos terruños mendocinos, desde Campo los Andes —un paraje de clima frío extremo a más de 1.200 metros en Tunuyán— hasta parcelas de altitud media pensadas para vinos de consumo cotidiano. Busca siempre fineza y frescura por sobre la extracción.",tienda:"https://www.aromadevid.com.ar/producto/alta-vista-estate-premium-cabernet-franc/",perfil:{cuerpo:4,frescura:3,taninos:4},aromas_somm:["hierbas frescas","frambuesa","pimienta"],color_somm:null},
+  {id:40,n:4,nombre:"Latente Malbec Cuarto Surco",bodega:"Cuarto Surco",tipo:"Tinto",copa:4500,x:0,y:25,varietal:"Malbec",region:"Gualtallary, Tupungato, Valle de Uco",altitud:"+1.400 msnm",suelo:"Caliche, arena y calcáreo",crianza:"6 meses en barricas de roble francés de tercer y cuarto uso",temperatura:"",nota:"Malbec de Gualtallary, a más de 1.400 metros, con 6 meses en barricas de roble francés usadas — ciruela, frambuesa y mora con vainilla y chocolate. Taninos dulces y suaves, de textura aterciopelada.",maridaje:["carnes de caza","carnes asadas","pastas con salsa roja","empanadas"],bodega_info:"Cuarto Surco es una bodega familiar de La Consulta, San Carlos, en el Valle de Uco, fundada en 2008 por Francisco Pannocchia Esteller. Continúa la historia de Don Quico Esteller, un tonelero valenciano que tuvo bodega propia.",tienda:"https://www.aromadevid.com.ar/producto/latente-malbec-cuarto-surco/",perfil:{cuerpo:4,frescura:3,taninos:3},aromas_somm:["ciruela","frambuesa","mora","vainilla","chocolate"],color_somm:null},
+  {id:42,n:5,nombre:"Uruco Merlot",bodega:"Uruco Wines",tipo:"Tinto",copa:5000,x:5,y:-25,varietal:"Merlot",region:"Gualtallary, Tupungato, Valle de Uco",altitud:"1.200 msnm",suelo:"Arenoso",crianza:"12 meses en roble y 12 meses en botella",temperatura:"",nota:"Merlot de Gualtallary de la línea alta de Uruco, con 12 meses en roble y otros 12 en botella — rubí intenso con tonos púrpura, fruta intensa, pimienta y especias. Estructurado y equilibrado, de taninos dulces.",maridaje:["carnes rojas","carnes especiadas","platos con aderezos intensos"],bodega_info:"Uruco Wines trabaja la finca El Peral en Tupungato, a 1.200 metros de altura, expresando lo mejor del terroir de altura.",tienda:"https://www.aromadevid.com.ar/producto/uruco-merlot/",perfil:{cuerpo:3,frescura:3,taninos:2},aromas_somm:["ciruela","pimienta"],color_somm:"Rojo rubí"},
+  {id:44,n:6,nombre:"Kamala Criolla Dharma",bodega:"Dharma Wines",tipo:"Tinto",copa:4000,x:-95,y:-100,varietal:"Criolla",region:"Vista Flores, Tunuyán, Valle de Uco",altitud:"",suelo:"Franco arenoso con arcilla",crianza:"Sin crianza en madera",temperatura:"12–14°C",nota:"Criolla de Dharma en Vista Flores, sin paso por roble — rojo rubí claro, frutilla y cereza frescas con un toque floral. Entrada ágil y acidez marcada; se sirve fresco, casi como un tinto de verano.",maridaje:["picadas","comidas livianas","quesos frescos"],bodega_info:"Dharma Wines elabora desde Vista Flores, una de las zonas más frescas del Valle de Uco, con foco en expresión varietal y elegancia por sobre la extracción. La altitud y los suelos arcilloso-pedregosos de la zona marcan la identidad de sus vinos.",tienda:"https://www.aromadevid.com.ar/producto/kamala-criolla/",perfil:{cuerpo:1,frescura:5,taninos:1},aromas_somm:["frutilla","cereza","rosa"],color_somm:"Rojo rubí"},
+  {id:46,n:7,nombre:"Hermandad Blend Falasco",bodega:"Falasco Wines",tipo:"Tinto",copa:7000,x:11,y:0,varietal:"Blend",region:"Valle de Uco (Los Árboles, Vista Flores, Altamira, Los Chacayes)",altitud:"1.000–1.300 msnm",suelo:"Franco arenoso, pedregoso y calcáreo según la parcela",crianza:"12 meses en roble francés (70% nuevo)",temperatura:"16–18°C",nota:"Corte de cuatro varietales de Falasco — Malbec, Cabernet Sauvignon, Merlot y Petit Verdot, Valle de Uco. Fruta negra madura, especias dulces y vainilla, con taninos estructurados pero aterciopelados y un final largo.",maridaje:["quesos duros","guisos","carnes rojas","pastas rellenas con salsas contundentes"],bodega_info:"Falasco Wines es el proyecto de la cuarta generación de la familia Falasco, en el vino desde 1939. Elabora con uvas del Valle de Uco, entre 900 y 1.500 metros, y tiene base en San Martín, Mendoza.",tienda:"https://www.aromadevid.com.ar/producto/hermandad-blend/",perfil:{cuerpo:4,frescura:3,taninos:2},aromas_somm:["mora","ciruela","canela","vainilla"],color_somm:null},
+  {id:52,n:8,nombre:"Uno Pinot Gris Antigal",bodega:"Antigal",tipo:"Blanco",copa:4500,x:-95,y:-75,varietal:"Pinot Grigio",region:"Gualtallary y La Arboleda, Valle de Uco",altitud:"1.100 msnm",suelo:"",crianza:"Sin crianza en madera",temperatura:"8–10°C",nota:"Pinot Grigio de Antigal, de Gualtallary y La Arboleda — pera, flores blancas y cítricos, fresco y vivaz. Liviano, con un final delicado pensado para la mesa.",maridaje:["sushi","cocina nikkei","burrata","ensaladas frescas","pastas con vegetales","pescados blancos a la parrilla"],bodega_info:"Antigal funciona en una bodega histórica de 1897 en Russell, Maipú, restaurada con un sistema de elaboración por gravedad. Tiene viñedos en Gualtallary y La Arboleda (Tupungato) y en Russell.",tienda:"https://www.aromadevid.com.ar/producto/antigal-uno-pinot-grigio/",perfil:{cuerpo:2,frescura:5,taninos:1},aromas_somm:["pera","flores blancas","limón"],color_somm:null},
+  {id:54,n:9,nombre:"Zolo Black Cabernet Franc",bodega:"Zolo",tipo:"Tinto",copa:12500,x:-5,y:-25,varietal:"Cabernet Franc",region:"Alto Agrelo, Luján de Cuyo",altitud:"1.050 msnm",suelo:"",crianza:"18 meses en barricas de roble",temperatura:"16–18°C",nota:"Cabernet Franc de Agrelo — frambuesa, grosella negra, violetas y un toque de pimiento verde y grafito. Boca suave, con taninos delicados y un final largo. 18 meses en roble, potencial de guarda de 10 años.",maridaje:["cordero condimentado","carnes rojas","carnes de caza","quesos duros","charcutería","cerdo"],bodega_info:"Zolo es una de las bodegas de Fincas Patagónicas, de Patricia Ortiz, creada en 2003. Tiene sede en Agrelo, Luján de Cuyo, y elabora con viñedos propios entre 920 y 1.400 metros de altura.",tienda:"https://www.aromadevid.com.ar/producto/zolo-black-cabernet-franc/",perfil:{cuerpo:3,frescura:4,taninos:2},aromas_somm:["frambuesa","cassis","violeta","pimiento verde","grafito"],color_somm:null},
+  {id:59,n:10,nombre:"Catalpa Malbec Atamisque",bodega:"Atamisque",tipo:"Tinto",copa:6500,x:43,y:75,varietal:"Malbec",region:"La Consulta, Valle de Uco",altitud:"1.150 msnm",suelo:"",crianza:"12 meses: 30% en barricas nuevas de roble francés y 70% en tanque",temperatura:"18°C",nota:"Malbec de La Consulta, a 1150 metros — violetas, frutos negros y un toque sutil de café y tabaco. Boca concentrada y untuosa, con taninos bien integrados por el paso en roble francés.",maridaje:["carnes a la parrilla","quesos","dulce de membrillo"],bodega_info:"Atamisque está en San José, Tupungato, a 1.300 metros en el Valle de Uco. La fundaron en 2007 John y Chantal du Monceau y se reconoce por su techo de piedra; produce vinos frutados de frescura natural.",tienda:"https://www.aromadevid.com.ar/producto/catalpa-malbec/",perfil:{cuerpo:5,frescura:2,taninos:4},aromas_somm:["violeta","mora","café","tabaco"],color_somm:null},
+  {id:60,n:11,nombre:"Lorca Ópalo Syrah",bodega:"Lorca",tipo:"Tinto",copa:4500,x:25,y:50,varietal:"Syrah",region:"Vista Flores, Tunuyán, Valle de Uco",altitud:"",suelo:"",crianza:"Sin crianza en madera",temperatura:"16–18°C",nota:"Syrah de Vista Flores — pimienta, menta y flores sobre un rojo violáceo profundo. Muy buena estructura, con un final suave, elegante y persistente.",maridaje:["carnes blancas condimentadas","carnes rojas","arroces","guisos","pastas"],bodega_info:"Bodega Mauricio Lorca está en Perdriel, Luján de Cuyo, y la conduce el enólogo Mauricio Lorca, pionero en vinos premium sin madera. Sus viñedos están en el Valle de Uco, entre 1.050 y 1.500 metros.",tienda:"https://www.aromadevid.com.ar/producto/2846/",perfil:{cuerpo:4,frescura:2,taninos:4},aromas_somm:["pimienta","menta","violeta"],color_somm:"Violáceo"}
+];
+
+const TIPO = {
+  Tinto:{c:'#8E1B2E', ink:'#FFF4EE'}, Blanco:{c:'#E2CF7E', ink:'#2A2420'},
+  Rosado:{c:'#E8939A', ink:'#2A2420'}, Naranjo:{c:'#D9822B', ink:'#2A2420'}
+};
+const FAMILIAS = [
+  {id:'roja', nombre:'Fruta roja', l:['Fruta','roja'], color:'#C24A5A', tx:'#FFF4EE', paper:'#9A2A3B', aromas:['frutilla','cereza','frambuesa','grosella']},
+  {id:'negra', nombre:'Fruta negra', l:['Fruta','negra'], color:'#7A3A68', tx:'#FFF4EE', paper:'#5A2A4F', aromas:['mora','ciruela','cassis','arándano']},
+  {id:'blanca', nombre:'Fruta blanca y cítricos', l:['Fruta','blanca'], color:'#D8C26A', tx:'#2A2420', paper:'#7E6A1C', aromas:['pera','manzana verde','durazno','ananá','limón','pomelo']},
+  {id:'floral', nombre:'Floral', l:['Floral'], color:'#C98BB9', tx:'#2A2420', paper:'#83437A', aromas:['violeta','rosa','flores blancas','azahar']},
+  {id:'especiado', nombre:'Especiado', l:['Especias'], color:'#C0703F', tx:'#FFF4EE', paper:'#94491E', aromas:['pimienta','clavo','canela','nuez moscada']},
+  {id:'herbal', nombre:'Herbal', l:['Hierbas'], color:'#7FA56B', tx:'#1F2A1A', paper:'#42693A', aromas:['hierbas frescas','menta','pimiento verde','eucalipto']},
+  {id:'madera', nombre:'Madera y tostado', l:['Madera'], color:'#9A6E48', tx:'#FFF4EE', paper:'#6A4628', aromas:['vainilla','chocolate','café','tabaco','tostado']},
+  {id:'terroso', nombre:'Terroso', l:['Tierra'], color:'#8A8070', tx:'#FFF4EE', paper:'#57503F', aromas:['grafito','tierra húmeda','cuero','hongos']}
+];
+const AROMA_FAM = {};
+FAMILIAS.forEach(f => f.aromas.forEach(a => { AROMA_FAM[a] = f; }));
+const famDe = a => AROMA_FAM[a];
+const COLORES = {
+  Tinto:[['Violáceo','#4F1640'],['Rojo rubí','#8E1B2E'],['Rojo cereza','#A4162E'],['Granate','#6A1420'],['Rojo teja','#8A3A22']],
+  Blanco:[['Amarillo verdoso','#D6D88A'],['Amarillo pálido','#EDE3A0'],['Amarillo dorado','#D9B44A']],
+  Rosado:[['Rosa pálido','#F1C1C0'],['Salmón','#EE9C82'],['Frambuesa','#D9536B']],
+  Naranjo:[['Naranja','#D9822B'],['Ámbar','#C0791E']]
+};
+const QUICK = {
+  Tinto:['cereza','frutilla','mora','ciruela','violeta','pimienta','vainilla','hierbas frescas'],
+  Blanco:['pera','durazno','ananá','limón','flores blancas','manzana verde','hierbas frescas','pomelo'],
+  Rosado:['frutilla','frambuesa','ananá','durazno','pomelo','flores blancas','hierbas frescas','limón'],
+  Naranjo:['durazno','ananá','flores blancas','hierbas frescas','miel','canela','limón','tostado']
+};
+const IMP = [['encanto','Me encantó',.92],['gusto','Me gustó',.55],['no','No es para mí',.16]];
+const IMP_L = {encanto:'Me encantó', gusto:'Me gustó', no:'No es para mí'};
+const PRESET = {encanto:93, gusto:87, no:74};
+const PASOS = [
+  ['Fase visual','Inclina la copa sobre el mantel blanco y mirá el borde.'],
+  ['Fase olfativa','Olé la copa quieta, después girala y volvé a oler.'],
+  ['En boca','Un sorbo chico, que recorra toda la boca.'],
+  ['Conclusión','Lo que te queda después de la copa.'],
+  ['Puntuación','Del 60 al 100, sin pensarlo demasiado.']
+];
+const QUIZ = [
+  {k:'color', t:'¿Qué color te llama hoy?', s:'Lo que más se te antoje.', o:[['tinto','Tinto','Con cuerpo y carácter'],['claro','Blanco o rosado','Fresco y liviano'],['sorpresa','Sorprendeme','Algo que no pedirías']]},
+  {k:'animo', t:'¿Cómo lo querés?', s:'Pensá en el ánimo de esta noche.', o:[['fresco','Fresco y fácil','Que entre solo'],['estructura','Con estructura','Para tomarlo despacio'],['igual','Me da igual','Que combine con lo que haya']]},
+  {k:'comida', t:'¿Va con algo para comer?', s:'Así acertamos con el maridaje.', o:[['tabla','Tabla o charcutería','Quesos, jamón, fiambres'],['solo','Solo, por ahora','Sin comida'],['contundente','Algo más contundente','Carnes o quesos duros']]},
+  {k:'precio', t:'¿Cuánto querés invertir?', s:'Todos los vinos de la carta están elegidos.', o:[['accesible','Lo más accesible','Copas de $4.000 a $4.500'],['medio','Precio medio','Copas de $5.000 a $7.000'],['top','Lo mejor de la carta','Esta noche me doy un gusto']]}
+];
+
+/* ---------- Utilidades ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt$ = n => '$' + Number(n).toLocaleString('es-AR');
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const byId = id => WINES.find(w => w.id === id);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const reduced = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const dayKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const quincena = d => (d.getDate() <= 15 ? '1ª' : '2ª') + ' quincena de ' + MESES[d.getMonth()];
+const quincenaKey = d => d.getFullYear() + '-' + String(d.getMonth()).padStart(2, '0') + '-' + (d.getDate() <= 15 ? 1 : 2);
+const fechaCorta = d => DIAS[d.getDay()].slice(0, 3) + ' ' + d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3);
+const fechaLarga = d => DIAS[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()];
+const descr = n => n >= 95 ? 'Memorable' : n >= 90 ? 'Excelente' : n >= 86 ? 'Muy bueno' : n >= 80 ? 'Bueno' : n >= 72 ? 'Correcto' : 'No es para mí';
+const colorDe = (tipo, nombre) => { const f = (COLORES[tipo] || []).find(c => c[0] === nombre); return f ? f[1] : null; };
+function regionCorta(r){ const base = r.split('(')[0].trim(); const parts = base.split(',').map(s => s.trim()); return parts.length > 2 ? parts.slice(-2).join(', ') : base; }
+function regionKey(r){
+  if (/Patagonia|Neuquén|Río Negro/.test(r)) return 'Patagonia';
+  if (/^Luján de Cuyo|Agrelo|Perdriel|Las Compuertas/.test(r)) return 'Luján de Cuyo';
+  if (/Uco|Tupungato|Tunuyán|Gualtallary|Consulta|Vista Flores|Altamira|Chacayes/.test(r)) return 'Valle de Uco';
+  if (/Maipú/.test(r)) return 'Maipú';
+  if (/Salta|Cafayate/.test(r)) return 'Salta';
+  return r.split(',')[0];
+}
+function preguntaSomm(w){
+  if (w.altitud) return 'Preguntale al sommelier qué le aporta crecer a ' + w.altitud.replace('+', 'más de ') + '.';
+  if (/sin crianza/i.test(w.crianza)) return 'Preguntale al sommelier por qué este vino no pasa por madera.';
+  if (/roble|barrica/i.test(w.crianza)) return 'Preguntale al sommelier qué le suma la madera a este vino.';
+  return 'Preguntale al sommelier con qué lo acompañaría esta noche.';
+}
+function haptic(ms){ try { if (navigator.vibrate) navigator.vibrate(ms || 8); } catch (e) {} }
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+
+/* ---------- Dibujos ---------- */
+let svgUid = 0;
+const ICON_ASK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8.5 9.5h7M8.5 12.5h4.5"/></svg>';
+const ICON_GO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+const HAND = 'M35 5C51 5 61 15 59 30C57 45 43 52 29 51C14 50 4 41 5 27C6 13 18 5 37 7';
+const handCircle = () => '<svg class="hand" viewBox="0 0 64 56" aria-hidden="true"><path d="' + HAND + '" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+const BOWL = 'M4 2H20C20 11 17 15.5 12 15.5C7 15.5 4 11 4 2Z';
+
+function copita(w){
+  const t = TIPO[w.tipo];
+  return '<svg viewBox="0 0 24 30" class="copita" aria-hidden="true"><path d="' + BOWL + '" fill="' + t.c + '" stroke="var(--glass-edge)" stroke-width="1"/><path d="M12 15.5V25.5M7.5 27H16.5" fill="none" stroke="var(--glass-edge)" stroke-width="1.3" stroke-linecap="round"/><text x="12" y="10.7" text-anchor="middle" font-size="8.2" font-weight="700" font-family="DM Sans, sans-serif" fill="' + t.ink + '">' + w.n + '</text></svg>';
+}
+function copaNivel(f, color){
+  const id = 'cn' + (++svgUid), y = (24 - 20 * f).toFixed(1);
+  const bowl = 'M6 4H26C26 17 22 24 16 24C10 24 6 17 6 4Z';
+  return '<svg viewBox="0 0 32 40" aria-hidden="true"><defs><clipPath id="' + id + '"><path d="' + bowl + '"/></clipPath></defs><rect x="0" y="' + y + '" width="32" height="30" fill="' + color + '" clip-path="url(#' + id + ')"/><path d="' + bowl + '" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M16 24V34M11 36H21" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+}
+function splitName(s){
+  if (s.length <= 10 || s.indexOf(' ') < 0) return [s];
+  const words = s.split(' '); let best = [s], diff = 1e9;
+  for (let i = 1; i < words.length; i++) {
+    const a = words.slice(0, i).join(' '), b = words.slice(i).join(' ');
+    const d = Math.abs(a.length - b.length);
+    if (d < diff) { diff = d; best = [a, b]; }
+  }
+  return best;
+}
+function bottleSVG(w){
+  const id = 'bt' + (++svgUid);
+  const clear = w.tipo !== 'Tinto';
+  const burg = clear || /Pinot|Criolla/.test(w.varietal);
+  const d = burg
+    ? 'M25 6H35V48C35 74 53 88 53 114V187Q53 194 46 194H14Q7 194 7 187V114C7 88 25 74 25 48Z'
+    : 'M24 6H36V56C36 69 53 70 53 85V187Q53 194 46 194H14Q7 194 7 187V85C7 70 24 69 24 56Z';
+  const glass = clear ? '#DCE5DA' : '#1E2A23';
+  const cap = w.tipo === 'Tinto' ? '#5E0F1F' : w.tipo === 'Rosado' ? '#C98A7A' : '#B89656';
+  const lines = splitName(w.bodega.toUpperCase());
+  const ly = lines.length === 1 ? [146] : [141.5, 149.5];
+  const varietal = w.varietal.length > 15 ? w.varietal.split(' ')[0] : w.varietal;
+  return '<svg viewBox="0 0 60 200" class="bottle" aria-hidden="true"><defs><clipPath id="' + id + '"><path d="' + d + '"/></clipPath></defs>'
+    + '<path d="' + d + '" fill="' + glass + '"' + (clear ? ' fill-opacity=".6"' : '') + '/>'
+    + (clear ? '<rect x="0" y="' + (burg ? 102 : 84) + '" width="60" height="120" fill="' + TIPO[w.tipo].c + '" opacity=".9" clip-path="url(#' + id + ')"/>' : '')
+    + '<rect x="10.5" y="90" width="4.5" height="96" rx="2" fill="#FFFFFF" opacity=".16" clip-path="url(#' + id + ')"/>'
+    + '<path class="edge" d="' + d + '"/>'
+    + '<rect x="23" y="4" width="14" height="' + (burg ? 30 : 34) + '" rx="2" fill="' + cap + '"/>'
+    + '<rect x="10" y="124" width="40" height="44" rx="2" fill="#F4EDE0"/>'
+    + '<line x1="14" y1="131" x2="46" y2="131" stroke="#C8A46A" stroke-width=".6"/>'
+    + '<line x1="14" y1="163" x2="46" y2="163" stroke="#C8A46A" stroke-width=".6"/>'
+    + lines.map((t, i) => '<text x="30" y="' + ly[i] + '" text-anchor="middle" font-family="DM Sans, sans-serif" font-weight="700" font-size="5.2" letter-spacing=".5" fill="#2A2420"' + (t.length > 9 ? ' textLength="34" lengthAdjust="spacingAndGlyphs"' : '') + '>' + esc(t) + '</text>').join('')
+    + '<text x="30" y="158" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-weight="600" font-size="6.6" fill="#7A1428">' + esc(varietal) + '</text>'
+    + '</svg>';
+}
+function blot(hex){
+  return '<svg viewBox="0 0 60 56" aria-hidden="true"><path d="M31 5C44 3 56 12 56 26C57 40 46 51 32 51C18 52 6 44 5 30C4 17 16 7 31 5Z" fill="' + hex + '"/><ellipse cx="23" cy="20" rx="9" ry="5" fill="#FFFFFF" opacity=".16" transform="rotate(-25 23 20)"/><circle cx="54" cy="48" r="3" fill="' + hex + '"/></svg>';
+}
+function arc(cx, cy, r0, r1, a0, a1){
+  const p = (r, a) => [cx + r * Math.cos(a * Math.PI / 180), cy + r * Math.sin(a * Math.PI / 180)];
+  const A = p(r1, a0), B = p(r1, a1), C = p(r0, a1), D = p(r0, a0);
+  const f = n => n.toFixed(2);
+  return 'M' + f(A[0]) + ' ' + f(A[1]) + 'A' + r1 + ' ' + r1 + ' 0 0 1 ' + f(B[0]) + ' ' + f(B[1]) + 'L' + f(C[0]) + ' ' + f(C[1]) + 'A' + r0 + ' ' + r0 + ' 0 0 0 ' + f(D[0]) + ' ' + f(D[1]) + 'Z';
+}
+const dots = (v, cls) => '<span class="dots ' + (cls || '') + '" role="img" aria-label="' + v + ' de 5">' + [1,2,3,4,5].map(i => '<i class="' + (i <= v ? 'on' : '') + '"></i>').join('') + '</span>';
+
+/* ---------- Cuaderno (se guarda en este navegador) ---------- */
+const KEY = '125cc-proto-cuaderno-v2';
+let store = {pages: [], email: '', theme: '', seeded: false};
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+function load(){
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.pages)) store = Object.assign(store, s); } catch (e) {}
+  if (!store.seeded) { store.pages = seed(); store.seeded = true; save(); }
+}
+function mkPage(vinoId, o){
+  const w = byId(vinoId);
+  return Object.assign({
+    id: uid(), vinoId, fecha: new Date().toISOString(), modo: 'rapida', impresion: null, puntaje: 86,
+    color: null, intensidad: null, aromas: [], intAroma: null, perfil: null, final: null, repetiria: null, nota: '', ejemplo: false,
+    snap: {n: w.n, nombre: w.nombre, bodega: w.bodega, varietal: w.varietal, tipo: w.tipo, region: w.region, x: w.x, y: w.y}
+  }, o);
+}
+function seed(){
+  const now = new Date();
+  const ago = (days, h, m) => { const d = new Date(now); d.setDate(d.getDate() - days); d.setHours(h, m, 0, 0); return d.toISOString(); };
+  return [
+    mkPage(44, {fecha: ago(14, 21, 10), modo: 'rapida', impresion: 'encanto', puntaje: 90, aromas: ['frutilla'], nota: 'Liviana y jugosa. Buena para arrancar la noche.', ejemplo: true}),
+    mkPage(40, {fecha: ago(6, 21, 40), modo: 'rapida', impresion: 'gusto', puntaje: 86, aromas: ['ciruela'], ejemplo: true}),
+    mkPage(54, {fecha: ago(6, 22, 35), modo: 'completa', impresion: 'encanto', color: 'Rojo rubí', intensidad: 3, aromas: ['frambuesa','pimiento verde','violeta'], intAroma: 4, perfil: {cuerpo: 3, frescura: 4, taninos: 3}, final: 'Largo', repetiria: 'Sí', puntaje: 93, nota: 'El pimiento verde aparece al final. Preguntar por la añada.', ejemplo: true})
+  ];
+}
+const ultimaPagina = id => store.pages.filter(p => p.vinoId === id).sort((a, b) => b.fecha.localeCompare(a.fecha))[0];
+function ultimasPorVino(){ const m = new Map(); [...store.pages].sort((a, b) => a.fecha.localeCompare(b.fecha)).forEach(p => m.set(p.vinoId, p)); return [...m.values()]; }
+function paladar(){
+  const liked = ultimasPorVino().filter(p => p.puntaje >= 86);
+  if (liked.length < 2) return null;
+  return {X: liked.reduce((s, p) => s + p.snap.x, 0) / liked.length, Y: liked.reduce((s, p) => s + p.snap.y, 0) / liked.length, n: liked.length};
+}
+function frasePaladar(){
+  const z = paladar();
+  if (!z) return 'Anotá un par de copas más y te muestro hacia dónde va tu paladar.';
+  const h = z.X < -18 ? 'frescos' : z.X > 18 ? 'complejos' : null;
+  const v = z.Y > 18 ? 'potentes' : z.Y < -18 ? 'suaves' : null;
+  const t = h && v ? 'los vinos ' + h + ' y ' + v : h ? 'los vinos ' + h : v ? 'los vinos ' + v : 'vinos de todo el mapa, sin un lado preferido';
+  return 'Te vienen gustando ' + t + '.';
+}
+function ultimaNoche(pages){
+  const k = dayKey(new Date(pages[0].fecha));
+  const ps = pages.filter(p => dayKey(new Date(p.fecha)) === k).sort((a, b) => a.fecha.localeCompare(b.fecha));
+  return {d: new Date(pages[0].fecha), pages: ps, esHoy: k === dayKey(new Date())};
+}
+
+/* ---------- Estado de la interfaz ---------- */
+const ui = {view: 'carta', filtro: 'Todos', faltan: false, sheet: null, cata: null, quiz: {step: -1, ans: {}}, confirm: null};
+
+/* ---------- Mapa ---------- */
+const LAYOUT = (() => {
+  const R = 125, sx = 0.075, sy = 0.105;
+  const pts = WINES.map(w => ({id: w.id, x: (w.x + R) / (2 * R), y: 1 - (w.y + R) / (2 * R)}));
+  for (let it = 0; it < 40; it++) {
+    for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+      const a = pts[i], b = pts[j];
+      let dx = (b.x - a.x) / sx, dy = (b.y - a.y) / sy;
+      const d = Math.hypot(dx, dy);
+      if (d < 1) {
+        if (d === 0) { dx = 1; dy = 0; }
+        const ux = dx / (d || 1), uy = dy / (d || 1), push = (1 - d) / 2;
+        a.x -= ux * push * sx; b.x += ux * push * sx; a.y -= uy * push * sy; b.y += uy * push * sy;
+      }
+    }
+  }
+  const o = {};
+  pts.forEach(p => { o[p.id] = {x: Math.min(.92, Math.max(.08, p.x)), y: Math.min(.9, Math.max(.1, p.y))}; });
+  return o;
+})();
+const visible = w => (ui.filtro === 'Todos' || w.tipo === ui.filtro) && (!ui.faltan || !ultimaPagina(w.id));
+function mapHTML(o){
+  o = o || {};
+  let zona = '';
+  if (o.paladar) {
+    const z = paladar();
+    if (z) zona = '<div class="zona" style="left:' + ((z.X + 125) / 250 * 100).toFixed(1) + '%;top:' + ((1 - (z.Y + 125) / 250) * 100).toFixed(1) + '%"><span>Tu zona</span></div>';
+  }
+  return '<div class="map' + (o.big ? ' big' : '') + '" role="group" aria-label="Mapa del vino: de fresco a complejo y de suave a potente">'
+    + '<i class="ax ax-x"></i><i class="ax ax-y"></i>'
+    + '<span class="lb lb-t">Potente</span><span class="lb lb-b">Suave</span><span class="lb lb-l">Fresco</span><span class="lb lb-r">Complejo</span>'
+    + zona
+    + WINES.map(w => {
+      const p = LAYOUT[w.id], pg = ultimaPagina(w.id);
+      const dim = o.paladar ? !pg : !visible(w);
+      return '<button class="pin' + (dim ? ' dim' : '') + '" style="left:' + (p.x * 100).toFixed(2) + '%;top:' + (p.y * 100).toFixed(2) + '%" data-act="ficha" data-id="' + w.id + '" aria-label="Nº ' + w.n + ', ' + esc(w.nombre) + (pg ? ', anotado con ' + pg.puntaje : '') + '">' + copita(w) + (pg ? '<span class="sb">' + pg.puntaje + '</span>' : '') + '</button>';
+    }).join('')
+    + '</div>';
+}
+
+/* ---------- Carta ---------- */
+function rowHTML(w){
+  const p = ultimaPagina(w.id), t = TIPO[w.tipo];
+  return '<li><button class="row" data-act="ficha" data-id="' + w.id + '">'
+    + '<span class="num" style="background:' + t.c + ';color:' + t.ink + '">' + w.n + '</span>'
+    + '<span class="row-main"><span class="row-name">' + esc(w.nombre) + '</span><span class="row-meta">' + esc(w.varietal) + ' · ' + esc(regionCorta(w.region)) + '</span></span>'
+    + '<span class="row-side"><span class="row-price">' + fmt$(w.copa) + '</span>' + (p ? '<span class="row-tag">' + p.puntaje + ' · anotado</span>' : '<span class="row-sub">la copa</span>') + '</span>'
+    + '</button></li>';
+}
+function renderCarta(){
+  const tipos = ['Todos'].concat(['Tinto','Blanco','Rosado','Naranjo'].filter(t => WINES.some(w => w.tipo === t)));
+  const vis = WINES.filter(visible);
+  $('#view-carta').innerHTML =
+    '<div class="carta-head"><div><p class="eyebrow">' + cap(quincena(new Date())) + '</p><h1 class="h1">Carta por copa</h1></div>'
+    + '<p class="carta-count">' + WINES.length + ' vinos<span>copas de 125 cc</span></p></div>'
+    + '<div class="mapcard">' + mapHTML() + '<div class="map-foot"><span>Tocá una copita para ver el vino</span><button class="link" data-act="ampliar">Ampliar mapa</button></div></div>'
+    + '<div class="chips" role="group" aria-label="Filtrar la carta">'
+    + tipos.map(t => '<button class="chip" data-act="filtro" data-v="' + t + '" aria-pressed="' + (ui.filtro === t) + '">' + (t !== 'Todos' ? '<i class="dot" style="background:' + TIPO[t].c + '"></i>' : '') + t + '</button>').join('')
+    + '<button class="chip" data-act="faltan" aria-pressed="' + ui.faltan + '">Me falta probar</button></div>'
+    + '<ul class="winelist">' + (vis.map(rowHTML).join('') || '<li class="empty-row">Ya probaste todos los vinos de este filtro.</li>') + '</ul>'
+    + '<p class="proto-note">Prototipo armado con la carta real de esta quincena y sus precios de copa. Lo que anotes se guarda solo en este navegador.</p>';
+}
+
+/* ---------- Página del vino ---------- */
+function perfilRows(perfil){
+  return '<div class="perf">' + [['cuerpo','Cuerpo'],['frescura','Frescura'],['taninos','Taninos']].map(([k, l]) => '<span>' + l + '</span>' + dots(perfil[k])).join('') + '</div>';
+}
+function fichaHTML(w){
+  const p = ultimaPagina(w.id);
+  const groups = [
+    ['Terruño', [['Región', w.region], ['Altitud', w.altitud], ['Suelo', w.suelo]]],
+    ['Elaboración', [['Varietal', w.varietal], ['Crianza', w.crianza]]],
+    ['Servicio', [['Temperatura', w.temperatura], ['Copa', '125 cc']]]
+  ].map(([g, rows]) => [g, rows.filter(r => r[1])]).filter(([, rows]) => rows.length);
+  return '<div class="ficha-hero"><div><p class="eyebrow">Nº ' + w.n + ' · ' + w.tipo + '</p><h2 class="h2" id="sheet-title">' + esc(w.nombre) + '</h2><p class="fh-bodega">' + esc(w.bodega) + '</p><p class="fh-price"><strong>' + fmt$(w.copa) + '</strong>la copa de 125 cc</p></div><div class="fh-bottle">' + bottleSVG(w) + '</div></div>'
+    + (p ? '<button class="mine" data-act="pagina" data-id="' + p.id + '"><span class="mine-score">' + p.puntaje + '</span><span><strong>Ya está en tu cuaderno</strong><br>' + cap(fechaLarga(new Date(p.fecha))) + (p.nota ? ' · “' + esc(p.nota.length > 46 ? p.nota.slice(0, 44) + '…' : p.nota) + '”' : '') + '</span></button>' : '')
+    + '<figure class="nota-somm"><p class="eyebrow">La nota del somm</p><blockquote>' + esc(w.nota) + '</blockquote></figure>'
+    + '<div class="block"><p class="block-t">Perfil <span>según la bodega</span></p>' + perfilRows(w.perfil) + '</div>'
+    + groups.map(([g, rows]) => '<div class="block"><p class="block-t">' + g + '</p><dl class="facts">' + rows.map(([k, v]) => '<div><dt>' + k + '</dt><dd>' + esc(v) + '</dd></div>').join('') + '</dl></div>').join('')
+    + '<div class="block"><p class="block-t">Va bien con</p><div class="tags">' + w.maridaje.map(m => '<span class="tag">' + esc(m) + '</span>').join('') + '</div></div>'
+    + '<div class="block bodega"><p class="block-t">Sobre la bodega</p><p>' + esc(w.bodega_info) + '</p></div>'
+    + '<p class="ask">' + ICON_ASK + '<span>' + esc(preguntaSomm(w)) + '</span></p>'
+    + '<a class="tienda" href="' + esc(w.tienda) + '" target="_blank" rel="noopener">Ver la botella en la tienda de Aroma de Vid ↗</a>';
+}
+
+/* ---------- Anotar ---------- */
+function nuevaCata(vinoId){
+  return {vinoId, modo: 'rapida', impresion: null, puntaje: 86, tocoPuntaje: false, aromas: [], nota: '', step: 0, color: null, intensidad: null, fam: null, intAroma: null, perfil: {cuerpo: null, frescura: null, taninos: null}, final: null, repetiria: null};
+}
+function rangeHTML(v){ return '<input type="range" class="range" id="score-r" min="60" max="100" step="1" value="' + v + '" style="--p:' + ((v - 60) / 40 * 100) + '%" aria-label="Puntaje de 60 a 100">'; }
+function rapidaHTML(){
+  const c = ui.cata, w = byId(c.vinoId);
+  return '<p class="eyebrow">Cata rápida · tres toques</p><h2 class="h3" id="sheet-title">' + esc(w.nombre) + '</h2>'
+    + '<div class="q"><p class="q-t">¿Cómo te cayó?</p><div class="imp">'
+    + IMP.map(([v, l, f]) => '<button class="imp-b" data-act="imp" data-v="' + v + '" aria-pressed="' + (c.impresion === v) + '">' + copaNivel(f, TIPO[w.tipo].c) + '<span>' + l + '</span></button>').join('')
+    + '</div></div>'
+    + '<div class="q"><div class="q-row"><p class="q-t">Puntaje</p><p class="score-read"><span id="score-n" class="score-m">' + c.puntaje + '</span><span id="score-d" class="score-desc">' + descr(c.puntaje) + '</span></p></div>' + rangeHTML(c.puntaje) + '<div class="range-l"><span>60</span><span>100</span></div></div>'
+    + '<div class="q"><p class="q-t">Un aroma que encuentres</p><div class="tags">'
+    + QUICK[w.tipo].map(a => '<button class="tag-b" data-act="aroma-q" data-v="' + a + '" aria-pressed="' + c.aromas.includes(a) + '" style="--fc:' + (famDe(a) ? famDe(a).color : '#8A8070') + '">' + a + '</button>').join('')
+    + '</div></div>'
+    + '<div class="q"><label class="q-t" for="nota-txt">Una nota <span class="optional">opcional</span></label><textarea id="nota-txt" rows="2" placeholder="Lo que te quieras acordar de esta copa">' + esc(c.nota) + '</textarea></div>';
+}
+function rapidaFoot(){
+  return '<button class="btn btn-ghost" data-act="completa">Cata completa</button><button class="btn btn-primary" id="btn-guardar" data-act="guardar-rapida"' + (ui.cata.impresion ? '' : ' disabled') + '>Guardar</button>';
+}
+function setScore(n){
+  const c = ui.cata; c.puntaje = n;
+  const r = $('#score-r'); if (r) { r.value = n; r.style.setProperty('--p', ((n - 60) / 40 * 100) + '%'); }
+  const sn = $('#score-n'); if (sn) sn.textContent = n;
+  const sd = $('#score-d'); if (sd) sd.textContent = descr(n);
+}
+
+/* Cata completa */
+function vasoHTML(){
+  const ticks = [1,2,3,4,5].map(k => { const y = (70 - k * 12.4).toFixed(1); return '<line x1="80" y1="' + y + '" x2="' + (k === 5 ? 88 : 85) + '" y2="' + y + '" stroke="var(--ink-faint)" stroke-width="1"/>'; }).join('');
+  return '<svg viewBox="0 0 96 130" class="vaso" aria-hidden="true"><defs><clipPath id="vaso-clip"><path d="M14 8H76C76 50 63 70 45 70C27 70 14 50 14 8Z"/></clipPath></defs>'
+    + '<g clip-path="url(#vaso-clip)"><rect id="cc-liq" class="vaso-liq" x="0" y="8" width="96" height="64" fill="#8E1B2E" style="transform:translateY(64px)"/></g>'
+    + '<path d="M14 8H76C76 50 63 70 45 70C27 70 14 50 14 8Z" fill="none" stroke="var(--ink-soft)" stroke-width="1.6"/>'
+    + '<path d="M45 70V114M30 118H60" fill="none" stroke="var(--ink-soft)" stroke-width="1.8" stroke-linecap="round"/>'
+    + ticks + '<text x="91" y="5" text-anchor="end" font-family="DM Sans, sans-serif" font-size="8" font-weight="600" fill="var(--ink-faint)">125</text></svg>';
+}
+function completaShell(){
+  const w = byId(ui.cata.vinoId);
+  return '<div class="cc-head"><div>' + vasoHTML() + '</div><div><p class="eyebrow" id="cc-paso"></p><h2 class="h3" id="sheet-title"></h2><p class="cc-wine">' + esc(w.nombre) + '</p></div></div><div id="cc-step"></div>';
+}
+function escala(key, val, lo, hi){
+  return '<div class="scale" role="group" aria-label="' + key + '">' + [1,2,3,4,5].map(i => '<button data-act="esc" data-k="' + key + '" data-v="' + i + '" class="' + (val && i <= val ? 'fill' : '') + (val === i ? ' on' : '') + '" aria-pressed="' + (val === i) + '" aria-label="' + i + ' de 5"></button>').join('') + '</div><div class="scale-l"><span>' + lo + '</span><span>' + hi + '</span></div>';
+}
+function wheelSVG(c){
+  const cx = 140, cy = 140, r0 = 50, r1 = 128, step = 360 / FAMILIAS.length;
+  const segs = FAMILIAS.map((f, i) => {
+    const a0 = -90 - step / 2 + i * step + 1.2, a1 = a0 + step - 2.4, am = (a0 + a1) / 2, rad = am * Math.PI / 180;
+    const on = c.fam === f.id, cnt = c.aromas.filter(a => famDe(a) && famDe(a).id === f.id).length;
+    const off = on ? 7 : 0, lr = (r0 + r1) / 2 + 2;
+    const lx = cx + Math.cos(rad) * lr, ly = cy + Math.sin(rad) * lr;
+    const label = f.l.length === 1
+      ? '<text x="' + lx.toFixed(1) + '" y="' + (ly + 4).toFixed(1) + '" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="600" fill="' + f.tx + '">' + f.l[0] + '</text>'
+      : '<text x="' + lx.toFixed(1) + '" y="' + (ly - 2).toFixed(1) + '" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11.5" font-weight="600" fill="' + f.tx + '"><tspan x="' + lx.toFixed(1) + '">' + f.l[0] + '</tspan><tspan x="' + lx.toFixed(1) + '" dy="13">' + f.l[1] + '</tspan></text>';
+    const bx = cx + Math.cos(rad) * (r1 - 12), by = cy + Math.sin(rad) * (r1 - 12);
+    const badge = cnt ? '<circle cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1) + '" r="8.5" fill="var(--ink)"/><text x="' + bx.toFixed(1) + '" y="' + (by + 3.6).toFixed(1) + '" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" font-weight="700" fill="var(--bg)">' + cnt + '</text>' : '';
+    return '<g class="seg" data-act="fam" data-v="' + f.id + '" role="button" tabindex="0" aria-pressed="' + on + '" aria-label="' + f.nombre + (cnt ? ', ' + cnt + ' elegido' + (cnt > 1 ? 's' : '') : '') + '" style="transform:translate(' + (Math.cos(rad) * off).toFixed(1) + 'px,' + (Math.sin(rad) * off).toFixed(1) + 'px)">'
+      + '<path d="' + arc(cx, cy, r0, r1, a0, a1) + '" fill="' + f.color + '" fill-opacity="' + (on ? 1 : (c.fam ? .55 : .85)) + '" stroke="' + (on ? 'var(--ink)' : 'none') + '" stroke-width="2"/>' + label + badge + '</g>';
+  }).join('');
+  const n = c.aromas.length;
+  return '<svg viewBox="0 0 280 280" class="wheel" role="group" aria-label="Rueda de aromas">' + segs
+    + '<circle cx="140" cy="140" r="44" fill="var(--surface-2)"/>'
+    + (n ? '<text x="140" y="142" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="24" font-weight="600" fill="var(--ink)">' + n + '</text><text x="140" y="160" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9.5" font-weight="600" letter-spacing="1.4" fill="var(--ink-soft)">' + (n === 1 ? 'AROMA' : 'AROMAS') + '</text>'
+         : '<text x="140" y="144" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9.5" font-weight="600" letter-spacing="1.4" fill="var(--ink-soft)">AROMAS</text>')
+    + '</svg>';
+}
+function stepValido(c, w){
+  return [
+    !!c.color,
+    c.aromas.length > 0,
+    !!(c.perfil.cuerpo && c.perfil.frescura && (w.tipo !== 'Tinto' || c.perfil.taninos) && c.final),
+    !!c.repetiria,
+    true
+  ][c.step];
+}
+const FALTA = ['Elegí un color para seguir.', 'Elegí al menos un aroma para seguir.', 'Completá cuerpo, frescura' + ', taninos y final para seguir.', 'Contanos si lo volverías a pedir.', ''];
+function stepBody(c, w){
+  const s = c.step;
+  let h = '<p class="hint">' + PASOS[s][1] + '</p>';
+  if (s === 0) {
+    h += '<div class="q"><p class="q-t">Color</p><div class="swatches">'
+      + COLORES[w.tipo].map(([n, hex]) => '<button class="sw" data-act="color" data-v="' + n + '" aria-pressed="' + (c.color === n) + '"><i style="background:' + hex + '"></i><span>' + n + '</span></button>').join('')
+      + '<button class="sw" data-act="color" data-v="Otro" aria-pressed="' + (c.color === 'Otro') + '"><i class="sw-otro"></i><span>Otro</span></button></div></div>'
+      + '<div class="q"><p class="q-t">Intensidad del color</p>' + escala('intensidad', c.intensidad, 'Pálida', 'Profunda') + '</div>';
+  } else if (s === 1) {
+    const f = FAMILIAS.find(x => x.id === c.fam);
+    h += wheelSVG(c)
+      + '<div class="fam-box">' + (f
+        ? '<p class="q-t">' + f.nombre + '</p><div class="tags">' + f.aromas.map(a => '<button class="tag-b" data-act="aroma" data-v="' + a + '" aria-pressed="' + c.aromas.includes(a) + '" style="--fc:' + f.color + '">' + a + '</button>').join('') + '</div>'
+        : '<p class="fam-empty">Tocá una familia de la rueda para ver sus aromas.</p>') + '</div>'
+      + (c.aromas.length ? '<div class="q"><p class="q-t">Tus aromas</p><div class="tags">' + c.aromas.map(a => '<button class="tag-b" data-act="aroma" data-v="' + a + '" aria-pressed="true" aria-label="Quitar ' + a + '" style="--fc:' + famDe(a).color + '">' + a + ' ×</button>').join('') + '</div></div>' : '')
+      + '<div class="q"><p class="q-t">Intensidad aromática</p>' + escala('intAroma', c.intAroma, 'Tímida', 'Intensa') + '</div>';
+  } else if (s === 2) {
+    h += '<div class="q"><p class="q-t">Cuerpo</p>' + escala('cuerpo', c.perfil.cuerpo, 'Liviano', 'Potente') + '</div>'
+      + '<div class="q"><p class="q-t">Frescura</p>' + escala('frescura', c.perfil.frescura, 'Suave', 'Vibrante') + '</div>'
+      + (w.tipo === 'Tinto' ? '<div class="q"><p class="q-t">Taninos</p>' + escala('taninos', c.perfil.taninos, 'Sedosos', 'Firmes') + '</div>' : '')
+      + '<div class="q"><p class="q-t">Final</p><div class="seg3">' + ['Corto','Medio','Largo'].map(v => '<button data-act="final" data-v="' + v + '" aria-pressed="' + (c.final === v) + '">' + v + '</button>').join('') + '</div></div>';
+  } else if (s === 3) {
+    h += '<div class="q"><p class="q-t">¿Lo volverías a pedir?</p><div class="seg3">' + ['Sí','Tal vez','No'].map(v => '<button data-act="repetir" data-v="' + v + '" aria-pressed="' + (c.repetiria === v) + '">' + v + '</button>').join('') + '</div></div>'
+      + '<div class="q"><label class="q-t" for="nota-txt">Tu nota <span class="optional">opcional</span></label><textarea id="nota-txt" rows="4" placeholder="Con quién estabas, qué comiste, qué te sorprendió">' + esc(c.nota) + '</textarea></div>';
+  } else {
+    h += '<div class="score-hero"><span id="score-n" class="score-xl">' + c.puntaje + '</span><span id="score-d" class="score-desc">' + descr(c.puntaje) + '</span></div>' + rangeHTML(c.puntaje) + '<div class="range-l"><span>60</span><span>80</span><span>100</span></div>';
+  }
+  if (!stepValido(c, w)) h += '<p class="need">' + (s === 2 && w.tipo !== 'Tinto' ? 'Completá cuerpo, frescura y final para seguir.' : FALTA[s]) + '</p>';
+  return h;
+}
+function renderStep(keepScroll){
+  const c = ui.cata, w = byId(c.vinoId), s = c.step;
+  const st = $('#sheet-body').scrollTop;
+  $('#cc-paso').textContent = 'Paso ' + (s + 1) + ' de 5 · ' + (25 * (s + 1)) + ' cc';
+  $('#sheet-title').textContent = PASOS[s][0];
+  $('#cc-step').innerHTML = stepBody(c, w);
+  const liq = $('#cc-liq');
+  if (liq) {
+    liq.setAttribute('fill', colorDe(w.tipo, c.color) || TIPO[w.tipo].c);
+    requestAnimationFrame(() => { liq.style.transform = 'translateY(' + ((1 - (s + 1) / 5) * 62 + 2) + 'px)'; });
+  }
+  $('#sheet-foot').innerHTML = '<button class="btn btn-ghost" data-act="paso-ant">' + (s === 0 ? 'Rápida' : 'Atrás') + '</button><button class="btn btn-primary" data-act="paso-sig"' + (stepValido(c, w) ? '' : ' disabled') + '>' + (s === 4 ? 'Ver qué encontró el somm' : 'Siguiente') + '</button>';
+  $('#sheet-body').scrollTop = keepScroll ? st : 0;
+}
+
+/* Revelado */
+function comparar(p, w){
+  const tus = p.aromas || [], somm = w.aromas_somm || [];
+  const exact = somm.filter(a => tus.includes(a));
+  const famT = new Set(tus.map(a => famDe(a) && famDe(a).id));
+  const fam = somm.filter(a => !exact.includes(a) && famDe(a) && famT.has(famDe(a).id));
+  const faltan = somm.filter(a => !exact.includes(a) && !fam.includes(a));
+  return {exact, fam, faltan};
+}
+function revealAromas(p, w, compact){
+  const s = w.aromas_somm;
+  if (!s || !s.length) return '';
+  const {exact, fam, faltan} = comparar(p, w);
+  let head;
+  if (exact.length > 1) head = 'Buen olfato: coincidiste con el sommelier en ' + exact.length + ' aromas.';
+  else if (exact.length === 1) head = 'Coincidiste con el sommelier en <strong>' + esc(exact[0]) + '</strong>.';
+  else if (fam.length) head = 'Ibas bien: el somm también encontró ' + famDe(fam[0]).nombre.toLowerCase() + '.';
+  else head = 'Esta vez fueron por lados distintos. En la próxima copa buscá <strong>' + esc(faltan[0]) + '</strong>.';
+  const leg = [];
+  if (exact.length) leg.push('<span><i class="lg t-match"></i>Coincidieron</span>');
+  if (fam.length) leg.push('<span><i class="lg t-fam"></i>Misma familia</span>');
+  if (faltan.length) leg.push('<span><i class="lg t-miss"></i>Para buscar</span>');
+  return '<div class="block"><p class="block-t">' + (compact ? 'El sommelier anotó' : 'Aromas') + '</p><p class="reveal-h">' + head + '</p><div class="tags">'
+    + s.map(a => '<span class="tag ' + (exact.includes(a) ? 't-match' : fam.includes(a) ? 't-fam' : 't-miss') + '">' + esc(a) + '</span>').join('')
+    + '</div><p class="legend-s">' + leg.join('') + '</p></div>';
+}
+function perfilCompare(tu, bod, tipo){
+  return ['cuerpo','frescura','taninos'].filter(k => k !== 'taninos' || tipo === 'Tinto').map(k =>
+    '<div class="pc-row"><span class="pc-k">' + cap(k) + '</span><span class="pc-v"><span class="pc-l">Vos</span>' + dots(tu[k]) + '</span><span class="pc-v"><span class="pc-l">Bodega</span>' + dots(bod[k], 'oak') + '</span></div>').join('');
+}
+function reveladoHTML(p, w){
+  return '<div class="rev-top"><div class="rev-score">' + handCircle() + '<span class="rev-n" id="rev-n">' + p.puntaje + '</span></div><div><p class="eyebrow">125 cc catados · ' + descr(p.puntaje) + '</p><h2 class="h3" id="sheet-title">Lo que encontró el sommelier</h2><p class="sub">' + esc(w.nombre) + '</p></div></div>'
+    + revealAromas(p, w, false)
+    + (p.perfil ? '<div class="block"><p class="block-t">En boca <span>vos y la ficha de la bodega</span></p>' + perfilCompare(p.perfil, w.perfil, w.tipo) + '</div>' : '')
+    + (w.color_somm && p.color && p.color !== 'Otro' ? '<div class="block"><p class="block-t">Color</p><p class="cmp-line">' + (p.color === w.color_somm ? 'Lo viste igual que el somm: <strong>' + esc(w.color_somm) + '</strong>.' : 'Vos lo viste <strong>' + esc(p.color) + '</strong>; el somm, <strong>' + esc(w.color_somm) + '</strong>.') + '</p></div>' : '')
+    + '<p class="ask">' + ICON_ASK + '<span>' + esc(preguntaSomm(w)) + '</span></p>';
+}
+function animarPuntaje(){
+  const el = $('#rev-n'); if (!el || reduced()) return;
+  const to = +el.textContent, from = 60, t0 = performance.now(), dur = 900;
+  const tick = now => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = Math.round(from + (to - from) * e); if (k < 1) requestAnimationFrame(tick); };
+  el.textContent = from; requestAnimationFrame(tick);
+}
+
+/* ---------- Hoja del cuaderno ---------- */
+function pageCard(p, o){
+  o = o || {};
+  const d = new Date(p.fecha), s = p.snap, hex = p.color ? colorDe(s.tipo, p.color) : null;
+  const rots = [-2.5, 1.8, -1, 2.6, -1.8];
+  const foot = [p.modo === 'completa' ? 'Cata completa' : 'Cata rápida'];
+  if (p.repetiria) foot.push('¿Repetirías? ' + p.repetiria);
+  else if (p.impresion) foot.push(IMP_L[p.impresion]);
+  return '<article class="page' + (o.btn ? ' page-btn' : '') + '"' + (o.btn ? ' data-act="pagina" data-id="' + p.id + '" role="button" tabindex="0" aria-label="Página de ' + esc(s.nombre) + ', ' + p.puntaje + ' puntos"' : '') + '>'
+    + '<div class="pg-top"><p class="pg-date">' + fechaCorta(d) + ' · ' + (d.getDate() <= 15 ? '1ª' : '2ª') + ' quincena</p>' + (p.ejemplo ? '<span class="pg-ej">Ejemplo</span>' : '') + '</div>'
+    + '<h3 class="pg-name">' + esc(s.nombre) + '</h3><p class="pg-meta">' + esc(s.bodega) + ' · ' + esc(s.varietal) + '</p>'
+    + '<div class="pg-score">' + handCircle() + '<span>' + p.puntaje + '</span></div>'
+    + '<div class="pg-row">' + (hex ? '<span class="blot" title="' + esc(p.color) + '">' + blot(hex) + '</span>' : '') + ((p.aromas || []).length ? '<div class="stamps">' + p.aromas.map((a, i) => '<span class="stamp" style="--fc:' + (famDe(a) ? famDe(a).paper : '#57503F') + ';--rot:' + rots[i % 5] + 'deg">' + esc(a) + '</span>').join('') + '</div>' : '') + '</div>'
+    + (p.nota ? '<p class="pg-nota">' + esc(p.nota) + '</p>' : '')
+    + '<p class="pg-foot">' + foot.join(' · ') + '</p></article>';
+}
+
+/* ---------- Mi cuaderno ---------- */
+function selloHTML(name, on, i){
+  const rot = [-6, 4, -2, 7, -4][i % 5];
+  return '<span class="sello' + (on ? ' on' : '') + '" style="--rot:' + rot + 'deg" title="' + esc(name) + (on ? '' : ' (todavía no)') + '"><svg viewBox="0 0 86 86" aria-hidden="true"><circle cx="43" cy="43" r="40" fill="none" stroke="currentColor" stroke-width="2"' + (on ? '' : ' stroke-dasharray="4 4"') + '/><circle cx="43" cy="43" r="33" fill="none" stroke="currentColor" stroke-width="1"' + (on ? '' : ' opacity=".5"') + '/>' + (on ? '<text x="43" y="20" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="9" font-weight="700" fill="currentColor">125cc</text>' : '') + '</svg><span class="sello-t">' + esc(name) + '</span></span>';
+}
+function mailHTML(){
+  if (store.email) return '<p class="saved-mail">Cuaderno asociado a <strong>' + esc(store.email) + '</strong>. En la app real lo recuperás desde cualquier celular; en este prototipo queda solo en este navegador.</p>';
+  return '<form class="mail" id="mail-form" novalidate><p class="mail-t">Guardá tu cuaderno</p><p class="mail-s">Con tu email lo recuperás en otro celular y no se pierde si borrás el navegador.</p><div class="mail-row"><input id="mail-in" type="email" inputmode="email" autocomplete="email" placeholder="tu@email.com" aria-label="Tu email"><button class="btn btn-primary sm" type="submit">Guardar</button></div><p class="mail-err" id="mail-err" hidden>Revisá el email: parece que falta algo.</p></form>';
+}
+function renderCuaderno(){
+  const el = $('#view-cuaderno');
+  const pages = [...store.pages].sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const head = '<div class="cu-head"><p class="eyebrow">Tu libreta de 125cc</p><h1 class="h1">Mi cuaderno</h1>';
+  if (!pages.length) {
+    el.innerHTML = head + '</div><div class="empty"><svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M60 16C46 8 26 8 10 12V80C26 76 46 76 60 84C74 76 94 76 110 80V12C94 8 74 8 60 16Z"/><path d="M60 16V84M20 28H48M20 38H48M20 48H40M72 28H100M72 38H100"/></svg><p class="empty-t">Tu cuaderno está en blanco</p><p>Elegí un vino de la carta y tocá <strong>Anotar esta copa</strong>. Cada copa queda acá como una página, aunque el vino salga de carta.</p><button class="btn btn-primary" data-act="view" data-v="carta">Ir a la carta</button></div>';
+    return;
+  }
+  const vinos = new Set(pages.map(p => p.vinoId)).size;
+  const qs = new Set(pages.map(p => quincenaKey(new Date(p.fecha)))).size;
+  const regs = new Set(pages.map(p => regionKey(p.snap.region)));
+  const todas = [...new Set(WINES.map(w => regionKey(w.region)).concat([...regs]))];
+  const cepas = new Set(pages.map(p => p.snap.varietal)).size;
+  const groups = [];
+  pages.forEach(p => { const d = new Date(p.fecha), k = quincenaKey(d); let g = groups.find(x => x.k === k); if (!g) { g = {k, label: quincena(d) + ' de ' + d.getFullYear(), pages: []}; groups.push(g); } g.pages.push(p); });
+  const n = ultimaNoche(pages);
+  el.innerHTML = head
+    + '<p class="cu-stats"><span><strong>' + pages.length + '</strong>' + (pages.length === 1 ? 'página' : 'páginas') + '</span><span><strong>' + vinos + '</strong>' + (vinos === 1 ? 'vino' : 'vinos') + '</span><span><strong>' + qs + '</strong>' + (qs === 1 ? 'quincena' : 'quincenas') + '</span></p></div>'
+    + mailHTML()
+    + '<section class="cu-sec noche" aria-label="Tu última noche"><div><p class="eyebrow">' + (n.esHoy ? 'Esta noche' : 'Tu última noche') + '</p><p class="noche-d">' + cap(fechaLarga(n.d)) + '</p></div><button class="btn btn-ghost sm" data-act="noche">Llevate tu noche</button>'
+    + '<div class="noche-copas">' + n.pages.map(p => '<span class="nc" title="' + esc(p.snap.nombre) + '">' + copita(p.snap) + '<b>' + p.puntaje + '</b></span>').join('') + '</div></section>'
+    + '<section class="cu-sec"><div class="sec-h"><p class="block-t">Tu paladar</p><span class="sec-s">sobre el mapa de esta carta</span></div>' + mapHTML({paladar: true}) + '<p class="paladar-f">' + frasePaladar() + '</p></section>'
+    + groups.map(g => '<section class="cu-sec"><div class="sec-h"><p class="block-t">' + cap(g.label) + '</p><span class="sec-s">' + g.pages.length + ' ' + (g.pages.length === 1 ? 'página' : 'páginas') + '</span></div><div class="pages">' + g.pages.map(p => pageCard(p, {btn: true})).join('') + '</div></section>').join('')
+    + '<section class="cu-sec"><div class="sec-h"><p class="block-t">Sellos</p><span class="sec-s">' + regs.size + ' de ' + todas.length + ' regiones · ' + cepas + ' ' + (cepas === 1 ? 'cepa' : 'cepas') + '</span></div><div class="sellos">' + todas.map((r, i) => selloHTML(r, regs.has(r), i)).join('') + '</div></section>'
+    + '<div class="cu-foot">' + (ui.confirm === 'reset'
+      ? '<p class="muted">¿Borrar todas las páginas de este navegador?</p><div class="row-btns"><button class="btn btn-ghost sm" data-act="cancelar">Cancelar</button><button class="btn btn-danger sm" data-act="reset-si">Sí, borrar todo</button></div>'
+      : (store.pages.some(p => p.ejemplo) ? '<button class="link" data-act="borrar-ejemplos">Quitar las páginas de ejemplo</button>' : '') + '<button class="link muted-l" data-act="reset">Empezar de cero</button>')
+    + '<p class="proto-note">Prototipo: el cuaderno se guarda solo en este navegador. Los aromas del sommelier salen de la nota de cata de cada vino, como ejemplo del campo nuevo.</p></div>';
+}
+
+/* ---------- ¿Qué tomo? ---------- */
+function recomendar(ans){
+  const pMax = Math.max(...WINES.map(w => w.copa));
+  const z = paladar();
+  return WINES.map(w => {
+    let s = 0; const why = []; const p = w.perfil, m = w.maridaje.join(' ');
+    if (ans.color === 'tinto') s += w.tipo === 'Tinto' ? 3 : -5;
+    else if (ans.color === 'claro') s += w.tipo === 'Tinto' ? -5 : 3;
+    else if (w.tipo !== 'Tinto' || /Criolla|Franc|Syrah/.test(w.varietal)) { s += 2; why.push(w.tipo !== 'Tinto' ? 'un ' + w.tipo.toLowerCase() + ' para salir de lo de siempre' : 'una cepa que no se pide tanto'); }
+    if (ans.animo === 'fresco') { s += (p.frescura - 3) * 1.3 - (p.cuerpo - 3) * .9; if (p.frescura >= 4) why.push('fresco y fácil de tomar'); }
+    else if (ans.animo === 'estructura') { s += (p.cuerpo - 3) * 1.3 + (p.taninos - 3) * .7; if (p.cuerpo >= 4) why.push('tiene cuerpo y estructura'); }
+    if (ans.comida === 'tabla') { if (/queso|embutid|charcut|picada|fiambre|jam/.test(m)) { s += 1.5; why.push('va muy bien con la tabla'); } }
+    else if (ans.comida === 'contundente') { if (/carne|cordero|caza|guiso|cerdo/.test(m)) { s += 1.5; why.push('acompaña carnes y platos intensos'); } }
+    else if (ans.comida === 'solo' && p.cuerpo <= 3) { s += .8; why.push('se disfruta solo'); }
+    if (ans.precio === 'accesible') s += w.copa <= 4500 ? 2 : w.copa <= 7000 ? -.5 : -3;
+    else if (ans.precio === 'medio') s += w.copa > 4500 && w.copa <= 7000 ? 2 : w.copa <= 4500 ? .3 : -1;
+    else { s += w.copa >= 7000 ? 2 : -.8; if (w.copa === pMax) { s += .8; why.push('es lo más especial de la carta'); } }
+    const probado = !!ultimaPagina(w.id);
+    if (z && !probado) { const d = Math.hypot(w.x - z.X, w.y - z.Y); if (d < 70) { s += 1.2 * (1 - d / 70); why.push('queda cerca de lo que te viene gustando'); } }
+    if (probado) s -= .6;
+    return {w, s, why};
+  }).sort((a, b) => b.s - a.s).slice(0, 3).map(r => {
+    const u = [...new Set(r.why)].slice(0, 2);
+    const ar = (r.w.aromas_somm || []).slice(0, 2);
+    const notas = ar.length ? ' Notas de ' + ar.join(' y ') + '.' : '';
+    return {w: r.w, why: (u.length ? cap(u.join(', ')) + '.' : 'Equilibrado y fácil de acompañar.') + notas};
+  });
+}
+function renderQueTomo(){
+  const q = ui.quiz, el = $('#view-que-tomo');
+  if (q.step === -1) {
+    el.innerHTML = '<div class="qt-intro"><svg viewBox="0 0 80 110" aria-hidden="true"><path d="M14 6H66C66 44 54 62 40 62C26 62 14 44 14 6Z" fill="none" stroke="var(--oak)" stroke-width="2"/><path d="M17 30H63C61 50 52 59 40 59C28 59 19 50 17 30Z" fill="var(--tinto)"/><path d="M40 62V98M26 102H54" fill="none" stroke="var(--oak)" stroke-width="2.2" stroke-linecap="round"/></svg>'
+      + '<p class="eyebrow">Un sommelier en tu mesa</p><h1 class="h1">¿Qué tomo?</h1><p class="sub">Cuatro preguntas y te sugiero tres copas de la carta de esta quincena' + (paladar() ? ', teniendo en cuenta lo que ya anotaste' : '') + '.</p>'
+      + '<button class="btn btn-primary wide" data-act="quiz-start">Ayudame a elegir</button><p class="qt-note">Si preferís charlarlo, el sommelier está en el salón.</p></div>';
+    return;
+  }
+  if (q.step === 'pensando') {
+    el.innerHTML = '<div class="thinking"><svg viewBox="0 0 80 110" aria-hidden="true"><path d="M14 6H66C66 44 54 62 40 62C26 62 14 44 14 6Z" fill="none" stroke="var(--oak)" stroke-width="2"/><path d="M17 30H63C61 50 52 59 40 59C28 59 19 50 17 30Z" fill="var(--tinto)"/><path d="M40 62V98M26 102H54" fill="none" stroke="var(--oak)" stroke-width="2.2" stroke-linecap="round"/></svg><p>Buscando en la carta…</p></div>';
+    return;
+  }
+  if (q.step < QUIZ.length) {
+    const Q = QUIZ[q.step];
+    el.innerHTML = '<div class="qt-prog">' + QUIZ.map((_, i) => '<i class="' + (i <= q.step ? 'on' : '') + '"></i>').join('') + '<span>' + (q.step + 1) + ' de ' + QUIZ.length + '</span></div>'
+      + (q.step > 0 ? '<button class="link back" data-act="quiz-back">← Volver</button>' : '<div class="back-sp"></div>')
+      + '<h2 class="h2">' + Q.t + '</h2><p class="sub">' + Q.s + '</p>'
+      + '<div class="opts">' + Q.o.map(([v, t, s]) => '<button class="opt" data-act="quiz-ans" data-v="' + v + '" aria-pressed="' + (q.ans[Q.k] === v) + '"><span class="opt-t">' + t + '</span><span class="opt-s">' + s + '</span><span class="opt-go">' + ICON_GO + '</span></button>').join('') + '</div>';
+    return;
+  }
+  const recs = recomendar(q.ans);
+  const res = QUIZ.map(Q => { const o = Q.o.find(x => x[0] === q.ans[Q.k]); return o ? o[1] : ''; }).filter(Boolean).join(' · ');
+  el.innerHTML = '<p class="eyebrow">Para esta noche</p><h1 class="h1">Tus tres copas</h1><p class="sub">' + esc(res) + '</p>'
+    + '<ol class="recs">' + recs.map((r, i) => '<li><button class="rec" data-act="ficha" data-id="' + r.w.id + '"><span class="rec-rank">' + (i + 1) + '</span><span class="rec-main"><span class="rec-name">' + esc(r.w.nombre) + '</span><span class="rec-why">' + esc(r.why) + '</span><span class="rec-meta">' + esc(r.w.varietal) + ' · ' + fmt$(r.w.copa) + (store.pages.length && !ultimaPagina(r.w.id) ? ' · todavía no lo probaste' : '') + '</span></span><span class="rec-b">' + bottleSVG(r.w) + '</span></button></li>').join('') + '</ol>'
+    + '<div class="row-btns"><button class="btn btn-ghost" data-act="quiz-reset">Volver a empezar</button></div>';
+}
+
+/* ---------- Tarjeta “Llevate tu noche” ---------- */
+function wrapLines(g, text, max){
+  const words = text.split(' '), lines = []; let cur = '';
+  words.forEach(wd => { const t = cur ? cur + ' ' + wd : wd; if (g.measureText(t).width > max && cur) { lines.push(cur); cur = wd; } else cur = t; });
+  if (cur) lines.push(cur);
+  return lines;
+}
+async function storyURL(n){
+  const W = 1080, H = 1920, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  try { await Promise.race([Promise.all(['600 64px "Cormorant Garamond"', 'italic 500 64px "Cormorant Garamond"', '400 32px "DM Sans"', '600 32px "DM Sans"'].map(f => document.fonts.load(f))), new Promise(r => setTimeout(r, 1500))]); } catch (e) {}
+  const C = {bg1: '#13171A', bg2: '#28313A', cream: '#F3ECE2', soft: '#A9A49B', oak: '#C8A46A', ring: '#D0566B'};
+  const serif = '"Cormorant Garamond", Georgia, serif', sans = '"DM Sans", system-ui, sans-serif';
+  const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, C.bg2); gr.addColorStop(1, C.bg1);
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  g.strokeStyle = 'rgba(243,236,226,.06)'; g.lineWidth = 2;
+  for (let y = 740; y < 1700; y += 64) { g.beginPath(); g.moveTo(90, y); g.lineTo(W - 90, y); g.stroke(); }
+  g.textBaseline = 'alphabetic';
+  g.fillStyle = C.cream; g.font = '600 170px ' + serif; g.fillText('125', 84, 300);
+  const w1 = g.measureText('125').width;
+  g.fillStyle = C.oak; g.font = 'italic 500 170px ' + serif; g.fillText('cc', 84 + w1 + 6, 300);
+  g.font = '600 28px ' + sans; if ('letterSpacing' in g) g.letterSpacing = '8px';
+  g.fillText('WINE BAR · MAR DEL PLATA', 92, 362); if ('letterSpacing' in g) g.letterSpacing = '0px';
+  g.fillStyle = C.cream; g.font = 'italic 500 120px ' + serif; g.fillText(n.esHoy ? 'Mi noche' : 'Mi última noche', 84, 560);
+  g.fillStyle = C.soft; g.font = '400 40px ' + sans; g.fillText(cap(fechaLarga(n.d)), 90, 628);
+  const rows = n.pages.slice(0, 5), rowH = rows.length <= 3 ? 270 : 200;
+  let y = 750;
+  const bowl = new Path2D(BOWL), stem = new Path2D('M12 15.5V25.5M7.5 27H16.5'), hand = new Path2D(HAND);
+  rows.forEach(p => {
+    g.save(); g.translate(90, y); g.scale(4.4, 4.4);
+    g.fillStyle = TIPO[p.snap.tipo].c; g.fill(bowl); g.strokeStyle = C.cream; g.lineWidth = .7; g.stroke(bowl);
+    g.lineWidth = .9; g.lineCap = 'round'; g.stroke(stem); g.restore();
+    g.fillStyle = C.cream; g.font = '600 58px ' + serif;
+    const lines = wrapLines(g, p.snap.nombre, 600).slice(0, 2);
+    lines.forEach((l, i) => g.fillText(l, 232, y + 52 + i * 60));
+    g.fillStyle = C.soft; g.font = '400 30px ' + sans;
+    g.fillText(p.snap.bodega + ' · ' + p.snap.varietal, 234, y + 56 + lines.length * 60);
+    g.save(); g.translate(890, y - 4); g.scale(2.3, 2.3); g.strokeStyle = C.ring; g.lineWidth = 2.2; g.lineCap = 'round'; g.stroke(hand); g.restore();
+    g.fillStyle = C.cream; g.font = '700 62px ' + serif; g.textAlign = 'center'; g.fillText(String(p.puntaje), 890 + 73, y + 78); g.textAlign = 'left';
+    y += rowH;
+  });
+  const conNota = rows.filter(p => p.nota).sort((a, b) => b.puntaje - a.puntaje)[0];
+  if (conNota && y < 1500) {
+    g.fillStyle = C.oak; g.fillRect(90, y + 20, 60, 3);
+    g.fillStyle = C.cream; g.font = 'italic 500 50px ' + serif;
+    wrapLines(g, '“' + conNota.nota + '”', 880).slice(0, 4).forEach((l, i) => g.fillText(l, 90, y + 110 + i * 64));
+  }
+  g.fillStyle = C.oak; g.font = '600 36px ' + sans; g.fillText('@125ccwinebar', 90, 1790);
+  g.fillStyle = C.soft; g.font = '400 30px ' + sans; g.fillText('Hipólito Yrigoyen y San Lorenzo', 90, 1840);
+  return c.toDataURL('image/png');
+}
+
+/* ---------- Hoja: abrir, cerrar, arrastrar ---------- */
+const sheet = $('#sheet'), scrim = $('#scrim'), sBody = $('#sheet-body'), sFoot = $('#sheet-foot');
+let sheetOpen = false, pushed = false;
+function renderSheet(keepScroll){
+  const S = ui.sheet; if (!S) return;
+  const st = sBody.scrollTop;
+  let body = '', foot = '';
+  if (S.mode === 'ficha') {
+    const w = byId(S.id), p = ultimaPagina(w.id);
+    body = fichaHTML(w);
+    foot = '<button class="btn btn-primary" data-act="anotar" data-id="' + w.id + '">' + (p ? 'Anotar otra copa' : 'Anotar esta copa') + '</button>';
+  } else if (S.mode === 'mapa') {
+    const tipos = ['Tinto','Blanco','Rosado','Naranjo'].filter(t => WINES.some(w => w.tipo === t));
+    body = '<p class="eyebrow">Carta por copa</p><h2 class="h3" id="sheet-title">Mapa del vino</h2><p class="sub">A la izquierda, los más frescos; a la derecha, los más complejos. Arriba, los más potentes.</p><div class="block">' + mapHTML({big: true}) + '</div><p class="legend-map">' + tipos.map(t => '<span><i style="background:' + TIPO[t].c + '"></i>' + t + '</span>').join('') + '</p>';
+  } else if (S.mode === 'rapida') {
+    body = rapidaHTML(); foot = rapidaFoot();
+  } else if (S.mode === 'completa') {
+    sBody.innerHTML = completaShell(); sFoot.innerHTML = ''; renderStep(false); return;
+  } else if (S.mode === 'guardado') {
+    const p = store.pages.find(x => x.id === S.pageId), w = byId(p.vinoId);
+    body = '<div class="saved-head"><svg class="check" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="22" r="20" stroke-width="1.4"/><path d="M13 23l6 6 12-13"/></svg><div><p class="eyebrow">Guardado en tu cuaderno</p><h2 class="h3" id="sheet-title">Una página más</h2></div></div>'
+      + pageCard(p) + revealAromas(p, w, true)
+      + (!store.email && store.pages.filter(x => !x.ejemplo).length === 1 ? '<p class="need">Tu primera página. Si querés no perderla, dejá tu email en Mi cuaderno.</p>' : '');
+    foot = '<button class="btn btn-ghost" data-act="ir-cuaderno">Ver mi cuaderno</button><button class="btn btn-primary" data-act="cerrar">Seguir con la carta</button>';
+  } else if (S.mode === 'revelado') {
+    const p = store.pages.find(x => x.id === S.pageId), w = byId(p.vinoId);
+    body = reveladoHTML(p, w);
+    foot = '<button class="btn btn-ghost" data-act="pagina" data-id="' + p.id + '">Ver mi página</button><button class="btn btn-primary" data-act="cerrar">Seguir con la carta</button>';
+  } else if (S.mode === 'pagina') {
+    const p = store.pages.find(x => x.id === S.pageId);
+    if (!p) { requestClose(); return; }
+    const w = byId(p.vinoId);
+    body = '<p class="eyebrow" id="sheet-title">Página del cuaderno</p><div class="block">' + pageCard(p) + '</div>'
+      + (w ? revealAromas(p, w, true) : '')
+      + (p.perfil && w ? '<div class="block"><p class="block-t">En boca <span>vos y la ficha de la bodega</span></p>' + perfilCompare(p.perfil, w.perfil, w.tipo) + '</div>' : '');
+    foot = S.confirm
+      ? '<div class="confirm"><p>¿Borrar esta página del cuaderno?</p><button class="btn btn-ghost sm" data-act="borrar-no">Cancelar</button><button class="btn btn-danger sm" data-act="borrar-si">Sí, borrar</button></div>'
+      : '<button class="btn btn-ghost" data-act="borrar-pagina">Borrar</button>' + (w ? '<button class="btn btn-primary" data-act="ficha" data-id="' + w.id + '">Ver el vino</button>' : '');
+  } else if (S.mode === 'noche') {
+    const pages = [...store.pages].sort((a, b) => b.fecha.localeCompare(a.fecha)), n = ultimaNoche(pages);
+    body = '<p class="eyebrow">Llevate tu noche</p><h2 class="h3" id="sheet-title">' + (n.esHoy ? 'Mi noche' : 'Mi última noche') + ' en 125cc</h2><div class="story-wrap" id="story-wrap"><div class="story-ph">Armando la imagen…</div></div><p class="sub center">Para guardarla, mantené apretada la imagen o sacale una captura.</p>';
+    storyURL(n).then(url => { const sw = $('#story-wrap'); if (sw && ui.sheet && ui.sheet.mode === 'noche') sw.innerHTML = '<img class="story-img" src="' + url + '" alt="Tarjeta de tu noche en 125cc con ' + n.pages.length + ' vinos y sus puntajes">'; }).catch(() => { const sw = $('#story-wrap'); if (sw) sw.innerHTML = '<p class="muted">No se pudo armar la imagen en este navegador.</p>'; });
+  }
+  sBody.innerHTML = body; sFoot.innerHTML = foot;
+  sBody.scrollTop = keepScroll ? st : 0;
+  if (S.mode === 'revelado') animarPuntaje();
+}
+function openSheet(mode, data){
+  ui.sheet = Object.assign({mode}, data || {});
+  renderSheet(false);
+  if (!sheetOpen) {
+    sheetOpen = true; sheet.hidden = false; scrim.hidden = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => { sheet.classList.add('open'); scrim.classList.add('open'); }));
+    document.body.classList.add('locked');
+    try { history.pushState({sheet: 1}, ''); pushed = true; } catch (e) { pushed = false; }
+    setTimeout(() => { try { sheet.focus({preventScroll: true}); } catch (e) {} }, 60);
+  }
+}
+function hideSheet(){
+  sheetOpen = false; ui.sheet = null; ui.cata = null;
+  sheet.classList.remove('open'); scrim.classList.remove('open'); document.body.classList.remove('locked');
+  setTimeout(() => { if (!sheetOpen) { sheet.hidden = true; scrim.hidden = true; sheet.style.transform = ''; } }, 400);
+  refresh();
+}
+function requestClose(){ if (pushed) { pushed = false; history.back(); setTimeout(() => { if (sheetOpen) hideSheet(); }, 350); } else hideSheet(); }
+addEventListener('popstate', () => { if (sheetOpen) { pushed = false; hideSheet(); } });
+(() => {
+  const grab = $('#sheet-grab'); let drag = null;
+  grab.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; drag = {y: e.clientY, dy: 0}; sheet.style.transition = 'none'; try { grab.setPointerCapture(e.pointerId); } catch (er) {} });
+  grab.addEventListener('pointermove', e => { if (!drag) return; drag.dy = Math.max(0, e.clientY - drag.y); sheet.style.transform = 'translateY(' + drag.dy + 'px)'; });
+  const end = () => { if (!drag) return; const close = drag.dy > 110; drag = null; sheet.style.transition = ''; sheet.style.transform = ''; if (close) requestClose(); };
+  grab.addEventListener('pointerup', end); grab.addEventListener('pointercancel', end);
+})();
+
+/* ---------- Vistas ---------- */
+function updateBadge(){ const b = $('#badge'), n = store.pages.length; b.hidden = !n; b.textContent = n; }
+function refresh(){
+  if (ui.view === 'carta') renderCarta();
+  if (ui.view === 'cuaderno') renderCuaderno();
+  if (ui.view === 'que-tomo') renderQueTomo();
+  updateBadge();
+}
+function showView(v){
+  ui.view = v; ui.confirm = null;
+  ['carta','que-tomo','cuaderno'].forEach(k => { $('#view-' + k).hidden = k !== v; const nb = $('#nav-' + k); if (k === v) nb.setAttribute('aria-current', 'page'); else nb.removeAttribute('aria-current'); });
+  refresh();
+  window.scrollTo(0, 0);
+  try { history.replaceState(history.state, '', '#' + v); } catch (e) {}
+}
+function applyTheme(){
+  const root = document.documentElement;
+  if (store.theme) root.setAttribute('data-theme', store.theme);
+  const dark = (root.getAttribute('data-theme') || 'dark') !== 'light';
+  const btn = $('#theme-btn');
+  btn.setAttribute('aria-label', dark ? 'Pasar a modo día' : 'Pasar a modo noche');
+  btn.innerHTML = dark
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+}
+
+/* ---------- Acciones ---------- */
+const ACT = {
+  view: (t, v) => { if (sheetOpen) hideSheet(); showView(v); },
+  ficha: (t, v, id) => { openSheet('ficha', {id: +id}); haptic(); },
+  filtro: (t, v) => { ui.filtro = v; renderCarta(); },
+  faltan: () => { ui.faltan = !ui.faltan; renderCarta(); },
+  ampliar: () => openSheet('mapa'),
+  anotar: (t, v, id) => { ui.cata = nuevaCata(+id); openSheet('rapida'); },
+  imp: (t, v) => {
+    const c = ui.cata; c.impresion = v;
+    if (!c.tocoPuntaje) setScore(PRESET[v]);
+    sBody.querySelectorAll('[data-act="imp"]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+    const g = $('#btn-guardar'); if (g) g.disabled = false;
+    haptic();
+  },
+  'aroma-q': (t, v) => {
+    const c = ui.cata; c.aromas = c.aromas.length === 1 && c.aromas[0] === v ? [] : [v];
+    sBody.querySelectorAll('[data-act="aroma-q"]').forEach(b => b.setAttribute('aria-pressed', String(c.aromas.includes(b.dataset.v))));
+    haptic();
+  },
+  'guardar-rapida': () => {
+    const c = ui.cata;
+    const p = mkPage(c.vinoId, {modo: 'rapida', impresion: c.impresion, puntaje: c.puntaje, aromas: c.aromas.slice(), nota: c.nota.trim()});
+    store.pages.push(p); save(); ui.cata = null; updateBadge();
+    openSheet('guardado', {pageId: p.id}); haptic(16); refresh();
+  },
+  completa: () => { ui.cata.modo = 'completa'; ui.cata.step = 0; openSheet('completa'); },
+  color: (t, v) => { ui.cata.color = v; renderStep(true); haptic(); },
+  esc: (t, v) => { const c = ui.cata, k = t.dataset.k; if (k in c.perfil) c.perfil[k] = +v; else c[k] = +v; renderStep(true); haptic(); },
+  fam: (t, v) => { ui.cata.fam = ui.cata.fam === v ? null : v; renderStep(true); haptic(); },
+  aroma: (t, v) => { const c = ui.cata; c.aromas = c.aromas.includes(v) ? c.aromas.filter(a => a !== v) : c.aromas.concat(v); renderStep(true); haptic(); },
+  final: (t, v) => { ui.cata.final = v; renderStep(true); },
+  repetir: (t, v) => { ui.cata.repetiria = v; renderStep(true); },
+  'paso-ant': () => { const c = ui.cata; if (c.step === 0) { c.modo = 'rapida'; openSheet('rapida'); } else { c.step--; renderStep(false); } },
+  'paso-sig': () => {
+    const c = ui.cata;
+    if (c.step < 4) { c.step++; renderStep(false); return; }
+    const imp = c.puntaje >= 90 ? 'encanto' : c.puntaje >= 80 ? 'gusto' : 'no';
+    const p = mkPage(c.vinoId, {modo: 'completa', impresion: imp, puntaje: c.puntaje, color: c.color, intensidad: c.intensidad, aromas: c.aromas.slice(), intAroma: c.intAroma, perfil: Object.assign({}, c.perfil), final: c.final, repetiria: c.repetiria, nota: c.nota.trim()});
+    store.pages.push(p); save(); ui.cata = null; updateBadge();
+    openSheet('revelado', {pageId: p.id}); haptic(20); refresh();
+  },
+  pagina: (t, v, id) => openSheet('pagina', {pageId: id}),
+  'borrar-pagina': () => { ui.sheet.confirm = true; renderSheet(true); },
+  'borrar-no': () => { ui.sheet.confirm = false; renderSheet(true); },
+  'borrar-si': () => { const id = ui.sheet.pageId; store.pages = store.pages.filter(p => p.id !== id); save(); requestClose(); toast('Página borrada'); },
+  noche: () => openSheet('noche'),
+  'quiz-start': () => { ui.quiz = {step: 0, ans: {}}; renderQueTomo(); window.scrollTo(0, 0); },
+  'quiz-ans': (t, v) => {
+    const q = ui.quiz; q.ans[QUIZ[q.step].k] = v; haptic();
+    if (q.step < QUIZ.length - 1) { q.step++; renderQueTomo(); window.scrollTo(0, 0); return; }
+    q.step = 'pensando'; renderQueTomo();
+    setTimeout(() => { if (ui.quiz.step === 'pensando') { ui.quiz.step = QUIZ.length; renderQueTomo(); window.scrollTo(0, 0); } }, reduced() ? 0 : 900);
+  },
+  'quiz-back': () => { ui.quiz.step = Math.max(0, ui.quiz.step - 1); renderQueTomo(); },
+  'quiz-reset': () => { ui.quiz = {step: 0, ans: {}}; renderQueTomo(); window.scrollTo(0, 0); },
+  cerrar: () => requestClose(),
+  theme: () => {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    store.theme = cur === 'light' ? 'dark' : 'light'; save(); applyTheme();
+  },
+  'borrar-ejemplos': () => { store.pages = store.pages.filter(p => !p.ejemplo); save(); refresh(); toast('Listo: quedan solo tus páginas'); },
+  reset: () => { ui.confirm = 'reset'; renderCuaderno(); },
+  cancelar: () => { ui.confirm = null; renderCuaderno(); },
+  'reset-si': () => { store.pages = []; ui.confirm = null; save(); refresh(); toast('Cuaderno en blanco'); },
+  'ir-cuaderno': () => { hideSheet(); showView('cuaderno'); }
+};
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]');
+  if (!t || t.disabled) return;
+  const fn = ACT[t.dataset.act];
+  if (fn) fn(t, t.dataset.v, t.dataset.id, e);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && sheetOpen) { requestClose(); return; }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[role="button"][data-act]')) {
+    e.preventDefault();
+    e.target.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+  }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'score-r' && ui.cata) { ui.cata.tocoPuntaje = true; setScore(+e.target.value); }
+  if (e.target.id === 'nota-txt' && ui.cata) ui.cata.nota = e.target.value;
+});
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'mail-form') return;
+  e.preventDefault();
+  const v = $('#mail-in').value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) { $('#mail-err').hidden = false; return; }
+  store.email = v; save(); renderCuaderno(); toast('Listo. En el prototipo queda en este navegador.');
+});
+
+/* ---------- Arranque ---------- */
+load();
+applyTheme();
+const h = (location.hash || '').slice(1);
+showView(['carta','que-tomo','cuaderno'].includes(h) ? h : 'carta');
+})();
+</script>
+
+</body>
+</html>

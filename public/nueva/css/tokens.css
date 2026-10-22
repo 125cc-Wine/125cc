@@ -1,0 +1,64 @@
+/* public/nueva/css/tokens.css — tokens de la carta nueva (/nueva), salidos
+   del prototipo aprobado (docs/nueva/prototipo.html). Se carga DESPUÉS de
+   /paleta.css: los valores que coinciden con la paleta de etiqueta (tinto
+   #7A1428, roble #C8A46A, papel #FAF5EE) se toman de ahí; el resto son los
+   del prototipo. Colores, tipografías y tiempos de animación viven solo
+   acá: app.css y los módulos JS los leen por nombre (ver ms() en util.js).
+   Noche por defecto: el bar está en penumbra. */
+:root{
+  color-scheme: dark;
+  --bg:#171B1F; --surface:#21272D; --surface-2:#2B333A; --line:#323B43; --line-strong:#47525C;
+  --ink:#F3ECE2; --ink-soft:#ABA59B; --ink-faint:#7C776F;
+  /* --tinto de noche es más claro que el de la paleta para que se lea sobre fondo oscuro */
+  --tinto:#A8324A; --on-tinto:#FFF6F0; --oak:var(--roble); --oak-ink:#1B1712; --danger:#C2463F;
+  --map:#24211D; --map-line:#3A342D; --map-label:#9C8559;
+  --paper:#D9CDB7; --paper-ink:#2B241F; --paper-soft:#685C51; --paper-rule:#C9BBA2; --paper-margin:#A4404C;
+  --glass-edge:#E9E1D3; --bottle-edge:#5A656F; --spot:#38414A;
+  --scrim:rgba(6,8,10,.62); --shadow:rgba(0,0,0,.38);
+  --wa:#25D366;
+
+  /* Color por tipo de vino: copitas, números de la carta, líquido del vaso */
+  --tipo-tinto:#8E1B2E;   --tipo-tinto-ink:#FFF4EE;
+  --tipo-blanco:#E2CF7E;  --tipo-blanco-ink:#2A2420;
+  --tipo-rosado:#E8939A;  --tipo-rosado-ink:#2A2420;
+  --tipo-naranjo:#D9822B; --tipo-naranjo-ink:#2A2420;
+
+  /* Tarjeta "Llevate tu noche" (canvas): siempre en noche, no sigue el tema */
+  --story-bg1:#13171A; --story-bg2:#28313A; --story-cream:#F3ECE2; --story-soft:#A9A49B;
+  --story-oak:var(--roble); --story-ring:#D0566B;
+
+  --display:'Cormorant Garamond','Iowan Old Style',Georgia,serif;
+  --ui:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --nav-h:66px;
+
+  /* Movimiento */
+  --ease:cubic-bezier(.22,.8,.24,1);
+  --dur-press:.15s;   /* botón apretado */
+  --dur-fade:.2s;     /* opacidad, bordes */
+  --dur-tilt:.22s;    /* páginas y rueda de aromas */
+  --dur-pin:.25s;     /* copitas del mapa, toast */
+  --dur-scrim:.32s;
+  --dur-view:.35s;    /* entrada de cada vista */
+  --dur-sheet:.38s;   /* hoja que sube */
+  --dur-color:.4s;    /* color del vaso */
+  --dur-check:.6s;    /* tilde de "guardado" */
+  --dur-vaso:.7s;     /* llenado del vaso por paso */
+  --dur-draw:1s;      /* círculo a mano del puntaje */
+  --dur-swirl:1.1s;   /* copa que gira mientras piensa */
+  /* Tiempos que usa el JS */
+  --ms-score:900ms;   /* conteo del puntaje en el revelado */
+  --ms-pensando:900ms;/* "Buscando en la carta…" */
+  --ms-toast:2600ms;
+  --ms-cerrar:400ms;  /* espera para ocultar la hoja tras la animación */
+}
+:root[data-theme="light"]{
+  color-scheme: light;
+  --bg:#F5EFE5; --surface:#FFFBF4; --surface-2:#EDE4D5; --line:#E2D7C5; --line-strong:#CDBFA8;
+  --ink:#2A2420; --ink-soft:#685E55; --ink-faint:#958A7F;
+  --tinto:#7A1428; /* = --tinto de /paleta.css */
+  --on-tinto:#FFF6F0; --oak:#97743A; --oak-ink:#FFF8EE; --danger:#A2302A;
+  --map:#EFE4D1; --map-line:#D9CAB0; --map-label:#8C7444;
+  --paper:#FFFDF8; --paper-ink:#2A2420; --paper-soft:#7A6E63; --paper-rule:#EDE4D4; --paper-margin:#C47880;
+  --glass-edge:#4A3F37; --bottle-edge:#BBAE97; --spot:#F8F1E5;
+  --scrim:rgba(42,30,24,.42); --shadow:rgba(60,40,20,.16);
+}

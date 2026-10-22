@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>125cc · Carta por copa</title>
+<meta name="description" content="La carta por copa de 125cc Wine Bar: mapa del vino, cata y tu cuaderno.">
+<meta name="theme-color" content="#171B1F">
+<link rel="icon" href="/marca-vino.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+<link rel="stylesheet" href="/paleta.css">
+<link rel="stylesheet" href="/nueva/css/tokens.css">
+<link rel="stylesheet" href="/nueva/css/app.css">
+<!-- Sin build: los módulos se piden todos juntos para no encadenar descargas -->
+<link rel="modulepreload" href="/nueva/js/util.js">
+<link rel="modulepreload" href="/nueva/js/datos.js">
+<link rel="modulepreload" href="/nueva/js/dibujos.js">
+<link rel="modulepreload" href="/nueva/js/imagenes.js">
+<link rel="modulepreload" href="/nueva/js/store.js">
+<link rel="modulepreload" href="/nueva/js/mapa.js">
+<link rel="modulepreload" href="/nueva/js/hoja.js">
+<link rel="modulepreload" href="/nueva/js/ficha.js">
+<link rel="modulepreload" href="/nueva/js/cata.js">
+<link rel="modulepreload" href="/nueva/js/cuaderno.js">
+<link rel="modulepreload" href="/nueva/js/somm.js">
+<link rel="modulepreload" href="/nueva/js/tarjeta.js">
+<script>
+  // Tema antes de pintar, para que no parpadee al abrir en modo día
+  try { var t = (JSON.parse(localStorage.getItem('125cc-cuaderno-v1') || '{}') || {}).theme; if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+</script>
+<script type="module" src="/nueva/js/app.js"></script>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><span class="wm">125<em>cc</em></span></div>
+    <button class="icon-btn" id="theme-btn" data-act="theme" aria-label="Pasar a modo día"></button>
+  </header>
+  <main>
+    <section id="view-carta" class="view" aria-label="Carta">
+      <div class="carga" role="status"><svg viewBox="0 0 80 110" aria-hidden="true"><path d="M14 6H66C66 44 54 62 40 62C26 62 14 44 14 6Z" fill="none" stroke="var(--oak)" stroke-width="2"/><path d="M17 30H63C61 50 52 59 40 59C28 59 19 50 17 30Z" fill="var(--tinto)"/><path d="M40 62V98M26 102H54" fill="none" stroke="var(--oak)" stroke-width="2.2" stroke-linecap="round"/></svg><p>Sirviendo la carta…</p></div>
+    </section>
+    <section id="view-que-tomo" class="view" aria-label="¿Qué tomo?" hidden></section>
+    <section id="view-cuaderno" class="view" aria-label="Mi cuaderno" hidden></section>
+  </main>
+</div>
+
+<nav class="nav" aria-label="Secciones">
+  <div class="nav-in">
+    <button data-act="view" data-v="carta" id="nav-carta">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>
+      Carta
+    </button>
+    <button data-act="view" data-v="que-tomo" class="nav-c" id="nav-que-tomo">
+      <span class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10c0 5.5-2.2 8.5-5 8.5S7 8.5 7 3z"/><path d="M12 11.5V19M8.5 21h7"/></svg></span>
+      ¿Qué tomo?
+    </button>
+    <button data-act="view" data-v="cuaderno" id="nav-cuaderno">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v18M12.5 8h3.5M12.5 12h3.5"/></svg>
+      Mi cuaderno
+      <span class="badge" id="badge" hidden></span>
+    </button>
+  </div>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="scrim" id="scrim" data-act="cerrar" hidden></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1" hidden>
+  <div class="sheet-grab" id="sheet-grab"><span></span><button class="icon-btn sheet-x" data-act="cerrar" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sheet-body" id="sheet-body"></div>
+  <div class="sheet-foot" id="sheet-foot"></div>
+</section>
+
+</body>
+</html>

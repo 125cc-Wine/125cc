@@ -109,9 +109,10 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ bodegas });
     }
 
-    // Leer hoja Vinos — A:V incluye las 22 columnas hasta perfil_taninos
+    // Leer hoja Vinos — A:Z deja margen para columnas nuevas (aromas_somm y
+    // color_somm, que usa la carta nueva de /nueva, quedaron en V y W).
     const sheetRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:V500`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:Z500`,
       { headers: { "Authorization": `Bearer ${token}` } }
     );
 
@@ -179,6 +180,12 @@ module.exports = async function handler(req, res) {
           bodega_lon:  bodegaCentral?.lon ?? null,
           tienda_url:  obj.tienda_url    || "",
           imagen:      obj.imagen        || "",
+          // Campos del sommelier para el revelado de la cata en /nueva —
+          // opcionales: sin dato, la carta nueva oculta esas partes.
+          aromas_somm: obj.aromas_somm
+            ? obj.aromas_somm.split(",").map(s => s.trim().toLowerCase()).filter(Boolean)
+            : [],
+          color_somm:  obj.color_somm    || null,
           perfil,
         };
       });
@@ -227,9 +234,13 @@ module.exports = async function handler(req, res) {
           semana_inicio DESC
         LIMIT 1
       )
-      SELECT DISTINCT vino_nombre FROM carta_historial
+      SELECT DISTINCT vino_nombre, to_char(semana_inicio, 'YYYY-MM-DD') AS quincena
+      FROM carta_historial
       WHERE semana_inicio = (SELECT semana_inicio FROM elegida)`;
     const confirmadosHoy = new Set(confirmadosRows.map((r) => normalizarTexto(r.vino_nombre)));
+    // Qué quincena se está mostrando (puede ser la próxima, ver arriba) —
+    // la carta de /nueva la usa para el título en vez de suponer "hoy".
+    const quincenaMostrada = confirmadosRows[0]?.quincena || null;
     const huboPlanificacion = confirmadosHoy.size > 0;
 
     let numeroSiguiente = 1;
@@ -240,7 +251,7 @@ module.exports = async function handler(req, res) {
       v.numero = enCartaVigente ? numeroSiguiente++ : null;
     });
 
-    return res.status(200).json({ vinos });
+    return res.status(200).json({ vinos, quincena: quincenaMostrada });
 
   } catch (err) {
     console.error("Error:", err);

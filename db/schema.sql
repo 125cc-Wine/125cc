@@ -546,3 +546,18 @@ CREATE INDEX IF NOT EXISTS idx_comanda_items_cocina ON comanda_items(estado_coci
 ALTER TABLE comanda_items DROP CONSTRAINT IF EXISTS comanda_items_estado_cocina_check;
 ALTER TABLE comanda_items ADD CONSTRAINT comanda_items_estado_cocina_check
   CHECK (estado_cocina IN ('pendiente', 'listo', 'entregado'));
+
+-- ── Eventos de uso de la carta nueva (/nueva): qué vinos se abren, catas
+-- rápidas/completas, abandono por paso de cata, emails dejados, voto del
+-- ¿Qué tomo?. Los registra api/stats.js (POST con "evento"). sesion es un
+-- id al azar por pestaña, sin datos personales. Ver
+-- db/migrations/012_eventos_carta.sql. ──
+CREATE TABLE IF NOT EXISTS eventos_carta (
+  id         bigserial PRIMARY KEY,
+  evento     text NOT NULL,
+  vino_id    int,
+  sesion     text,
+  datos      jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS eventos_carta_evento_fecha ON eventos_carta (evento, created_at);

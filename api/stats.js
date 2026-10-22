@@ -1,12 +1,44 @@
 // api/stats.js — Lee hoja Degustaciones, soporta filtro por email
 
 const { getReadOnlyToken } = require('./_lib/google-auth');
+const { sql }              = require('./_lib/db');
+
+// Eventos de uso de la carta nueva (/nueva). Viven acá y no en un endpoint
+// propio porque el plan Hobby de Vercel tope a 12 funciones (ver
+// actualizar-vino.js). Se guardan en Postgres (tabla eventos_carta,
+// db/migrations/012) y no en el Sheet: son muchos y chicos, y un append a
+// Sheets por cada toque sería lento y comería cuota.
+const EVENTOS_CARTA = new Set([
+  'abrir_vino', 'anotar_rapida', 'anotar_completa', 'paso_cata', 'revelado',
+  'email_guardado', 'llevate_noche', 'quiz_resultado', 'somm_voto',
+]);
+
+async function registrarEvento(body, res) {
+  const { evento, vino_id, sesion, datos } = body;
+  if (!EVENTOS_CARTA.has(evento)) return res.status(400).json({ error: "Evento desconocido." });
+  const vinoId = Number.isInteger(vino_id) ? vino_id : null;
+  const sesionV = typeof sesion === 'string' ? sesion.slice(0, 40) : null;
+  let datosV = null;
+  if (datos && typeof datos === 'object') {
+    datosV = JSON.stringify(datos);
+    if (datosV.length > 2000) return res.status(400).json({ error: "Datos demasiado largos." });
+  }
+  try {
+    await sql`INSERT INTO eventos_carta (evento, vino_id, sesion, datos)
+              VALUES (${evento}, ${vinoId}, ${sesionV}, ${datosV}::jsonb)`;
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    return res.status(500).json({ error: "No se pudo registrar el evento.", detail: err.message });
+  }
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") return res.status(200).end();
+
+  if (req.method === 'POST' && req.body?.evento) return registrarEvento(req.body, res);
 
   const SHEET_ID            = process.env.GOOGLE_SHEET_ID;
   const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
@@ -20,7 +52,7 @@ module.exports = async function handler(req, res) {
     const token = await getReadOnlyToken(GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY);
 
     const sheetRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A1:W20000`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A1:AF20000`,
       { headers: { "Authorization": `Bearer ${token}` } }
     );
     if (!sheetRes.ok) {
@@ -76,6 +108,10 @@ module.exports = async function handler(req, res) {
         descripcion: col(r, "descripcion") || col(r, "opinion") || col(r, "opini_n"),
         copa:        col(r, "copa"),
         varietal:    col(r, "varietal"),
+        impresion:            col(r, "impresion"),
+        intensidad_color:     colN(r, "intensidad_color"),
+        intensidad_aromatica: colN(r, "intensidad_aromatica"),
+        app:                  col(r, "app"),
       }))
       .filter(d => d.vino);
 

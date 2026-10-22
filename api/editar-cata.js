@@ -41,6 +41,7 @@ module.exports = async function handler(req, res) {
     puntuacion, color, color_otro, aromas, aromas_otro,
     sabor, sabor_otro, acidez, cuerpo, taninos, final_boca,
     visual, olfativo, descripcion, repetiria, copa, varietal,
+    impresion, intensidad_color, intensidad_aromatica,
   } = req.body;
 
   if (!id || typeof id !== 'string')
@@ -60,12 +61,17 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: "La puntuación debe estar entre 60 y 100." });
 
   const MAX_TEXT = 1000;
+  for (const [campo, val] of Object.entries({ impresion, repetiria })) {
+    if (val && (typeof val !== 'string' || val.length > 50))
+      return res.status(400).json({ error: `Campo ${campo} inválido.` });
+  }
+
   for (const [campo, val] of Object.entries({ descripcion, color_otro, aromas_otro, sabor_otro })) {
     if (val && (typeof val !== 'string' || val.length > MAX_TEXT))
       return res.status(400).json({ error: `Campo ${campo} demasiado largo.` });
   }
 
-  for (const [campo, val] of Object.entries({ acidez, cuerpo, taninos, final_boca, visual, olfativo })) {
+  for (const [campo, val] of Object.entries({ acidez, cuerpo, taninos, final_boca, visual, olfativo, intensidad_color, intensidad_aromatica })) {
     if (val !== undefined && val !== null && val !== '') {
       const n = Number(val);
       if (!Number.isFinite(n) || n < 1 || n > 5)
@@ -77,7 +83,7 @@ module.exports = async function handler(req, res) {
     const token = await getReadWriteToken(GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY);
 
     const sheetRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A1:W20000`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Degustaciones!A1:AF20000`,
       { headers: { "Authorization": `Bearer ${token}` } }
     );
     if (!sheetRes.ok) {
@@ -152,6 +158,11 @@ module.exports = async function handler(req, res) {
           return olfativo ?? '—';
         case 'copa':        return copa || '125 cc';
         case 'varietal':    return varietal || '—';
+        // Columnas de la carta nueva: si la edición no las trae (p. ej. desde
+        // la carta actual), se conserva lo que ya había en la fila.
+        case 'impresion':            return impresion            ?? row[i] ?? '';
+        case 'intensidad_color':     return intensidad_color     ?? row[i] ?? '';
+        case 'intensidad_aromatica': return intensidad_aromatica ?? row[i] ?? '';
         default:            return row[i] ?? '';
       }
     });

@@ -446,7 +446,7 @@ async function guardarBodega(token, SHEET_ID, datos) {
 // filas tocó.
 async function renombrarBodegaEnVinos(token, SHEET_ID, nombreViejo, nombreNuevo) {
   const dataRes = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:V500`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:Z500`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
   const data = await dataRes.json();
@@ -484,7 +484,7 @@ async function renombrarBodegaEnVinos(token, SHEET_ID, nombreViejo, nombreNuevo)
 async function eliminarBodega(token, SHEET_ID, id) {
   const [bodegasRes, vinosRes] = await Promise.all([
     fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Bodegas!A1:C500`, { headers: { Authorization: `Bearer ${token}` } }),
-    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:V500`,   { headers: { Authorization: `Bearer ${token}` } }),
+    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:Z500`,   { headers: { Authorization: `Bearer ${token}` } }),
   ]);
   const bRows = (await bodegasRes.json()).values || [];
   const rowIdx = bRows.slice(1).findIndex(r => (r[0] || '').toString().trim() === id.toString());
@@ -620,7 +620,7 @@ module.exports = async function handler(req, res) {
 
     // Leer encabezados + datos actuales
     const dataRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:V500`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A1:Z500`,
       { headers: { 'Authorization': `Bearer ${token}` } }
     );
     if (!dataRes.ok) {
@@ -665,6 +665,11 @@ module.exports = async function handler(req, res) {
       set('perfil_cuerpo',   w.perfil_cuerpo   ?? w.perfil?.cuerpo   ?? 3);
       set('perfil_frescura', w.perfil_frescura ?? w.perfil?.frescura ?? 3);
       set('perfil_taninos',  w.perfil_taninos  ?? w.perfil?.taninos  ?? 3);
+      // Aromas y color del sommelier (revelado de la cata en /nueva). En una
+      // edición llegan del merge con la fila existente aunque el cliente no
+      // los mande, así que guardar desde otro lado no los borra.
+      set('aromas_somm',     Array.isArray(w.aromas_somm) ? w.aromas_somm.join(', ') : (w.aromas_somm || ''));
+      set('color_somm',      w.color_somm);
       return row;
     }
 
@@ -709,7 +714,7 @@ module.exports = async function handler(req, res) {
       const row = wineToRow(vino);
 
       const appendRes = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A:V:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Vinos!A:Z:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
         {
           method:  'POST',
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },

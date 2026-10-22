@@ -37,6 +37,10 @@ module.exports = async function handler(req, res) {
     puntuacion, color, color_otro, aromas, aromas_otro,
     sabor, sabor_otro, acidez, cuerpo, taninos, final_boca,
     visual, olfativo, descripcion, repetiria, copa, varietal,
+    // Campos de la carta nueva (/nueva) — columnas Impresion, Intensidad
+    // color, Intensidad aromatica y App. Si la hoja todavía no tiene la
+    // columna, el valor simplemente no se escribe (mapeo por nombre).
+    impresion, intensidad_color, intensidad_aromatica, app,
   } = req.body;
 
   if (!vino || !puntuacion)
@@ -53,12 +57,17 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: "Email inválido." });
 
   const MAX_TEXT = 1000;
+  for (const [campo, val] of Object.entries({ impresion, repetiria, app })) {
+    if (val && (typeof val !== 'string' || val.length > 50))
+      return res.status(400).json({ error: `Campo ${campo} inválido.` });
+  }
+
   for (const [campo, val] of Object.entries({ descripcion, color_otro, aromas_otro, sabor_otro })) {
     if (val && (typeof val !== 'string' || val.length > MAX_TEXT))
       return res.status(400).json({ error: `Campo ${campo} demasiado largo.` });
   }
 
-  for (const [campo, val] of Object.entries({ acidez, cuerpo, taninos, final_boca, visual, olfativo })) {
+  for (const [campo, val] of Object.entries({ acidez, cuerpo, taninos, final_boca, visual, olfativo, intensidad_color, intensidad_aromatica })) {
     if (val !== undefined && val !== null && val !== '') {
       const n = Number(val);
       if (!Number.isFinite(n) || n < 1 || n > 5)
@@ -146,6 +155,10 @@ module.exports = async function handler(req, res) {
       olfativo:    olfativo    ?? '—',
       copa:        copa        || '125 cc',
       varietal:    varietal    || '—',
+      impresion:            impresion            || '—',
+      intensidad_color:     intensidad_color     ?? '—',
+      intensidad_aromatica: intensidad_aromatica ?? '—',
+      app:                  app                  || 'actual',
       id:          cataId,
     };
 

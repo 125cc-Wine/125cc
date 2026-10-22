@@ -81,6 +81,29 @@ a mano que se pueda desalinear.
   es de Cuarto Trasero, pero el mismo criterio aplica acá: no agregar
   gestión de mesas/salón sin que lo pidan).
 
+## Carta nueva en `/nueva` (rama `nueva-carta`, en paralelo a la actual)
+
+Versión nueva de la carta según el prototipo aprobado
+(`docs/nueva/prototipo.html`, fuente de verdad de la experiencia). HTML/CSS/JS
+vanilla con módulos nativos en `public/nueva/js/` (sin build). `public/index.html`
+sigue igual hasta que se apruebe el reemplazo; las funciones que se reusan
+están **copiadas** (marcadas "copia de public/index.html").
+
+- Suma un **cuaderno** (catas guardadas en el celular, `125cc-cuaderno-v1`) que
+  se sincroniza con la hoja Degustaciones si la persona deja su email
+  (`125cc_email`, el mismo de "Mis catas"). Es una excepción deliberada al
+  criterio de "sesión única" de arriba: la decidió el dueño con el prototipo.
+- Columnas nuevas en Degustaciones: `Impresion`, `Intensidad color`,
+  `Intensidad aromatica`, `Repetiria`, `App`. La frescura percibida va en
+  `Acidez`, el modo en `Nivel` (rápida=simple, completa=sommelier) y el final
+  Corto/Medio/Largo en `Final` como 2/3/4.
+- Columnas nuevas en Vinos: `aromas_somm` (solo vocabulario de `FAMILIAS` en
+  `public/nueva/js/datos.js`, duplicado en `stats.html`) y `color_somm`. Se
+  cargan en el Editor de Vinos; sin dato, el revelado oculta esa parte.
+- Eventos de uso → `POST /api/stats {evento}` → tabla `eventos_carta` (Postgres).
+- Fotos por `/_vercel/image` (bloque `images` de `vercel.json`); la carta y el
+  mapa no cargan fotos. Leaflet se carga recién al ver el bloque de la bodega.
+
 ## Sistema de diseño
 
 `public/tokens.css` — tokens de color/tipografía/espaciado/sombra. Ver

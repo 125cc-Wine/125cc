@@ -1281,7 +1281,46 @@ const MARIDAJE_OPTS = [
   ['mortadela','Mortadela'], ['aceitunas','Aceitunas'], ['panera','Panera'], ['salame','Salame'],
 ];
 
+// Aromas y color del sommelier para el revelado de la cata en la carta
+// nueva (/nueva) — columnas aromas_somm y color_somm de la hoja Vinos.
+// Vocabulario EXACTO de FAMILIAS y COLORES en public/nueva/js/datos.js
+// (sin build no hay módulo compartido): si cambia allá, cambia acá.
+const AROMAS_SOMM_FAMILIAS = [
+  ['Fruta roja', ['frutilla','cereza','frambuesa','grosella']],
+  ['Fruta negra', ['mora','ciruela','cassis','arándano']],
+  ['Fruta blanca y cítricos', ['pera','manzana verde','durazno','ananá','limón','pomelo']],
+  ['Floral', ['violeta','rosa','flores blancas','azahar']],
+  ['Especiado', ['pimienta','clavo','canela','nuez moscada']],
+  ['Herbal', ['hierbas frescas','menta','pimiento verde','eucalipto']],
+  ['Madera y tostado', ['vainilla','chocolate','café','tabaco','tostado']],
+  ['Terroso', ['grafito','tierra húmeda','cuero','hongos']],
+];
+const COLORES_SOMM = {
+  Tinto:   ['Violáceo','Rojo rubí','Rojo cereza','Granate','Rojo teja'],
+  Blanco:  ['Amarillo verdoso','Amarillo pálido','Amarillo dorado'],
+  Rosado:  ['Rosa pálido','Salmón','Frambuesa'],
+  Naranjo: ['Naranja','Ámbar'],
+};
+function coloresSommDeTipo(tipo){
+  const t = (tipo||'').toLowerCase();
+  return COLORES_SOMM[t.startsWith('naranj') ? 'Naranjo' : t.startsWith('blanc') ? 'Blanco' : t.startsWith('rosad') ? 'Rosado' : 'Tinto'];
+}
+function colorSommOptions(tipo, actual){
+  const opts = coloresSommDeTipo(tipo);
+  return `<option value="">— Sin definir —</option>` + opts.map(c=>`<option value="${c}"${c===actual?' selected':''}>${c}</option>`).join('');
+}
+// Al cambiar el tipo, el color elegido puede dejar de valer: se vuelve a armar la lista
+function refreshColorSomm(){
+  const sel = document.getElementById('ef-color-somm');
+  if(!sel) return;
+  const actual = sel.value;
+  sel.innerHTML = colorSommOptions(document.getElementById('ef-tipo').value, actual);
+}
+
 function renderWineForm(w, isNew=false){
+  // Los maridajes cargados fuera de MARIDAJE_OPTS (por scripts o a mano en el
+  // Sheet: "sushi", "pescados grasos"…) también se muestran, tildados: si no,
+  // getFormData() solo junta las casillas y guardar el vino los borraba.
   const maridajeSelected = w.maridaje || [];
   const perfil = w.perfil || {};
 
@@ -1308,7 +1347,7 @@ function renderWineForm(w, isNew=false){
     <div class="form-row">
       <div>
         <label class="form-label">Tipo</label>
-        <select class="form-input" id="ef-tipo">
+        <select class="form-input" id="ef-tipo" onchange="refreshColorSomm()">
           ${['Tinto','Blanco','Rosado','Naranjo'].map(t=>`<option value="${t}"${w.tipo===t?' selected':''}>${t}</option>`).join('')}
         </select>
       </div>
@@ -1374,9 +1413,32 @@ function renderWineForm(w, isNew=false){
       <div></div>
     </div>
 
+    <div class="form-section">Lo que encontró el sommelier — revelado de la cata en /nueva (opcional)</div>
+    <div class="form-row">
+      <div>
+        <label class="form-label">Color</label>
+        <select class="form-input" id="ef-color-somm">${colorSommOptions(w.tipo, w.color_somm||'')}</select>
+      </div>
+      <div></div>
+    </div>
+    <label class="form-label">Aromas</label>
+    <div style="display:grid;gap:10px;margin-bottom:16px">
+      ${AROMAS_SOMM_FAMILIAS.map(([fam, aromas])=>`
+        <div>
+          <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:5px">${fam}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 12px">
+            ${aromas.map(a=>`
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-2)">
+                <input type="checkbox" class="ef-aroma" value="${a}" ${(w.aromas_somm||[]).includes(a)?'checked':''} style="accent-color:var(--accent)">
+                ${a}
+              </label>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+
     <div class="form-section">Maridaje</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-      ${MARIDAJE_OPTS.map(([val,label])=>`
+      ${MARIDAJE_OPTS.concat(maridajeSelected.filter(m=>!MARIDAJE_OPTS.some(([v])=>v===m)).map(m=>[m,m])).map(([val,label])=>`
         <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--ink-2)">
           <input type="checkbox" value="${val}" ${maridajeSelected.includes(val)?'checked':''} style="accent-color:var(--accent)">
           ${label}
@@ -1512,7 +1574,7 @@ async function extraerImagenDeLink(){
 }
 
 function getFormData(id, isNew){
-  const maridaje = [...document.querySelectorAll('#wineEditForm input[type=checkbox]:checked')].map(c=>c.value);
+  const maridaje = [...document.querySelectorAll('#wineEditForm input[type=checkbox]:not(.ef-aroma):checked')].map(c=>c.value);
   const w = isNew ? {} : {...editorWines.find(x=>x.id===id)};
   return {
     ...w,
@@ -1544,6 +1606,8 @@ function getFormData(id, isNew){
     maridaje:    maridaje,
     img:         document.getElementById('ef-img').value.trim(),
     imagen:      document.getElementById('ef-img').value.trim(),
+    aromas_somm: [...document.querySelectorAll('#wineEditForm .ef-aroma:checked')].map(c=>c.value),
+    color_somm:  document.getElementById('ef-color-somm').value,
   };
 }
 
@@ -1575,7 +1639,7 @@ function readChecklistVals(){
     cuerpo:   parseInt(val('ef-cuerpo'))||3,
     frescura: parseInt(val('ef-frescura'))||3,
     taninos:  parseInt(val('ef-taninos'))||3,
-    maridaje: [...document.querySelectorAll('#wineEditForm input[type=checkbox]:checked')].map(c=>c.value),
+    maridaje: [...document.querySelectorAll('#wineEditForm input[type=checkbox]:not(.ef-aroma):checked')].map(c=>c.value),
   };
 }
 function refreshChecklist(){
