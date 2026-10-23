@@ -1,17 +1,33 @@
 // ficha.js — la página del vino (hoja que sube al tocar una copita o una
 // fila de la carta), el mapa ampliado y el mapa del terruño de la bodega.
 
-import { $, ui, esc, fmt$, cap, fechaLarga, ACT, haptic, registrar } from './util.js';
+import { $, ui, esc, fmt$, cap, fechaLarga, reduced, ACT, haptic, registrar } from './util.js';
 import { byId, TIPO, preguntaSomm } from './datos.js';
-import { ICON_ASK, dots } from './dibujos.js';
-import { fotoBotella } from './imagenes.js';
+import { ICON_ASK, ICONOS_DATO, dots } from './dibujos.js';
+import { escenaBotella } from './imagenes.js';
 import { mapHTML, tiposEnCarta } from './mapa.js';
 import { ultimaPagina } from './store.js';
 import { MODOS, MODOS_DESPUES, openSheet, sBody, alCerrar } from './hoja.js';
 
+// Cada barra con sus dos extremos
+const PERFIL = [['cuerpo', 'Cuerpo', 'Liviano', 'Potente'], ['frescura', 'Frescura', 'Suave', 'Vibrante'], ['taninos', 'Taninos', 'Sedosos', 'Firmes']];
 function perfilRows(perfil){
-  return '<div class="perf">' + [['cuerpo','Cuerpo'],['frescura','Frescura'],['taninos','Taninos']].map(([k, l]) => '<span>' + l + '</span>' + dots(perfil[k])).join('') + '</div>';
+  return '<div class="perf" id="perf">' + PERFIL.map(([k, l, a, b]) => '<span class="perf-k">' + l + '</span><span class="perf-v">' + dots(perfil[k]) + '<span class="perf-ext"><span>' + a + '</span><span>' + b + '</span></span></span>').join('') + '</div>';
 }
+// Las barras se llenan en cascada cuando el bloque entra en pantalla
+let perfIO = null;
+function observarPerfil(){
+  if (perfIO) { perfIO.disconnect(); perfIO = null; }
+  const el = $('#perf');
+  if (!el || reduced() || typeof IntersectionObserver === 'undefined') return;
+  el.classList.add('esperando');
+  perfIO = new IntersectionObserver(entries => {
+    if (!entries.some(e => e.isIntersecting)) return;
+    el.classList.remove('esperando'); perfIO.disconnect(); perfIO = null;
+  }, {root: sBody, threshold: .6});
+  perfIO.observe(el);
+}
+alCerrar(() => { if (perfIO) { perfIO.disconnect(); perfIO = null; } });
 const coord = v => v != null && v !== '' && Number.isFinite(Number(v));
 const tieneTerruno = w => coord(w.bodega_lat) && coord(w.bodega_lon);
 
@@ -23,15 +39,15 @@ function fichaHTML(w){
     ['Servicio', [['Temperatura', w.temperatura], ['Copa', '125 cc']]]
   ].map(([g, rows]) => [g, rows.filter(r => r[1])]).filter(([, rows]) => rows.length);
   const terruno = tieneTerruno(w);
-  return '<div class="ficha-hero"><div><p class="t-eyebrow eyebrow">Nº ' + w.n + ' · ' + w.tipo + '</p><h2 class="t-titulo-l titulo" id="sheet-title">' + esc(w.nombre) + '</h2><p class="fh-bodega">' + esc(w.bodega) + '</p><p class="fh-price"><strong>' + fmt$(w.copa) + '</strong>la copa de 125 cc</p></div>'
-    + '<div class="fh-bottle">' + fotoBotella(w, {ws: [320, 640], sizes: '88px', width: 88, height: 188}) + '</div></div>'
+  return '<div class="fh">' + escenaBotella(w, {ws: [320, 640], sizes: '320px', width: 213, height: 320})
+    + '<div class="fh-txt"><p class="t-eyebrow eyebrow">Nº ' + w.n + ' · ' + w.tipo + '</p><h2 class="t-titulo-l titulo" id="sheet-title">' + esc(w.nombre) + '</h2><p class="fh-bodega">' + esc(w.bodega) + '</p><p class="fh-price"><strong>' + fmt$(w.copa) + '</strong>la copa de 125 cc</p></div></div>'
     + (p ? '<button class="mine" data-act="pagina" data-id="' + p.id + '"><span class="mine-score">' + p.puntaje + '</span><span><strong>Ya está en tu cuaderno</strong><br>' + cap(fechaLarga(new Date(p.fecha))) + (p.nota ? ' · “' + esc(p.nota.length > 46 ? p.nota.slice(0, 44) + '…' : p.nota) + '”' : '') + '</span></button>' : '')
     + (w.nota ? '<figure class="nota-somm"><p class="t-eyebrow eyebrow">La nota del somm</p><blockquote class="t-nota-somm">' + esc(w.nota) + '</blockquote></figure>' : '')
     + '<div class="block"><p class="block-t">Perfil <span>según la bodega</span></p>' + perfilRows(w.perfil) + '</div>'
-    + groups.map(([g, rows]) => '<div class="block"><p class="block-t">' + g + '</p><dl class="facts">' + rows.map(([k, v]) => '<div><dt>' + k + '</dt><dd>' + esc(v) + '</dd></div>').join('') + '</dl></div>').join('')
+    + groups.map(([g, rows]) => '<div class="block"><p class="block-t">' + g + '</p><dl class="facts">' + rows.map(([k, v]) => '<div><dt>' + (ICONOS_DATO[k] || '') + k + '</dt><dd>' + esc(v) + '</dd></div>').join('') + '</dl></div>').join('')
     + (w.maridaje.length ? '<div class="block"><p class="block-t">Va bien con</p><div class="tags">' + w.maridaje.map(m => '<span class="tag">' + esc(m) + '</span>').join('') + '</div></div>' : '')
-    + (w.bodega_info || terruno ? '<div class="block bodega"><p class="block-t">Sobre la bodega</p>' + (w.bodega_info ? '<p>' + esc(w.bodega_info) + '</p>' : '')
-      + (terruno ? '<div class="terruno" id="terruno" data-id="' + w.id + '"><button class="link" data-act="terruno">Ver en el mapa</button></div>' : '') + '</div>' : '')
+    + (w.bodega_info || terruno ? '<div class="block bodega"><p class="block-t">Sobre la bodega</p>' + (w.bodega_info ? '<p class="bodega-txt">' + esc(w.bodega_info) + '</p>' : '')
+      + (terruno ? '<div class="terruno" id="terruno" data-id="' + w.id + '"><button class="link" data-act="terruno">Ver en el mapa</button></div><p class="terruno-pie">' + esc(w.bodega) + (w.region ? ' · ' + esc(w.region) : '') + '</p>' : '') + '</div>' : '')
     + '<p class="ask">' + ICON_ASK + '<span>' + esc(preguntaSomm(w)) + '</span></p>'
     + '<div class="ficha-links">' + (w.tienda ? '<a class="tienda" href="' + esc(w.tienda) + '" target="_blank" rel="noopener">Ver la botella en la tienda de Aroma de Vid ↗</a>' : '<span></span>')
     + '<button class="link" data-act="compartir" data-id="' + w.id + '" id="compartir-l">Compartir</button></div>';
@@ -117,7 +133,7 @@ MODOS.ficha = S => {
   const w = byId(S.id), p = ultimaPagina(w.id);
   return {body: fichaHTML(w), foot: '<button class="t-boton btn btn-primary" data-act="anotar" data-id="' + w.id + '">' + (p ? 'Anotar otra copa' : 'Anotar esta copa') + '</button>'};
 };
-MODOS_DESPUES.ficha = S => observarTerruno(byId(S.id));
+MODOS_DESPUES.ficha = S => { observarTerruno(byId(S.id)); observarPerfil(); };
 MODOS.mapa = () => {
   const tipos = tiposEnCarta();
   return {body: '<p class="t-eyebrow eyebrow">Carta por copa</p><h2 class="t-titulo-m titulo" id="sheet-title">Mapa del vino</h2><p class="sub">A la izquierda, los más frescos; a la derecha, los más complejos. Arriba, los más potentes.</p><div class="block">' + mapHTML({big: true}) + '</div><p class="legend-map">' + tipos.map(t => '<span><i style="background:' + TIPO[t].c + '"></i>' + t + '</span>').join('') + '</p>'};

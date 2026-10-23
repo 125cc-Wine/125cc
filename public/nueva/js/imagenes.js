@@ -1,7 +1,13 @@
 // imagenes.js — fotos de botella servidas por la optimización de imágenes
 // de Vercel (/_vercel/image, configurada en vercel.json → "images") y el
 // dibujo de botella del prototipo como respaldo cuando no hay foto o falla.
-// La carta y el mapa no cargan fotos: abren al instante con dibujos.
+// La lista de la carta baja solo miniaturas (96w/192w, lazy); la foto
+// grande (640w) se pide recién al abrir el vino. El mapa no carga fotos.
+//
+// Las fotos son PNG transparentes con lienzos distintos (cuadrados, 2:3,
+// 1:2): se dimensionan por el alto con ancho automático y centradas, nunca
+// con object-fit en una caja fija (un lienzo cuadrado dejaría la botella
+// diminuta). Lo que sobra a los costados es transparente.
 
 import { esc } from './util.js';
 import { TIPO } from './datos.js';
@@ -52,20 +58,44 @@ export function bottleSVG(w){
     + '</svg>';
 }
 
-// Foto real con srcset, o el dibujo si el vino no tiene imagen. El tamaño
-// queda fijo (width/height) para que no salte el layout mientras carga.
-// opts: {ws: [anchos], sizes, width, height, lazy}
+// Foto real con srcset, o el dibujo si el vino no tiene imagen. width/height
+// reservan el lugar mientras carga. opts: {ws: [anchos], sizes, width,
+// height, lazy, deco} — deco: alt vacío (el reflejo, o la miniatura de una
+// fila que ya dice el nombre al lado).
 const respaldos = new Map(); // id del <img> → vino, para dibujarlo si la foto falla
 export function fotoBotella(w, opts){
   if (!w.imagen) return bottleSVG(w);
   const ws = opts.ws;
   const id = nuevoId('ft');
   respaldos.set(id, w);
-  return '<img class="foto" id="' + id + '" alt="Botella de ' + esc(w.nombre) + '"'
+  return '<img class="foto" id="' + id + '" alt="' + (opts.deco ? '' : 'Botella de ' + esc(w.nombre)) + '"'
     + ' src="' + esc(foto(w.imagen, ws[0])) + '"'
     + (LOCAL ? '' : ' srcset="' + ws.map(n => esc(foto(w.imagen, n)) + ' ' + n + 'w').join(', ') + '" sizes="' + opts.sizes + '"')
     + ' width="' + opts.width + '" height="' + opts.height + '" decoding="async"' + (opts.lazy ? ' loading="lazy"' : '') + '>';
 }
+const halo = w => (TIPO[w.tipo] || TIPO.Tinto).c;
+
+// La botella en escena (página del vino, ¿Qué tomo?): un foco de luz del
+// color del tipo atrás, la botella, su reflejo en el piso (la misma imagen
+// dada vuelta, que se apaga hacia abajo) y la sombra de la base. Lo mismo
+// con el dibujo de respaldo. chica: la versión de 120 px.
+export function escenaBotella(w, opts, chica){
+  return '<div class="escena' + (chica ? ' chica' : '') + '" style="--halo:' + halo(w) + '">'
+    + '<span class="escena-halo"></span><span class="escena-vino">'
+    + '<span class="escena-botella">' + fotoBotella(w, opts) + '</span>'
+    + '<span class="escena-reflejo" aria-hidden="true">' + fotoBotella(w, Object.assign({}, opts, {deco: true})) + '</span>'
+    + '<span class="escena-sombra"></span></span></div>';
+}
+
+// Miniatura de la lista: la botella en su nicho con foco de luz, y el
+// número de carta como insignia en la esquina.
+export function nicho(w, opts){
+  const t = TIPO[w.tipo] || TIPO.Tinto;
+  return '<span class="nicho" style="--halo:' + t.c + '"><span class="nicho-luz">'
+    + fotoBotella(w, Object.assign({ws: [96, 192], sizes: '64px', width: 44, height: 64, lazy: true, deco: true}, opts)) + '</span>'
+    + (w.n != null ? '<span class="nicho-n" style="background:' + t.c + ';color:' + t.ink + '">' + w.n + '</span>' : '') + '</span>';
+}
+
 // Un solo escuchador para todas las fotos: si una falla, va el dibujo.
 document.addEventListener('error', e => {
   const img = e.target;

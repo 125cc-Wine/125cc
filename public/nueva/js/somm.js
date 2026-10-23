@@ -6,7 +6,7 @@
 import { $, ui, esc, fmt$, cap, reduced, ms, ACT, haptic, registrar } from './util.js';
 import { carta } from './datos.js';
 import { ICON_GO, ICON_UP, ICON_DOWN, GLASS_ICON } from './dibujos.js';
-import { fotoBotella } from './imagenes.js';
+import { escenaBotella } from './imagenes.js';
 import { store, ultimaPagina, paladar } from './store.js';
 
 // Franjas de precio por tercios de la carta real, como precioBandThresholds()
@@ -99,7 +99,7 @@ export function renderQueTomo(){
   const fb = leerFeedback();
   const res = QUIZ.map(Q => { const o = Q.o.find(x => x[0] === q.ans[Q.k]); return o ? o[1] : ''; }).filter(Boolean).join(' · ');
   el.innerHTML = '<p class="t-eyebrow eyebrow">Para esta noche</p><h1 class="t-titulo-xl titulo">Tus tres copas</h1><p class="sub">' + esc(res) + '</p>'
-    + '<ol class="recs">' + q.recs.map((r, i) => '<li class="rec-li"><button class="rec" data-act="ficha" data-id="' + r.w.id + '"><span class="rec-rank">' + (i + 1) + '</span><span class="rec-main"><span class="rec-name">' + esc(r.w.nombre) + '</span><span class="rec-why">' + esc(r.why) + '</span><span class="rec-meta">' + esc(r.w.varietal) + ' · ' + fmt$(r.w.copa) + (store.pages.length && !ultimaPagina(r.w.id) ? ' · todavía no lo probaste' : '') + '</span></span><span class="rec-b">' + fotoBotella(r.w, {ws: [96, 192], sizes: '40px', width: 40, height: 84, lazy: true}) + '</span></button>' + votoHTML(r.w.id, fb) + '</li>').join('') + '</ol>'
+    + '<ol class="recs">' + q.recs.map((r, i) => '<li class="rec-li"><button class="rec" data-act="ficha" data-id="' + r.w.id + '"><span class="rec-rank">' + (i + 1) + '</span><span class="rec-main"><span class="rec-name">' + esc(r.w.nombre) + '</span><span class="rec-why">' + esc(r.why) + '</span><span class="rec-meta">' + esc(r.w.varietal) + ' · ' + fmt$(r.w.copa) + (store.pages.length && !ultimaPagina(r.w.id) ? ' · todavía no lo probaste' : '') + '</span></span><span class="rec-b">' + escenaBotella(r.w, {ws: [192, 320], sizes: '120px', width: 80, height: 120}, true) + '</span></button>' + votoHTML(r.w.id, fb) + '</li>').join('') + '</ol>'
     + '<div class="row-btns"><button class="t-boton btn btn-ghost" data-act="quiz-reset">Volver a empezar</button></div>';
 }
 

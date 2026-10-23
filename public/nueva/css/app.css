@@ -2,14 +2,20 @@
    Sale tal cual del prototipo aprobado (docs/nueva/prototipo.html) con los
    tiempos de animación pasados a tokens; al final, lo que suma la versión
    real: foto de la botella, mapa del terruño, WhatsApp, voto del ¿Qué tomo?
-   y la tarjeta para compartir. Colores y tiempos: solo desde tokens.css. */
+   y la tarjeta para compartir. Al final, "Más diseño y más botella": las
+   botellas en escena, profundidad en las superficies y el mapa como objeto.
+   Colores y tiempos: solo desde tokens.css. */
 /* Alto de la barra inferior: medida del componente, no del sistema */
 :root{--nav-h:66px}
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{margin:0;color:var(--ink);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:25;background:var(--bg)}
 body.locked{overflow:hidden}
+/* Fondo: degradé vertical muy suave hacia surface y el grano encima. Capa
+   fija aparte, así el scroll no la repinta */
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--grano),linear-gradient(180deg,var(--bg) 0%,var(--bg) 30%,color-mix(in srgb,var(--surface) 80%,var(--bg)) 100%)}
 button,input,textarea{font:inherit;color:inherit}
 button{background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
 a{color:inherit}
@@ -17,7 +23,7 @@ a{color:inherit}
 p{margin:0}
 
 .app{max-width:520px;margin:0 auto;padding-left:max(var(--space-4),env(safe-area-inset-left,0px));padding-right:max(var(--space-4),env(safe-area-inset-right,0px));padding-block:0 calc(var(--nav-h) + calc(var(--space-4) * 2.5) + env(safe-area-inset-bottom,0px))}
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;margin-inline:calc(-1 * var(--space-4));padding:var(--space-3) var(--space-4) var(--space-2);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);background:var(--bg)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;margin-inline:calc(-1 * var(--space-4));padding:var(--space-3) var(--space-4) var(--space-2);display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);background:var(--grano),var(--bg)}
 .brand{display:flex;align-items:center;gap:var(--space-2)}
 .wm{font:600 30px/1 var(--font-display);letter-spacing:-.01em}
 .wm em{font-style:italic;font-weight:500;color:var(--roble)}
@@ -37,13 +43,26 @@ p{margin:0}
 .carta-head{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--space-3);margin:var(--space-1) 0 var(--space-3)}
 .carta-count{text-align:right;font:600 15px/1.3 var(--font-ui)}
 .carta-count span{display:block;font-weight:400;font-size:12.5px;color:var(--ink-soft)}
-.mapcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-xl);padding:var(--space-2)}
-.map{position:relative;width:100%;max-width:100%;aspect-ratio:1/.8;border-radius:var(--radius-l);background:var(--mapa);overflow:hidden;touch-action:pan-y}
+.mapcard{background:var(--brillo-borde),var(--surface);border:1px solid var(--line);border-radius:var(--radius-xl);padding:var(--space-2);box-shadow:var(--elev-1)}
+/* El mapa como objeto: grano, el centro más claro, los cuadrantes apenas teñidos */
+.map{position:relative;width:100%;max-width:100%;aspect-ratio:1/.8;border-radius:var(--radius-l);background:var(--grano),radial-gradient(ellipse at 50% 50%,color-mix(in srgb,var(--papel) 9%,transparent),transparent 72%),var(--mapa);box-shadow:inset 0 0 0 1px var(--mapa-linea);overflow:hidden;touch-action:pan-y}
 .map.big{aspect-ratio:1/1.1}
-.map .ax{position:absolute;background:var(--mapa-linea)}
+.map .ax,.map .mk{position:absolute;background:var(--mapa-linea)}
+.map .mk-x{top:50%;width:1px;height:7px;margin:-3px 0 0}
+.map .mk-y{left:50%;width:7px;height:1px;margin:0 0 0 -3px}
+.cuad{position:absolute;width:50%;height:50%;pointer-events:none}
+.cuad-fp{left:0;top:0;background:radial-gradient(circle at 0 0,color-mix(in srgb,var(--roble) 5%,transparent),transparent 75%)}
+.cuad-cp{right:0;top:0;background:radial-gradient(circle at 100% 0,color-mix(in srgb,var(--tipo-tinto) 6%,transparent),transparent 75%)}
+.cuad-fs{left:0;bottom:0;background:radial-gradient(circle at 0 100%,color-mix(in srgb,var(--aroma-herbal) 6%,transparent),transparent 75%)}
+.cuad-cs{right:0;bottom:0;background:radial-gradient(circle at 100% 100%,color-mix(in srgb,var(--roble) 5%,transparent),transparent 75%)}
+.lq{position:absolute;max-width:34%;font:italic 500 12.5px/1.15 var(--font-display);color:var(--mapa-rotulo);pointer-events:none}
+.lq-fp{left:10px;top:10px}
+.lq-cp{right:10px;top:10px;text-align:right}
+.lq-fs{left:10px;bottom:10px}
+.lq-cs{right:10px;bottom:10px;text-align:right}
 .map .ax-x{left:5%;right:5%;top:50%;height:1px}
 .map .ax-y{top:7%;bottom:7%;left:50%;width:1px}
-.map .lb{position:absolute;font:600 9.5px/1 var(--font-ui);letter-spacing:.16em;color:var(--mapa-etiqueta);text-transform:uppercase;pointer-events:none}
+.map .lb{position:absolute;font:600 9.5px/1 var(--font-ui);letter-spacing:.16em;color:var(--mapa-rotulo);text-transform:uppercase;pointer-events:none}
 .lb-t{top:9px;left:50%;transform:translateX(-50%)}
 .lb-b{bottom:9px;left:50%;transform:translateX(-50%)}
 .lb-l{left:9px;top:50%;transform:translateY(-150%)}
@@ -63,9 +82,12 @@ p{margin:0}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .chip .dot{width:8px;height:8px;border-radius:50%}
 .winelist{list-style:none;margin:var(--space-1) 0 0;padding:0}
-.row{width:100%;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:var(--space-3);align-items:center;padding:var(--space-3) var(--space-1);border-bottom:1px solid var(--line);text-align:left}
-.row:hover .row-name{color:var(--roble)}
-.num{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font:700 14px/1 var(--font-ui)}
+.winelist li+li{border-top:1px solid var(--line)}
+.row{width:100%;display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:var(--space-3);align-items:center;margin-block:var(--space-1);padding:var(--space-2);border-radius:var(--radius-m);text-align:left;transition:background-color var(--dur-rapida)}
+/* Al tocar, la fila se ilumina y la botella se acerca */
+.row:active{background-color:var(--surface)}
+.row:active .nicho-luz>*{transform:scale(1.04)}
+@media (hover:hover){.row:hover{background-color:var(--surface)}.row:hover .nicho-luz>*{transform:scale(1.04)}}
 .row-main{min-width:0}
 .row-name{display:block;font-weight:500;font-size:15.5px;line-height:1.28;text-wrap:balance}
 .row-meta{display:block;margin-top:var(--space-1);font-size:12.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -80,7 +102,7 @@ p{margin:0}
 .nav button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-1);color:var(--ink-faint)}
 .nav button svg{width:22px;height:22px}
 .nav button[aria-current="page"]{color:var(--ink)}
-.nav .nav-c .ring{width:48px;height:48px;margin-top:calc(-1 * var(--space-5));border-radius:50%;display:grid;place-items:center;background:var(--tinto);color:var(--on-tinto);box-shadow:var(--sombra-papel)}
+.nav .nav-c .ring{width:48px;height:48px;margin-top:calc(-1 * var(--space-5));border-radius:50%;display:grid;place-items:center;color:var(--on-tinto);background:linear-gradient(180deg,color-mix(in srgb,var(--tinto) 92%,var(--on-tinto)),var(--tinto));box-shadow:var(--relieve),0 8px 20px color-mix(in srgb,var(--tinto) 35%,transparent)}
 .nav .nav-c[aria-current="page"] .ring{outline:2px solid var(--roble);outline-offset:3px}
 .badge{position:absolute;top:8px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 var(--space-1);border-radius:var(--radius-pill);background:var(--roble);color:var(--on-roble);font:700 10.5px/18px var(--font-ui);text-align:center}
 
@@ -88,7 +110,7 @@ p{margin:0}
 .scrim{position:fixed;inset:0;z-index:40;background:color-mix(in srgb,var(--bg) 62%,transparent);opacity:0;transition:opacity var(--dur-hoja)}
 .scrim.open{opacity:1}
 :root[data-theme="dia"] .scrim{background:color-mix(in srgb,var(--papel-tinta) 42%,transparent)}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:560px;margin:0 auto;max-height:calc(100% - 24px - env(safe-area-inset-top,0px));display:flex;flex-direction:column;background:var(--surface);border-radius:var(--radius-hoja) var(--radius-hoja) 0 0;box-shadow:var(--sombra-hoja);transform:translateY(104%);transition:transform var(--dur-hoja) var(--curva);outline:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:560px;margin:0 auto;max-height:calc(100% - 24px - env(safe-area-inset-top,0px));display:flex;flex-direction:column;background:var(--surface);border-top:1px solid var(--line-strong);border-radius:var(--radius-hoja) var(--radius-hoja) 0 0;box-shadow:var(--sombra-hoja),var(--elev-2);transform:translateY(104%);transition:transform var(--dur-hoja) var(--curva);outline:none}
 .sheet.open{transform:none}
 .sheet-grab{flex:none;position:relative;height:34px;display:grid;place-items:center;cursor:grab;touch-action:none}
 .sheet-grab span{width:42px;height:5px;border-radius:var(--radius-pill);background:var(--line-strong)}
@@ -103,20 +125,15 @@ p{margin:0}
 .btn:active{transform:scale(.98)}
 a.btn{text-decoration:none}
 .btn[disabled]{opacity:.38;cursor:not-allowed}
-.btn-primary{flex:1;background:var(--tinto);color:var(--on-tinto)}
+.btn-primary{flex:1;color:var(--on-tinto);background:linear-gradient(180deg,color-mix(in srgb,var(--tinto) 92%,var(--on-tinto)),var(--tinto));box-shadow:var(--relieve),0 8px 20px color-mix(in srgb,var(--tinto) 35%,transparent);transition:transform var(--dur-rapida),box-shadow var(--dur-rapida),opacity var(--dur-rapida)}
+.btn-primary:active{transform:translateY(1px);box-shadow:var(--relieve),0 3px 8px color-mix(in srgb,var(--tinto) 35%,transparent)}
 .btn-ghost{flex:0 0 auto;border:1px solid var(--line-strong);color:var(--ink)}
 .btn-danger{flex:1;background:var(--peligro);color:var(--on-tinto)}
 .btn.sm{height:40px;padding:0 var(--space-3);border-radius:var(--radius-m);font-size:13.5px}
 .btn.wide{width:100%}
 
 /* Página del vino */
-.ficha-hero{display:grid;grid-template-columns:minmax(0,1fr) 88px;gap:var(--space-3);align-items:end;padding:var(--space-4) var(--space-3) var(--space-4) var(--space-4);border-radius:var(--radius-l);background:radial-gradient(circle at 82% 78%,var(--line),transparent 62%),var(--surface-2)}
-/* Foco de luz detrás de la botella: más claro que el fondo en los dos temas */
-:root[data-theme="dia"] .ficha-hero{background:radial-gradient(circle at 82% 78%,var(--surface),transparent 62%),var(--surface-2)}
-.fh-bottle{height:188px;display:flex;justify-content:center;align-items:flex-end}
-.bottle{height:100%;width:auto;overflow:visible}
-.bottle .edge{fill:none;stroke:var(--line-strong);stroke-width:.8}
-.fh-bodega{margin-top:var(--space-1);color:var(--ink-soft);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase}
+.fh-bodega{margin-top:var(--space-2);color:var(--ink-soft);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase}
 .fh-price{margin-top:var(--space-3);color:var(--ink-soft);font-size:13px}
 .fh-price strong{margin-right:var(--space-1);font:700 27px/1 var(--font-display);color:var(--ink);font-variant-numeric:tabular-nums}
 .mine{width:100%;display:flex;gap:var(--space-3);align-items:center;margin-top:var(--space-3);padding:var(--space-2) var(--space-3);border-radius:var(--radius-m);border:1px solid var(--line-strong);font-size:13px;color:var(--ink-soft);text-align:left}
@@ -127,18 +144,23 @@ a.btn{text-decoration:none}
 .block{margin-top:var(--space-5)}
 .block-t{margin:0 0 var(--space-2);font:600 11.5px/1.3 var(--font-ui);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-soft)}
 .block-t span{font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink-faint)}
-.perf{display:grid;grid-template-columns:80px auto;gap:var(--space-2) var(--space-3);align-items:center;font-size:13.5px}
+.perf{display:grid;grid-template-columns:80px auto;gap:var(--space-3) var(--space-3);align-items:start;justify-content:start;font-size:13.5px}
+.perf-k{line-height:8px}
+.perf-v{display:inline-grid;gap:var(--space-1)}
+.perf-ext{display:flex;justify-content:space-between;gap:var(--space-3);font-size:11px;color:var(--ink-faint)}
 .dots{display:inline-flex;gap:var(--space-1)}
-.dots i{width:24px;height:8px;border-radius:var(--radius-pill);background:var(--surface-2);border:1px solid var(--line-strong)}
-.dots i.on{background:var(--tinto);border-color:var(--tinto)}
-.dots.oak i.on{background:var(--roble);border-color:var(--roble)}
+.dots i{width:24px;height:8px;border-radius:var(--radius-pill);background:var(--surface-2);border:1px solid var(--line-strong);transform-origin:0 50%;transition:transform var(--dur-copa) var(--curva) calc(var(--i,0) * var(--escalonado))}
+.dots i.on{background-color:var(--tinto);background-image:linear-gradient(180deg,color-mix(in srgb,var(--on-tinto) 30%,transparent),transparent 75%);border-color:var(--tinto)}
+.dots.oak i.on{background-color:var(--roble);border-color:var(--roble)}
+.perf.esperando .dots i.on{transform:scaleX(0)}
 .facts{margin:0}
-.facts div{display:grid;grid-template-columns:98px minmax(0,1fr);gap:var(--space-3);padding:var(--space-2) 0;border-bottom:1px solid var(--line)}
-.facts dt{font-size:13px;color:var(--ink-soft)}
+.facts div{display:grid;grid-template-columns:120px minmax(0,1fr);gap:var(--space-3);padding:var(--space-2) 0;border-bottom:1px solid var(--line)}
+.facts dt{display:flex;align-items:flex-start;gap:var(--space-2);font-size:13px;color:var(--ink-soft)}
+.facts .ico{flex:none;width:18px;height:18px;color:var(--roble)}
 .facts dd{margin:0;font-size:14px}
 .tags{display:flex;flex-wrap:wrap;gap:var(--space-1)}
 .tag{display:inline-flex;align-items:center;min-height:30px;padding:0 var(--space-3);border-radius:var(--radius-pill);background:var(--surface-2);font-size:13px}
-.bodega p{color:var(--ink-soft);font-size:14px;line-height:1.55}
+.bodega-txt{font:italic 500 18px/1.45 var(--font-display);color:var(--ink-soft);text-wrap:pretty}
 .ask{display:flex;gap:var(--space-2);align-items:flex-start;margin-top:var(--space-5);padding:var(--space-3) var(--space-3);border-radius:var(--radius-m);border:1px dashed var(--roble);font-size:14px}
 .ask svg{flex:none;width:20px;height:20px;margin-top:var(--space-1);color:var(--roble)}
 .tienda{display:inline-block;margin:var(--space-4) 0 var(--space-1);color:var(--roble);font-size:13.5px;font-weight:600;text-decoration:none}
@@ -210,6 +232,8 @@ textarea::placeholder{color:var(--ink-soft)}
 @keyframes draw{from{stroke-dashoffset:240}}
 .reveal-h{margin-bottom:var(--space-2);font-size:15px}
 .tag.t-match{background:var(--roble);color:var(--on-roble);font-weight:600}
+.revela .tag{animation:aparece var(--dur-hoja) var(--curva) backwards;animation-delay:calc(var(--i,0) * var(--escalonado) + var(--dur-rapida))}
+@keyframes aparece{from{opacity:0;transform:translateY(6px) scale(.94)}}
 .tag.t-fam{background:transparent;border:1px solid var(--roble)}
 .tag.t-miss{background:transparent;border:1px dashed var(--line-strong);color:var(--ink-soft)}
 .legend-s{display:flex;flex-wrap:wrap;gap:var(--space-1) var(--space-3);margin-top:var(--space-2);font-size:11.5px;color:var(--ink-faint)}
@@ -225,14 +249,18 @@ textarea::placeholder{color:var(--ink-soft)}
 
 /* Hoja de cuaderno */
 /* El lomo (4 px) y el sello de goma (3 px) son detalles del dibujo del papel, sin token */
-.page{position:relative;display:block;width:100%;padding:var(--space-4) calc(var(--space-4) * 4.75) var(--space-3) calc(var(--space-4) * 3);border-radius:4px var(--radius-m) var(--radius-m) 4px;color:var(--papel-tinta);text-align:left;background-color:var(--papel);background-image:repeating-linear-gradient(to bottom,transparent 0 27px,var(--papel-renglon) 27px 28px);background-position:0 14px;box-shadow:var(--sombra-papel)}
+.page{position:relative;display:block;width:100%;padding:var(--space-4) calc(var(--space-4) * 4.75) var(--space-3) calc(var(--space-4) * 3);border-radius:4px var(--radius-m) var(--radius-m) 4px;color:var(--papel-tinta);text-align:left;overflow:hidden;background-color:var(--papel);background-image:var(--grano),repeating-linear-gradient(to bottom,transparent 0 27px,var(--papel-renglon) 27px 28px);background-position:0 0,0 14px;box-shadow:var(--sombra-papel)}
 .page::before{content:"";position:absolute;top:0;bottom:0;left:32px;width:1.5px;background:var(--papel-margen);opacity:.75}
 .page::after{content:"";position:absolute;left:11px;top:18px;width:9px;height:9px;border-radius:50%;background:var(--bg);box-shadow:0 30px 0 var(--bg),0 60px 0 var(--bg)}
 .page-btn{cursor:pointer;transition:transform var(--dur-rapida) var(--curva)}
 .page-btn:hover{transform:translateY(-2px) rotate(-.3deg)}
 .pg-top{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)}
 .pg-date{font:600 10.5px/1.4 var(--font-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--papel-suave)}
-.pg-name{margin:var(--space-1) 0 0;font:600 23px/1.12 var(--font-display);text-wrap:balance}
+.pg-head{display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-1)}
+.pg-foto{flex:none;width:30px;height:52px;display:flex;justify-content:center;overflow:hidden}
+.pg-foto .foto,.pg-foto .bottle{flex:none;height:52px;width:auto;max-width:none}
+.pg-name{margin:0;font:600 23px/1.12 var(--font-display);text-wrap:balance}
+.pg-mancha{position:absolute;right:-24px;bottom:-28px;width:112px;height:112px;transform:rotate(-14deg);pointer-events:none}
 .pg-meta{margin-top:var(--space-1);font-size:12.5px;color:var(--papel-suave)}
 .pg-score{position:absolute;top:12px;right:10px;width:62px;height:56px;display:grid;place-items:center;color:var(--papel-margen)}
 .pg-score span{position:relative;font:700 25px/1 var(--font-display);color:var(--papel-tinta);font-variant-numeric:tabular-nums}
@@ -254,7 +282,7 @@ textarea::placeholder{color:var(--ink-soft)}
 .sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-2);margin-bottom:var(--space-2)}
 .sec-h .block-t{margin:0}
 .sec-s{font-size:12px;color:var(--ink-faint)}
-.mail{margin-top:var(--space-4);padding:var(--space-4);border-radius:var(--radius-l);background:var(--surface);border:1px solid var(--line)}
+.mail{margin-top:var(--space-4);padding:var(--space-4);border-radius:var(--radius-l);background:var(--brillo-borde),var(--surface);border:1px solid var(--line);box-shadow:var(--elev-1)}
 .mail-t{font:600 21px/1.2 var(--font-display)}
 .mail-s{margin:var(--space-1) 0 var(--space-3);font-size:13.5px;color:var(--ink-soft)}
 .mail-row{display:flex;gap:var(--space-2)}
@@ -262,7 +290,7 @@ textarea::placeholder{color:var(--ink-soft)}
 .mail-row input{flex:1;min-width:0;height:44px;padding:0 var(--space-3);border-radius:var(--radius-m);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--ink)}
 .mail-err{margin-top:var(--space-2);font-size:12.5px;color:var(--peligro)}
 .saved-mail{margin-top:var(--space-4);font-size:13px;color:var(--ink-soft)}
-.noche{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-3);align-items:center;padding:var(--space-4);border-radius:var(--radius-l);background:var(--surface);border:1px solid var(--line)}
+.noche{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-3);align-items:center;padding:var(--space-4);border-radius:var(--radius-l);background:var(--brillo-borde),var(--surface);border:1px solid var(--line);box-shadow:var(--elev-1)}
 .noche-d{margin-top:var(--space-1);font:600 20px/1.2 var(--font-display)}
 .noche-copas{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:var(--space-4)}
 .nc{display:flex;flex-direction:column;align-items:center;gap:var(--space-1)}
@@ -298,21 +326,21 @@ textarea::placeholder{color:var(--ink-soft)}
 .back{display:inline-block;margin-top:var(--space-1)}
 .back-sp{height:14px}
 .opts{display:grid;gap:var(--space-2);margin-top:var(--space-4)}
-.opt{position:relative;display:flex;flex-direction:column;gap:var(--space-1);padding:var(--space-4) calc(var(--space-4) * 3) var(--space-4) var(--space-4);border-radius:var(--radius-l);background:var(--surface);border:1px solid var(--line);text-align:left;transition:border-color var(--dur-rapida)}
+.opt{position:relative;display:flex;flex-direction:column;gap:var(--space-1);padding:var(--space-4) calc(var(--space-4) * 3) var(--space-4) var(--space-4);border-radius:var(--radius-l);background:var(--brillo-borde),var(--surface);border:1px solid var(--line);box-shadow:var(--elev-1);text-align:left;transition:border-color var(--dur-rapida)}
 .opt:hover,.opt[aria-pressed="true"]{border-color:var(--roble)}
 .opt-t{font:600 21px/1.2 var(--font-display)}
 .opt-s{font-size:13px;color:var(--ink-soft)}
 .opt-go{position:absolute;right:18px;top:50%;transform:translateY(-50%);color:var(--roble)}
 .opt-go svg{width:18px;height:18px;display:block}
 .recs{list-style:none;margin:var(--space-4) 0 0;padding:0;display:grid;gap:var(--space-3)}
-.rec{width:100%;display:grid;grid-template-columns:26px minmax(0,1fr) 40px;gap:var(--space-3);align-items:center;padding:var(--space-3);border-radius:var(--radius-l);background:var(--surface);border:1px solid var(--line);text-align:left}
+.rec{width:100%;display:grid;grid-template-columns:26px minmax(0,1fr) 84px;gap:var(--space-3);align-items:center;padding:var(--space-3);border-radius:var(--radius-l);background:var(--brillo-borde),var(--surface);border:1px solid var(--line);box-shadow:var(--elev-1);text-align:left;overflow:hidden}
 .rec:hover{border-color:var(--roble)}
 .rec-rank{font:600 22px/1 var(--font-ui);color:var(--roble);text-align:center}
 .rec-main{min-width:0}
 .rec-name{display:block;font:600 20px/1.15 var(--font-display)}
 .rec-why{display:block;margin-top:var(--space-1);font-size:13.5px}
 .rec-meta{display:block;margin-top:var(--space-1);font-size:12px;color:var(--ink-soft)}
-.rec-b{height:84px;display:flex;justify-content:center}
+
 .thinking{display:flex;flex-direction:column;align-items:center;gap:var(--space-3);padding:calc(var(--space-4) * 4.5) 0;color:var(--ink-soft)}
 .thinking svg{width:60px;height:auto;animation:swirl var(--dur-trazo) ease-in-out infinite;transform-origin:50% 90%}
 @keyframes swirl{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
@@ -335,15 +363,16 @@ textarea::placeholder{color:var(--ink-soft)}
 .carga{display:flex;flex-direction:column;align-items:center;gap:var(--space-3);padding:calc(var(--space-4) * 5.5) 0;color:var(--ink-soft);text-align:center}
 .carga svg{width:52px;height:auto;animation:swirl var(--dur-trazo) ease-in-out infinite;transform-origin:50% 90%}
 
-/* Foto real de la botella (página del vino y ¿Qué tomo?); si falla, va el dibujo */
-.foto{display:block;object-fit:contain;filter:drop-shadow(var(--sombra-papel))}
-.fh-bottle .foto{width:88px;height:188px}
-.rec-b{width:40px;align-items:center}
-.rec-b .foto{width:40px;height:84px}
-.rec-b .bottle{height:84px}
+/* Foto real de la botella; si falla, va el dibujo. Se dimensiona por el
+   alto en cada lugar (ver imagenes.js) */
+.foto{display:block}
+.rec-b{display:flex;justify-content:center}
 
 /* Mapa del terruño (Leaflet, se carga recién cuando el bloque se ve) */
-.terruno{position:relative;margin-top:var(--space-3);height:190px;border-radius:var(--radius-m);overflow:hidden;background:var(--mapa);border:1px solid var(--line);display:grid;place-items:center;isolation:isolate}
+.terruno{position:relative;margin-top:var(--space-3);height:190px;border-radius:var(--radius-l);overflow:hidden;background:var(--grano),var(--mapa);border:1px solid var(--line);box-shadow:var(--elev-1);display:grid;place-items:center;isolation:isolate}
+/* Viñeta: arriba de los mosaicos (z 400 de Leaflet), abajo del marcador y el zoom */
+.terruno::after{content:"";position:absolute;inset:0;z-index:450;border-radius:inherit;box-shadow:inset 0 0 34px 6px var(--sombra-color);pointer-events:none}
+.terruno-pie{margin-top:var(--space-2);font-size:12px;color:var(--ink-faint)}
 .terruno .link{position:relative;z-index:1}
 .terruno .leaflet-container{position:absolute;inset:0;background:var(--mapa);font:inherit}
 
@@ -373,3 +402,58 @@ textarea::placeholder{color:var(--ink-soft)}
 /* Tarjeta para llevar */
 .story-actions{display:flex;gap:var(--space-2);flex:1}
 .wa-no{color:var(--ink-soft)}
+
+/* ── Más diseño y más botella ── */
+
+/* La botella en su nicho (fila de la carta, burbuja del mapa): foco de luz
+   del color del tipo y el número de carta como insignia en la esquina */
+.nicho{position:relative;flex:none;display:block;width:52px;height:72px}
+.nicho-luz{display:flex;justify-content:center;align-items:flex-end;width:100%;height:100%;padding-bottom:var(--space-1);border-radius:var(--radius-s);overflow:hidden;background:radial-gradient(circle at 50% 60%,color-mix(in srgb,var(--halo) 18%,transparent),transparent 72%),var(--surface-2)}
+.nicho-luz>*{flex:none;height:64px;width:auto;max-width:none;transform-origin:50% 100%;transition:transform var(--dur-rapida) var(--curva)}
+.nicho-n{position:absolute;top:-5px;left:-5px;min-width:20px;height:20px;padding:0 var(--space-1);border-radius:var(--radius-pill);font:700 11px/20px var(--font-ui);text-align:center;box-shadow:var(--relieve)}
+
+/* La botella en escena: halo atrás, reflejo en el piso y sombra de la base.
+   Entra subiendo 24 px cuando se abre la hoja */
+.escena{--alto:clamp(300px,82vw,340px);--reflejo:40px;--halo-d:280px;--base:96px;position:relative;display:flex;justify-content:center;height:calc(var(--alto) + var(--reflejo))}
+.escena.chica{--alto:120px;--reflejo:16px;--halo-d:124px;--base:40px}
+.escena-halo{position:absolute;left:50%;top:calc(var(--alto) / 2);width:var(--halo-d);height:var(--halo-d);margin:calc(var(--halo-d) / -2) 0 0 calc(var(--halo-d) / -2);border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--halo) 35%,transparent),transparent);pointer-events:none}
+.escena-vino{position:relative;display:flex;flex-direction:column;align-items:center;animation:subir var(--dur-botella) var(--curva) backwards}
+@keyframes subir{from{opacity:0;transform:translateY(24px)}}
+.escena-botella,.escena-reflejo{display:flex;justify-content:center}
+.escena-botella{height:var(--alto);align-items:flex-end}
+.escena-botella>*,.escena-reflejo>*{flex:none;height:var(--alto);width:auto;max-width:none}
+.escena-reflejo{height:var(--reflejo);overflow:hidden;opacity:.18;-webkit-mask-image:linear-gradient(#000,transparent);mask-image:linear-gradient(#000,transparent)}
+.escena-reflejo>*{transform:scaleY(-1)}
+.escena-sombra{position:absolute;left:50%;bottom:calc(var(--reflejo) - 6px);width:var(--base);height:12px;margin-left:calc(var(--base) / -2);border-radius:50%;background:radial-gradient(closest-side,var(--sombra-color),transparent);pointer-events:none}
+
+/* Página del vino: la botella sale por arriba de la tarjeta (60 px) y el
+   nombre, la bodega y el precio van debajo */
+.fh{position:relative;display:flow-root;margin-top:60px;padding:0 var(--space-4) var(--space-5);border-radius:var(--radius-l);background:var(--brillo-borde),var(--surface-2);box-shadow:var(--elev-1);text-align:center}
+.fh .escena{margin-top:-60px}
+.fh-txt{position:relative;margin-top:var(--space-2)}
+.fh-txt .titulo{text-wrap:balance}
+
+/* ¿Qué tomo?: la botella a 120 px */
+.rec-b .escena{width:84px}
+
+/* Burbuja del mapa */
+.burbuja{position:absolute;z-index:5;width:min(240px,calc(100% - 16px));display:grid;grid-template-columns:auto minmax(0,1fr) 18px;gap:var(--space-3);align-items:center;padding:var(--space-2) var(--space-3) var(--space-2) var(--space-2);border-radius:var(--radius-m);background:var(--brillo-borde),var(--surface);border:1px solid var(--line);box-shadow:var(--elev-2);text-align:left;opacity:0;transform:translateY(4px);transition:opacity var(--dur-rapida),transform var(--dur-rapida) var(--curva)}
+.burbuja.arriba{transform:translateY(-4px)}
+.burbuja.show{opacity:1;transform:none}
+.burbuja::before{content:"";position:absolute;left:var(--flecha);top:-6px;width:10px;height:10px;margin-left:-5px;background:var(--surface);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg)}
+.burbuja.arriba::before{top:auto;bottom:-6px;transform:rotate(225deg)}
+.burbuja .nicho{width:40px;height:56px}
+.burbuja .nicho-luz>*{height:48px}
+.bu-main{min-width:0;display:flex;flex-direction:column;gap:2px}
+.bu-name{font:600 17px/1.15 var(--font-display);text-wrap:balance}
+.bu-meta{font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bu-main .t-precio{margin-top:var(--space-1)}
+.bu-go{color:var(--roble)}
+.bu-go svg{display:block;width:18px;height:18px}
+.con-burbuja .pin:not(.sel){opacity:.45}
+.con-burbuja .pin.dim:not(.sel){opacity:.2}
+.pin.sel{transform:scale(1.18);z-index:3}
+
+/* Pie de la carta */
+.pie{margin-top:var(--space-6);text-align:center;font-size:13px;color:var(--ink-faint)}
+.pie a{color:var(--roble);font-weight:600;text-decoration:none}

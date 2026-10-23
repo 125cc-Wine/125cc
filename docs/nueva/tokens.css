@@ -17,6 +17,9 @@
   --mapa: #24211D;
   --mapa-linea: #3A342D;
   --mapa-etiqueta: #9C8559;
+  /* Palabras del mapa sobre el fondo con grano y cuadrantes teñidos: la
+     etiqueta corrida hacia ink, para no bajar de 4.5:1 */
+  --mapa-rotulo: color-mix(in srgb, var(--mapa-etiqueta) 80%, var(--ink));
   --papel: #D9CDB7;
   --papel-tinta: #2B241F;
   --papel-suave: #574B42;
@@ -36,6 +39,16 @@
   --aroma-terroso: #8A8070;
   --sombra-hoja: 0 -12px 40px rgba(0,0,0,.38);
   --sombra-papel: 0 10px 26px rgba(0,0,0,.38);
+  /* Profundidad: tarjetas (elev-1), hoja que sube (elev-2), brillo del borde
+     superior de una superficie, grano del fondo y del papel */
+  --elev-1: 0 1px 0 rgba(255,255,255,.04) inset, 0 6px 18px rgba(0,0,0,.28);
+  --elev-2: 0 1px 0 rgba(255,255,255,.06) inset, 0 14px 36px rgba(0,0,0,.40);
+  --brillo-borde: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,0) 40%);
+  --grano: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='.05'/%3E%3C/svg%3E");
+  /* Relieve de lo que se aprieta (botón principal, insignia de número) y
+     el color de las sombras dibujadas (piso de la botella, viñeta del mapa) */
+  --relieve: inset 0 1px 0 rgba(255,255,255,.2), inset 0 -1.5px 2px rgba(0,0,0,.2), 0 1px 3px rgba(0,0,0,.3);
+  --sombra-color: rgba(0,0,0,.5);
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -53,6 +66,8 @@
   --dur-hoja: 380ms;
   --dur-copa: 700ms;
   --dur-trazo: 1000ms;
+  --dur-botella: 500ms;
+  --escalonado: 80ms;
   --font-display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
   --font-ui: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
@@ -78,6 +93,11 @@
   --papel-renglon: #EDE4D4;
   --sombra-hoja: 0 -12px 40px rgba(60,40,20,.16);
   --sombra-papel: 0 10px 26px rgba(60,40,20,.16);
+  --elev-1: 0 1px 0 rgba(255,255,255,.6) inset, 0 6px 18px rgba(60,40,20,.14);
+  --elev-2: 0 1px 0 rgba(255,255,255,.6) inset, 0 14px 36px rgba(60,40,20,.20);
+  --brillo-borde: linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,0) 40%);
+  --relieve: inset 0 1px 0 rgba(255,255,255,.25), inset 0 -1.5px 2px rgba(60,40,20,.2), 0 1px 3px rgba(60,40,20,.25);
+  --sombra-color: rgba(60,40,20,.28);
 }
 /* Estilos de texto */
 .t-titulo-xl { font-family: var(--font-display); font-size: 38px; line-height: 1.04; font-weight: 600; }

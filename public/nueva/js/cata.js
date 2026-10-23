@@ -168,8 +168,8 @@ export function revealAromas(p, w, compact){
   if (exact.length) leg.push('<span><i class="lg t-match"></i>Coincidieron</span>');
   if (fam.length) leg.push('<span><i class="lg t-fam"></i>Misma familia</span>');
   if (faltan.length) leg.push('<span><i class="lg t-miss"></i>Para buscar</span>');
-  return '<div class="block"><p class="block-t">' + (compact ? 'El sommelier anotó' : 'Aromas') + '</p><p class="reveal-h">' + head + '</p><div class="tags">'
-    + s.map(a => '<span class="tag ' + (exact.includes(a) ? 't-match' : fam.includes(a) ? 't-fam' : 't-miss') + '">' + esc(a) + '</span>').join('')
+  return '<div class="block"><p class="block-t">' + (compact ? 'El sommelier anotó' : 'Aromas') + '</p><p class="reveal-h">' + head + '</p><div class="tags revela">'
+    + s.map((a, i) => '<span class="tag ' + (exact.includes(a) ? 't-match' : fam.includes(a) ? 't-fam' : 't-miss') + '" style="--i:' + i + '">' + esc(a) + '</span>').join('')
     + '</div><p class="legend-s">' + leg.join('') + '</p></div>';
 }
 export function perfilCompare(tu, bod, tipo){

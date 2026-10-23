@@ -7,6 +7,7 @@ import { carta, famDe, colorDe, IMP_L, regionKey } from './datos.js';
 import { copita, blot, handCircle } from './dibujos.js';
 import { store, save, vinoDe, paladar, frasePaladar, ultimaNoche, borrarPagina, setEmail, olvidarEmail, EMAIL_RE } from './store.js';
 import { mapHTML } from './mapa.js';
+import { fotoBotella } from './imagenes.js';
 import { MODOS, openSheet, renderSheet, requestClose, hideSheet } from './hoja.js';
 import { revealAromas, perfilCompare } from './cata.js';
 
@@ -21,12 +22,17 @@ export function pageCard(p, o){
   const pend = p.pendiente && store.email ? '<span class="pg-pend">· sin subir todavía</span>' : '';
   return '<article class="page' + (o.btn ? ' page-btn' : '') + '"' + (o.btn ? ' data-act="pagina" data-id="' + p.id + '" role="button" tabindex="0" aria-label="Página de ' + esc(s.nombre) + ', ' + p.puntaje + ' puntos"' : '') + '>'
     + '<div class="pg-top"><p class="pg-date">' + fechaCorta(d) + ' · ' + (d.getDate() <= 15 ? '1ª' : '2ª') + ' quincena</p></div>'
-    + '<h3 class="pg-name">' + esc(s.nombre) + '</h3><p class="pg-meta">' + esc([s.bodega, s.varietal].filter(Boolean).join(' · ')) + '</p>'
+    + '<div class="pg-head">' + (s.imagen ? '<span class="pg-foto">' + fotoBotella(s, {ws: [96], sizes: '52px', width: 35, height: 52, lazy: true, deco: true}) + '</span>' : '')
+    + '<div><h3 class="pg-name">' + esc(s.nombre) + '</h3><p class="pg-meta">' + esc([s.bodega, s.varietal].filter(Boolean).join(' · ')) + '</p></div></div>'
     + '<div class="pg-score">' + handCircle() + '<span>' + p.puntaje + '</span></div>'
     + '<div class="pg-row">' + (hex ? '<span class="blot" title="' + esc(p.color) + '">' + blot(hex) + '</span>' : '') + ((p.aromas || []).length ? '<div class="stamps">' + p.aromas.map((a, i) => '<span class="stamp" style="--fc:' + (famDe(a) ? famDe(a).paper : 'var(--papel-suave)') + ';--rot:' + rots[i % 5] + 'deg">' + esc(a) + '</span>').join('') + '</div>' : '') + '</div>'
     + (p.nota ? '<p class="pg-nota">' + esc(p.nota) + '</p>' : '')
-    + '<p class="pg-foot">' + foot.join(' · ') + pend + '</p></article>';
+    + '<p class="pg-foot">' + foot.join(' · ') + pend + '</p>' + (conMancha(p.id) ? MANCHA : '') + '</article>';
 }
+// Una de cada tres páginas, siempre la misma, lleva la marca de una copa
+// apoyada en la esquina.
+const conMancha = id => [...String(id)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % 3 === 0;
+const MANCHA = '<svg class="pg-mancha" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 9C74 8 92 26 91 50C90 73 72 92 49 91C26 90 9 73 9 50C9 28 27 10 52 11" fill="none" stroke="var(--tipo-tinto)" stroke-opacity=".06" stroke-width="7" stroke-linecap="round"/><path d="M50 13C71 13 87 29 87 50C86 70 70 87 50 87C29 87 13 71 13 50" fill="none" stroke="var(--tipo-tinto)" stroke-opacity=".09" stroke-width="1.4"/></svg>';
 
 /* ---------- Mi cuaderno ---------- */
 function selloHTML(name, on, i){

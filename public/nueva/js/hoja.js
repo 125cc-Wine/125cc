@@ -42,9 +42,10 @@ export const alCerrar = fn => cierres.push(fn);
 export function hideSheet(){
   abierta = false; ui.sheet = null; ui.cata = null;
   sheet.classList.remove('open'); scrim.classList.remove('open'); document.body.classList.remove('locked');
-  setTimeout(() => { if (!abierta) { sheet.hidden = true; scrim.hidden = true; sheet.style.transform = ''; sBody.innerHTML = ''; } }, ms('--dur-hoja'));
+  // La vista de abajo se redibuja cuando la hoja ya bajó: hacerlo mientras
+  // baja traba la animación en celulares lentos.
+  setTimeout(() => { if (!abierta) { sheet.hidden = true; scrim.hidden = true; sheet.style.transform = ''; sBody.innerHTML = ''; vistas.refresh(); } }, ms('--dur-hoja'));
   cierres.forEach(fn => fn());
-  vistas.refresh();
 }
 export function requestClose(){
   if (pushed) { pushed = false; history.back(); setTimeout(() => { if (abierta) hideSheet(); }, ms('--dur-hoja')); }
