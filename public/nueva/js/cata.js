@@ -5,7 +5,7 @@
 
 import { $, ui, esc, fmt$, cap, descr, reduced, ms, ACT, haptic, toast, registrar } from './util.js';
 import { byId, TIPO, FAMILIAS, famDe, COLOR_SIN_FAMILIA, COLORES, colorDe, QUICK, IMP, PRESET, PASOS, preguntaSomm } from './datos.js';
-import { ICON_ASK, ICON_WA, copaNivel, handCircle, arc, dots } from './dibujos.js';
+import { ICON_ASK, copaNivel, handCircle, arc, dots } from './dibujos.js';
 import { store, mkPage, vinoDe, guardarPagina, actualizarPagina } from './store.js';
 import { MODOS, MODOS_DESPUES, openSheet, renderSheet, sBody, sFoot } from './hoja.js';
 import { pageCard } from './cuaderno.js';
@@ -33,7 +33,7 @@ function rapidaHTML(){
   const quick = QUICK[w.tipo] || QUICK.Tinto;
   // Al editar, que se vean también los aromas que ya tenía y no están en la lista corta
   const extras = c.aromas.filter(a => !quick.includes(a));
-  return '<p class="eyebrow">Cata rápida · tres toques</p><h2 class="h3" id="sheet-title">' + esc(w.nombre) + '</h2>'
+  return '<p class="t-eyebrow eyebrow">Cata rápida · tres toques</p><h2 class="t-titulo-m titulo" id="sheet-title">' + esc(w.nombre) + '</h2>'
     + '<div class="q"><p class="q-t">¿Cómo te cayó?</p><div class="imp">'
     + IMP.map(([v, l, f]) => '<button class="imp-b" data-act="imp" data-v="' + v + '" aria-pressed="' + (c.impresion === v) + '">' + copaNivel(f, (TIPO[w.tipo] || TIPO.Tinto).c) + '<span>' + l + '</span></button>').join('')
     + '</div></div>'
@@ -44,7 +44,7 @@ function rapidaHTML(){
     + '<div class="q"><label class="q-t" for="nota-txt">Una nota <span class="optional">opcional</span></label><textarea id="nota-txt" rows="2" placeholder="Lo que te quieras acordar de esta copa">' + esc(c.nota) + '</textarea></div>';
 }
 function rapidaFoot(){
-  return '<button class="btn btn-ghost" data-act="completa">Cata completa</button><button class="btn btn-primary" id="btn-guardar" data-act="guardar-rapida"' + (ui.cata.impresion ? '' : ' disabled') + '>Guardar</button>';
+  return '<button class="t-boton btn btn-ghost" data-act="completa">Cata completa</button><button class="t-boton btn btn-primary" id="btn-guardar" data-act="guardar-rapida"' + (ui.cata.impresion ? '' : ' disabled') + '>Guardar</button>';
 }
 function setScore(n){
   const c = ui.cata; c.puntaje = n;
@@ -63,7 +63,7 @@ function vasoHTML(){
     + ticks + '<text x="91" y="5" text-anchor="end" font-family="DM Sans, sans-serif" font-size="8" font-weight="600" fill="var(--ink-faint)">125</text></svg>';
 }
 function completaShell(){
-  return '<div class="cc-head"><div>' + vasoHTML() + '</div><div><p class="eyebrow" id="cc-paso"></p><h2 class="h3" id="sheet-title"></h2><p class="cc-wine">' + esc(ui.cata.w.nombre) + '</p></div></div><div id="cc-step"></div>';
+  return '<div class="cc-head"><div>' + vasoHTML() + '</div><div><p class="t-eyebrow eyebrow" id="cc-paso"></p><h2 class="t-titulo-m titulo" id="sheet-title"></h2><p class="cc-wine">' + esc(ui.cata.w.nombre) + '</p></div></div><div id="cc-step"></div>';
 }
 function escala(key, val, lo, hi){
   return '<div class="scale" role="group" aria-label="' + key + '">' + [1,2,3,4,5].map(i => '<button data-act="esc" data-k="' + key + '" data-v="' + i + '" class="' + (val && i <= val ? 'fill' : '') + (val === i ? ' on' : '') + '" aria-pressed="' + (val === i) + '" aria-label="' + i + ' de 5"></button>').join('') + '</div><div class="scale-l"><span>' + lo + '</span><span>' + hi + '</span></div>';
@@ -125,7 +125,7 @@ function stepBody(c, w){
     h += '<div class="q"><p class="q-t">¿Lo volverías a pedir?</p><div class="seg3">' + ['Sí','Tal vez','No'].map(v => '<button data-act="repetir" data-v="' + v + '" aria-pressed="' + (c.repetiria === v) + '">' + v + '</button>').join('') + '</div></div>'
       + '<div class="q"><label class="q-t" for="nota-txt">Tu nota <span class="optional">opcional</span></label><textarea id="nota-txt" rows="4" placeholder="Con quién estabas, qué comiste, qué te sorprendió">' + esc(c.nota) + '</textarea></div>';
   } else {
-    h += '<div class="score-hero"><span id="score-n" class="score-xl">' + c.puntaje + '</span><span id="score-d" class="score-desc">' + descr(c.puntaje) + '</span></div>' + rangeHTML(c.puntaje) + '<div class="range-l"><span>60</span><span>80</span><span>100</span></div>';
+    h += '<div class="score-hero"><span id="score-n" class="t-puntaje-xl">' + c.puntaje + '</span><span id="score-d" class="score-desc">' + descr(c.puntaje) + '</span></div>' + rangeHTML(c.puntaje) + '<div class="range-l"><span>60</span><span>80</span><span>100</span></div>';
   }
   if (!stepValido(c, w)) h += '<p class="need">' + (s === 2 && w.tipo !== 'Tinto' ? 'Completá cuerpo, frescura y final para seguir.' : FALTA[s]) + '</p>';
   return h;
@@ -142,7 +142,7 @@ function renderStep(keepScroll){
     requestAnimationFrame(() => { liq.style.transform = 'translateY(' + ((1 - (s + 1) / 5) * 62 + 2) + 'px)'; });
   }
   const fin = c.editId ? 'Guardar cambios' : 'Ver qué encontró el somm';
-  sFoot.innerHTML = '<button class="btn btn-ghost" data-act="paso-ant">' + (s === 0 ? 'Rápida' : 'Atrás') + '</button><button class="btn btn-primary" data-act="paso-sig"' + (stepValido(c, w) ? '' : ' disabled') + '>' + (s === 4 ? fin : 'Siguiente') + '</button>';
+  sFoot.innerHTML = '<button class="t-boton btn btn-ghost" data-act="paso-ant">' + (s === 0 ? 'Rápida' : 'Atrás') + '</button><button class="t-boton btn btn-primary" data-act="paso-sig"' + (stepValido(c, w) ? '' : ' disabled') + '>' + (s === 4 ? fin : 'Siguiente') + '</button>';
   sBody.scrollTop = keepScroll ? st : 0;
 }
 
@@ -177,7 +177,7 @@ export function perfilCompare(tu, bod, tipo){
     '<div class="pc-row"><span class="pc-k">' + cap(k) + '</span><span class="pc-v"><span class="pc-l">Vos</span>' + dots(tu[k]) + '</span><span class="pc-v"><span class="pc-l">Bodega</span>' + dots(bod[k], 'oak') + '</span></div>').join('');
 }
 function reveladoHTML(p, w){
-  return '<div class="rev-top"><div class="rev-score">' + handCircle() + '<span class="rev-n" id="rev-n">' + p.puntaje + '</span></div><div><p class="eyebrow">125 cc catados · ' + descr(p.puntaje) + '</p><h2 class="h3" id="sheet-title">Lo que encontró el sommelier</h2><p class="sub">' + esc(w.nombre) + '</p></div></div>'
+  return '<div class="rev-top"><div class="rev-score">' + handCircle() + '<span class="rev-n" id="rev-n">' + p.puntaje + '</span></div><div><p class="t-eyebrow eyebrow">125 cc catados · ' + descr(p.puntaje) + '</p><h2 class="t-titulo-m titulo" id="sheet-title">Lo que encontró el sommelier</h2><p class="sub">' + esc(w.nombre) + '</p></div></div>'
     + revealAromas(p, w, false)
     + (p.perfil && w.perfil && w.perfil.cuerpo ? '<div class="block"><p class="block-t">En boca <span>vos y la ficha de la bodega</span></p>' + perfilCompare(p.perfil, w.perfil, w.tipo) + '</div>' : '')
     + (w.color_somm && p.color && p.color !== 'Otro' ? '<div class="block"><p class="block-t">Color</p><p class="cmp-line">' + (p.color === w.color_somm ? 'Lo viste igual que el somm: <strong>' + esc(w.color_somm) + '</strong>.' : 'Vos lo viste <strong>' + esc(p.color) + '</strong>; el somm, <strong>' + esc(w.color_somm) + '</strong>.') + '</p></div>' : '')
@@ -185,7 +185,7 @@ function reveladoHTML(p, w){
 }
 function animarPuntaje(){
   const el = $('#rev-n'); if (!el || reduced()) return;
-  const to = +el.textContent, from = 60, t0 = performance.now(), dur = ms('--ms-score');
+  const to = +el.textContent, from = 60, t0 = performance.now(), dur = ms('--dur-trazo');
   const tick = now => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = Math.round(from + (to - from) * e); if (k < 1) requestAnimationFrame(tick); };
   el.textContent = from; requestAnimationFrame(tick);
 }
@@ -200,11 +200,11 @@ function normalizarTelefono(phone){
   return p;
 }
 function waHTML(S){
-  if (!S.wa) return '<button class="btn btn-ghost btn-wa" data-act="wa-abrir">' + ICON_WA + 'Mandámelo por WhatsApp</button>';
+  if (!S.wa) return '<button class="t-boton btn btn-ghost btn-wa" data-act="wa-abrir">Mandámelo por WhatsApp</button>';
   return '<form class="wa-form" id="wa-form" novalidate><p class="mail-t">Por WhatsApp</p><p class="mail-s">Te mandamos el vino, tu puntaje y tu nota.</p>'
-    + '<div class="mail-row"><input id="wa-in" type="tel" inputmode="tel" autocomplete="tel" placeholder="223 123-4567" aria-label="Tu celular"><button class="btn btn-primary sm" type="submit" id="wa-btn">Enviar</button></div>'
+    + '<div class="mail-row"><input id="wa-in" type="tel" inputmode="tel" autocomplete="tel" placeholder="223 123-4567" aria-label="Tu celular"><button class="t-boton btn btn-primary sm" type="submit" id="wa-btn">Enviar</button></div>'
     + '<p class="mail-err" id="wa-err" hidden>Revisá el número: parece que falta algo.</p>'
-    + '<button class="link muted-l" type="button" data-act="wa-cerrar">Mejor no</button></form>';
+    + '<button class="link wa-no" type="button" data-act="wa-cerrar">Mejor no</button></form>';
 }
 async function enviarWA(){
   const S = ui.sheet; if (!S) return;
@@ -234,18 +234,18 @@ MODOS.completa = () => { sBody.innerHTML = completaShell(); sFoot.innerHTML = ''
 MODOS.guardado = S => {
   const p = store.pages.find(x => x.id === S.pageId), w = vinoDe(p);
   return {
-    body: '<div class="saved-head"><svg class="check" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="22" r="20" stroke-width="1.4"/><path d="M13 23l6 6 12-13"/></svg><div><p class="eyebrow">Guardado en tu cuaderno</p><h2 class="h3" id="sheet-title">Una página más</h2></div></div>'
+    body: '<div class="saved-head"><svg class="check" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="22" cy="22" r="20" stroke-width="1.4"/><path d="M13 23l6 6 12-13"/></svg><div><p class="t-eyebrow eyebrow">Guardado en tu cuaderno</p><h2 class="t-titulo-m titulo" id="sheet-title">Una página más</h2></div></div>'
       + pageCard(p) + revealAromas(p, w, true)
       + (!store.email && store.pages.length === 1 ? '<p class="need">Tu primera página. Si querés no perderla, dejá tu email en Mi cuaderno.</p>' : '')
       + waHTML(S),
-    foot: '<button class="btn btn-ghost" data-act="ir-cuaderno">Ver mi cuaderno</button><button class="btn btn-primary" data-act="cerrar">Seguir con la carta</button>'
+    foot: '<button class="t-boton btn btn-ghost" data-act="ir-cuaderno">Ver mi cuaderno</button><button class="t-boton btn btn-primary" data-act="cerrar">Seguir con la carta</button>'
   };
 };
 MODOS.revelado = S => {
   const p = store.pages.find(x => x.id === S.pageId), w = vinoDe(p);
   return {
     body: reveladoHTML(p, w) + waHTML(S),
-    foot: '<button class="btn btn-ghost" data-act="pagina" data-id="' + p.id + '">Ver mi página</button><button class="btn btn-primary" data-act="cerrar">Seguir con la carta</button>'
+    foot: '<button class="t-boton btn btn-ghost" data-act="pagina" data-id="' + p.id + '">Ver mi página</button><button class="t-boton btn btn-primary" data-act="cerrar">Seguir con la carta</button>'
   };
 };
 MODOS_DESPUES.revelado = S => { if (!S.wa && !S.animado) { S.animado = true; animarPuntaje(); } };

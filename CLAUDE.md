@@ -103,6 +103,12 @@ están **copiadas** (marcadas "copia de public/index.html").
 - Eventos de uso → `POST /api/stats {evento}` → tabla `eventos_carta` (Postgres).
 - Fotos por `/_vercel/image` (bloque `images` de `vercel.json`); la carta y el
   mapa no cargan fotos. Leaflet se carga recién al ver el bloque de la bodega.
+- **Sistema de diseño propio:** `docs/nueva/tokens.css` (copiado tal cual a
+  `public/nueva/css/tokens.css`) + `docs/nueva/SISTEMA.md` (voz, contraste,
+  componentes). `app.css` usa solo esas variables; noche por defecto, día con
+  `data-theme="dia"`. `tinto` nunca como texto de noche; `ink-faint` solo sobre
+  `bg`/`surface`. No usa `/paleta.css` ni `public/tokens.css` (los de la carta
+  actual): los nombres chocan (`--tinto`, `--papel`).
 
 ## Sistema de diseño
 

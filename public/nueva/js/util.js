@@ -28,14 +28,26 @@ export function ms(name){
   return /ms$/.test(v) ? n : n * 1000;
 }
 export function token(name){ return css().getPropertyValue(name).trim(); }
+// Tokens del tema noche aunque la persona esté en día (la tarjeta para
+// compartir siempre es de noche). Se lee sin el atributo y se restaura en el
+// mismo instante, sin que llegue a pintarse.
+export function tokensNoche(names){
+  const root = document.documentElement, t = root.getAttribute('data-theme');
+  if (t) root.removeAttribute('data-theme');
+  const cs = getComputedStyle(root), o = {};
+  names.forEach(n => { o[n] = cs.getPropertyValue(n).trim(); });
+  if (t) root.setAttribute('data-theme', t);
+  return o;
+}
 // 'var(--tipo-tinto)' → '#8E1B2E'
 export function resolver(c){ const m = /^var\((--[\w-]+)\)$/.exec(c || ''); return m ? token(m[1]) : c; }
 
 export function haptic(n){ try { if (navigator.vibrate) navigator.vibrate(n || 8); } catch (e) {} }
+const TOAST_MS = 2600; // cuánto queda a la vista (no es una animación)
 let toastT;
 export function toast(msg){
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms('--ms-toast'));
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), TOAST_MS);
 }
 
 // Estado de la interfaz (no se guarda)

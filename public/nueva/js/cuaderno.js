@@ -23,7 +23,7 @@ export function pageCard(p, o){
     + '<div class="pg-top"><p class="pg-date">' + fechaCorta(d) + ' · ' + (d.getDate() <= 15 ? '1ª' : '2ª') + ' quincena</p></div>'
     + '<h3 class="pg-name">' + esc(s.nombre) + '</h3><p class="pg-meta">' + esc([s.bodega, s.varietal].filter(Boolean).join(' · ')) + '</p>'
     + '<div class="pg-score">' + handCircle() + '<span>' + p.puntaje + '</span></div>'
-    + '<div class="pg-row">' + (hex ? '<span class="blot" title="' + esc(p.color) + '">' + blot(hex) + '</span>' : '') + ((p.aromas || []).length ? '<div class="stamps">' + p.aromas.map((a, i) => '<span class="stamp" style="--fc:' + (famDe(a) ? famDe(a).paper : '#57503F') + ';--rot:' + rots[i % 5] + 'deg">' + esc(a) + '</span>').join('') + '</div>' : '') + '</div>'
+    + '<div class="pg-row">' + (hex ? '<span class="blot" title="' + esc(p.color) + '">' + blot(hex) + '</span>' : '') + ((p.aromas || []).length ? '<div class="stamps">' + p.aromas.map((a, i) => '<span class="stamp" style="--fc:' + (famDe(a) ? famDe(a).paper : 'var(--papel-suave)') + ';--rot:' + rots[i % 5] + 'deg">' + esc(a) + '</span>').join('') + '</div>' : '') + '</div>'
     + (p.nota ? '<p class="pg-nota">' + esc(p.nota) + '</p>' : '')
     + '<p class="pg-foot">' + foot.join(' · ') + pend + '</p></article>';
 }
@@ -35,15 +35,14 @@ function selloHTML(name, on, i){
 }
 function mailHTML(){
   if (store.email) return '<p class="saved-mail">Cuaderno asociado a <strong>' + esc(store.email) + '</strong>. Lo recuperás desde cualquier celular con el mismo email.<button class="link" data-act="cambiar-email">Cambiar</button></p>';
-  return '<form class="mail" id="mail-form" novalidate><p class="mail-t">Guardá tu cuaderno</p><p class="mail-s">Con tu email lo recuperás en otro celular y no se pierde si borrás el navegador. Si ya cataste en 125cc con ese email, tus catas aparecen acá.</p><div class="mail-row"><input id="mail-in" type="email" inputmode="email" autocomplete="email" placeholder="tu@email.com" aria-label="Tu email"><button class="btn btn-primary sm" type="submit" id="mail-btn">Guardar</button></div><p class="mail-err" id="mail-err" hidden>Revisá el email: parece que falta algo.</p></form>';
+  return '<form class="mail" id="mail-form" novalidate><p class="mail-t">Guardá tu cuaderno</p><p class="mail-s">Con tu email lo recuperás en otro celular y no se pierde si borrás el navegador. Si ya cataste en 125cc con ese email, tus catas aparecen acá.</p><div class="mail-row"><input id="mail-in" type="email" inputmode="email" autocomplete="email" placeholder="tu@email.com" aria-label="Tu email"><button class="t-boton btn btn-primary sm" type="submit" id="mail-btn">Guardar</button></div><p class="mail-err" id="mail-err" hidden>Revisá el email: parece que falta algo.</p></form>';
 }
 export function renderCuaderno(){
   const el = $('#view-cuaderno');
   const pages = [...store.pages].sort((a, b) => b.fecha.localeCompare(a.fecha));
-  const head = '<div class="cu-head"><p class="eyebrow">Tu libreta de 125cc</p><h1 class="h1">Mi cuaderno</h1>';
+  const head = '<div class="cu-head"><p class="t-eyebrow eyebrow">Tu libreta de 125cc</p><h1 class="t-titulo-xl titulo">Mi cuaderno</h1>';
   if (!pages.length) {
-    el.innerHTML = head + '</div><div class="empty"><svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M60 16C46 8 26 8 10 12V80C26 76 46 76 60 84C74 76 94 76 110 80V12C94 8 74 8 60 16Z"/><path d="M60 16V84M20 28H48M20 38H48M20 48H40M72 28H100M72 38H100"/></svg><p class="empty-t">Tu cuaderno está en blanco</p><p>Elegí un vino de la carta y tocá <strong>Anotar esta copa</strong>. Cada copa queda acá como una página, aunque el vino salga de carta.</p><button class="btn btn-primary" data-act="view" data-v="carta">Ir a la carta</button></div>'
-      + mailHTML();
+    el.innerHTML = head + '</div><div class="empty"><svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M60 16C46 8 26 8 10 12V80C26 76 46 76 60 84C74 76 94 76 110 80V12C94 8 74 8 60 16Z"/><path d="M60 16V84M20 28H48M20 38H48M20 48H40M72 28H100M72 38H100"/></svg><p class="empty-t">Tu cuaderno está en blanco</p><p>Elegí un vino de la carta y tocá <strong>Anotar esta copa</strong>. Cada copa queda acá como una página, aunque el vino salga de carta.</p><button class="t-boton btn btn-primary" data-act="view" data-v="carta">Ir a la carta</button></div>';
     return;
   }
   const clave = p => p.vinoId ?? p.snap.nombre;
@@ -59,13 +58,13 @@ export function renderCuaderno(){
   el.innerHTML = head
     + '<p class="cu-stats"><span><strong>' + pages.length + '</strong>' + (pages.length === 1 ? 'página' : 'páginas') + '</span><span><strong>' + vinos + '</strong>' + (vinos === 1 ? 'vino' : 'vinos') + '</span><span><strong>' + qs + '</strong>' + (qs === 1 ? 'quincena' : 'quincenas') + '</span></p></div>'
     + mailHTML()
-    + '<section class="cu-sec noche" aria-label="Tu última noche"><div><p class="eyebrow">' + (n.esHoy ? 'Esta noche' : 'Tu última noche') + '</p><p class="noche-d">' + cap(fechaLarga(n.d)) + '</p></div><button class="btn btn-ghost sm" data-act="noche">Llevate tu noche</button>'
+    + '<section class="cu-sec noche" aria-label="Tu última noche"><div><p class="t-eyebrow eyebrow">' + (n.esHoy ? 'Esta noche' : 'Tu última noche') + '</p><p class="noche-d">' + cap(fechaLarga(n.d)) + '</p></div><button class="t-boton btn btn-ghost sm" data-act="noche">Llevate tu noche</button>'
     + '<div class="noche-copas">' + n.pages.map(p => '<span class="nc" title="' + esc(p.snap.nombre) + '">' + copita(p.snap) + '<b>' + p.puntaje + '</b></span>').join('') + '</div></section>'
     + '<section class="cu-sec"><div class="sec-h"><p class="block-t">Tu paladar</p><span class="sec-s">sobre el mapa de esta carta</span></div>' + mapHTML({paladar: true}) + '<p class="paladar-f">' + frasePaladar() + '</p></section>'
     + groups.map(g => '<section class="cu-sec"><div class="sec-h"><p class="block-t">' + cap(g.label) + '</p><span class="sec-s">' + g.pages.length + ' ' + (g.pages.length === 1 ? 'página' : 'páginas') + '</span></div><div class="pages">' + g.pages.map(p => pageCard(p, {btn: true})).join('') + '</div></section>').join('')
     + (todas.length ? '<section class="cu-sec"><div class="sec-h"><p class="block-t">Sellos</p><span class="sec-s">' + regs.size + ' de ' + todas.length + ' regiones · ' + cepas + ' ' + (cepas === 1 ? 'cepa' : 'cepas') + '</span></div><div class="sellos">' + todas.map((r, i) => selloHTML(r, regs.has(r), i)).join('') + '</div></section>' : '')
     + '<div class="cu-foot">' + (ui.confirm === 'reset'
-      ? '<p class="muted">' + (conEmail ? '¿Borrar las páginas de este celular? Las que se guardaron con tu email siguen en 125cc y vuelven si lo cargás de nuevo.' : '¿Borrar todas las páginas de este celular?') + '</p><div class="row-btns"><button class="btn btn-ghost sm" data-act="cancelar">Cancelar</button><button class="btn btn-danger sm" data-act="reset-si">Sí, borrar todo</button></div>'
+      ? '<p class="muted">' + (conEmail ? '¿Borrar las páginas de este celular? Las que se guardaron con tu email siguen en 125cc y vuelven si lo cargás de nuevo.' : '¿Borrar todas las páginas de este celular?') + '</p><div class="row-btns"><button class="t-boton btn btn-ghost sm" data-act="cancelar">Cancelar</button><button class="t-boton btn btn-danger sm" data-act="reset-si">Sí, borrar todo</button></div>'
       : '<button class="link muted-l" data-act="reset">Empezar de cero</button>')
     + '</div>';
 }
@@ -77,12 +76,12 @@ MODOS.pagina = S => {
   const w = vinoDe(p);
   const enCarta = carta.vinos.some(x => x.id === p.vinoId);
   return {
-    body: '<p class="eyebrow" id="sheet-title">Página del cuaderno</p><div class="block">' + pageCard(p) + '</div>'
+    body: '<p class="t-eyebrow eyebrow" id="sheet-title">Página del cuaderno</p><div class="block">' + pageCard(p) + '</div>'
       + revealAromas(p, w, true)
       + (p.perfil && w.perfil && w.perfil.cuerpo ? '<div class="block"><p class="block-t">En boca <span>vos y la ficha de la bodega</span></p>' + perfilCompare(p.perfil, w.perfil, w.tipo) + '</div>' : ''),
     foot: S.confirm
-      ? '<div class="confirm"><p>¿Borrar esta página del cuaderno?</p><button class="btn btn-ghost sm" data-act="borrar-no">Cancelar</button><button class="btn btn-danger sm" data-act="borrar-si">Sí, borrar</button></div>'
-      : '<button class="btn btn-ghost" data-act="borrar-pagina">Borrar</button><button class="btn btn-ghost" data-act="editar-pagina">Editar</button>' + (enCarta ? '<button class="btn btn-primary" data-act="ficha" data-id="' + p.vinoId + '">Ver el vino</button>' : '')
+      ? '<div class="confirm"><p>¿Borrar esta página del cuaderno?</p><button class="t-boton btn btn-ghost sm" data-act="borrar-no">Cancelar</button><button class="t-boton btn btn-danger sm" data-act="borrar-si">Sí, borrar</button></div>'
+      : '<button class="t-boton btn btn-ghost" data-act="borrar-pagina">Borrar</button><button class="t-boton btn btn-ghost" data-act="editar-pagina">Editar</button>' + (enCarta ? '<button class="t-boton btn btn-primary" data-act="ficha" data-id="' + p.vinoId + '">Ver el vino</button>' : '')
   };
 };
 

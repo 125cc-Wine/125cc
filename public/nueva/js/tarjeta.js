@@ -4,7 +4,7 @@
 // no quede bloqueado); si una foto no llega, va la copita dibujada.
 // Para compartir: menú del teléfono si acepta archivos, si no, descarga.
 
-import { ui, cap, fechaLarga, token, resolver, ACT, registrar } from './util.js';
+import { ui, cap, fechaLarga, tokensNoche, resolver, ACT, registrar } from './util.js';
 import { TIPO } from './datos.js';
 import { BOWL, HAND } from './dibujos.js';
 import { cargarImagen } from './imagenes.js';
@@ -28,12 +28,15 @@ async function storyCanvas(n, conFotos){
     Promise.all(rows.map(p => conFotos && p.snap.imagen ? cargarImagen(p.snap.imagen, 320) : null)),
     Promise.race([Promise.all(['600 64px "Cormorant Garamond"', 'italic 500 64px "Cormorant Garamond"', '400 32px "DM Sans"', '600 32px "DM Sans"'].map(f => document.fonts.load(f))), new Promise(r => setTimeout(r, 1500))]).catch(() => {}),
   ]);
-  const C = {bg1: token('--story-bg1'), bg2: token('--story-bg2'), cream: token('--story-cream'), soft: token('--story-soft'), oak: token('--story-oak'), ring: token('--story-ring')};
+  const N = tokensNoche(['--bg', '--surface-2', '--ink', '--ink-soft', '--roble', '--tinto', '--sombra-papel']);
+  const C = {bg1: N['--bg'], bg2: N['--surface-2'], cream: N['--ink'], soft: N['--ink-soft'], oak: N['--roble'], ring: N['--tinto']};
+  const sombra = (/rgba?\([^)]*\)/.exec(N['--sombra-papel']) || [C.bg1])[0];
   const serif = '"Cormorant Garamond", Georgia, serif', sans = '"DM Sans", system-ui, sans-serif';
   const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, C.bg2); gr.addColorStop(1, C.bg1);
   g.fillStyle = gr; g.fillRect(0, 0, W, H);
-  g.strokeStyle = 'rgba(243,236,226,.06)'; g.lineWidth = 2;
+  g.save(); g.globalAlpha = .06; g.strokeStyle = C.cream; g.lineWidth = 2;
   for (let y = 740; y < 1700; y += 64) { g.beginPath(); g.moveTo(90, y); g.lineTo(W - 90, y); g.stroke(); }
+  g.restore();
   g.textBaseline = 'alphabetic';
   g.fillStyle = C.cream; g.font = '600 170px ' + serif; g.fillText('125', 84, 300);
   const w1 = g.measureText('125').width;
@@ -49,7 +52,7 @@ async function storyCanvas(n, conFotos){
     if (img && img.naturalWidth) {
       // Botella real: alto de la fila, centrada donde iba la copita
       const h = rowH - 50, wd = Math.min(120, h * img.naturalWidth / img.naturalHeight), hh = wd * img.naturalHeight / img.naturalWidth;
-      g.save(); g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 24; g.shadowOffsetY = 10;
+      g.save(); g.shadowColor = sombra; g.shadowBlur = 26; g.shadowOffsetY = 10;
       g.drawImage(img, 147 - wd / 2, y - 28 + (h - hh) / 2, wd, hh); g.restore();
     } else {
       g.save(); g.translate(90, y); g.scale(4.4, 4.4);
@@ -92,10 +95,10 @@ MODOS.noche = S => {
     : S.error ? '<p class="muted">No se pudo armar la imagen en este navegador.</p>' : '<div class="story-ph">Armando la imagen…</div>';
   const sub = !S.url ? '' : S.compartible ? 'Compartila en tus historias o mandala por WhatsApp.' : 'Descargala, o mantené apretada la imagen para guardarla.';
   return {
-    body: '<p class="eyebrow">Llevate tu noche</p><h2 class="h3" id="sheet-title">' + (n.esHoy ? 'Mi noche' : 'Mi última noche') + ' en 125cc</h2><div class="story-wrap">' + img + '</div>' + (sub ? '<p class="sub center">' + sub + '</p>' : ''),
+    body: '<p class="t-eyebrow eyebrow">Llevate tu noche</p><h2 class="t-titulo-m titulo" id="sheet-title">' + (n.esHoy ? 'Mi noche' : 'Mi última noche') + ' en 125cc</h2><div class="story-wrap">' + img + '</div>' + (sub ? '<p class="sub center">' + sub + '</p>' : ''),
     foot: !S.url ? '' : S.compartible
-      ? '<button class="btn btn-primary" data-act="noche-compartir">Compartir</button>'
-      : '<a class="btn btn-primary" href="' + S.url + '" download="mi-noche-125cc.png" data-act="noche-descargar">Descargar</a>'
+      ? '<button class="t-boton btn btn-primary" data-act="noche-compartir">Compartir</button>'
+      : '<a class="t-boton btn btn-primary" href="' + S.url + '" download="mi-noche-125cc.png" data-act="noche-descargar">Descargar</a>'
   };
 };
 MODOS_DESPUES.noche = S => {

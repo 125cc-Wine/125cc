@@ -42,12 +42,12 @@ export const alCerrar = fn => cierres.push(fn);
 export function hideSheet(){
   abierta = false; ui.sheet = null; ui.cata = null;
   sheet.classList.remove('open'); scrim.classList.remove('open'); document.body.classList.remove('locked');
-  setTimeout(() => { if (!abierta) { sheet.hidden = true; scrim.hidden = true; sheet.style.transform = ''; sBody.innerHTML = ''; } }, ms('--ms-cerrar'));
+  setTimeout(() => { if (!abierta) { sheet.hidden = true; scrim.hidden = true; sheet.style.transform = ''; sBody.innerHTML = ''; } }, ms('--dur-hoja'));
   cierres.forEach(fn => fn());
   vistas.refresh();
 }
 export function requestClose(){
-  if (pushed) { pushed = false; history.back(); setTimeout(() => { if (abierta) hideSheet(); }, ms('--ms-cerrar') - 50); }
+  if (pushed) { pushed = false; history.back(); setTimeout(() => { if (abierta) hideSheet(); }, ms('--dur-hoja')); }
   else hideSheet();
 }
 addEventListener('popstate', () => { if (abierta) { pushed = false; hideSheet(); } });

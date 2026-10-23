@@ -23,10 +23,10 @@ function fichaHTML(w){
     ['Servicio', [['Temperatura', w.temperatura], ['Copa', '125 cc']]]
   ].map(([g, rows]) => [g, rows.filter(r => r[1])]).filter(([, rows]) => rows.length);
   const terruno = tieneTerruno(w);
-  return '<div class="ficha-hero"><div><p class="eyebrow">Nº ' + w.n + ' · ' + w.tipo + '</p><h2 class="h2" id="sheet-title">' + esc(w.nombre) + '</h2><p class="fh-bodega">' + esc(w.bodega) + '</p><p class="fh-price"><strong>' + fmt$(w.copa) + '</strong>la copa de 125 cc</p></div>'
+  return '<div class="ficha-hero"><div><p class="t-eyebrow eyebrow">Nº ' + w.n + ' · ' + w.tipo + '</p><h2 class="t-titulo-l titulo" id="sheet-title">' + esc(w.nombre) + '</h2><p class="fh-bodega">' + esc(w.bodega) + '</p><p class="fh-price"><strong>' + fmt$(w.copa) + '</strong>la copa de 125 cc</p></div>'
     + '<div class="fh-bottle">' + fotoBotella(w, {ws: [320, 640], sizes: '88px', width: 88, height: 188}) + '</div></div>'
     + (p ? '<button class="mine" data-act="pagina" data-id="' + p.id + '"><span class="mine-score">' + p.puntaje + '</span><span><strong>Ya está en tu cuaderno</strong><br>' + cap(fechaLarga(new Date(p.fecha))) + (p.nota ? ' · “' + esc(p.nota.length > 46 ? p.nota.slice(0, 44) + '…' : p.nota) + '”' : '') + '</span></button>' : '')
-    + (w.nota ? '<figure class="nota-somm"><p class="eyebrow">La nota del somm</p><blockquote>' + esc(w.nota) + '</blockquote></figure>' : '')
+    + (w.nota ? '<figure class="nota-somm"><p class="t-eyebrow eyebrow">La nota del somm</p><blockquote class="t-nota-somm">' + esc(w.nota) + '</blockquote></figure>' : '')
     + '<div class="block"><p class="block-t">Perfil <span>según la bodega</span></p>' + perfilRows(w.perfil) + '</div>'
     + groups.map(([g, rows]) => '<div class="block"><p class="block-t">' + g + '</p><dl class="facts">' + rows.map(([k, v]) => '<div><dt>' + k + '</dt><dd>' + esc(v) + '</dd></div>').join('') + '</dl></div>').join('')
     + (w.maridaje.length ? '<div class="block"><p class="block-t">Va bien con</p><div class="tags">' + w.maridaje.map(m => '<span class="tag">' + esc(m) + '</span>').join('') + '</div></div>' : '')
@@ -108,19 +108,19 @@ async function compartirVino(id){
   try {
     await navigator.clipboard.writeText(url);
     const el = $('#compartir-l');
-    if (el) { const prev = el.textContent; el.textContent = '¡Link copiado!'; setTimeout(() => { if (el.isConnected) el.textContent = prev; }, 1600); }
+    if (el) { const prev = el.textContent; el.textContent = 'Link copiado'; setTimeout(() => { if (el.isConnected) el.textContent = prev; }, 1600); }
   } catch (e) { prompt('Copiá este link:', url); }
 }
 
 /* ---------- Modos de la hoja ---------- */
 MODOS.ficha = S => {
   const w = byId(S.id), p = ultimaPagina(w.id);
-  return {body: fichaHTML(w), foot: '<button class="btn btn-primary" data-act="anotar" data-id="' + w.id + '">' + (p ? 'Anotar otra copa' : 'Anotar esta copa') + '</button>'};
+  return {body: fichaHTML(w), foot: '<button class="t-boton btn btn-primary" data-act="anotar" data-id="' + w.id + '">' + (p ? 'Anotar otra copa' : 'Anotar esta copa') + '</button>'};
 };
 MODOS_DESPUES.ficha = S => observarTerruno(byId(S.id));
 MODOS.mapa = () => {
   const tipos = tiposEnCarta();
-  return {body: '<p class="eyebrow">Carta por copa</p><h2 class="h3" id="sheet-title">Mapa del vino</h2><p class="sub">A la izquierda, los más frescos; a la derecha, los más complejos. Arriba, los más potentes.</p><div class="block">' + mapHTML({big: true}) + '</div><p class="legend-map">' + tipos.map(t => '<span><i style="background:' + TIPO[t].c + '"></i>' + t + '</span>').join('') + '</p>'};
+  return {body: '<p class="t-eyebrow eyebrow">Carta por copa</p><h2 class="t-titulo-m titulo" id="sheet-title">Mapa del vino</h2><p class="sub">A la izquierda, los más frescos; a la derecha, los más complejos. Arriba, los más potentes.</p><div class="block">' + mapHTML({big: true}) + '</div><p class="legend-map">' + tipos.map(t => '<span><i style="background:' + TIPO[t].c + '"></i>' + t + '</span>').join('') + '</p>'};
 };
 
 export function abrirFicha(id){

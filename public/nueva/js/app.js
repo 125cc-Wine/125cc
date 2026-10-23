@@ -32,10 +32,14 @@ function showView(v){
 }
 Object.assign(vistas, {refresh, mostrar: showView, badge: updateBadge});
 
+// Noche por defecto (el bar está en penumbra); día con data-theme="dia".
+// store.theme guardaba 'light'/'dark' en las primeras versiones: se migra.
 function applyTheme(){
   const root = document.documentElement;
-  if (store.theme) root.setAttribute('data-theme', store.theme);
-  const dark = (root.getAttribute('data-theme') || 'dark') !== 'light';
+  if (store.theme === 'light') store.theme = 'dia';
+  if (store.theme === 'dark') store.theme = 'noche';
+  if (store.theme === 'dia') root.setAttribute('data-theme', 'dia'); else root.removeAttribute('data-theme');
+  const dark = store.theme !== 'dia';
   const btn = $('#theme-btn');
   btn.setAttribute('aria-label', dark ? 'Pasar a modo día' : 'Pasar a modo noche');
   btn.innerHTML = dark
@@ -49,8 +53,7 @@ Object.assign(ACT, {
   view: (t, v) => { if (hojaAbierta()) hideSheet(); showView(v); },
   cerrar: () => requestClose(),
   theme: () => {
-    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
-    store.theme = cur === 'light' ? 'dark' : 'light'; save(); applyTheme();
+    store.theme = store.theme === 'dia' ? 'noche' : 'dia'; save(); applyTheme();
   },
 });
 

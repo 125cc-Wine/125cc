@@ -1,0 +1,93 @@
+/* 125cc — tokens del sistema de diseño. Noche por defecto; día con data-theme="dia". */
+:root {
+  color-scheme: dark;
+  --bg: #171B1F;
+  --surface: #21272D;
+  --surface-2: #2B333A;
+  --line: #323B43;
+  --line-strong: #47525C;
+  --ink: #F3ECE2;
+  --ink-soft: #ABA59B;
+  --ink-faint: #959086;
+  --tinto: #A8324A;
+  --on-tinto: #FFF6F0;
+  --roble: #C8A46A;
+  --on-roble: #1B1712;
+  --peligro: #C2463F;
+  --mapa: #24211D;
+  --mapa-linea: #3A342D;
+  --mapa-etiqueta: #9C8559;
+  --papel: #D9CDB7;
+  --papel-tinta: #2B241F;
+  --papel-suave: #574B42;
+  --papel-renglon: #C9BBA2;
+  --papel-margen: #8E2F3B;
+  --tipo-tinto: #8E1B2E;
+  --tipo-blanco: #E2CF7E;
+  --tipo-rosado: #E8939A;
+  --tipo-naranjo: #D9822B;
+  --aroma-fruta-roja: #C24A5A;
+  --aroma-fruta-negra: #7A3A68;
+  --aroma-fruta-blanca: #D8C26A;
+  --aroma-floral: #C98BB9;
+  --aroma-especiado: #C0703F;
+  --aroma-herbal: #7FA56B;
+  --aroma-madera: #9A6E48;
+  --aroma-terroso: #8A8070;
+  --sombra-hoja: 0 -12px 40px rgba(0,0,0,.38);
+  --sombra-papel: 0 10px 26px rgba(0,0,0,.38);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 22px;
+  --space-6: 28px;
+  --radius-s: 10px;
+  --radius-m: 14px;
+  --radius-l: 18px;
+  --radius-xl: 22px;
+  --radius-hoja: 26px;
+  --radius-pill: 999px;
+  --curva: cubic-bezier(.22,.8,.24,1);
+  --dur-rapida: 150ms;
+  --dur-hoja: 380ms;
+  --dur-copa: 700ms;
+  --dur-trazo: 1000ms;
+  --font-display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --font-ui: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+:root[data-theme="dia"] {
+  color-scheme: light;
+  --bg: #F5EFE5;
+  --surface: #FFFBF4;
+  --surface-2: #EDE4D5;
+  --line: #E2D7C5;
+  --line-strong: #CDBFA8;
+  --ink: #2A2420;
+  --ink-soft: #685E55;
+  --ink-faint: #726860;
+  --tinto: #7A1428;
+  --roble: #7F6029;
+  --on-roble: #FFF8EE;
+  --peligro: #A2302A;
+  --mapa: #EFE4D1;
+  --mapa-linea: #D9CAB0;
+  --mapa-etiqueta: #6E5A2C;
+  --papel: #FFFDF8;
+  --papel-tinta: #2A2420;
+  --papel-renglon: #EDE4D4;
+  --sombra-hoja: 0 -12px 40px rgba(60,40,20,.16);
+  --sombra-papel: 0 10px 26px rgba(60,40,20,.16);
+}
+/* Estilos de texto */
+.t-titulo-xl { font-family: var(--font-display); font-size: 38px; line-height: 1.04; font-weight: 600; }
+.t-titulo-l { font-family: var(--font-display); font-size: 30px; line-height: 1.08; font-weight: 600; }
+.t-titulo-m { font-family: var(--font-display); font-size: 25px; line-height: 1.12; font-weight: 600; }
+.t-nota-somm { font-family: var(--font-display); font-size: 21px; line-height: 1.36; font-weight: 500; font-style: italic; }
+.t-precio { font-family: var(--font-display); font-size: 19px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.t-puntaje-xl { font-family: var(--font-display); font-size: 78px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.t-cuerpo { font-family: var(--font-ui); font-size: 15px; line-height: 1.5; font-weight: 400; }
+.t-cuerpo-s { font-family: var(--font-ui); font-size: 13.5px; line-height: 1.45; font-weight: 400; }
+.t-boton { font-family: var(--font-ui); font-size: 15px; line-height: 1; font-weight: 600; }
+.t-eyebrow { font-family: var(--font-ui); font-size: 11px; line-height: 1.3; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+.t-nav { font-family: var(--font-ui); font-size: 11.5px; line-height: 1; font-weight: 500; }

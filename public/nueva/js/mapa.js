@@ -57,7 +57,7 @@ function rowHTML(w){
   return '<li><button class="row" data-act="ficha" data-id="' + w.id + '">'
     + '<span class="num" style="background:' + t.c + ';color:' + t.ink + '">' + w.n + '</span>'
     + '<span class="row-main"><span class="row-name">' + esc(w.nombre) + '</span><span class="row-meta">' + esc([w.varietal, regionCorta(w.region)].filter(Boolean).join(' · ')) + '</span></span>'
-    + '<span class="row-side"><span class="row-price">' + fmt$(w.copa) + '</span>' + (p ? '<span class="row-tag">' + p.puntaje + ' · anotado</span>' : '<span class="row-sub">la copa</span>') + '</span>'
+    + '<span class="row-side"><span class="t-precio">' + fmt$(w.copa) + '</span>' + (p ? '<span class="row-tag">' + p.puntaje + ' · anotado</span>' : '<span class="row-sub">la copa</span>') + '</span>'
     + '</button></li>';
 }
 // La quincena que muestra la API (puede ser la próxima, antes de abrir)
@@ -70,13 +70,13 @@ export function renderCarta(){
   const el = $('#view-carta');
   if (!ui.cargada) return; // sigue el "Sirviendo la carta…" del HTML
   if (!carta.vinos.length) {
-    el.innerHTML = '<div class="carga">' + GLASS_ICON + '<p>No pudimos traer la carta.<br>Revisá la conexión y probá de nuevo.</p><button class="btn btn-primary" data-act="recargar">Reintentar</button></div>';
+    el.innerHTML = '<div class="carga">' + GLASS_ICON + '<p>No pudimos traer la carta.<br>Revisá la conexión y probá de nuevo.</p><button class="t-boton btn btn-primary" data-act="recargar">Reintentar</button></div>';
     return;
   }
   const tipos = ['Todos'].concat(tiposEnCarta());
   const vis = carta.vinos.filter(visible);
   el.innerHTML =
-    '<div class="carta-head"><div><p class="eyebrow">' + cap(quincena(fechaQuincena())) + '</p><h1 class="h1">Carta por copa</h1></div>'
+    '<div class="carta-head"><div><p class="t-eyebrow eyebrow">' + cap(quincena(fechaQuincena())) + '</p><h1 class="t-titulo-xl titulo">Carta por copa</h1></div>'
     + '<p class="carta-count">' + carta.vinos.length + ' vinos<span>copas de 125 cc</span></p></div>'
     + '<div class="mapcard">' + mapHTML() + '<div class="map-foot"><span>Tocá una copita para ver el vino</span><button class="link" data-act="ampliar">Ampliar mapa</button></div></div>'
     + '<div class="chips" role="group" aria-label="Filtrar la carta">'

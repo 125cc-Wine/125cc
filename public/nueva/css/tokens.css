@@ -1,64 +1,93 @@
-/* public/nueva/css/tokens.css — tokens de la carta nueva (/nueva), salidos
-   del prototipo aprobado (docs/nueva/prototipo.html). Se carga DESPUÉS de
-   /paleta.css: los valores que coinciden con la paleta de etiqueta (tinto
-   #7A1428, roble #C8A46A, papel #FAF5EE) se toman de ahí; el resto son los
-   del prototipo. Colores, tipografías y tiempos de animación viven solo
-   acá: app.css y los módulos JS los leen por nombre (ver ms() en util.js).
-   Noche por defecto: el bar está en penumbra. */
-:root{
+/* 125cc — tokens del sistema de diseño. Noche por defecto; día con data-theme="dia". */
+:root {
   color-scheme: dark;
-  --bg:#171B1F; --surface:#21272D; --surface-2:#2B333A; --line:#323B43; --line-strong:#47525C;
-  --ink:#F3ECE2; --ink-soft:#ABA59B; --ink-faint:#7C776F;
-  /* --tinto de noche es más claro que el de la paleta para que se lea sobre fondo oscuro */
-  --tinto:#A8324A; --on-tinto:#FFF6F0; --oak:var(--roble); --oak-ink:#1B1712; --danger:#C2463F;
-  --map:#24211D; --map-line:#3A342D; --map-label:#9C8559;
-  --paper:#D9CDB7; --paper-ink:#2B241F; --paper-soft:#685C51; --paper-rule:#C9BBA2; --paper-margin:#A4404C;
-  --glass-edge:#E9E1D3; --bottle-edge:#5A656F; --spot:#38414A;
-  --scrim:rgba(6,8,10,.62); --shadow:rgba(0,0,0,.38);
-  --wa:#25D366;
-
-  /* Color por tipo de vino: copitas, números de la carta, líquido del vaso */
-  --tipo-tinto:#8E1B2E;   --tipo-tinto-ink:#FFF4EE;
-  --tipo-blanco:#E2CF7E;  --tipo-blanco-ink:#2A2420;
-  --tipo-rosado:#E8939A;  --tipo-rosado-ink:#2A2420;
-  --tipo-naranjo:#D9822B; --tipo-naranjo-ink:#2A2420;
-
-  /* Tarjeta "Llevate tu noche" (canvas): siempre en noche, no sigue el tema */
-  --story-bg1:#13171A; --story-bg2:#28313A; --story-cream:#F3ECE2; --story-soft:#A9A49B;
-  --story-oak:var(--roble); --story-ring:#D0566B;
-
-  --display:'Cormorant Garamond','Iowan Old Style',Georgia,serif;
-  --ui:'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-  --nav-h:66px;
-
-  /* Movimiento */
-  --ease:cubic-bezier(.22,.8,.24,1);
-  --dur-press:.15s;   /* botón apretado */
-  --dur-fade:.2s;     /* opacidad, bordes */
-  --dur-tilt:.22s;    /* páginas y rueda de aromas */
-  --dur-pin:.25s;     /* copitas del mapa, toast */
-  --dur-scrim:.32s;
-  --dur-view:.35s;    /* entrada de cada vista */
-  --dur-sheet:.38s;   /* hoja que sube */
-  --dur-color:.4s;    /* color del vaso */
-  --dur-check:.6s;    /* tilde de "guardado" */
-  --dur-vaso:.7s;     /* llenado del vaso por paso */
-  --dur-draw:1s;      /* círculo a mano del puntaje */
-  --dur-swirl:1.1s;   /* copa que gira mientras piensa */
-  /* Tiempos que usa el JS */
-  --ms-score:900ms;   /* conteo del puntaje en el revelado */
-  --ms-pensando:900ms;/* "Buscando en la carta…" */
-  --ms-toast:2600ms;
-  --ms-cerrar:400ms;  /* espera para ocultar la hoja tras la animación */
+  --bg: #171B1F;
+  --surface: #21272D;
+  --surface-2: #2B333A;
+  --line: #323B43;
+  --line-strong: #47525C;
+  --ink: #F3ECE2;
+  --ink-soft: #ABA59B;
+  --ink-faint: #959086;
+  --tinto: #A8324A;
+  --on-tinto: #FFF6F0;
+  --roble: #C8A46A;
+  --on-roble: #1B1712;
+  --peligro: #C2463F;
+  --mapa: #24211D;
+  --mapa-linea: #3A342D;
+  --mapa-etiqueta: #9C8559;
+  --papel: #D9CDB7;
+  --papel-tinta: #2B241F;
+  --papel-suave: #574B42;
+  --papel-renglon: #C9BBA2;
+  --papel-margen: #8E2F3B;
+  --tipo-tinto: #8E1B2E;
+  --tipo-blanco: #E2CF7E;
+  --tipo-rosado: #E8939A;
+  --tipo-naranjo: #D9822B;
+  --aroma-fruta-roja: #C24A5A;
+  --aroma-fruta-negra: #7A3A68;
+  --aroma-fruta-blanca: #D8C26A;
+  --aroma-floral: #C98BB9;
+  --aroma-especiado: #C0703F;
+  --aroma-herbal: #7FA56B;
+  --aroma-madera: #9A6E48;
+  --aroma-terroso: #8A8070;
+  --sombra-hoja: 0 -12px 40px rgba(0,0,0,.38);
+  --sombra-papel: 0 10px 26px rgba(0,0,0,.38);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 22px;
+  --space-6: 28px;
+  --radius-s: 10px;
+  --radius-m: 14px;
+  --radius-l: 18px;
+  --radius-xl: 22px;
+  --radius-hoja: 26px;
+  --radius-pill: 999px;
+  --curva: cubic-bezier(.22,.8,.24,1);
+  --dur-rapida: 150ms;
+  --dur-hoja: 380ms;
+  --dur-copa: 700ms;
+  --dur-trazo: 1000ms;
+  --font-display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --font-ui: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
-:root[data-theme="light"]{
+:root[data-theme="dia"] {
   color-scheme: light;
-  --bg:#F5EFE5; --surface:#FFFBF4; --surface-2:#EDE4D5; --line:#E2D7C5; --line-strong:#CDBFA8;
-  --ink:#2A2420; --ink-soft:#685E55; --ink-faint:#958A7F;
-  --tinto:#7A1428; /* = --tinto de /paleta.css */
-  --on-tinto:#FFF6F0; --oak:#97743A; --oak-ink:#FFF8EE; --danger:#A2302A;
-  --map:#EFE4D1; --map-line:#D9CAB0; --map-label:#8C7444;
-  --paper:#FFFDF8; --paper-ink:#2A2420; --paper-soft:#7A6E63; --paper-rule:#EDE4D4; --paper-margin:#C47880;
-  --glass-edge:#4A3F37; --bottle-edge:#BBAE97; --spot:#F8F1E5;
-  --scrim:rgba(42,30,24,.42); --shadow:rgba(60,40,20,.16);
+  --bg: #F5EFE5;
+  --surface: #FFFBF4;
+  --surface-2: #EDE4D5;
+  --line: #E2D7C5;
+  --line-strong: #CDBFA8;
+  --ink: #2A2420;
+  --ink-soft: #685E55;
+  --ink-faint: #726860;
+  --tinto: #7A1428;
+  --roble: #7F6029;
+  --on-roble: #FFF8EE;
+  --peligro: #A2302A;
+  --mapa: #EFE4D1;
+  --mapa-linea: #D9CAB0;
+  --mapa-etiqueta: #6E5A2C;
+  --papel: #FFFDF8;
+  --papel-tinta: #2A2420;
+  --papel-renglon: #EDE4D4;
+  --sombra-hoja: 0 -12px 40px rgba(60,40,20,.16);
+  --sombra-papel: 0 10px 26px rgba(60,40,20,.16);
 }
+/* Estilos de texto */
+.t-titulo-xl { font-family: var(--font-display); font-size: 38px; line-height: 1.04; font-weight: 600; }
+.t-titulo-l { font-family: var(--font-display); font-size: 30px; line-height: 1.08; font-weight: 600; }
+.t-titulo-m { font-family: var(--font-display); font-size: 25px; line-height: 1.12; font-weight: 600; }
+.t-nota-somm { font-family: var(--font-display); font-size: 21px; line-height: 1.36; font-weight: 500; font-style: italic; }
+.t-precio { font-family: var(--font-display); font-size: 19px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.t-puntaje-xl { font-family: var(--font-display); font-size: 78px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.t-cuerpo { font-family: var(--font-ui); font-size: 15px; line-height: 1.5; font-weight: 400; }
+.t-cuerpo-s { font-family: var(--font-ui); font-size: 13.5px; line-height: 1.45; font-weight: 400; }
+.t-boton { font-family: var(--font-ui); font-size: 15px; line-height: 1; font-weight: 600; }
+.t-eyebrow { font-family: var(--font-ui); font-size: 11px; line-height: 1.3; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+.t-nav { font-family: var(--font-ui); font-size: 11.5px; line-height: 1; font-weight: 500; }

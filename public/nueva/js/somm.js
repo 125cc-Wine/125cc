@@ -75,8 +75,8 @@ export function renderQueTomo(){
   const q = ui.quiz, el = $('#view-que-tomo'), QUIZ = quiz();
   if (q.step === -1) {
     el.innerHTML = '<div class="qt-intro">' + GLASS_ICON
-      + '<p class="eyebrow">Un sommelier en tu mesa</p><h1 class="h1">¿Qué tomo?</h1><p class="sub">Cuatro preguntas y te sugiero tres copas de la carta de esta quincena' + (paladar() ? ', teniendo en cuenta lo que ya anotaste' : '') + '.</p>'
-      + '<button class="btn btn-primary wide" data-act="quiz-start"' + (carta.vinos.length ? '' : ' disabled') + '>Ayudame a elegir</button><p class="qt-note">Si preferís charlarlo, el sommelier está en el salón.</p></div>';
+      + '<p class="t-eyebrow eyebrow">Un sommelier en tu mesa</p><h1 class="t-titulo-xl titulo">¿Qué tomo?</h1><p class="sub">Cuatro preguntas y te sugiero tres copas de la carta de esta quincena' + (paladar() ? ', teniendo en cuenta lo que ya anotaste' : '') + '.</p>'
+      + '<button class="t-boton btn btn-primary wide" data-act="quiz-start"' + (carta.vinos.length ? '' : ' disabled') + '>Ayudame a elegir</button><p class="qt-note">Si preferís charlarlo, el sommelier está en el salón.</p></div>';
     return;
   }
   if (q.step === 'pensando') {
@@ -87,7 +87,7 @@ export function renderQueTomo(){
     const Q = QUIZ[q.step];
     el.innerHTML = '<div class="qt-prog">' + QUIZ.map((_, i) => '<i class="' + (i <= q.step ? 'on' : '') + '"></i>').join('') + '<span>' + (q.step + 1) + ' de ' + QUIZ.length + '</span></div>'
       + (q.step > 0 ? '<button class="link back" data-act="quiz-back">← Volver</button>' : '<div class="back-sp"></div>')
-      + '<h2 class="h2">' + Q.t + '</h2><p class="sub">' + Q.s + '</p>'
+      + '<h2 class="t-titulo-l titulo">' + Q.t + '</h2><p class="sub">' + Q.s + '</p>'
       + '<div class="opts">' + Q.o.map(([v, t, s]) => '<button class="opt" data-act="quiz-ans" data-v="' + v + '" aria-pressed="' + (q.ans[Q.k] === v) + '"><span class="opt-t">' + t + '</span><span class="opt-s">' + esc(s) + '</span><span class="opt-go">' + ICON_GO + '</span></button>').join('') + '</div>';
     return;
   }
@@ -98,9 +98,9 @@ export function renderQueTomo(){
   }
   const fb = leerFeedback();
   const res = QUIZ.map(Q => { const o = Q.o.find(x => x[0] === q.ans[Q.k]); return o ? o[1] : ''; }).filter(Boolean).join(' · ');
-  el.innerHTML = '<p class="eyebrow">Para esta noche</p><h1 class="h1">Tus tres copas</h1><p class="sub">' + esc(res) + '</p>'
+  el.innerHTML = '<p class="t-eyebrow eyebrow">Para esta noche</p><h1 class="t-titulo-xl titulo">Tus tres copas</h1><p class="sub">' + esc(res) + '</p>'
     + '<ol class="recs">' + q.recs.map((r, i) => '<li class="rec-li"><button class="rec" data-act="ficha" data-id="' + r.w.id + '"><span class="rec-rank">' + (i + 1) + '</span><span class="rec-main"><span class="rec-name">' + esc(r.w.nombre) + '</span><span class="rec-why">' + esc(r.why) + '</span><span class="rec-meta">' + esc(r.w.varietal) + ' · ' + fmt$(r.w.copa) + (store.pages.length && !ultimaPagina(r.w.id) ? ' · todavía no lo probaste' : '') + '</span></span><span class="rec-b">' + fotoBotella(r.w, {ws: [96, 192], sizes: '40px', width: 40, height: 84, lazy: true}) + '</span></button>' + votoHTML(r.w.id, fb) + '</li>').join('') + '</ol>'
-    + '<div class="row-btns"><button class="btn btn-ghost" data-act="quiz-reset">Volver a empezar</button></div>';
+    + '<div class="row-btns"><button class="t-boton btn btn-ghost" data-act="quiz-reset">Volver a empezar</button></div>';
 }
 
 Object.assign(ACT, {
@@ -109,7 +109,7 @@ Object.assign(ACT, {
     const q = ui.quiz, QUIZ = quiz(); q.ans[QUIZ[q.step].k] = v; haptic();
     if (q.step < QUIZ.length - 1) { q.step++; renderQueTomo(); window.scrollTo(0, 0); return; }
     q.step = 'pensando'; q.recs = null; renderQueTomo();
-    setTimeout(() => { if (ui.quiz.step === 'pensando') { ui.quiz.step = QUIZ.length; renderQueTomo(); window.scrollTo(0, 0); } }, reduced() ? 0 : ms('--ms-pensando'));
+    setTimeout(() => { if (ui.quiz.step === 'pensando') { ui.quiz.step = QUIZ.length; renderQueTomo(); window.scrollTo(0, 0); } }, reduced() ? 0 : ms('--dur-trazo'));
   },
   'quiz-back': () => { ui.quiz.step = Math.max(0, ui.quiz.step - 1); renderQueTomo(); },
   'quiz-reset': () => { ui.quiz = {step: 0, ans: {}}; renderQueTomo(); window.scrollTo(0, 0); },

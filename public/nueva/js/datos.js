@@ -8,27 +8,34 @@ import { norm } from './util.js';
 /* ---------- Vocabulario (del prototipo) ---------- */
 // Colores por tipo: tokens de tokens.css, para que sigan al tema.
 export const TIPO = {
-  Tinto:   {c: 'var(--tipo-tinto)',   ink: 'var(--tipo-tinto-ink)'},
-  Blanco:  {c: 'var(--tipo-blanco)',  ink: 'var(--tipo-blanco-ink)'},
-  Rosado:  {c: 'var(--tipo-rosado)',  ink: 'var(--tipo-rosado-ink)'},
-  Naranjo: {c: 'var(--tipo-naranjo)', ink: 'var(--tipo-naranjo-ink)'}
+  Tinto:   {c: 'var(--tipo-tinto)',   ink: 'var(--on-tinto)'},
+  Blanco:  {c: 'var(--tipo-blanco)',  ink: 'var(--papel-tinta)'},
+  Rosado:  {c: 'var(--tipo-rosado)',  ink: 'var(--papel-tinta)'},
+  Naranjo: {c: 'var(--tipo-naranjo)', ink: 'var(--papel-tinta)'}
 };
 export const TIPOS = ['Tinto', 'Blanco', 'Rosado', 'Naranjo'];
 // La rueda de aromas: único vocabulario válido para aromas_somm y para las catas.
+// color: token --aroma-* · tx: rótulo sobre ese color en la rueda (el que más
+// contrasta; en especias y tierra el claro, que se lee mejor cuando la rueda
+// atenúa las familias no elegidas) · paper: el sello sobre el papel del cuaderno, el mismo color
+// mezclado con tinta en la proporción justa para pasar 4.5:1 en los dos temas.
+const fam = (id, nombre, l, token, tx, sello, aromas) => ({id, nombre, l, aromas,
+  color: 'var(' + token + ')', tx: 'var(' + tx + ')',
+  paper: sello === 100 ? 'var(' + token + ')' : 'color-mix(in srgb, var(' + token + ') ' + sello + '%, var(--papel-tinta))'});
 export const FAMILIAS = [
-  {id:'roja', nombre:'Fruta roja', l:['Fruta','roja'], color:'#C24A5A', tx:'#FFF4EE', paper:'#9A2A3B', aromas:['frutilla','cereza','frambuesa','grosella']},
-  {id:'negra', nombre:'Fruta negra', l:['Fruta','negra'], color:'#7A3A68', tx:'#FFF4EE', paper:'#5A2A4F', aromas:['mora','ciruela','cassis','arándano']},
-  {id:'blanca', nombre:'Fruta blanca y cítricos', l:['Fruta','blanca'], color:'#D8C26A', tx:'#2A2420', paper:'#7E6A1C', aromas:['pera','manzana verde','durazno','ananá','limón','pomelo']},
-  {id:'floral', nombre:'Floral', l:['Floral'], color:'#C98BB9', tx:'#2A2420', paper:'#83437A', aromas:['violeta','rosa','flores blancas','azahar']},
-  {id:'especiado', nombre:'Especiado', l:['Especias'], color:'#C0703F', tx:'#FFF4EE', paper:'#94491E', aromas:['pimienta','clavo','canela','nuez moscada']},
-  {id:'herbal', nombre:'Herbal', l:['Hierbas'], color:'#7FA56B', tx:'#1F2A1A', paper:'#42693A', aromas:['hierbas frescas','menta','pimiento verde','eucalipto']},
-  {id:'madera', nombre:'Madera y tostado', l:['Madera'], color:'#9A6E48', tx:'#FFF4EE', paper:'#6A4628', aromas:['vainilla','chocolate','café','tabaco','tostado']},
-  {id:'terroso', nombre:'Terroso', l:['Tierra'], color:'#8A8070', tx:'#FFF4EE', paper:'#57503F', aromas:['grafito','tierra húmeda','cuero','hongos']}
+  fam('roja', 'Fruta roja', ['Fruta','roja'], '--aroma-fruta-roja', '--on-tinto', 65, ['frutilla','cereza','frambuesa','grosella']),
+  fam('negra', 'Fruta negra', ['Fruta','negra'], '--aroma-fruta-negra', '--on-tinto', 100, ['mora','ciruela','cassis','arándano']),
+  fam('blanca', 'Fruta blanca y cítricos', ['Fruta','blanca'], '--aroma-fruta-blanca', '--papel-tinta', 30, ['pera','manzana verde','durazno','ananá','limón','pomelo']),
+  fam('floral', 'Floral', ['Floral'], '--aroma-floral', '--papel-tinta', 40, ['violeta','rosa','flores blancas','azahar']),
+  fam('especiado', 'Especiado', ['Especias'], '--aroma-especiado', '--on-tinto', 50, ['pimienta','clavo','canela','nuez moscada']),
+  fam('herbal', 'Herbal', ['Hierbas'], '--aroma-herbal', '--papel-tinta', 40, ['hierbas frescas','menta','pimiento verde','eucalipto']),
+  fam('madera', 'Madera y tostado', ['Madera'], '--aroma-madera', '--on-tinto', 60, ['vainilla','chocolate','café','tabaco','tostado']),
+  fam('terroso', 'Terroso', ['Tierra'], '--aroma-terroso', '--on-tinto', 55, ['grafito','tierra húmeda','cuero','hongos'])
 ];
 const AROMA_FAM = {};
 FAMILIAS.forEach(f => f.aromas.forEach(a => { AROMA_FAM[a] = f; }));
 export const famDe = a => AROMA_FAM[a];
-export const COLOR_SIN_FAMILIA = '#8A8070';
+export const COLOR_SIN_FAMILIA = 'var(--aroma-terroso)';
 export const COLORES = {
   Tinto:[['Violáceo','#4F1640'],['Rojo rubí','#8E1B2E'],['Rojo cereza','#A4162E'],['Granate','#6A1420'],['Rojo teja','#8A3A22']],
   Blanco:[['Amarillo verdoso','#D6D88A'],['Amarillo pálido','#EDE3A0'],['Amarillo dorado','#D9B44A']],
